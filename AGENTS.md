@@ -58,6 +58,23 @@ python -m playwright install chromium   # only for --render
    data needs CrUX/PageSpeed). State what was measured vs. what needs an external
    source.
 
+## Fix loop (audit → edit → prove it)
+When the site's **source is in the current workspace**, close the loop instead of
+stopping at the report:
+1. Baseline: `python scan.py <url> --format json -o before.json`.
+2. Map each finding to the owning file (layout `<head>` for title/meta/canonical/
+   OG, page source for alt/headings, static dir for robots.txt) and apply minimal,
+   framework-idiomatic edits. Use `generate_schema.py` / `generate_llms.py` for
+   generated artifacts.
+3. Re-scan a local preview (`--allow-private`) as `after.json`, then
+   `python diff_scan.py before.json after.json` to show resolved findings + delta.
+
+Honesty: a localhost re-scan verifies **page-level** fixes only — mark site-level
+signals (robots.txt, sitemap, HTTPS, canonical host, llms.txt) *verify after
+deploy*; with no local preview, report "applied, pending deploy" + the re-scan
+commands. Source not in the workspace → **no edits**, emit a per-finding fix plan.
+Findings unreachable from the repo go in a "needs manual action" list.
+
 ## Multi-agent deep audit (Claude Code)
 `/narwhal audit <site>` runs the deterministic `audit.py` baseline, then fans out
 ~10 specialist subagents in parallel (defined in `agents/`: technical, content,

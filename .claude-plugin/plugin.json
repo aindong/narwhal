@@ -1,7 +1,7 @@
 {
   "name": "narwhal",
   "displayName": "Narwhal — SEO & GEO/LLMO Scan",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "description": "Local-first SEO & GEO/LLMO (AI-search) auditing for pages and sites: technical SEO, content/E-E-A-T, schema.org JSON-LD, and citability for AI answer engines (ChatGPT, Claude, Perplexity, Google AI Overviews).",
   "author": {
     "name": "aindong"

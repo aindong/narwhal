@@ -84,6 +84,21 @@ The scripts do the **measurement** (fast, zero-dep, reproducible); the agents do
 definitions live in [`agents/`](agents/). The other actions (`scan`, `crawl`,
 `sitemap`, `llms`, `schema`) run directly for quick, deterministic output.
 
+## Fix it, don't just report it
+
+The audit *finds*; **`/narwhal fix <site>`** closes the loop. When the site's
+source code is in your working directory, it maps each finding to the file that
+owns it (title/meta, canonical, Open Graph, JSON-LD, alt text, robots.txt,
+`llms.txt`…), applies minimal framework-idiomatic edits, then **re-scans and
+diffs** to prove the score moved — resolved findings and the delta, from
+`diff_scan.py`, not vibes.
+
+It's honest about what a local re-scan can verify: page-level fixes check out
+against a local preview; site-level signals (robots.txt, sitemap, HTTPS) are
+labeled *verify after deploy*. If the source isn't in the workspace, it makes no
+edits and hands you a per-finding fix plan instead. A SaaS auditor emits a PDF —
+Narwhal emits a diff.
+
 ## Quick start
 
 ```bash

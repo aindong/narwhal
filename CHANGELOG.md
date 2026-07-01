@@ -4,6 +4,21 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.17.0] — 2026-07-02
+
+### Added
+- **`/narwhal fix <site>` — close the audit → fix loop.** When the site's source
+  is in the current workspace, the agent maps each scan/audit finding to the file
+  that owns it (title/meta, canonical, OG/Twitter, JSON-LD via
+  `generate_schema.py`, alt text, robots.txt, `llms.txt` via `generate_llms.py`),
+  applies minimal framework-idiomatic edits, then **re-scans and runs
+  `diff_scan.py`** to prove what resolved and the score delta. Honest by design:
+  localhost re-scans verify page-level fixes only (site-level signals are labeled
+  *verify after deploy*), "applied, pending deploy" when there's no local preview,
+  no edits + a per-finding fix plan when the source isn't in the workspace, and a
+  "needs manual action" list for findings unreachable from the repo. Fix-loop
+  guidance also added to `SKILL.md` and `AGENTS.md` for non-Claude agents.
+
 ## [1.16.1] — 2026-07-02
 
 ### Changed

@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.16.1**_
+_Last updated: 2026-07-02 · version **1.17.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -24,7 +24,9 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **All P0 + P1 roadmap items** shipped (#1–#12, closed).
 - **Beyond the roadmap:** `/narwhal <action> <site>` command, plugin renamed to
   `narwhal`, audit-style report, comprehensive `audit`, **multi-agent deep audit**
-  (10 specialists), filler/AI-writing content scorer, link-check perf fix.
+  (10 specialists), filler/AI-writing content scorer, link-check perf fix,
+  **`/narwhal fix`** (v1.17.0) — closes the audit → fix loop: maps findings to
+  source edits in the workspace, re-scans, and diffs to prove the delta.
 - **#13 shipped:** **HTML + PDF report export** — self-contained styled HTML
   (`--format html`: score gauge, per-area breakdown, severity cards) on `scan` and
   `audit`; PDF via WeasyPrint with graceful HTML fallback (`--format pdf`). Sample

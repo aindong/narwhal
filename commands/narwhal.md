@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
+argument-hint: <audit|fix|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -87,6 +87,71 @@ Guardrails: never fabricate metrics. Real Core Web Vitals come from the `vitals`
 action (CrUX) when a key is set — otherwise say so and treat perf as hygiene only.
 Be honest where a claim needs an external tool. Keep the synthesis tight, not a
 wall of raw output.
+
+---
+
+## If `$1` is `fix` → close the audit → fix loop
+
+Apply the findings as real code edits in the current workspace, then re-scan and
+diff to **prove** the score moved. Never claim improvement without a diff.
+
+**Step 1 — Baseline.** If a fresh scan/audit JSON for `$2` already exists in the
+CWD (e.g. `narwhal-audit.json` from a recent `/narwhal audit`), reuse it.
+Otherwise run:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" $2 --format json -o narwhal-fix-before.json
+```
+
+**Step 2 — Confirm the source is here.** Verify the current workspace contains
+the site's source: grep for distinctive strings the scan saw (the `<title>`, a
+heading, the meta description). If it does **not**, make **no edits** — output a
+per-finding fix plan instead (for each finding: what file/artifact to change and
+the exact snippet to add) and stop.
+
+**Step 3 — Map findings → edits.** Work through the baseline findings, critical
+→ high → medium. For each, find the file that owns the artifact and decide the
+concrete edit. Typical mappings:
+- **title / meta description / canonical / OG & Twitter tags / hreflang** → the
+  head: layout or per-page front-matter/metadata (Next `metadata` export, Astro/
+  Hugo/Jekyll layout partial, or the raw `<head>` in plain HTML).
+- **Missing/invalid JSON-LD** → generate it, don't hand-write:
+  `python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/generate_schema.py" <Type> --field …`
+- **Image alt text, heading structure, thin/direct-answer intro, question
+  headings** → the page/component source or content Markdown.
+- **robots.txt / AI-crawler access** → the static robots.txt (or its template).
+- **Missing llms.txt** → `python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/generate_llms.py" $2 -o <static-dir>/llms.txt`, then curate its TODOs.
+
+Anything unreachable from this repo (server/CDN redirect config, DNS, real Core
+Web Vitals, an external service) goes in a **"needs manual action"** list —
+never silently dropped.
+
+**Step 4 — Apply.** Make the edits, minimal and idiomatic to the detected
+framework (Next/Nuxt/Astro/Hugo/Jekyll/plain HTML…). Keep a list of every file
+touched. Do not commit — the user reviews via git.
+
+**Step 5 — Verify.** If the site can be previewed locally (dev server, or a
+static build via `python -m http.server`), re-scan the local URL and diff:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" http://localhost:<port>/<page> --allow-private --format json -o narwhal-fix-after.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/diff_scan.py" narwhal-fix-before.json narwhal-fix-after.json
+```
+(diff against whichever baseline Step 1 used — `narwhal-fix-before.json` or the
+reused audit JSON.)
+
+**Honesty rule:** a localhost scan verifies **page-level** fixes (title, meta,
+schema, alt, OG, headings). **Site-level** signals — robots.txt, sitemap, HTTPS,
+canonical host, llms.txt — come from the *local server's* origin, not the
+deployed site, so label those **verify after deploy**, not fixed or regressed.
+In a prod-baseline → localhost-after diff, expect the raw verdict to say
+"Regressed" with new critical/high findings like "not served over HTTPS" / "no
+robots.txt" / "no sitemap" — those are localhost artifacts; discount them and
+judge by the page-level findings that resolved. If no local preview is possible,
+report **"applied, pending deploy"** and give the exact re-scan + diff commands
+to run post-deploy.
+
+**Step 6 — Report.** Deliver: the score delta (or "pending deploy"), findings
+resolved (from the diff), files changed, the verify-after-deploy list, and the
+manual-action list. Never fabricate a score.
 
 ---
 

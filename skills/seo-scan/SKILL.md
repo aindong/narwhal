@@ -179,6 +179,29 @@ duplication, sitemap, sxo, and local — each using these scripts as tools and a
 reasoning + exact fixes, synthesized into one prioritized report. The individual
 scripts above remain the fast, deterministic path.
 
+## Fix loop (audit → edit → prove it)
+
+When the site's **source code is in the current workspace**, don't stop at the
+report — close the loop (`/narwhal fix <url>` in Claude Code):
+
+1. Save a baseline: `python scripts/scan.py <url> --format json -o before.json`
+   (or reuse a fresh audit JSON).
+2. Map each finding to the file that owns the artifact (layout `<head>` for
+   title/meta/canonical/OG, page source for alt/headings, static dir for
+   robots.txt) and apply minimal, framework-idiomatic edits. Use
+   `generate_schema.py` for JSON-LD and `generate_llms.py` for llms.txt rather
+   than hand-writing them.
+3. Re-scan a local preview (`--allow-private` for localhost) as `after.json`,
+   then `python scripts/diff_scan.py before.json after.json` to show what
+   resolved and the score delta.
+
+Honesty rules: a localhost re-scan only verifies **page-level** fixes — label
+site-level signals (robots.txt, sitemap, HTTPS, canonical host, llms.txt) as
+*verify after deploy*; if there's no local preview, report "applied, pending
+deploy" with the re-scan commands. If the source is **not** in the workspace,
+make no edits — give a per-finding fix plan instead. Findings unreachable from
+the repo (CDN/redirect config, real CWV) go in a "needs manual action" list.
+
 ## Configuration
 
 An optional `narwhal.toml` at the project root (auto-discovered) tunes scoring
