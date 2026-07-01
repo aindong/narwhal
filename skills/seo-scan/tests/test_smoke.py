@@ -21,6 +21,7 @@ from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
 import generate_schema  # noqa: E402
 import crawl_site  # noqa: E402
+import generate_llms  # noqa: E402
 
 GOOD_PAGE = """<!doctype html><html lang="en"><head>
 <title>What is GEO? A practical guide to AI search optimization</title>
@@ -320,6 +321,41 @@ class TestCrawlPoliteness(unittest.TestCase):
         cands = [f"https://site.com/{i}" for i in range(20)]
         urls, skipped = crawl_site.select_urls(cands, base, rt, True, 5)
         self.assertEqual(len(urls), 5)
+
+
+class TestLlmsTxt(unittest.TestCase):
+    def test_section_for(self):
+        self.assertEqual(generate_llms.section_for("https://x.com/"), "Main")
+        self.assertEqual(generate_llms.section_for("https://x.com/about"), "Main")
+        self.assertEqual(generate_llms.section_for("https://x.com/blog/post-1"), "Blog")
+        self.assertEqual(generate_llms.section_for("https://x.com/case-studies/a"),
+                         "Case Studies")
+
+    def test_grouping_main_first(self):
+        pages = [
+            {"url": "https://x.com/blog/a", "title": "A", "description": ""},
+            {"url": "https://x.com/", "title": "Home", "description": ""},
+            {"url": "https://x.com/docs/b", "title": "B", "description": ""},
+        ]
+        sections = generate_llms.group_sections(pages)
+        self.assertEqual(sections[0][0], "Main")           # Main always first
+        self.assertEqual([s[0] for s in sections[1:]], ["Blog", "Docs"])  # sorted
+
+    def test_render_format_and_todos(self):
+        sections = [("Main", [
+            {"url": "https://x.com/", "title": "Home", "description": "Welcome."},
+            {"url": "https://x.com/about", "title": "", "description": ""},
+        ])]
+        out = generate_llms.render_llms_txt("Acme", "A great site", sections)
+        self.assertIn("# Acme", out)
+        self.assertIn("> A great site", out)
+        self.assertIn("## Main", out)
+        self.assertIn("- [Home](https://x.com/): Welcome.", out)
+        self.assertIn("- [About](https://x.com/about)", out)  # slug title fallback
+
+    def test_render_marks_missing_name(self):
+        out = generate_llms.render_llms_txt("", "", [])
+        self.assertIn("TODO", out)
 
 
 class TestConfig(unittest.TestCase):

@@ -79,6 +79,12 @@ takes a sitemap URL; recurses indexes, validates `loc`/`lastmod`, samples URLs f
 python scripts/validate_sitemap.py https://example.com --sample 20
 ```
 
+**Generate a starter `llms.txt`** (seeds from the homepage + discovered pages,
+grouped into sections; a curation starting point, not a finished file):
+```
+python scripts/generate_llms.py https://example.com -o llms.txt
+```
+
 ## What each auditor covers
 
 | Auditor | Focus |

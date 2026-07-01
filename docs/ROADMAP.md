@@ -66,8 +66,9 @@ hard commitments.
   config > default. Docs in `docs/CONFIG.md`. — [#9](https://github.com/aindong/narwhal/issues/9)
 
 ### GEO & content depth
-- ⬜ **`llms.txt` generator** — build a starter `/llms.txt` from sitemap + metadata.
-  — [#10](https://github.com/aindong/narwhal/issues/10)
+- ✅ **`llms.txt` generator** — `narwhal llms`: builds a starter `/llms.txt` from
+  the homepage + discovered pages, grouped into sections, TODO-marked, honest about
+  its low-certainty benefit. — [#10](https://github.com/aindong/narwhal/issues/10)
 - ✅ **Readability + entity extraction** — Flesch reading ease + FK grade in the
   content auditor, dominant terms/phrases + candidate entities, and a title/H1
   vs body topical-focus check. — [#11](https://github.com/aindong/narwhal/issues/11)
