@@ -727,12 +727,65 @@ class TestCruxVitals(unittest.TestCase):
         import contextlib
         import io
         import unittest.mock
-        # Ensure no ambient key so we exercise the "key required" guard.
-        with unittest.mock.patch.dict(os.environ, {}, clear=False):
+        from lib import env as envlib
+        # Hermetic: no ambient key AND no .env discovered anywhere up the tree.
+        with unittest.mock.patch.dict(os.environ, {}, clear=False), \
+                unittest.mock.patch.object(envlib, "find_dotenv", return_value=None):
             os.environ.pop("CRUX_API_KEY", None)
             with contextlib.redirect_stderr(io.StringIO()):
                 rc = self.crux.main(["https://example.com"])
         self.assertEqual(rc, 2)
+
+
+class TestEnvLoader(unittest.TestCase):
+    def setUp(self):
+        from lib import env
+        self.env = env
+
+    def _write_env(self, text):
+        import tempfile
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, ".env"), "w", encoding="utf-8") as fh:
+            fh.write(text)
+        return os.path.join(d, ".env")
+
+    def test_resolve_prefers_cli_then_env_then_dotenv(self):
+        import unittest.mock
+        path = self._write_env("CRUX_API_KEY=from_dotenv\n")
+        with unittest.mock.patch.object(self.env, "find_dotenv", return_value=path):
+            with unittest.mock.patch.dict(os.environ, {}, clear=False):
+                os.environ.pop("CRUX_API_KEY", None)
+                # CLI value wins outright
+                self.assertEqual(self.env.resolve("CRUX_API_KEY", "cli"), "cli")
+                # env var beats .env
+                os.environ["CRUX_API_KEY"] = "from_env"
+                self.assertEqual(self.env.resolve("CRUX_API_KEY", None), "from_env")
+                # .env used only when neither present
+                os.environ.pop("CRUX_API_KEY", None)
+                self.assertEqual(self.env.resolve("CRUX_API_KEY", None), "from_dotenv")
+
+    def test_load_dotenv_parsing(self):
+        import unittest.mock
+        path = self._write_env(
+            "# a comment\n\nexport CRUX_API_KEY = 'quoted value'\n"
+            "PLAIN=bare\nNOEQ line\n")
+        with unittest.mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("CRUX_API_KEY", None)
+            os.environ.pop("PLAIN", None)
+            loaded = self.env.load_dotenv(path)
+        self.assertEqual(loaded.get("CRUX_API_KEY"), "quoted value")  # export+quotes stripped
+        self.assertEqual(loaded.get("PLAIN"), "bare")
+        self.assertNotIn("NOEQ", loaded)                              # malformed line ignored
+
+    def test_existing_env_not_overridden_by_default(self):
+        import unittest.mock
+        path = self._write_env("CRUX_API_KEY=from_dotenv\n")
+        with unittest.mock.patch.dict(os.environ, {}, clear=False):
+            os.environ["CRUX_API_KEY"] = "already_set"
+            self.env.load_dotenv(path)
+            self.assertEqual(os.environ["CRUX_API_KEY"], "already_set")
+            self.env.load_dotenv(path, override=True)
+            self.assertEqual(os.environ["CRUX_API_KEY"], "from_dotenv")
 
 
 class TestRenderHardening(unittest.TestCase):

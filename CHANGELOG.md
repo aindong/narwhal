@@ -4,6 +4,16 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] — 2026-07-01
+
+### Added
+- **`.env` support for the CrUX key** so you don't have to pass `--crux-key` every
+  time. `narwhal vitals` now resolves the key as **`--crux-key` > `CRUX_API_KEY`
+  env var > `.env` file** (auto-loaded from the working directory or a parent).
+  Zero-dependency loader (`lib/env.py`); `.env` is gitignored, so secrets never get
+  committed. Added [`.env.example`](.env.example); the "key required" message now
+  lists all three options. (Never put the key in `narwhal.toml` — that's committed.)
+
 ## [1.9.0] — 2026-07-01
 
 ### Added

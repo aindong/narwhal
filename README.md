@@ -172,14 +172,32 @@ per project (can't be paid to raise, but that's plenty for audits).
 
 Full details: [Google's CrUX API guide](https://developer.chrome.com/docs/crux/api).
 
-#### Use it
+#### Give Narwhal the key (three ways — you don't have to pass it every time)
+
+Narwhal resolves the key in this order, so pick whichever fits — **you only set it
+once**:
+
+1. **`--crux-key` flag** — explicit, good for one-offs or CI secret injection:
+   ```bash
+   narwhal vitals https://example.com/page --crux-key YOUR_KEY
+   ```
+2. **`CRUX_API_KEY` environment variable** — best for a permanent/global setup
+   (also inherited by Claude Code and CI). Add it to your shell profile:
+   ```bash
+   export CRUX_API_KEY=YOUR_KEY          # macOS/Linux (~/.bashrc, ~/.zshrc)
+   $env:CRUX_API_KEY = "YOUR_KEY"        # Windows PowerShell ($PROFILE for persistence)
+   ```
+3. **A `.env` file** — the convenient project-local option. Copy
+   [`.env.example`](.env.example) to `.env`, fill in the key, and Narwhal
+   auto-loads it (from the working directory or any parent):
+   ```bash
+   cp .env.example .env      # then edit: CRUX_API_KEY=YOUR_KEY
+   narwhal vitals https://example.com
+   ```
+   `.env` is **gitignored**, so the secret never gets committed. (Never put the key
+   in `narwhal.toml` — that file *is* meant to be committed.)
 
 ```bash
-# pass the key directly...
-narwhal vitals https://example.com/page --crux-key YOUR_KEY
-
-# ...or set it once in your environment (Narwhal reads CRUX_API_KEY):
-export CRUX_API_KEY=YOUR_KEY          # Windows PowerShell: $env:CRUX_API_KEY="YOUR_KEY"
 narwhal vitals https://example.com --origin --form-factor phone
 ```
 

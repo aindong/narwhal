@@ -41,7 +41,7 @@ narwhal/
     │   ├── cli.py           # unified `narwhal` entrypoint (scan/crawl/…)
     │   ├── audit_*.py       # one file per auditor (technical/content/schema/geo)
     │   └── lib/             # http, htmlx, report, robots, links, sitemap,
-    │                        #   simhash, text, content_quality, config
+    │                        #   simhash, text, content_quality, config, env
     ├── references/          # deep-dive guidance per auditor
     └── tests/               # offline unittest suite (no network, no deps)
 ```

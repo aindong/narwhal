@@ -178,9 +178,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Real Core Web Vitals field data from the Chrome UX Report (opt-in)")
     ap.add_argument("url", help="page URL (or origin, with --origin)")
-    ap.add_argument("--crux-key", default=os.environ.get("CRUX_API_KEY"),
-                    help="CrUX API key (or set CRUX_API_KEY). Get one: "
-                         "https://developer.chrome.com/docs/crux/api")
+    ap.add_argument("--crux-key", default=None,
+                    help="CrUX API key. Or set CRUX_API_KEY (env var or a .env "
+                         "file). Get one: https://developer.chrome.com/docs/crux/api")
     ap.add_argument("--origin", action="store_true",
                     help="query origin-level data (aggregate across the whole site)")
     ap.add_argument("--form-factor", choices=list(_FORM_FACTORS),
@@ -195,13 +195,20 @@ def main(argv=None) -> int:
     except (AttributeError, ValueError):
         pass
 
-    if not args.crux_key:
+    # Resolve the key: --crux-key > CRUX_API_KEY env var > .env file.
+    from lib import env as envlib  # noqa: PLC0415
+    api_key = envlib.resolve("CRUX_API_KEY", args.crux_key)
+    if not api_key:
         print("A CrUX API key is required (this is the only feature that calls an "
-              "external API).\nGet a free key at https://developer.chrome.com/docs/crux/api "
-              "then pass --crux-key or set CRUX_API_KEY.", file=sys.stderr)
+              "external API).\nProvide it any of these ways:\n"
+              "  - pass --crux-key YOUR_KEY\n"
+              "  - set the CRUX_API_KEY environment variable (e.g. in your shell profile)\n"
+              "  - add CRUX_API_KEY=YOUR_KEY to a .env file (it's gitignored)\n"
+              "Get a free key: https://developer.chrome.com/docs/crux/api",
+              file=sys.stderr)
         return 2
 
-    r = analyze(args.url, args.crux_key, origin=args.origin,
+    r = analyze(args.url, api_key, origin=args.origin,
                 form_factor=args.form_factor, timeout=args.timeout)
     out = render_json(r) if args.format == "json" else render_markdown(r)
     if args.output:
