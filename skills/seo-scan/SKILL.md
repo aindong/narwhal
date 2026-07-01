@@ -110,6 +110,20 @@ matched across runs). Add `--fail-on-regression` for a CI gate: it exits non-zer
 if the score dropped or a new critical/high finding appeared. Works on `audit`
 JSON too (uses the overall score + homepage findings).
 
+**Real Core Web Vitals** (opt-in; the one tool that calls an external service).
+Everything else is local and must never fabricate field metrics — for the *real*
+LCP/INP/CLS (what Chrome users experience), query the CrUX API:
+```
+python scripts/crux.py https://example.com/page      # needs a CrUX API key
+python scripts/crux.py https://example.com --origin --form-factor phone
+```
+The key is resolved from `--crux-key`, the `CRUX_API_KEY` env var, or a `.env` file
+(auto-loaded) — so once the user has set it, just run the script. If it reports the
+key is missing, relay the three ways to provide one and the free-key link
+(`https://developer.chrome.com/docs/crux/api`); **do not** invent numbers. Low-traffic
+URLs return "no data" — suggest `--origin`. Get a key: enable the *Chrome UX Report
+API* in Google Cloud Console and create an API key (free, 150 queries/min).
+
 ## What each auditor covers
 
 | Auditor | Focus |

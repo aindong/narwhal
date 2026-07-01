@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.10.0**_
+_Last updated: 2026-07-01 · version **1.11.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -46,10 +46,12 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   via `<picture>`. Derived deterministically from the light logo
   (`assets/make-dark-logo.py`).
 - **P2 backlog (#13–#18) fully cleared.**
-- **Tests:** 94, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 97, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
-- **Released:** v1.0.0 → v1.10.0. Plugin installs as `narwhal@narwhal`.
+- **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
+  and the skill; `audit` folds in real CrUX vitals when `CRUX_API_KEY` is set.
+- **Released:** v1.0.0 → v1.11.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

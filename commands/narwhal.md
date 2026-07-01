@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|scan|crawl|sitemap|llms|schema> <site>
+argument-hint: <audit|scan|crawl|sitemap|llms|schema|vitals|diff> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -16,7 +16,8 @@ Prefer the plugin's local scripts:
 python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/<script>" <args>
 ```
 Fallback (needs `uv`): `uvx --from git+https://github.com/aindong/narwhal narwhal <action> <args>`.
-They are local-first, SSRF-safe, and need no API keys. Respect any `narwhal.toml`.
+They are local-first and SSRF-safe; only `vitals` (CrUX field data) needs an API
+key. Respect any `narwhal.toml`.
 
 ---
 
@@ -43,6 +44,15 @@ subagents with the Task tool (pass each the URL `$2` and the path `narwhal-audit
 
 Each returns a domain score + prioritized findings with exact fixes.
 
+**Step 2b — Real Core Web Vitals (optional).** If a `CRUX_API_KEY` is set (env or a
+`.env` file), also run:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/crux.py" $2 --origin
+```
+and fold the **real** LCP/INP/CLS field verdict into the performance section. If no
+key is set, skip it silently and note that `/narwhal vitals` (with a free CrUX key)
+gives real field data — do not fabricate numbers.
+
 **Step 3 — Synthesize one report.** Merge the specialists into:
 - **SEO Health Score (0–100)** — reconcile the deterministic scores with the
   specialists' judgment; explain the number in one sentence.
@@ -60,8 +70,9 @@ corrupt in terminals and when streamed. Keep any table to ≤4 **narrow** column
 it would be wide, use a list instead. Produce one clean report — don't paste each
 specialist's raw output verbatim.
 
-Guardrails: never fabricate metrics (real Core Web Vitals need CrUX/PageSpeed);
-be honest where a claim needs an external tool. Keep the synthesis tight, not a
+Guardrails: never fabricate metrics. Real Core Web Vitals come from the `vitals`
+action (CrUX) when a key is set — otherwise say so and treat perf as hygiene only.
+Be honest where a claim needs an external tool. Keep the synthesis tight, not a
 wall of raw output.
 
 ---
@@ -75,9 +86,20 @@ wall of raw output.
 | `sitemap` | `validate_sitemap.py $2` | validate XML sitemap(s) |
 | `llms` | `generate_llms.py $2 -o llms.txt` | generate a starter llms.txt |
 | `schema` | `generate_schema.py $2 …` | here `$2` is the schema **Type** (e.g. Article) |
+| `vitals` | `crux.py $2` | **real** Core Web Vitals (LCP/INP/CLS) from CrUX — see key note below |
+| `diff` | `diff_scan.py $2 $3` | compare two saved JSON reports (`$2`=old, `$3`=new); add `--fail-on-regression` for a gate |
 
 Read the report back **in your own words, leading with the highest-severity fixes** —
 summarize, don't paste everything.
+
+**`vitals` — API key:** this is the one action that calls an external service. The
+script auto-resolves the key from the environment (`CRUX_API_KEY`) or a `.env` file
+in the project, so if the user has set it, just run `crux.py $2` and report the
+result. If it prints "A CrUX API key is required", relay the three ways to provide
+one (— `--crux-key`, the `CRUX_API_KEY` env var, or a `.env` file —) and the free
+key link `https://developer.chrome.com/docs/crux/api`; don't guess field numbers.
+Use `--origin` for the whole-site aggregate, `--form-factor phone|desktop|tablet`
+to narrow the device.
 
 Edge cases: if `$1` is empty/unrecognized, treat it as `audit`. If `$2` (the site) is
 missing, ask for it. Only add `--allow-private` for local/staging targets.

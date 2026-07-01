@@ -4,6 +4,18 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] — 2026-07-01
+
+### Added
+- **`vitals` and `diff` are now plugin-native** — wired into the `/narwhal <action>
+  <site>` command and documented in the skill, not just the CLI. `/narwhal vitals
+  example.com` runs the real CrUX Core Web Vitals lookup (resolving the key from the
+  env or a `.env`, which Claude Code inherits), and `/narwhal diff old.json new.json`
+  compares two saved reports.
+- **The multi-agent `audit` now folds in real Core Web Vitals** when a `CRUX_API_KEY`
+  is available (runs `crux.py --origin` and merges the field verdict into the
+  performance section); otherwise it stays honest and points at `/narwhal vitals`.
+
 ## [1.10.0] — 2026-07-01
 
 ### Added

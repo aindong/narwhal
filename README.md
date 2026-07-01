@@ -225,16 +225,23 @@ That's it — the skill and its scripts load automatically. Then use the slash
 command:
 
 ```text
-/narwhal audit example.com      # full single-page audit
+/narwhal audit example.com      # full multi-agent audit (folds in CrUX vitals if a key is set)
 /narwhal crawl example.com      # site-wide crawl (links + duplicates)
 /narwhal sitemap example.com    # validate the XML sitemap(s)
 /narwhal llms example.com       # generate a starter llms.txt
+/narwhal vitals example.com     # real Core Web Vitals from CrUX (needs a key — see below)
 ```
 
 `/narwhal <action> <site>` takes actions `scan`/`audit`, `crawl`, `sitemap`,
-`llms`, `schema`. You can also just ask Claude naturally:
+`llms`, `schema`, `vitals`, and `diff`. You can also just ask Claude naturally:
 
 > Run an SEO and GEO audit on https://example.com
+
+**Using `vitals` from the plugin:** the slash command runs the same CrUX lookup, so
+it needs the key too — set `CRUX_API_KEY` in your shell profile (Claude Code
+inherits it) or drop a `.env` in your project (see *Real Core Web Vitals* above).
+Then `/narwhal vitals example.com` just works, and `/narwhal audit` automatically
+includes real field data when a key is present.
 
 To update later, run `/plugin marketplace update narwhal`; to remove, `/plugin
 uninstall narwhal@narwhal`. (The first `narwhal` is the marketplace, the second is
