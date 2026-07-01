@@ -40,17 +40,21 @@ def _demote(md: str) -> str:
 
 
 def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=False,
-        obey_robots=True, render=False, config=None) -> dict:
+        obey_robots=True, render=False, max_links=100, max_sitemaps=12,
+        config=None) -> dict:
+    """Run the three sub-audits. The link and sitemap caps default lower than the
+    standalone tools' — an audit is an overview, so it favors speed over an
+    exhaustive link/sitemap sweep (the dedicated commands go deeper)."""
     config = config or configlib.Config()
     page = scanner.scan(site, timeout=timeout, allow_private=allow_private,
                         render=render, config=config)
     site_result = crawl_site.crawl(
         site, max_pages=max_pages, concurrency=concurrency, timeout=timeout,
         allow_private=allow_private, obey_robots=obey_robots, render=render,
-        check_links=True, detect_dupes=True, config=config)
+        check_links=True, max_links=max_links, detect_dupes=True, config=config)
     sitemap = validate_sitemap.analyze(
         site, allow_private=allow_private, timeout=timeout,
-        sample=config.default("sample"), max_sitemaps=config.default("max_sitemaps"))
+        sample=config.default("sample"), max_sitemaps=max_sitemaps)
     return {"site": site, "page": page, "site_result": site_result, "sitemap": sitemap}
 
 
@@ -112,6 +116,10 @@ def main(argv=None) -> int:
     ap.add_argument("url", help="site URL")
     ap.add_argument("--max-pages", type=int, default=d["max_pages"])
     ap.add_argument("--concurrency", type=int, default=d["concurrency"])
+    ap.add_argument("--max-links", type=int, default=100,
+                    help="cap on outbound links checked (default 100)")
+    ap.add_argument("--max-sitemaps", type=int, default=12,
+                    help="cap on sitemap files fetched (default 12)")
     ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--ignore-robots", action="store_true")
@@ -130,7 +138,8 @@ def main(argv=None) -> int:
 
     data = run(args.url, max_pages=args.max_pages, concurrency=args.concurrency,
                timeout=args.timeout, allow_private=args.allow_private,
-               obey_robots=not args.ignore_robots, render=args.render, config=cfg)
+               obey_robots=not args.ignore_robots, render=args.render,
+               max_links=args.max_links, max_sitemaps=args.max_sitemaps, config=cfg)
     out = render_json(data) if args.format == "json" else render_markdown(data)
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:

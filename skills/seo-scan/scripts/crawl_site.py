@@ -143,11 +143,15 @@ def select_urls(candidates, base, rt, obey_robots, max_pages,
 
 
 def check_broken_links(pages_links: dict, *, allow_private, timeout,
-                       concurrency, max_links) -> dict:
+                       concurrency, max_links, link_timeout=8) -> dict:
     """Check unique links found across scanned pages; report broken ones.
 
     ``pages_links`` maps page_url -> list of {url, internal}. Returns a summary
     with each broken link's status and the source pages that link to it.
+
+    Link checks are HEAD requests, so they use a **shorter per-link timeout** and
+    **more workers** than page scanning — otherwise a handful of slow external
+    links on a link-heavy page can serialize into a multi-minute stall.
     """
     registry: dict = {}   # link url -> {internal, sources:set}
     order: list = []
@@ -160,13 +164,15 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
             registry[u]["sources"].add(page)
 
     targets = order[:max_links]
+    t = min(timeout, link_timeout)
+    workers = min(16, max(concurrency, 10))
 
     def check(u):
-        return u, http.head(u, timeout=timeout, allow_private=allow_private)
+        return u, http.head(u, timeout=t, allow_private=allow_private)
 
     statuses: dict = {}
     if targets:
-        with ThreadPoolExecutor(max_workers=concurrency) as ex:
+        with ThreadPoolExecutor(max_workers=workers) as ex:
             for u, (status, err) in ex.map(check, targets):
                 statuses[u] = (status, err)
 
