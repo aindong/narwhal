@@ -1,4 +1,8 @@
-# Narwhal — SEO & GEO/LLMO scanning skills
+<p align="center">
+  <img src="assets/logo-512.png" alt="Narwhal logo" width="220">
+</p>
+
+<h1 align="center">Narwhal — SEO & GEO/LLMO scanning skills</h1>
 
 A local-first toolkit that scans a web page or site for **SEO** and **GEO/LLMO**
 (visibility in AI answer engines like ChatGPT, Claude, Perplexity, and Google AI
@@ -8,6 +12,26 @@ prioritized, fix-first report.
 
 No accounts, no API keys, nothing phones home. It runs on a bare Python install
 and gets sharper when optional parsing/rendering libraries are present.
+
+## Why "Narwhal"?
+
+The narwhal is the perfect mascot for a search-and-AI-visibility tool:
+
+- **The tusk is a sensor, not a weapon.** A narwhal's tusk is packed with millions
+  of nerve endings that read tiny changes in the water around it. Narwhal the tool
+  does the same for a page — it senses the subtle, easy-to-miss signals (meta,
+  canonical, schema, passage citability, crawler access) that decide whether you're
+  seen.
+- **It navigates dark, opaque water.** Narwhals thrive in deep, ice-covered Arctic
+  seas using sound, surfacing where nothing else can. Modern search and AI answer
+  engines are exactly that kind of murky water — Narwhal helps you navigate it.
+- **The "unicorn of the sea."** Rare and unmistakable. That's the whole goal of SEO
+  and GEO: to be the distinctive result that ranks and gets *cited* by AI, not one
+  of the anonymous many.
+- **It dives deep.** Deep audits, not surface-level checks.
+
+And yes, it works as a backronym too:
+**N**avigate **A**I **R**ankings, **W**eb **H**ealth **A**nd **L**LM-visibility.
 
 ## What it checks
 
