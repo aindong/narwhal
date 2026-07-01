@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "narwhal-seo"
+version = "1.0.0"
+description = "Local-first SEO & GEO/LLMO (AI-search) scanning for pages and sites."
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [{ name = "aindong" }]
+keywords = ["seo", "geo", "llmo", "aeo", "schema", "structured-data", "ai-search", "audit"]
+# Zero required dependencies — the scanner runs on the standard library.
+dependencies = []
+
+[project.optional-dependencies]
+# Higher-fidelity parsing + JS rendering (auto-detected at runtime).
+extras = [
+  "requests>=2.28",
+  "beautifulsoup4>=4.11",
+  "lxml>=4.9",
+  "trafilatura>=1.6",
+]
+render = ["playwright>=1.40"]
+
+[project.scripts]
+narwhal = "narwhal.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/aindong/narwhal"
+Repository = "https://github.com/aindong/narwhal"
+Issues = "https://github.com/aindong/narwhal/issues"
+
+# The tool's source lives under skills/seo-scan/scripts (so it also works as a
+# Claude Code skill and as standalone scripts). Ship it as the `narwhal` package.
+[tool.hatch.build.targets.wheel]
+force-include = { "skills/seo-scan/scripts" = "narwhal" }
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "skills/seo-scan/scripts",
+  "README.md",
+  "LICENSE",
+]
