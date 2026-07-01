@@ -12,7 +12,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
 sys.path.insert(0, SCRIPTS)
 
-from lib import htmlx, http  # noqa: E402
+from lib import htmlx, http, links  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
@@ -159,6 +159,50 @@ class TestRobots(unittest.TestCase):
         rt = RobotsTxt.parse(
             "Sitemap: https://x.com/sitemap.xml\nUser-agent: *\nDisallow:")
         self.assertEqual(rt.sitemaps, ["https://x.com/sitemap.xml"])
+
+
+class TestLinks(unittest.TestCase):
+    HTML = """<html><body>
+    <a href="/about">About</a>
+    <a href="https://example.com/x">internal abs</a>
+    <a href="https://other.com/y">external</a>
+    <a href="mailto:a@b.com">mail</a>
+    <a href="tel:+15551234">call</a>
+    <a href="#section">frag</a>
+    <a href="page2">relative</a>
+    <a href="/about#top">dup w/ fragment</a>
+    </body></html>"""
+
+    def _links(self):
+        doc = htmlx.parse(self.HTML, base_url="https://example.com/dir/")
+        return links.extract_links(doc, "https://example.com/dir/")
+
+    def test_resolves_and_classifies(self):
+        by_url = {l["url"]: l["internal"] for l in self._links()}
+        self.assertTrue(by_url.get("https://example.com/about"))
+        self.assertTrue(by_url.get("https://example.com/x"))
+        self.assertTrue(by_url.get("https://example.com/dir/page2"))
+        self.assertFalse(by_url.get("https://other.com/y"))
+
+    def test_skips_non_http_and_fragments(self):
+        urls = [l["url"] for l in self._links()]
+        self.assertFalse(any(u.startswith(("mailto", "tel")) for u in urls))
+        self.assertNotIn("https://example.com/dir/#section", urls)
+
+    def test_dedupes_fragment_variants(self):
+        urls = [l["url"] for l in self._links()]
+        self.assertEqual(urls.count("https://example.com/about"), 1)
+
+    def test_is_broken(self):
+        for code in (0, 400, 404, 410, 500, 503):
+            self.assertTrue(links.is_broken(code))
+        for code in (200, 204, 301, 302, 399):
+            self.assertFalse(links.is_broken(code))
+
+    def test_gated_codes_not_broken(self):
+        # rate-limited / bot-blocked / auth-walled are not "dead links"
+        for code in (401, 403, 429, 451, 999):
+            self.assertFalse(links.is_broken(code))
 
 
 class TestCrawlPoliteness(unittest.TestCase):

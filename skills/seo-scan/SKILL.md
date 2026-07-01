@@ -62,7 +62,9 @@ The crawler is polite by default: it **honors robots.txt** (skips disallowed URL
 reported in the summary), fetches site-level signals once, and scans pages in
 parallel. Tune with `--concurrency N` (default 4), `--delay SECONDS` (sequential
 rate-limit), and `--ignore-robots` to override. `--fail-under N` gates on the
-average score.
+average score. Add `--check-links` to check outbound links (internal + external)
+for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
+rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).
 
 **Generate schema.org JSON-LD:**
 ```

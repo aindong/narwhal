@@ -54,7 +54,9 @@ hard commitments.
 - ✅ **Robust robots.txt matching** — `lib/robots.py`: user-agent groups, `*`/`$`
   wildcards, longest-match with Allow-over-Disallow ties (RFC 9309). Powers the GEO
   AI-crawler check; reused by the crawler (#5). — [#6](https://github.com/aindong/narwhal/issues/6)
-- ⬜ **Broken-link checker** — internal + external, grouped by source page.
+- ✅ **Broken-link checker** — `--check-links` on the crawler: HEAD-checks
+  outbound links (internal + external) for 4xx/5xx/dead, grouped by source page;
+  gated codes (401/403/429) treated as not-broken to avoid false positives.
   — [#7](https://github.com/aindong/narwhal/issues/7)
 - ⬜ **Deeper sitemap validation** — nested indexes, `lastmod`, 404 sampling.
   — [#8](https://github.com/aindong/narwhal/issues/8)

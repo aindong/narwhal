@@ -208,3 +208,63 @@ def fetch_text(url: str, **kwargs) -> Optional[str]:
     """Fetch a plain-text resource (robots.txt, llms.txt, sitemap) or None."""
     resp = fetch(url, **kwargs)
     return resp.text if resp.ok else None
+
+
+def head(url: str, *, timeout: int = DEFAULT_TIMEOUT, user_agent: str = DEFAULT_UA,
+         allow_private: bool = False):
+    """Check a URL's reachability cheaply. Returns ``(status, error)``.
+
+    Uses HEAD (falling back to GET when a server rejects it) and follows
+    redirects. ``status == 0`` means unreachable (DNS/timeout/SSRF-blocked); the
+    error string carries the reason. Never raises — safe for bulk link checking.
+    """
+    try:
+        url = normalize_url(url)
+    except ValueError as exc:
+        return 0, str(exc)
+    try:
+        assert_public_host(url, allow_private=allow_private)
+    except SSRFError as exc:
+        return 0, str(exc)
+    try:
+        return _head_requests(url, timeout, user_agent)
+    except ImportError:
+        return _head_urllib(url, timeout, user_agent)
+
+
+def _head_requests(url, timeout, user_agent):
+    import requests  # noqa: PLC0415
+
+    headers = {"User-Agent": user_agent}
+    try:
+        r = requests.head(url, headers=headers, timeout=timeout, allow_redirects=True)
+        if r.status_code in (403, 405, 501):  # some servers refuse HEAD
+            r = requests.get(url, headers=headers, timeout=timeout,
+                             allow_redirects=True, stream=True)
+            r.close()
+        return r.status_code, None
+    except requests.RequestException as exc:
+        return 0, type(exc).__name__
+
+
+def _head_urllib(url, timeout, user_agent):
+    import urllib.error  # noqa: PLC0415
+    import urllib.request  # noqa: PLC0415
+
+    def _try(method):
+        req = urllib.request.Request(url, headers={"User-Agent": user_agent},
+                                     method=method)
+        with urllib.request.urlopen(req, timeout=timeout) as fh:
+            return fh.status, None
+
+    try:
+        return _try("HEAD")
+    except urllib.error.HTTPError as exc:
+        if exc.code in (403, 405, 501):
+            try:
+                return _try("GET")
+            except Exception:  # noqa: BLE001
+                return exc.code, None
+        return exc.code, None
+    except Exception as exc:  # noqa: BLE001
+        return 0, type(exc).__name__

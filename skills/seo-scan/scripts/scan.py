@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx  # noqa: E402
+from lib import http, htmlx, links  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 
 import audit_content  # noqa: E402
@@ -74,10 +74,12 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
 
 def scan(url: str, *, render=False, allow_private=False, timeout=20,
-         only=None, ctx=None) -> Report:
+         only=None, ctx=None, collect_links=False) -> Report:
     """Audit a single page. Pass ``ctx`` (from :func:`gather_context`) to reuse
     site-level signals across many pages — the crawler does this so robots.txt,
-    sitemap, and llms.txt are fetched once per site rather than once per page."""
+    sitemap, and llms.txt are fetched once per site rather than once per page.
+    Set ``collect_links=True`` to record outbound links in ``report.meta['links']``
+    (used by the crawler's broken-link checker)."""
     resp = http.fetch(url, render=render, allow_private=allow_private, timeout=timeout)
     report = Report(url=url, final_url=resp.final_url, fetched_status=resp.status,
                     rendered=resp.rendered)
@@ -90,6 +92,8 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         return report
 
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
+    if collect_links:
+        report.meta["links"] = links.extract_links(doc, resp.final_url or url)
     if ctx is None:
         ctx = gather_context(resp.final_url or url,
                              allow_private=allow_private, timeout=timeout)

@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx  # noqa: E402
+from lib import http, htmlx, links  # noqa: E402
 from lib.report import below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -108,8 +108,54 @@ def select_urls(candidates, base, rt, obey_robots, max_pages,
     return urls, skipped
 
 
+def check_broken_links(pages_links: dict, *, allow_private, timeout,
+                       concurrency, max_links) -> dict:
+    """Check unique links found across scanned pages; report broken ones.
+
+    ``pages_links`` maps page_url -> list of {url, internal}. Returns a summary
+    with each broken link's status and the source pages that link to it.
+    """
+    registry: dict = {}   # link url -> {internal, sources:set}
+    order: list = []
+    for page, page_links in pages_links.items():
+        for l in page_links:
+            u = l["url"]
+            if u not in registry:
+                registry[u] = {"internal": l["internal"], "sources": set()}
+                order.append(u)
+            registry[u]["sources"].add(page)
+
+    targets = order[:max_links]
+
+    def check(u):
+        return u, http.head(u, timeout=timeout, allow_private=allow_private)
+
+    statuses: dict = {}
+    if targets:
+        with ThreadPoolExecutor(max_workers=concurrency) as ex:
+            for u, (status, err) in ex.map(check, targets):
+                statuses[u] = (status, err)
+
+    broken = []
+    for u in targets:
+        status, err = statuses[u]
+        if links.is_broken(status):
+            broken.append({
+                "url": u,
+                "status": status,
+                "error": err,
+                "internal": registry[u]["internal"],
+                "sources": sorted(registry[u]["sources"]),
+            })
+    broken.sort(key=lambda b: (not b["internal"], b["url"]))  # internal first
+    return {"unique_links": len(order), "checked": len(targets),
+            "skipped_over_cap": max(0, len(order) - len(targets)),
+            "broken": broken}
+
+
 def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
-          timeout=20, delay=0.0, concurrency=4, obey_robots=True) -> dict:
+          timeout=20, delay=0.0, concurrency=4, obey_robots=True,
+          check_links=False, max_links=200) -> dict:
     # Fetch site-level signals (robots/sitemap/llms) ONCE and reuse for every
     # page — polite and much faster than re-fetching per page.
     ctx = scanner.gather_context(base, allow_private=allow_private, timeout=timeout)
@@ -125,7 +171,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     def scan_one(u):
         return u, scanner.scan(u, render=render, allow_private=allow_private,
-                               timeout=timeout, ctx=ctx)
+                               timeout=timeout, ctx=ctx, collect_links=check_links)
 
     results = []
     if concurrency <= 1:
@@ -137,15 +183,23 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         with ThreadPoolExecutor(max_workers=concurrency) as ex:
             results = list(ex.map(scan_one, urls))
 
-    pages, issue_counter = [], Counter()
+    pages, issue_counter, pages_links = [], Counter(), {}
     for u, rep in results:
         pages.append({"url": u, "score": rep.score(), "counts": rep.counts()})
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
+        if check_links:
+            pages_links[u] = rep.meta.get("links", [])
     avg = round(sum(p["score"] for p in pages) / len(pages), 1) if pages else 0
-    return {"base": base, "pages_scanned": len(pages), "avg_score": avg,
-            "skipped_robots": skipped, "pages": pages, "recurring": issue_counter}
+
+    result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
+              "skipped_robots": skipped, "pages": pages, "recurring": issue_counter}
+    if check_links:
+        result["links"] = check_broken_links(
+            pages_links, allow_private=allow_private, timeout=timeout,
+            concurrency=concurrency, max_links=max_links)
+    return result
 
 
 def render_markdown(result: dict) -> str:
@@ -166,6 +220,28 @@ def render_markdown(result: dict) -> str:
         for (cat, sev, title), n in recurring:
             lines.append(f"| {n} | {sev} | {cat} | {title} |")
         lines.append("")
+
+    link_info = result.get("links")
+    if link_info is not None:
+        broken = link_info["broken"]
+        header = (f"## Broken links ({len(broken)} of {link_info['checked']} checked"
+                  + (f", {link_info['skipped_over_cap']} over cap" if link_info["skipped_over_cap"] else "")
+                  + ")")
+        lines.append(header)
+        lines.append("")
+        if not broken:
+            lines.append("No broken links found. 🟢")
+            lines.append("")
+        else:
+            lines += ["| Status | Type | Broken URL | Linked from |",
+                      "|:--:|:--|:--|:--|"]
+            for b in broken:
+                status = b["status"] or (b["error"] or "unreachable")
+                kind = "internal" if b["internal"] else "external"
+                src = b["sources"][0]
+                more = f" (+{len(b['sources']) - 1})" if len(b["sources"]) > 1 else ""
+                lines.append(f"| {status} | {kind} | {b['url']} | {src}{more} |")
+            lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -194,6 +270,10 @@ def main(argv=None) -> int:
                     help="number of pages to scan in parallel (default 4)")
     ap.add_argument("--ignore-robots", action="store_true",
                     help="do NOT skip URLs disallowed by robots.txt (off by default)")
+    ap.add_argument("--check-links", action="store_true",
+                    help="check outbound links (internal + external) for 4xx/5xx/dead")
+    ap.add_argument("--max-links", type=int, default=200, metavar="N",
+                    help="cap the number of unique links checked (default 200)")
     ap.add_argument("--fail-under", type=int, metavar="N",
                     help="exit non-zero if the average score is below N (for CI gating)")
     args = ap.parse_args(argv)
@@ -206,7 +286,8 @@ def main(argv=None) -> int:
     result = crawl(args.url, max_pages=args.max_pages, render=args.render,
                    allow_private=args.allow_private, timeout=args.timeout,
                    delay=args.delay, concurrency=args.concurrency,
-                   obey_robots=not args.ignore_robots)
+                   obey_robots=not args.ignore_robots,
+                   check_links=args.check_links, max_links=args.max_links)
     out = render_json(result) if args.format == "json" else render_markdown(result)
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:
