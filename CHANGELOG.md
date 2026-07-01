@@ -4,6 +4,33 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.18.0] — 2026-07-02
+
+### Added
+- **Google Search Console integration (`narwhal gsc <site>`)** — opt-in, real
+  query data for your verified property: **striking-distance** queries
+  (positions 8–20 with impressions), **CTR laggards** (top-10 rankings far below
+  the expected-CTR curve — title/meta rewrite candidates; the curve is a labeled
+  heuristic), **decaying pages** (clicks down ≥25% vs the prior window), and
+  **keyword cannibalization** (several pages splitting one query). Markdown/JSON
+  output; `--days`, `--min-impressions`.
+- **Stdlib-only OAuth** (GSC has no API-key path): `GSC_ACCESS_TOKEN`
+  passthrough, or the durable `GSC_CLIENT_ID`/`GSC_CLIENT_SECRET`/
+  `GSC_REFRESH_TOKEN` trio — obtained once with **`narwhal gsc --auth`**
+  (loopback browser consent; `--write-env` stores the credentials in `.env`).
+  Read-only scope; only fixed Google hosts are contacted. Service-account auth
+  deliberately deferred (would need a crypto dependency).
+- **`narwhal audit --gsc`** folds the same data into the audit (new
+  "Search performance (GSC)" section in Markdown/HTML, `gsc` block in JSON, and
+  a clicks headline in the metrics strip), mirroring `--vitals`; degrades to a
+  one-line note without credentials. `/narwhal audit` now prioritizes the action
+  plan by real queries when the block is present, and `/narwhal fix` fixes pages
+  with actual search opportunity first.
+
+### Changed
+- The audit's conditional report sections (Core Web Vitals, Search performance)
+  are now numbered dynamically instead of hardcoding "4."
+
 ## [1.17.0] — 2026-07-02
 
 ### Added

@@ -64,6 +64,7 @@ And yes, it works as a backronym too:
 | **Content & E-E-A-T** | thin-content detection, readability, author/date signals, Open Graph / Twitter cards |
 | **Structured data** | JSON-LD detection, required/recommended property validation, deprecated rich-result types, JSON-LD generation |
 | **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and **AI-crawler access** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) |
+| **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 
 ## Multi-agent deep audit
 
@@ -98,6 +99,39 @@ against a local preview; site-level signals (robots.txt, sitemap, HTTPS) are
 labeled *verify after deploy*. If the source isn't in the workspace, it makes no
 edits and hands you a per-finding fix plan instead. A SaaS auditor emits a PDF —
 Narwhal emits a diff.
+
+## Real search data (Google Search Console, opt-in)
+
+Audits guess at priority from severity; **your own query data removes the
+guessing**. `narwhal gsc <site>` pulls Search Analytics rows for your verified
+property and answers "which page do I fix *first*":
+
+- **Striking distance** — queries sitting at positions 8–20 with real
+  impressions: the "push to page 1" list.
+- **CTR laggards** — top-10 rankings whose CTR is far below the expected curve
+  for that position: title/meta rewrite candidates.
+- **Decaying pages** — clicks down ≥25% versus the previous period.
+- **Keyword cannibalization** — several of your pages splitting one query
+  (cross-check with the audit's near-duplicate clusters).
+
+Add `--gsc` to `narwhal audit` and the same data lands in the report + JSON, so
+`/narwhal audit` prioritizes by **real queries instead of severity guesswork**,
+and `/narwhal fix` fixes the pages with actual search opportunity first.
+
+**One-time setup (~3 minutes).** GSC has no API-key path, so this is OAuth
+(read-only scope), all stdlib, credentials in your gitignored `.env`:
+
+1. In [Google Cloud Console](https://console.cloud.google.com): enable the
+   **Google Search Console API**, then *Credentials → Create credentials →
+   OAuth client ID → **Desktop app***.
+2. Put `GSC_CLIENT_ID=…` and `GSC_CLIENT_SECRET=…` in your `.env`.
+3. Run `narwhal gsc --auth --write-env` — your browser opens Google's consent
+   page; Narwhal catches the redirect on localhost and stores the refresh token.
+
+Then just: `narwhal gsc https://your-site.com`. (Quick alternative, no client
+setup: `GSC_ACCESS_TOKEN="$(gcloud auth print-access-token)"` — expires hourly.)
+In a pinch for CI, mint the access token outside and pass it in; service-account
+auth is deliberately not built in yet (it would require a crypto dependency).
 
 ## Quick start
 

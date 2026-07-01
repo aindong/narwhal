@@ -135,6 +135,27 @@ It returns a performance score + LCP, TBT (lab proxy for INP), CLS, FCP, SI, TTI
 key is optional (keyless quota is shared/often exhausted); set `PAGESPEED_API_KEY`
 or reuse the CrUX key with the PageSpeed Insights API also enabled.
 
+**Real Search Console query data** (opt-in; OAuth — GSC has no API-key path).
+Turns "what's broken" into "what to fix *first*" using the user's own queries:
+```
+python scripts/gsc.py https://example.com            # needs GSC credentials
+python scripts/gsc.py https://example.com --days 28 --format json
+```
+Reports striking-distance queries (positions 8–20 with impressions), CTR
+laggards (top-10 rankings whose CTR is far below the expected-for-position
+curve — title/meta rewrite candidates; the curve is a labeled heuristic used
+only for ranking), decaying pages (clicks down ≥25% vs the prior window), and
+keyword cannibalization (several pages splitting one query — cross-check the
+crawler's near-duplicate clusters). Credentials resolve from env/`.env`:
+`GSC_ACCESS_TOKEN` (e.g. `gcloud auth print-access-token`, expires ~1h) or the
+durable `GSC_CLIENT_ID`/`GSC_CLIENT_SECRET`/`GSC_REFRESH_TOKEN` trio. If
+missing, relay the one-time setup: create a **Desktop** OAuth client (enable
+the Search Console API), put the ID/secret in `.env`, run
+`python scripts/gsc.py --auth --write-env`. Add `--gsc` to `audit.py` to fold
+the same data into the audit report/JSON (degrades to a note without
+credentials). These are real numbers for the user's verified property — never
+fabricate or extrapolate them.
+
 **Turn a Markdown report into a branded HTML/PDF** (e.g. after synthesizing an
 audit — write it to a `.md`, then render):
 ```

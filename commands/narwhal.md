@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|fix|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
+argument-hint: <audit|fix|gsc|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -28,14 +28,18 @@ combining deterministic measurement with specialist reasoning.
 
 **Step 1 — Deterministic baseline (hard data, fast).** Run:
 ```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --vitals --format json -o narwhal-audit.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --vitals --gsc --format json -o narwhal-audit.json
 ```
 This gives homepage + site-wide + sitemap data, per-area subscores, broken links,
 and duplicate clusters. `--vitals` also fetches **real Core Web Vitals** — CrUX
 field data (if `CRUX_API_KEY` is set), falling back to PageSpeed Insights **lab**
 data for low-traffic sites (see `vitals` below for keys); it lands in
-`narwhal-audit.json` under `vitals`. Skim it to detect the **business type** (SaaS,
-publisher, e-commerce, local/brick-and-mortar, directory/people-search…).
+`narwhal-audit.json` under `vitals`. `--gsc` folds in **real Search Console query
+data** under `gsc` when GSC credentials are set (see `gsc` below) — striking-
+distance queries, CTR laggards, decaying pages, cannibalization; without
+credentials it degrades to a note, and the rest of the audit is unaffected. Skim
+the JSON to detect the **business type** (SaaS, publisher, e-commerce,
+local/brick-and-mortar, directory/people-search…).
 
 **Step 2 — Fan out specialists IN PARALLEL.** In a *single message*, spawn these
 subagents with the Task tool (pass each the URL `$2` and the path `narwhal-audit.json`):
@@ -59,7 +63,13 @@ Fold its verdict into the performance section. Label it correctly — **field**
   specialists' judgment; explain the number in one sentence.
 - **Executive summary** — business type, biggest risks, and the 3 highest-leverage moves.
 - **Prioritized action plan** — Critical → High → Medium → Low, each with the fix and
-  a rough effort tag. Call out fixes that resolve several findings at once.
+  a rough effort tag. Call out fixes that resolve several findings at once. When the
+  baseline has a `gsc` block, let **real search data outrank severity guesswork**:
+  striking-distance pages become quick wins, CTR laggards become title/meta
+  rewrites, decaying pages get urgency, and cannibalization pairs with the
+  duplication findings (consolidate/canonicalize). Cite the actual queries and
+  numbers. Without a `gsc` block, note once that GSC credentials
+  (`/narwhal gsc --auth`) unlock data-driven prioritization and move on.
 - **Quick wins** — low-effort, high-impact.
 - **Core Web Vitals** — the field/lab verdict from Step 2b.
 - **Per-area detail** — one concise section per specialist.
@@ -109,8 +119,11 @@ per-finding fix plan instead (for each finding: what file/artifact to change and
 the exact snippet to add) and stop.
 
 **Step 3 — Map findings → edits.** Work through the baseline findings, critical
-→ high → medium. For each, find the file that owns the artifact and decide the
-concrete edit. Typical mappings:
+→ high → medium. If the baseline JSON has a `gsc` block, **order the work by
+search opportunity first**: pages appearing in `striking` and `laggards` get
+fixed before pages with no search data (a title rewrite on a page-2 query beats
+a meta fix on a page nobody searches for). For each finding, find the file that
+owns the artifact and decide the concrete edit. Typical mappings:
 - **title / meta description / canonical / OG & Twitter tags / hreflang** → the
   head: layout or per-page front-matter/metadata (Next `metadata` export, Astro/
   Hugo/Jekyll layout partial, or the raw `<head>` in plain HTML).
@@ -165,6 +178,7 @@ manual-action list. Never fabricate a score.
 | `llms` | `generate_llms.py $2 -o llms.txt` | generate a starter llms.txt |
 | `schema` | `generate_schema.py $2 …` | here `$2` is the schema **Type** (e.g. Article) |
 | `vitals` | `crux.py $2` | **real** Core Web Vitals (LCP/INP/CLS) from CrUX — see key note below |
+| `gsc` | `gsc.py $2` | **real** Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — see the OAuth note below |
 | `diff` | `diff_scan.py $2 $3` | compare two saved JSON reports (`$2`=old, `$3`=new); add `--fail-on-regression` for a gate |
 | `render` | `render_report.py $2 -o report.html` | here `$2` is a Markdown file → branded HTML (`--format pdf` for PDF) |
 
@@ -186,6 +200,19 @@ Two data sources:
 
 Always label lab data as synthetic/estimate, never as real-user field data; never
 guess numbers.
+
+**`gsc` — OAuth, not an API key:** this action calls Google's Search Console API
+for the user's **own verified property** (read-only). Credentials resolve from
+env or `.env`, in order: `GSC_ACCESS_TOKEN` (e.g. `gcloud auth
+print-access-token`; expires ~1h) or the durable
+`GSC_CLIENT_ID`/`GSC_CLIENT_SECRET`/`GSC_REFRESH_TOKEN` trio. If they're missing,
+relay the one-time setup: create a **Desktop** OAuth client in Google Cloud
+Console (enable the "Google Search Console API"), put the client ID/secret in
+`.env`, then run `gsc.py --auth --write-env` — it opens the browser consent page
+and stores the refresh token. Useful flags: `--days N` (window, default 28),
+`--min-impressions N`, `--format json`. The numbers are real search data — never
+supplement them with guessed ones; the expected-CTR curve in the laggards table
+is a labeled heuristic used only for ranking.
 
 Edge cases: if `$1` is empty/unrecognized, treat it as `audit`. If `$2` (the site) is
 missing, ask for it. Only add `--allow-private` for local/staging targets.

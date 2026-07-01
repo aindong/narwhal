@@ -25,6 +25,8 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python render_report.py report.md -o report.html` | Render any Markdown report as branded HTML (`--format pdf` for PDF) |
 | `python crux.py <url> --crux-key KEY` | Real Core Web Vitals (LCP/INP/CLS) from the CrUX API — opt-in field data, needs a key |
 | `python crux.py <url> --lab` | PageSpeed Insights (Lighthouse) LAB metrics for any URL (use when CrUX has no data); key optional |
+| `python gsc.py <url>` | Real Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — opt-in OAuth (`GSC_ACCESS_TOKEN`, or one-time `gsc.py --auth`) |
+| `python audit.py <url> --gsc` | Fold the GSC data into the audit report/JSON (degrades to a note without credentials) |
 | `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server: exposes scan_page/crawl_site/audit_site/validate_sitemap/generate_llms/generate_schema/diff_reports over stdio |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
