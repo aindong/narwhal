@@ -16,6 +16,7 @@ from lib import htmlx, http, links  # noqa: E402
 from lib import sitemap as sm  # noqa: E402
 from lib import text as textlib  # noqa: E402
 from lib import config as configlib  # noqa: E402
+from lib import simhash  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
@@ -321,6 +322,54 @@ class TestCrawlPoliteness(unittest.TestCase):
         cands = [f"https://site.com/{i}" for i in range(20)]
         urls, skipped = crawl_site.select_urls(cands, base, rt, True, 5)
         self.assertEqual(len(urls), 5)
+
+
+class TestSimhash(unittest.TestCase):
+    # Realistic page-length, VARIED text (many unique shingles). SimHash is built
+    # for substantial documents, where a small edit moves few of the 64 bits.
+    A = " ".join(
+        f"paragraph {i} explains the alpha methodology concept {i} using worked "
+        f"example {i} and a practical note {i} for readers." for i in range(60))
+    # Near-identical: a couple of words changed in a long document.
+    A2 = A.replace("worked example 10", "worked sample 10").replace(
+        "practical note 20", "practical tip 20")
+    B = " ".join(
+        f"row {i} tabulates metric {i} with observed value {i} and current "
+        f"status {i} pending review by team {i} today." for i in range(60))
+
+    def test_deterministic(self):
+        self.assertEqual(simhash.simhash(self.A), simhash.simhash(self.A))
+
+    def test_near_dup_high_similarity(self):
+        sim = simhash.similarity(simhash.simhash(self.A), simhash.simhash(self.A2))
+        self.assertGreaterEqual(sim, 90)
+
+    def test_different_low_similarity(self):
+        sim = simhash.similarity(simhash.simhash(self.A), simhash.simhash(self.B))
+        self.assertLess(sim, 80)
+
+    def test_cluster_groups_near_dupes(self):
+        items = [("a", simhash.simhash(self.A)),
+                 ("a2", simhash.simhash(self.A2)),
+                 ("b", simhash.simhash(self.B))]
+        clusters = simhash.cluster(items, 90.0)
+        self.assertEqual(len(clusters), 1)
+        self.assertEqual(set(clusters[0]), {"a", "a2"})
+
+    def test_find_duplicates_flags_canonical(self):
+        fp_a = simhash.simhash(self.A)
+        fp_a2 = simhash.simhash(self.A2)
+        # near-dupes with no canonical -> flagged
+        bad = crawl_site.find_duplicates([
+            {"url": "u1", "fingerprint": fp_a, "canonical": None},
+            {"url": "u2", "fingerprint": fp_a2, "canonical": None}], 90.0)
+        self.assertEqual(len(bad), 1)
+        self.assertFalse(bad[0]["canonical_ok"])
+        # near-dupes pointing at one canonical -> ok
+        good = crawl_site.find_duplicates([
+            {"url": "u1", "fingerprint": fp_a, "canonical": "https://x.com/canon"},
+            {"url": "u2", "fingerprint": fp_a2, "canonical": "https://x.com/canon"}], 90.0)
+        self.assertTrue(good[0]["canonical_ok"])
 
 
 class TestLlmsTxt(unittest.TestCase):

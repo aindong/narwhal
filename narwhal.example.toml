@@ -43,9 +43,10 @@ fail_under   = 0      # 0 disables the CI gate; set e.g. 80 to fail below 80
 concurrency  = 4      # crawl_site parallelism
 max_pages    = 15     # crawl_site page cap
 max_links    = 200    # crawl_site --check-links cap
-delay        = 0.0    # crawl_site sequential rate-limit (seconds)
-sample       = 10     # sitemap URL 404-sample size
-max_sitemaps = 50     # sitemap recursion cap
+delay         = 0.0   # crawl_site sequential rate-limit (seconds)
+sample        = 10    # sitemap URL 404-sample size
+max_sitemaps  = 50    # sitemap recursion cap
+dup_threshold = 90.0  # crawl_site: % similarity to treat pages as near-duplicates
 
 # --- Suppress findings -------------------------------------------------------
 # Silence findings you've decided are acceptable. `categories` drops whole

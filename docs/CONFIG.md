@@ -79,6 +79,7 @@ Used when the corresponding flag isn't passed.
 | `delay` | 0.0 | `crawl` |
 | `sample` | 10 | `sitemap` |
 | `max_sitemaps` | 50 | `sitemap` |
+| `dup_threshold` | 90.0 | `crawl` (near-duplicate % similarity) |
 
 ```toml
 [defaults]

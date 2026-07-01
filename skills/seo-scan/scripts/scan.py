@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, links  # noqa: E402
+from lib import http, htmlx, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 
@@ -75,7 +75,8 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
 
 def scan(url: str, *, render=False, allow_private=False, timeout=20,
-         only=None, ctx=None, collect_links=False, config=None) -> Report:
+         only=None, ctx=None, collect_links=False, collect_fingerprint=False,
+         config=None) -> Report:
     """Audit a single page. Pass ``ctx`` (from :func:`gather_context`) to reuse
     site-level signals across many pages — the crawler does this so robots.txt,
     sitemap, and llms.txt are fetched once per site rather than once per page.
@@ -98,6 +99,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
     if collect_links:
         report.meta["links"] = links.extract_links(doc, resp.final_url or url)
+    if collect_fingerprint:
+        report.meta["fingerprint"] = simhash.simhash(doc.body_text)
+        report.meta["canonical"] = doc.canonical()
     if ctx is None:
         ctx = gather_context(resp.final_url or url,
                              allow_private=allow_private, timeout=timeout)

@@ -65,6 +65,9 @@ rate-limit), and `--ignore-robots` to override. `--fail-under N` gates on the
 average score. Add `--check-links` to check outbound links (internal + external)
 for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
 rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).
+**Near-duplicate content detection** runs by default (SimHash fingerprints;
+clusters pages ≥`--dup-threshold` % similar and flags clusters lacking a
+consistent canonical; disable with `--no-dupes`).
 
 **Generate schema.org JSON-LD:**
 ```

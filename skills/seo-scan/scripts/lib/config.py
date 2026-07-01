@@ -31,7 +31,7 @@ DEFAULT_THRESHOLDS = {
 DEFAULT_DEFAULTS = {
     "timeout": 20, "fail_under": None,
     "concurrency": 4, "max_pages": 15, "max_links": 200, "delay": 0.0,
-    "sample": 10, "max_sitemaps": 50,
+    "sample": 10, "max_sitemaps": 50, "dup_threshold": 90.0,
 }
 
 

@@ -72,8 +72,9 @@ hard commitments.
 - ✅ **Readability + entity extraction** — Flesch reading ease + FK grade in the
   content auditor, dominant terms/phrases + candidate entities, and a title/H1
   vs body topical-focus check. — [#11](https://github.com/aindong/narwhal/issues/11)
-- ⬜ **Duplicate / near-duplicate detection** — shingling/SimHash across a crawl;
-  flag dupes missing canonical. — [#12](https://github.com/aindong/narwhal/issues/12)
+- ✅ **Duplicate / near-duplicate detection** — SimHash fingerprints across a
+  crawl; clusters near-dupes by Hamming distance and flags clusters lacking a
+  consistent canonical (`--dup-threshold`, `--no-dupes`). — [#12](https://github.com/aindong/narwhal/issues/12)
 
 ## 🔵 P2 — Outputs & integrations
 

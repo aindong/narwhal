@@ -23,11 +23,44 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, links  # noqa: E402
+from lib import http, htmlx, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
+
+
+def _norm_canonical(url):
+    if not url:
+        return None
+    p = urlparse(url)
+    return f"{p.netloc}{p.path}".rstrip("/").lower()
+
+
+def find_duplicates(page_fps: list, threshold_pct: float) -> list:
+    """Cluster near-duplicate pages and check their canonicalization.
+
+    ``page_fps`` is a list of ``{url, fingerprint, canonical}``. Returns clusters
+    with the minimum pairwise similarity and whether the near-dupes point to a
+    single, consistent canonical (``canonical_ok``).
+    """
+    items = [(i, p["fingerprint"]) for i, p in enumerate(page_fps)
+             if p.get("fingerprint")]
+    clusters = []
+    for idxs in simhash.cluster(items, threshold_pct):
+        pages = [page_fps[i] for i in idxs]
+        sims = [simhash.similarity(pages[a]["fingerprint"], pages[b]["fingerprint"])
+                for a in range(len(pages)) for b in range(a + 1, len(pages))]
+        canon_targets = {_norm_canonical(p["canonical"]) for p in pages}
+        canonical_ok = all(p["canonical"] for p in pages) and len(canon_targets) == 1
+        clusters.append({
+            "urls": [p["url"] for p in pages],
+            "canonicals": [p["canonical"] for p in pages],
+            "min_similarity": min(sims) if sims else 100.0,
+            "canonical_ok": canonical_ok,
+        })
+    clusters.sort(key=lambda c: (c["canonical_ok"], -c["min_similarity"]))
+    return clusters
 
 # Product token a site would match us on (from http.DEFAULT_UA).
 CRAWLER_AGENT = "seo-scan"
@@ -156,7 +189,8 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
 
 def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           timeout=20, delay=0.0, concurrency=4, obey_robots=True,
-          check_links=False, max_links=200, config=None) -> dict:
+          check_links=False, max_links=200, detect_dupes=True,
+          dup_threshold=90.0, config=None) -> dict:
     config = config or configlib.Config()
     # Fetch site-level signals (robots/sitemap/llms) ONCE and reuse for every
     # page — polite and much faster than re-fetching per page.
@@ -174,7 +208,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     def scan_one(u):
         return u, scanner.scan(u, render=render, allow_private=allow_private,
                                timeout=timeout, ctx=ctx, collect_links=check_links,
-                               config=config)
+                               collect_fingerprint=detect_dupes, config=config)
 
     results = []
     if concurrency <= 1:
@@ -186,7 +220,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         with ThreadPoolExecutor(max_workers=concurrency) as ex:
             results = list(ex.map(scan_one, urls))
 
-    pages, issue_counter, pages_links = [], Counter(), {}
+    pages, issue_counter, pages_links, page_fps = [], Counter(), {}, []
     for u, rep in results:
         pages.append({"url": u, "score": rep.score(), "counts": rep.counts()})
         for f in rep.findings:
@@ -194,6 +228,9 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                 issue_counter[(f.category, f.severity, f.title)] += 1
         if check_links:
             pages_links[u] = rep.meta.get("links", [])
+        if detect_dupes and rep.meta.get("fingerprint"):
+            page_fps.append({"url": u, "fingerprint": rep.meta["fingerprint"],
+                             "canonical": rep.meta.get("canonical")})
     avg = round(sum(p["score"] for p in pages) / len(pages), 1) if pages else 0
 
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
@@ -202,6 +239,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         result["links"] = check_broken_links(
             pages_links, allow_private=allow_private, timeout=timeout,
             concurrency=concurrency, max_links=max_links)
+    if detect_dupes:
+        result["duplicates"] = find_duplicates(page_fps, dup_threshold)
     return result
 
 
@@ -245,6 +284,29 @@ def render_markdown(result: dict) -> str:
                 more = f" (+{len(b['sources']) - 1})" if len(b["sources"]) > 1 else ""
                 lines.append(f"| {status} | {kind} | {b['url']} | {src}{more} |")
             lines.append("")
+
+    dupes = result.get("duplicates")
+    if dupes is not None:
+        problem = [c for c in dupes if not c["canonical_ok"]]
+        lines.append(f"## Duplicate content ({len(dupes)} near-duplicate cluster(s))")
+        lines.append("")
+        if not dupes:
+            lines.append("No near-duplicate pages detected. 🟢")
+            lines.append("")
+        else:
+            for i, c in enumerate(dupes, 1):
+                flag = "✅ canonical consistent" if c["canonical_ok"] \
+                    else "⚠️ missing/inconsistent canonical"
+                lines.append(f"**Cluster {i}** — ~{c['min_similarity']}% similar · {flag}")
+                for url, can in zip(c["urls"], c["canonicals"]):
+                    canon = f" → canonical: {can}" if can else " → no canonical"
+                    lines.append(f"- {url}{canon}")
+                lines.append("")
+            if problem:
+                lines.append(f"> {len(problem)} cluster(s) of near-duplicate pages "
+                             "lack a single consistent canonical — pick one URL per "
+                             "cluster and point the rest at it with rel=canonical.")
+                lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -280,6 +342,11 @@ def main(argv=None) -> int:
                     help="check outbound links (internal + external) for 4xx/5xx/dead")
     ap.add_argument("--max-links", type=int, default=d["max_links"], metavar="N",
                     help="cap the number of unique links checked (default 200)")
+    ap.add_argument("--no-dupes", action="store_true",
+                    help="skip near-duplicate content detection (on by default)")
+    ap.add_argument("--dup-threshold", type=float,
+                    default=d.get("dup_threshold", 90.0), metavar="PCT",
+                    help="similarity %% at/above which pages are near-duplicates (default 90)")
     ap.add_argument("--fail-under", type=int, metavar="N", default=d.get("fail_under"),
                     help="exit non-zero if the average score is below N (for CI gating)")
     args = ap.parse_args(argv)
@@ -294,6 +361,7 @@ def main(argv=None) -> int:
                    delay=args.delay, concurrency=args.concurrency,
                    obey_robots=not args.ignore_robots,
                    check_links=args.check_links, max_links=args.max_links,
+                   detect_dupes=not args.no_dupes, dup_threshold=args.dup_threshold,
                    config=cfg)
     out = render_json(result) if args.format == "json" else render_markdown(result)
     if args.output:
