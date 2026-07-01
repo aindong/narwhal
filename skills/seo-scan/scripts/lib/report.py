@@ -551,21 +551,47 @@ def md_to_html(md: str) -> str:
     return "\n".join(out)
 
 
-def pdf_from_html(html: str, path: str) -> bool:
-    """Render ``html`` to a PDF at ``path`` using WeasyPrint if available.
-
-    Returns True on success, False if WeasyPrint isn't installed (the caller
-    then falls back to writing HTML — see the ``--format pdf`` handling). Any
-    other WeasyPrint error propagates so the user sees the real cause.
-    """
+def _pdf_via_weasyprint(html: str, path: str) -> bool:
     try:
-        from weasyprint import HTML  # type: ignore
+        from weasyprint import HTML  # type: ignore  # noqa: PLC0415
     except (ImportError, OSError):
-        # ImportError: package absent. OSError: package present but its native
-        # libraries (pango/cairo/…) aren't — treat both as "no PDF, use HTML".
+        # ImportError: package absent. OSError: present but its native libs
+        # (pango/cairo/…) aren't — treat both as "not available here".
         return False
     HTML(string=html).write_pdf(path)
     return True
+
+
+def _pdf_via_chromium(html: str, path: str) -> bool:
+    """Print the HTML to PDF with headless Chromium (Playwright). Renders our exact
+    CSS, so the PDF matches the browser; the report is self-contained (inline CSS +
+    base64 logo), so no network is touched."""
+    try:
+        from playwright.sync_api import sync_playwright  # noqa: PLC0415
+    except ImportError:
+        return False
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True,
+                                        args=["--disable-dev-shm-usage"])
+            try:
+                page = browser.new_page()
+                page.set_content(html, wait_until="load")
+                page.pdf(path=path, print_background=True, format="A4",
+                         margin={"top": "12mm", "bottom": "14mm",
+                                 "left": "10mm", "right": "10mm"})
+            finally:
+                browser.close()
+        return True
+    except Exception:  # noqa: BLE001 — missing browser binary etc.; fall back
+        return False
+
+
+def pdf_from_html(html: str, path: str) -> bool:
+    """Render ``html`` to a PDF at ``path``. Tries WeasyPrint, then headless
+    Chromium (Playwright). Returns True on success, or False if neither engine is
+    available (the caller then falls back to writing HTML — see ``deliver``)."""
+    return _pdf_via_weasyprint(html, path) or _pdf_via_chromium(html, path)
 
 
 def deliver(fmt: str, output, content: str, *, label: str = "report",
@@ -589,9 +615,13 @@ def deliver(fmt: str, output, content: str, *, label: str = "report",
                      if output.lower().endswith(".pdf") else output + ".html")
         with open(html_path, "w", encoding="utf-8") as fh:
             fh.write(content)
-        print(f"WeasyPrint not installed - wrote HTML {label} to {html_path}"
-              f"{score_txt} instead.\nInstall it for PDF export: "
-              f"pip install weasyprint", file=sys.stderr)
+        print(f"No PDF engine available - wrote HTML {label} to {html_path}"
+              f"{score_txt} instead.\nFor PDF, install either:\n"
+              f"  - WeasyPrint:  pip install weasyprint\n"
+              f"  - or Chromium: pip install playwright && python -m playwright "
+              f"install chromium\n"
+              f"(the HTML is self-contained, so you can also open it and Print to "
+              f"PDF from your browser).", file=sys.stderr)
         return 0
     if output:
         with open(output, "w", encoding="utf-8") as fh:

@@ -4,6 +4,20 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.16.0] — 2026-07-02
+
+### Added
+- **Second PDF engine: headless Chromium (Playwright).** `pdf_from_html` now tries
+  WeasyPrint, then Chromium print-to-PDF — which renders our exact CSS (pixel-perfect
+  branded PDF) and installs cleanly cross-platform (it also powers `--render`).
+  Verified end to end (real branded PDF generated via Chromium).
+
+### Changed
+- **`/narwhal audit` delivers a PDF by default.** Step 4 now renders
+  `narwhal-audit-report.pdf`; with no PDF engine it falls back to a self-contained
+  HTML (and the message lists both install options + the "Print to PDF from your
+  browser" escape hatch).
+
 ## [1.15.0] — 2026-07-02
 
 ### Added

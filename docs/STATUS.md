@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.15.0**_
+_Last updated: 2026-07-02 · version **1.16.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -48,7 +48,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   via `<picture>`. Derived deterministically from the light logo
   (`assets/make-dark-logo.py`).
 - **P2 backlog (#13–#18) fully cleared.**
-- **Tests:** 111, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 112, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -61,7 +61,10 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   `narwhal-audit-report.md` then renders a branded HTML (offers PDF) via the new
   `narwhal render` (`render_report.py`) — Markdown → branded HTML/PDF, reusing the
   report shell. md_to_html now renders `[links]`.
-- **Released:** v1.0.0 → v1.15.0. Plugin installs as `narwhal@narwhal`.
+- **PDF: two engines + PDF-by-default audit (v1.16.0):** `report.pdf_from_html`
+  tries WeasyPrint then headless Chromium (Playwright `page.pdf`, pixel-perfect,
+  verified). `/narwhal audit` Step 4 now renders a **PDF by default**, HTML fallback.
+- **Released:** v1.0.0 → v1.16.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

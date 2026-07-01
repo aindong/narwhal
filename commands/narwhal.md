@@ -64,15 +64,18 @@ Fold its verdict into the performance section. Label it correctly — **field**
 - **Core Web Vitals** — the field/lab verdict from Step 2b.
 - **Per-area detail** — one concise section per specialist.
 
-**Step 4 — Deliver the branded report file.** Write the synthesized report to
-`narwhal-audit-report.md`, then render it into a **self-contained, branded HTML
-report** (Narwhal logo + styling, containing *your* synthesis):
+**Step 4 — Deliver the branded report file (PDF by default).** Write the
+synthesized report to `narwhal-audit-report.md`, then render it into a
+**self-contained, branded PDF** (Narwhal logo + styling, containing *your*
+synthesis):
 ```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/render_report.py" narwhal-audit-report.md --subtitle "$2" -o narwhal-audit-report.html
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/render_report.py" narwhal-audit-report.md --subtitle "$2" --format pdf -o narwhal-audit-report.pdf
 ```
-Also try a **PDF** (add `--format pdf -o narwhal-audit-report.pdf`); it needs
-WeasyPrint and prints a note + writes HTML instead if it's missing. Tell the user
-the exact file path(s) produced, and that a PDF needs `pip install weasyprint`.
+PDF needs a rendering engine (WeasyPrint **or** Playwright's Chromium). If neither
+is present the script prints a note and writes `narwhal-audit-report.html` instead
+— the HTML is self-contained and shareable on its own. **Report the exact file it
+produced** (`.pdf` or `.html`); if it fell back to HTML, relay the one-line install
+options from the note so the user can get a PDF next time.
 
 **Formatting (important):** write the report in plain **GitHub-flavored Markdown**
 — `#`/`##` headings, `|`-delimited pipe tables, `-` bullet lists, `**bold**`. Do

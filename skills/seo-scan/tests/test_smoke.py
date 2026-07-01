@@ -938,6 +938,15 @@ class TestRenderHardening(unittest.TestCase):
         self.assertIn("Playwright render failed", msg)
         self.assertIn("some other failure", msg)
 
+    def test_chromium_pdf_backend_absent_is_graceful(self):
+        # Without Playwright installed, the Chromium backend must return False
+        # (not raise), so pdf_from_html can fall through to the HTML fallback.
+        try:
+            import playwright  # noqa: F401
+            self.skipTest("Playwright installed; can't test the absent path")
+        except ImportError:
+            self.assertFalse(report_lib._pdf_via_chromium("<html></html>", "x.pdf"))
+
     def test_pdf_from_html_survives_missing_native_libs(self):
         # Simulate WeasyPrint present but its native libs missing (OSError on
         # import) — pdf_from_html must return False, not raise.

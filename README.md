@@ -112,8 +112,9 @@ with what was observed and a concrete fix.
   to raw HTML.
 - `--format json|html|pdf [-o file]` — machine-readable JSON, a **self-contained,
   styled HTML** report (score gauge, severity-coloured finding cards — see the
-  [sample](docs/samples/sample-report.html)), or **PDF** (needs WeasyPrint; falls
-  back to HTML if it isn't installed). `html`/`pdf` also work on `audit.py` for a
+  [sample](docs/samples/sample-report.html)), or **PDF** (needs a PDF engine —
+  **WeasyPrint** or **Playwright/Chromium**; falls back to HTML if neither is
+  present). `html`/`pdf` also work on `audit.py` for a
   shareable, stakeholder-ready deliverable — and `audit.py --vitals` adds a **Core
   Web Vitals** section (CrUX field data, or PSI lab fallback) right into that
   HTML/PDF/Markdown/JSON:
@@ -275,11 +276,13 @@ inherits it) or drop a `.env` in your project (see *Real Core Web Vitals* above)
 Then `/narwhal vitals example.com` just works, and `/narwhal audit` automatically
 includes real field data when a key is present.
 
-**`/narwhal audit` produces a shareable report file.** It doesn't just print in the
-chat — after the multi-agent synthesis it writes `narwhal-audit-report.md` and
-renders a **self-contained, branded HTML report** (`narwhal-audit-report.html`),
-then offers a **PDF** (`--format pdf`, needs WeasyPrint). Under the hood that's the
-`render` action, which turns any Markdown into a branded report:
+**`/narwhal audit` produces a shareable, branded report file — a PDF by default.**
+It doesn't just print in the chat — after the multi-agent synthesis it writes
+`narwhal-audit-report.md` and renders a **self-contained, branded PDF**
+(`narwhal-audit-report.pdf`). PDF needs a rendering engine (**WeasyPrint** or
+**Playwright/Chromium**); with neither it falls back to a self-contained
+`narwhal-audit-report.html`. Under the hood that's the `render` action, which turns
+any Markdown into a branded report:
 ```bash
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```
