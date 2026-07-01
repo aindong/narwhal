@@ -276,13 +276,14 @@ inherits it) or drop a `.env` in your project (see *Real Core Web Vitals* above)
 Then `/narwhal vitals example.com` just works, and `/narwhal audit` automatically
 includes real field data when a key is present.
 
-**`/narwhal audit` produces a shareable, branded report file — a PDF by default.**
-It doesn't just print in the chat — after the multi-agent synthesis it writes
-`narwhal-audit-report.md` and renders a **self-contained, branded PDF**
-(`narwhal-audit-report.pdf`). PDF needs a rendering engine (**WeasyPrint** or
-**Playwright/Chromium**); with neither it falls back to a self-contained
-`narwhal-audit-report.html`. Under the hood that's the `render` action, which turns
-any Markdown into a branded report:
+**`/narwhal audit` produces a shareable, branded report file.** It doesn't just
+print in the chat — after the multi-agent synthesis it writes
+`narwhal-audit-report.md` and renders a **self-contained, branded HTML report**
+(`narwhal-audit-report.html`) — no extra tools needed, opens anywhere. Want a
+**PDF**? Add `--format pdf` (needs a rendering engine — WeasyPrint or
+Playwright/Chromium — else it stays HTML), or just open the HTML and *Print → Save
+as PDF*. Under the hood that's the `render` action, which turns any Markdown into a
+branded report:
 ```bash
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```

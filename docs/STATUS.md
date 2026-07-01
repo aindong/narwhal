@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.16.0**_
+_Last updated: 2026-07-02 · version **1.16.1**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -61,10 +61,11 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   `narwhal-audit-report.md` then renders a branded HTML (offers PDF) via the new
   `narwhal render` (`render_report.py`) — Markdown → branded HTML/PDF, reusing the
   report shell. md_to_html now renders `[links]`.
-- **PDF: two engines + PDF-by-default audit (v1.16.0):** `report.pdf_from_html`
-  tries WeasyPrint then headless Chromium (Playwright `page.pdf`, pixel-perfect,
-  verified). `/narwhal audit` Step 4 now renders a **PDF by default**, HTML fallback.
-- **Released:** v1.0.0 → v1.16.0. Plugin installs as `narwhal@narwhal`.
+- **Two PDF engines (v1.16.0):** `report.pdf_from_html` tries WeasyPrint then
+  headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
+  audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
+  (`--format pdf`).
+- **Released:** v1.0.0 → v1.16.1. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

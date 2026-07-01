@@ -4,6 +4,14 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.16.1] — 2026-07-02
+
+### Changed
+- **`/narwhal audit` delivers HTML by default again** (needs no extra tools). PDF is
+  now opt-in — the Chromium/WeasyPrint engines and `--format pdf` remain available
+  for anyone who wants a PDF, and the self-contained HTML can be Printed → Saved as
+  PDF from any browser.
+
 ## [1.16.0] — 2026-07-02
 
 ### Added
