@@ -10,6 +10,11 @@ from __future__ import annotations
 
 import re
 
+try:
+    from lib.robots import RobotsTxt
+except ImportError:  # when imported as a package
+    from .lib.robots import RobotsTxt  # type: ignore
+
 CAT = "geo"
 
 _WORD = re.compile(r"[A-Za-z][A-Za-z'-]+")
@@ -141,40 +146,18 @@ def _ai_crawler_access(ctx, report):
     robots = ctx.get("robots_txt")
     if robots is None:
         return
-    blocked = _blocked_bots(robots)
+    rt = RobotsTxt.parse(robots)
+    # A bot is effectively blocked when it can't fetch the site root.
+    blocked = [b for b in AI_BOTS if rt.disallowed("/", b)]
     if blocked:
         names = ", ".join(f"{b} ({AI_BOTS[b]})" for b in blocked)
         report.add(CAT, "high", "AI crawlers are blocked in robots.txt",
-                   f"Disallowed: {names}.",
+                   f"Disallowed from the site root: {names}.",
                    "If you want visibility in AI answers, allow these agents. If "
                    "the block is intentional (content protection), ignore this.",
                    evidence=names)
     else:
         report.ok(CAT, "AI crawlers are not blocked")
-
-
-def _blocked_bots(robots: str) -> list:
-    blocked = []
-    lines = robots.splitlines()
-    current = []
-    disallow_all = False
-    for raw in lines:
-        line = raw.split("#", 1)[0].strip()
-        if not line:
-            current, disallow_all = [], False
-            continue
-        key, _, val = line.partition(":")
-        key, val = key.strip().lower(), val.strip()
-        if key == "user-agent":
-            current.append(val)
-            disallow_all = False
-        elif key == "disallow" and val == "/":
-            disallow_all = True
-            for ua in current:
-                for bot in AI_BOTS:
-                    if ua.lower() == bot.lower() and bot not in blocked:
-                        blocked.append(bot)
-    return blocked
 
 
 def _entity_clarity(doc, report):

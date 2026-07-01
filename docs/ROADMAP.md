@@ -50,8 +50,9 @@ hard commitments.
   publish is optional and deferred. — [#4](https://github.com/aindong/narwhal/issues/4)
 - ⬜ **Polite crawler** — honor robots.txt, rate-limit, bounded concurrency,
   caching. — [#5](https://github.com/aindong/narwhal/issues/5)
-- ⬜ **Robust robots.txt matching** — wildcards + Allow/Disallow precedence; report
-  which paths are blocked per agent. — [#6](https://github.com/aindong/narwhal/issues/6)
+- ✅ **Robust robots.txt matching** — `lib/robots.py`: user-agent groups, `*`/`$`
+  wildcards, longest-match with Allow-over-Disallow ties (RFC 9309). Powers the GEO
+  AI-crawler check; reused by the crawler (#5). — [#6](https://github.com/aindong/narwhal/issues/6)
 - ⬜ **Broken-link checker** — internal + external, grouped by source page.
   — [#7](https://github.com/aindong/narwhal/issues/7)
 - ⬜ **Deeper sitemap validation** — nested indexes, `lastmod`, 404 sampling.

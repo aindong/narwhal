@@ -14,6 +14,7 @@ sys.path.insert(0, SCRIPTS)
 
 from lib import htmlx, http  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
+from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
 import generate_schema  # noqa: E402
 
@@ -103,6 +104,60 @@ class TestAuditors(unittest.TestCase):
         html = GOOD_PAGE.replace('"image":"/x.png"}', '"image": }')  # broken JSON
         report = self._run(html)
         self.assertTrue(any(f.title == "Invalid JSON-LD" for f in report.findings))
+
+
+class TestRobots(unittest.TestCase):
+    def test_disallow_prefix(self):
+        rt = RobotsTxt.parse("User-agent: *\nDisallow: /private")
+        self.assertFalse(rt.allowed("/private/page", "AnyBot"))
+        self.assertTrue(rt.allowed("/public", "AnyBot"))
+
+    def test_empty_disallow_allows_all(self):
+        rt = RobotsTxt.parse("User-agent: *\nDisallow:")
+        self.assertTrue(rt.allowed("/anything", "AnyBot"))
+
+    def test_allow_beats_disallow_longer_match(self):
+        rt = RobotsTxt.parse(
+            "User-agent: *\nDisallow: /folder\nAllow: /folder/public")
+        self.assertFalse(rt.allowed("/folder/secret", "Bot"))
+        self.assertTrue(rt.allowed("/folder/public/x", "Bot"))
+
+    def test_allow_wins_equal_length_tie(self):
+        rt = RobotsTxt.parse("User-agent: *\nDisallow: /p\nAllow: /p")
+        self.assertTrue(rt.allowed("/page", "Bot"))
+
+    def test_wildcard_star(self):
+        rt = RobotsTxt.parse("User-agent: *\nDisallow: /*/admin")
+        self.assertFalse(rt.allowed("/any/admin", "Bot"))
+        self.assertTrue(rt.allowed("/admin", "Bot"))
+
+    def test_end_anchor(self):
+        rt = RobotsTxt.parse("User-agent: *\nDisallow: /*.pdf$")
+        self.assertFalse(rt.allowed("/files/report.pdf", "Bot"))
+        self.assertTrue(rt.allowed("/files/report.pdf?x=1", "Bot"))
+
+    def test_user_agent_specificity(self):
+        rt = RobotsTxt.parse(
+            "User-agent: *\nDisallow: /\n\nUser-agent: GPTBot\nDisallow:")
+        # Specific GPTBot group (allow-all) wins over the restrictive * group
+        self.assertTrue(rt.allowed("/anything", "GPTBot"))
+        self.assertFalse(rt.allowed("/anything", "RandomBot"))
+
+    def test_multiple_agents_share_block(self):
+        rt = RobotsTxt.parse(
+            "User-agent: GPTBot\nUser-agent: ClaudeBot\nDisallow: /")
+        self.assertTrue(rt.disallowed("/", "GPTBot"))
+        self.assertTrue(rt.disallowed("/", "ClaudeBot"))
+        self.assertTrue(rt.allowed("/", "PerplexityBot"))
+
+    def test_no_rules_allows(self):
+        rt = RobotsTxt.parse("")
+        self.assertTrue(rt.allowed("/", "Bot"))
+
+    def test_sitemaps_collected(self):
+        rt = RobotsTxt.parse(
+            "Sitemap: https://x.com/sitemap.xml\nUser-agent: *\nDisallow:")
+        self.assertEqual(rt.sitemaps, ["https://x.com/sitemap.xml"])
 
 
 class TestFailUnderGate(unittest.TestCase):
