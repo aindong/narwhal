@@ -47,6 +47,12 @@ python -m playwright install chromium   # only for --render
    data needs CrUX/PageSpeed). State what was measured vs. what needs an external
    source.
 
+## Configuration
+An optional `narwhal.toml` (auto-discovered from the project root) tunes scoring
+weights, thresholds, CLI defaults, and ignore rules. Precedence: CLI > config >
+default. Use `--config PATH` / `--no-config`. See `docs/CONFIG.md` and
+`narwhal.example.toml`.
+
 ## Deeper guidance
 The reasoning and thresholds behind each check are in
 `skills/seo-scan/references/` (`technical-seo.md`, `content-eeat.md`,

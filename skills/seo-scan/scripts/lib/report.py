@@ -39,9 +39,14 @@ class Report:
     rendered: bool = False
     findings: list = field(default_factory=list)
     meta: dict = field(default_factory=dict)
+    weights: dict = None          # override severity penalties (from config)
+    ignore: object = None         # callable(category, title) -> bool
 
     def add(self, *args, **kwargs) -> None:
-        self.findings.append(Finding(*args, **kwargs))
+        finding = Finding(*args, **kwargs)
+        if self.ignore and self.ignore(finding.category, finding.title):
+            return  # suppressed by config ignore rules
+        self.findings.append(finding)
 
     def ok(self, category: str, title: str, detail: str = "") -> None:
         self.add(category, "good", title, detail)
@@ -53,7 +58,9 @@ class Report:
         return buckets
 
     def score(self) -> int:
-        penalty = sum(_WEIGHT[f.severity] for f in self.findings)
+        weights = self.weights or _WEIGHT
+        penalty = sum(weights.get(f.severity, _WEIGHT[f.severity])
+                      for f in self.findings)
         return max(0, 100 - penalty)
 
     def counts(self) -> dict:

@@ -1,0 +1,56 @@
+# narwhal.example.toml — copy to `narwhal.toml` and edit.
+#
+# Optional project configuration for the Narwhal SEO/GEO scanner. Drop a
+# `narwhal.toml` at your project root and the tools auto-discover it (walking up
+# from the current directory). Precedence is always:
+#
+#     CLI flag  >  narwhal.toml  >  built-in default
+#
+# Every section and key below is OPTIONAL — omit anything you don't want to
+# change. Requires Python 3.11+ (stdlib tomllib) or the `tomli` package on older
+# Pythons; if neither is present the file is simply ignored.
+#
+# Point at a specific file with `--config path/to/narwhal.toml`, or ignore any
+# config with `--no-config`.
+
+# --- Scoring weights ---------------------------------------------------------
+# Penalty subtracted from the 0-100 health score for each finding of a severity.
+# Raise a weight to make that severity hurt the score more. Defaults shown.
+[weights]
+critical = 12
+high     = 6
+medium   = 3
+low      = 1
+# `good` (passing checks) is always 0.
+
+# --- Check thresholds --------------------------------------------------------
+# Tune the numbers behind individual checks. Defaults shown.
+[thresholds]
+title_min     = 15    # shorter titles are flagged "very short"
+title_max     = 65    # longer titles are flagged as possibly truncated
+meta_desc_min = 70
+meta_desc_max = 165
+thin_content  = 300   # fewer words than this = "thin content"
+short_content = 600   # between thin and this = "on the short side"
+passage_min   = 40    # GEO citable-passage word range (lower bound)
+passage_max   = 120   # GEO citable-passage word range (upper bound)
+
+# --- Default values for CLI flags -------------------------------------------
+# Used when the flag isn't passed on the command line.
+[defaults]
+timeout      = 20
+fail_under   = 0      # 0 disables the CI gate; set e.g. 80 to fail below 80
+concurrency  = 4      # crawl_site parallelism
+max_pages    = 15     # crawl_site page cap
+max_links    = 200    # crawl_site --check-links cap
+delay        = 0.0    # crawl_site sequential rate-limit (seconds)
+sample       = 10     # sitemap URL 404-sample size
+max_sitemaps = 50     # sitemap recursion cap
+
+# --- Suppress findings -------------------------------------------------------
+# Silence findings you've decided are acceptable. `categories` drops whole
+# auditors; `titles` drops any finding whose title contains one of these
+# substrings (case-insensitive).
+[ignore]
+categories = []                       # e.g. ["geo"] to hide all GEO findings
+titles     = []                       # e.g. ["Open Graph", "Twitter/X card"]

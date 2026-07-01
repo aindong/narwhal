@@ -8,6 +8,10 @@ Documentation index for the Narwhal SEO & GEO/LLMO scanning toolkit.
 - **[Issues](https://github.com/aindong/narwhal/issues)** — detailed tasks and
   acceptance criteria (the source of truth for individual work items).
 
+## Configuration
+- **[CONFIG.md](CONFIG.md)** — how to use `narwhal.toml` (weights, thresholds,
+  CLI defaults, ignore rules). Template: [`narwhal.example.toml`](../narwhal.example.toml).
+
 ## Using the tool
 - **[Project README](../README.md)** — what it is, install (Claude Code plugin or
   manual), and quick start.

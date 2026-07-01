@@ -165,6 +165,28 @@ Deep-dive reasoning behind each check lives in
 [`skills/seo-scan/references/`](skills/seo-scan/references/):
 `technical-seo.md`, `content-eeat.md`, `schema.md`, `geo-llmo.md`.
 
+## Configuration (optional)
+
+Narwhal needs no config, but you can drop a **`narwhal.toml`** at your project root
+to tune scoring weights, check thresholds, CLI defaults, and which findings to
+ignore. It's auto-discovered; precedence is **CLI flag > `narwhal.toml` > default**.
+
+```toml
+[defaults]
+fail_under = 85            # CI gate: fail below 85
+
+[thresholds]
+thin_content = 250         # our pages are intentionally concise
+
+[ignore]
+categories = ["geo"]       # hide all GEO findings
+titles     = ["Open Graph"]# hide the social-preview nag
+```
+
+Full reference: **[docs/CONFIG.md](docs/CONFIG.md)** · commented template:
+**[narwhal.example.toml](narwhal.example.toml)**. Use `--config PATH` or
+`--no-config` to override discovery.
+
 ## Roadmap & docs
 
 - **[docs/ROADMAP.md](docs/ROADMAP.md)** — where Narwhal is headed (priorities,

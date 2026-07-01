@@ -22,6 +22,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, links, sitemap as sm  # noqa: E402
+from lib import config as configlib  # noqa: E402
 
 COMMON = ("/sitemap.xml", "/sitemap_index.xml", "/sitemap-index.xml")
 
@@ -160,15 +161,18 @@ def render_json(r: dict) -> str:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Validate a site's XML sitemap(s)")
+    cfg = configlib.load_from_args(argv)
+    d = cfg.defaults
+    ap = argparse.ArgumentParser(description="Validate a site's XML sitemap(s)",
+                                 parents=[configlib.config_arg_parser()])
     ap.add_argument("url", help="site URL or a sitemap URL")
-    ap.add_argument("--sample", type=int, default=10,
+    ap.add_argument("--sample", type=int, default=d["sample"],
                     help="number of URLs to spot-check for 404 (default 10)")
-    ap.add_argument("--max-sitemaps", type=int, default=50,
+    ap.add_argument("--max-sitemaps", type=int, default=d["max_sitemaps"],
                     help="cap on sitemap files fetched (default 50)")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("-o", "--output")
-    ap.add_argument("--timeout", type=int, default=20)
+    ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--allow-private", action="store_true")
     args = ap.parse_args(argv)
 

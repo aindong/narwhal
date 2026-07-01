@@ -61,8 +61,9 @@ hard commitments.
 - ✅ **Deeper sitemap validation** — `narwhal sitemap`: recurses sitemap indexes,
   validates `loc` (absolute/same-host) and `lastmod` (W3C), samples URLs for 404s,
   gzip-aware, reports partial counts when capped. — [#8](https://github.com/aindong/narwhal/issues/8)
-- ⬜ **Config file (`narwhal.toml`)** — thresholds, ignore rules, severity weights.
-  — [#9](https://github.com/aindong/narwhal/issues/9)
+- ✅ **Config file (`narwhal.toml`)** — scoring weights, check thresholds, CLI
+  defaults, and ignore rules; auto-discovered, `--config`/`--no-config`, CLI >
+  config > default. Docs in `docs/CONFIG.md`. — [#9](https://github.com/aindong/narwhal/issues/9)
 
 ### GEO & content depth
 - ⬜ **`llms.txt` generator** — build a starter `/llms.txt` from sitemap + metadata.

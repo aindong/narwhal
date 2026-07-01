@@ -30,7 +30,8 @@ def audit(doc, resp, report, ctx=None) -> None:
     words = _WORD.findall(text)
     wc = len(words)
 
-    _word_count(wc, report)
+    th = (ctx or {}).get("thresholds", {})
+    _word_count(wc, report, th)
     _readability(text, report)
     _keywords(doc, text, report)
     _authorship(doc, text, report)
@@ -38,13 +39,15 @@ def audit(doc, resp, report, ctx=None) -> None:
     _og_social(doc, report)
 
 
-def _word_count(wc, report):
-    if wc < 300:
+def _word_count(wc, report, th=None):
+    th = th or {}
+    thin, short = th.get("thin_content", 300), th.get("short_content", 600)
+    if wc < thin:
         report.add(CAT, "high", "Thin content",
                    f"~{wc} words of main text.",
                    "Expand to cover the topic fully; thin pages struggle to rank "
                    "and are rarely cited by AI answers.")
-    elif wc < 600:
+    elif wc < short:
         report.add(CAT, "low", "Content is on the short side",
                    f"~{wc} words.",
                    "Consider deepening coverage if this is a primary landing page.")

@@ -19,8 +19,9 @@ CAT = "technical"
 
 def audit(doc, resp, report, ctx=None) -> None:
     ctx = ctx or {}
-    _title(doc, report)
-    _description(doc, report)
+    th = ctx.get("thresholds", {})
+    _title(doc, report, th)
+    _description(doc, report, th)
     _headings(doc, report)
     _canonical(doc, resp, report)
     _robots_directives(doc, report)
@@ -33,7 +34,9 @@ def audit(doc, resp, report, ctx=None) -> None:
     _sitemap(ctx, report)
 
 
-def _title(doc, report):
+def _title(doc, report, th=None):
+    th = th or {}
+    lo, hi = th.get("title_min", 15), th.get("title_max", 65)
     t = doc.title
     if not t:
         report.add(CAT, "critical", "Missing <title>",
@@ -41,21 +44,23 @@ def _title(doc, report):
                    "Add a unique, descriptive <title> of ~50–60 characters.")
         return
     n = len(t)
-    if n < 15:
+    if n < lo:
         report.add(CAT, "high", "Title is very short",
                    f"Title is {n} characters.",
                    "Expand to ~50–60 characters with the primary query and brand.",
                    evidence=t)
-    elif n > 65:
+    elif n > hi:
         report.add(CAT, "medium", "Title may be truncated in SERPs",
-                   f"Title is {n} characters (>65 often truncates).",
+                   f"Title is {n} characters (>{hi} often truncates).",
                    "Trim to ~50–60 characters, front-loading the key phrase.",
                    evidence=t)
     else:
         report.ok(CAT, "Title length is in range", f"{n} characters")
 
 
-def _description(doc, report):
+def _description(doc, report, th=None):
+    th = th or {}
+    lo, hi = th.get("meta_desc_min", 70), th.get("meta_desc_max", 165)
     d = doc.meta_by_name("description")
     if not d:
         report.add(CAT, "high", "Missing meta description",
@@ -63,12 +68,12 @@ def _description(doc, report):
                    "Add a compelling 140–160 character summary with the target query.")
         return
     n = len(d)
-    if n < 70:
+    if n < lo:
         report.add(CAT, "low", "Meta description is short",
                    f"Description is {n} characters.",
                    "Aim for 140–160 characters to use the full SERP snippet.",
                    evidence=d)
-    elif n > 165:
+    elif n > hi:
         report.add(CAT, "low", "Meta description may be truncated",
                    f"Description is {n} characters.",
                    "Trim to ~155 characters.", evidence=d)

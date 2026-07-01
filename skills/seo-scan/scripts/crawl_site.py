@@ -24,6 +24,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, htmlx, links  # noqa: E402
+from lib import config as configlib  # noqa: E402
 from lib.report import below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -155,7 +156,8 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
 
 def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           timeout=20, delay=0.0, concurrency=4, obey_robots=True,
-          check_links=False, max_links=200) -> dict:
+          check_links=False, max_links=200, config=None) -> dict:
+    config = config or configlib.Config()
     # Fetch site-level signals (robots/sitemap/llms) ONCE and reuse for every
     # page — polite and much faster than re-fetching per page.
     ctx = scanner.gather_context(base, allow_private=allow_private, timeout=timeout)
@@ -171,7 +173,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     def scan_one(u):
         return u, scanner.scan(u, render=render, allow_private=allow_private,
-                               timeout=timeout, ctx=ctx, collect_links=check_links)
+                               timeout=timeout, ctx=ctx, collect_links=check_links,
+                               config=config)
 
     results = []
     if concurrency <= 1:
@@ -256,25 +259,28 @@ def render_json(result: dict) -> str:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Site-level SEO + GEO/LLMO scan")
+    cfg = configlib.load_from_args(argv)
+    d = cfg.defaults
+    ap = argparse.ArgumentParser(description="Site-level SEO + GEO/LLMO scan",
+                                 parents=[configlib.config_arg_parser()])
     ap.add_argument("url", help="base URL of the site")
-    ap.add_argument("--max-pages", type=int, default=15)
+    ap.add_argument("--max-pages", type=int, default=d["max_pages"])
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("-o", "--output")
-    ap.add_argument("--timeout", type=int, default=20)
+    ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--allow-private", action="store_true")
-    ap.add_argument("--delay", type=float, default=0.0, metavar="SECONDS",
+    ap.add_argument("--delay", type=float, default=d["delay"], metavar="SECONDS",
                     help="pause between requests (sequential mode); be a polite bot")
-    ap.add_argument("--concurrency", type=int, default=4, metavar="N",
+    ap.add_argument("--concurrency", type=int, default=d["concurrency"], metavar="N",
                     help="number of pages to scan in parallel (default 4)")
     ap.add_argument("--ignore-robots", action="store_true",
                     help="do NOT skip URLs disallowed by robots.txt (off by default)")
     ap.add_argument("--check-links", action="store_true",
                     help="check outbound links (internal + external) for 4xx/5xx/dead")
-    ap.add_argument("--max-links", type=int, default=200, metavar="N",
+    ap.add_argument("--max-links", type=int, default=d["max_links"], metavar="N",
                     help="cap the number of unique links checked (default 200)")
-    ap.add_argument("--fail-under", type=int, metavar="N",
+    ap.add_argument("--fail-under", type=int, metavar="N", default=d.get("fail_under"),
                     help="exit non-zero if the average score is below N (for CI gating)")
     args = ap.parse_args(argv)
 
@@ -287,7 +293,8 @@ def main(argv=None) -> int:
                    allow_private=args.allow_private, timeout=args.timeout,
                    delay=args.delay, concurrency=args.concurrency,
                    obey_robots=not args.ignore_robots,
-                   check_links=args.check_links, max_links=args.max_links)
+                   check_links=args.check_links, max_links=args.max_links,
+                   config=cfg)
     out = render_json(result) if args.format == "json" else render_markdown(result)
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:

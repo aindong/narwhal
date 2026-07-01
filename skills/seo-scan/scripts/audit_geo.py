@@ -41,7 +41,7 @@ AI_BOTS = {
 def audit(doc, resp, report, ctx=None) -> None:
     ctx = ctx or {}
     _question_headings(doc, report)
-    _passage_citability(doc, report)
+    _passage_citability(doc, report, ctx.get("thresholds", {}))
     _evidence_density(doc, report)
     _direct_answer(doc, report)
     _llms_txt(ctx, report)
@@ -66,13 +66,15 @@ def _question_headings(doc, report):
                   f"{len(q)}/{len(subs)} subheadings")
 
 
-def _passage_citability(doc, report):
+def _passage_citability(doc, report, th=None):
     """AI engines quote self-contained passages best when they're ~40–120 words.
 
     We approximate passages by splitting visible text on sentence groups. Very
     long unbroken blocks are hard to lift cleanly; a page of only tiny fragments
     lacks quotable substance.
     """
+    th = th or {}
+    lo, hi = th.get("passage_min", 40), th.get("passage_max", 120)
     text = doc.body_text or ""
     chunks = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
     # group sentences into ~paragraph-sized passages
@@ -81,18 +83,18 @@ def _passage_citability(doc, report):
         w = len(_WORD.findall(s))
         buf.append(s)
         count += w
-        if count >= 40:
+        if count >= lo:
             passages.append(count)
             buf, count = [], 0
     if buf and count:
         passages.append(count)
     if not passages:
         return
-    citable = [p for p in passages if 40 <= p <= 120]
+    citable = [p for p in passages if lo <= p <= hi]
     ratio = len(citable) / len(passages)
     if ratio < 0.3:
         report.add(CAT, "medium", "Few self-contained, citable passages",
-                   "Most passages are outside the ~40–120 word range that AI "
+                   f"Most passages are outside the ~{lo}–{hi} word range that AI "
                    "engines quote cleanly.",
                    "Structure answers as standalone paragraphs that make sense "
                    "without surrounding context.")

@@ -15,6 +15,7 @@ sys.path.insert(0, SCRIPTS)
 from lib import htmlx, http, links  # noqa: E402
 from lib import sitemap as sm  # noqa: E402
 from lib import text as textlib  # noqa: E402
+from lib import config as configlib  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
@@ -319,6 +320,55 @@ class TestCrawlPoliteness(unittest.TestCase):
         cands = [f"https://site.com/{i}" for i in range(20)]
         urls, skipped = crawl_site.select_urls(cands, base, rt, True, 5)
         self.assertEqual(len(urls), 5)
+
+
+class TestConfig(unittest.TestCase):
+    def test_defaults(self):
+        c = configlib.Config()
+        self.assertEqual(c.weights["critical"], 12)
+        self.assertEqual(c.thresholds["title_max"], 65)
+        self.assertEqual(c.default("timeout"), 20)
+
+    def test_overrides_merge(self):
+        c = configlib.Config({
+            "weights": {"high": 10},
+            "thresholds": {"title_max": 70},
+            "defaults": {"concurrency": 8},
+        })
+        self.assertEqual(c.weights["high"], 10)
+        self.assertEqual(c.weights["critical"], 12)   # untouched default
+        self.assertEqual(c.thresholds["title_max"], 70)
+        self.assertEqual(c.thresholds["title_min"], 15)  # untouched
+        self.assertEqual(c.default("concurrency"), 8)
+
+    def test_ignore_rules(self):
+        c = configlib.Config({"ignore": {
+            "categories": ["geo"], "titles": ["Open Graph"]}})
+        self.assertTrue(c.is_ignored("geo", "anything"))
+        self.assertTrue(c.is_ignored("content", "Incomplete Open Graph tags"))
+        self.assertFalse(c.is_ignored("content", "Thin content"))
+
+    def test_report_custom_weights(self):
+        r = Report("u", weights={**configlib.DEFAULT_WEIGHTS, "critical": 50})
+        r.add("technical", "critical", "boom")
+        self.assertEqual(r.score(), 50)
+
+    def test_report_ignore_suppresses(self):
+        r = Report("u", ignore=lambda cat, title: cat == "geo")
+        r.add("geo", "high", "dropped")
+        r.add("technical", "high", "kept")
+        self.assertEqual(len(r.findings), 1)
+        self.assertEqual(r.findings[0].title, "kept")
+
+    def test_thresholds_flow_to_auditor(self):
+        # A 20-char title passes by default (max 65) but fails a strict max of 10.
+        doc = htmlx.parse('<title>Twelve chars ok</title>', base_url="https://x.com/")
+        strict = Report("u")
+        import audit_technical
+        audit_technical.audit(doc, http.Response("https://x.com/", "https://x.com/",
+                              200, {}, "", 1), strict, {"thresholds": {"title_max": 10}})
+        titles = [f.title for f in strict.findings]
+        self.assertIn("Title may be truncated in SERPs", titles)
 
 
 class TestFailUnderGate(unittest.TestCase):

@@ -105,6 +105,15 @@ not absolute — always explain the *specific* fixes, not just the number. When 
 finding is a heuristic (readability, citability, entity clarity), say so; these
 flag pages worth a human look rather than issuing verdicts.
 
+## Configuration
+
+An optional `narwhal.toml` at the project root (auto-discovered) tunes scoring
+weights, check thresholds, CLI defaults, and ignore rules. Precedence is
+**CLI flag > narwhal.toml > default**. Use `--config PATH` or `--no-config` to
+override. If the user has one, respect it; to suppress a finding they consider
+acceptable, add it to `[ignore]` rather than hard-coding around it. Full docs:
+`docs/CONFIG.md`.
+
 ## Guardrails
 
 - **SSRF-safe:** hosts resolving to private/loopback IPs are blocked. Only pass
