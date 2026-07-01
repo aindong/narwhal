@@ -135,6 +135,26 @@ non-zero if the score dropped or a new critical/high finding appeared. Commit th
 JSON snapshots alongside your repo to keep a lightweight history. Works on `audit`
 JSON too.
 
+### Real Core Web Vitals (opt-in)
+
+Everything above is local and honest about what it can measure — it will **never
+fabricate** field metrics. When you want *real* Core Web Vitals (what actual Chrome
+users experience), Narwhal can query Google's **Chrome UX Report (CrUX) API**. This
+is the one feature that calls an external service, so it's **opt-in** and needs a
+free [CrUX API key](https://developer.chrome.com/docs/crux/api):
+
+```bash
+narwhal vitals https://example.com/page --crux-key YOUR_KEY
+# or set it once:
+export CRUX_API_KEY=YOUR_KEY
+narwhal vitals https://example.com --origin --form-factor phone
+```
+
+You get **LCP, INP, CLS** (the Core Web Vitals; INP replaced FID in 2024) at the
+75th percentile, each rated good / needs-improvement / poor, plus a pass/fail
+verdict. CrUX only has data for pages/origins with enough real traffic — low-traffic
+URLs return "no data" (try `--origin`).
+
 ## Install
 
 ### Claude Code — plugin (recommended, one command)

@@ -4,6 +4,21 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] — 2026-07-01
+
+### Added
+- **Real Core Web Vitals** (`narwhal vitals <url>`): opt-in field data from Google's
+  Chrome UX Report (CrUX) API — **LCP, INP, CLS** at the 75th percentile, each rated
+  good/needs-improvement/poor, with a pass/fail verdict, plus FCP/TTFB as secondary.
+  Origin- or URL-level, per form factor. Verified against the current CrUX API.
+  - The only feature that calls an external service — **opt-in**, gated behind an API
+    key (`--crux-key` / `CRUX_API_KEY`); never on the default scan path.
+  - Honest: no key → clear message; low-traffic URL with no CrUX data → says so
+    (suggests `--origin`); never fabricates field metrics.
+  - Built against the CrUX API directly, since PageSpeed Insights is dropping CrUX
+    field data in 2026 (and INP replaced FID in 2024).
+- The `narwhal-performance` agent now points at `narwhal vitals` for real field data.
+
 ## [1.7.0] — 2026-07-01
 
 ### Changed

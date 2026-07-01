@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.7.0**_
+_Last updated: 2026-07-01 · version **1.8.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -39,8 +39,11 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **#16 shipped:** **Hardened `--render`** — actionable missing-browser message,
   capped networkidle settle, guaranteed browser cleanup, honest failures; new CI
   `render-smoke` job executes JS end to end (verified vs Playwright 1.61).
-- **Tests:** 87, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
-- **Released:** v1.0.0 → v1.7.0. Plugin installs as `narwhal@narwhal`.
+- **#15 shipped:** **Real Core Web Vitals** — `narwhal vitals` (`crux.py`) fetches
+  LCP/INP/CLS field data from the CrUX API. Opt-in (API key), never on the default
+  path; honest when no key / no data. Verified vs the live CrUX API contract.
+- **Tests:** 94, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Released:** v1.0.0 → v1.8.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -51,7 +54,7 @@ narwhal/
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
 │   ├── scripts/           scan, crawl_site, validate_sitemap, generate_schema,
-│   │                      generate_llms, audit, diff_scan, mcp_server, cli + lib/ (http, htmlx, report,
+│   │                      generate_llms, audit, diff_scan, crux, mcp_server, cli + lib/ (http, htmlx, report,
 │   │                      robots, links, sitemap, simhash, text, content_quality,
 │   │                      config)
 │   ├── references/        deep-dive guidance per auditor
@@ -61,12 +64,10 @@ narwhal/
 └── pyproject.toml         uvx/pip packaging (narwhal-seo)
 ```
 
-## What's next (open issues — all P2)
-- **#15** Optional real Core Web Vitals field data — **use the CrUX API**
-  (`chromeuxreport.googleapis.com`), not PageSpeed Insights: as of 2026 Google is
-  removing CrUX field data from PSI. Metrics are INP/LCP/CLS (FID is gone).
-  Opt-in via API key; the `narwhal-performance` agent already points here.
-- **#18** Dark-mode logo + README `<picture>` auto-swap.
+## What's next (open issues)
+- **#18** (P2) Dark-mode logo + README `<picture>` auto-swap — the last P2 item.
+- **#19** Tune the multi-agent audit from real runs.
+- **#20** Make the optional `trafilatura` main-content path the default.
 
 ### Also worth doing (not yet ticketed)
 - **Tune the multi-agent audit from real runs** — the 10 agents were authored, then

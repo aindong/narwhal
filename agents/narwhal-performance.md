@@ -23,13 +23,19 @@ Read the page HTML yourself (via the script output or a fetch) to inspect resour
 ## Honesty guardrail (critical)
 You are inferring from source, **not measuring**. Do NOT output specific LCP/INP/CLS
 numbers — those require real field data (CrUX) or lab runs (Lighthouse/PageSpeed).
-Say clearly: "these are hygiene risks; confirm with PageSpeed Insights / CrUX."
+Say clearly: "these are hygiene risks; confirm with real field data."
+
+For the **real** numbers, Narwhal has `narwhal vitals <url> --crux-key KEY` (the CrUX
+API — real Chrome-user LCP/INP/CLS at p75). If the user has a `CRUX_API_KEY` set, you
+may run it and fold the actual field verdict into your report; otherwise recommend it.
 
 ## Reference (2026)
 LCP good <2.5s / poor >4s · INP good <200ms / poor >500ms · CLS good <0.1 / poor >0.25.
+(INP replaced FID in 2024; the CrUX API is the field-data source — PageSpeed Insights
+is dropping CrUX field data in 2026.)
 
 ## Output to the orchestrator
 - **Performance score:** X/100 (a hygiene score — label it as such)
 - **Findings** (Critical → Low) — each: observation · why it matters · exact fix
 - **Quick wins**
-- **Recommended follow-up:** run PageSpeed Insights for real field metrics.
+- **Recommended follow-up:** `narwhal vitals <url> --crux-key KEY` for real CrUX field metrics.

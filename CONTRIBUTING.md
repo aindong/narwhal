@@ -36,6 +36,7 @@ narwhal/
     │   ├── generate_schema.py / generate_llms.py
     │   ├── audit.py         # comprehensive page + crawl + sitemap
     │   ├── diff_scan.py     # diff two JSON reports (regression tracking)
+    │   ├── crux.py          # `narwhal vitals` — real Core Web Vitals via CrUX (opt-in)
     │   ├── mcp_server.py    # `narwhal mcp` — MCP server exposing the auditors
     │   ├── cli.py           # unified `narwhal` entrypoint (scan/crawl/…)
     │   ├── audit_*.py       # one file per auditor (technical/content/schema/geo)

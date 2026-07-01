@@ -676,6 +676,65 @@ class TestScanDiff(unittest.TestCase):
         self.assertIn("Resolved", md)
 
 
+class TestCruxVitals(unittest.TestCase):
+    def setUp(self):
+        import crux
+        self.crux = crux
+
+    def _record(self, lcp=2100, inp=180, cls="0.05", ttfb=900):
+        return {"metrics": {
+            "largest_contentful_paint": {"percentiles": {"p75": lcp}},
+            "interaction_to_next_paint": {"percentiles": {"p75": inp}},
+            "cumulative_layout_shift": {"percentiles": {"p75": cls}},
+            "experimental_time_to_first_byte": {"percentiles": {"p75": ttfb}},
+        }, "collectionPeriod": {"lastDate": {"year": 2026, "month": 6, "day": 28}}}
+
+    def test_thresholds(self):
+        self.assertEqual(self.crux.rate(2500, 4000, 2100), "good")
+        self.assertEqual(self.crux.rate(2500, 4000, 3000), "needs-improvement")
+        self.assertEqual(self.crux.rate(2500, 4000, 5000), "poor")
+
+    def test_all_good_passes_cwv(self):
+        p = self.crux.parse_record(self._record())
+        self.assertTrue(p["cwv_pass"])
+        self.assertEqual(p["period"], "2026-06-28")
+        core = {r["metric"]: r["rating"] for r in p["rows"] if r["core"]}
+        self.assertEqual(core, {"LCP": "good", "INP": "good", "CLS": "good"})
+
+    def test_one_poor_core_fails_cwv(self):
+        p = self.crux.parse_record(self._record(lcp=5000))
+        self.assertFalse(p["cwv_pass"])
+
+    def test_missing_core_metric_is_incomplete(self):
+        rec = self._record()
+        del rec["metrics"]["interaction_to_next_paint"]
+        p = self.crux.parse_record(rec)
+        self.assertIsNone(p["cwv_pass"])   # can't confirm without INP
+
+    def test_cls_string_p75_is_coerced(self):
+        p = self.crux.parse_record(self._record(cls="0.24"))
+        cls = [r for r in p["rows"] if r["metric"] == "CLS"][0]
+        self.assertEqual(cls["rating"], "needs-improvement")
+        self.assertAlmostEqual(cls["p75"], 0.24)
+
+    def test_render_markdown_not_found(self):
+        md = self.crux.render_markdown(
+            {"found": False, "target": "https://x.com/", "error": "no data"})
+        self.assertIn("Core Web Vitals", md)
+        self.assertIn("no data", md)
+
+    def test_main_requires_key(self):
+        import contextlib
+        import io
+        import unittest.mock
+        # Ensure no ambient key so we exercise the "key required" guard.
+        with unittest.mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("CRUX_API_KEY", None)
+            with contextlib.redirect_stderr(io.StringIO()):
+                rc = self.crux.main(["https://example.com"])
+        self.assertEqual(rc, 2)
+
+
 class TestRenderHardening(unittest.TestCase):
     def test_missing_browser_gives_actionable_hint(self):
         # Playwright installed but Chromium binary absent — the message must tell

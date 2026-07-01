@@ -4,10 +4,10 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
-> **Status (v1.7.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
-> features below, and now **#13 (HTML/PDF)**, **#14 (scan diffing)**, **#16 (harden
-> render)**, and **#17 (MCP server)**. Remaining P2 work is #15 and #18. See
-> [STATUS.md](STATUS.md) for the full snapshot.
+> **Status (v1.8.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
+> features below, and now **#13 (HTML/PDF)**, **#14 (scan diffing)**, **#15 (CrUX
+> vitals)**, **#16 (harden render)**, and **#17 (MCP server)**. The only P2 left is
+> **#18 (dark-mode logo)**. See [STATUS.md](STATUS.md) for the full snapshot.
 
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
 > **Status:** ⬜ planned · 🟡 in progress · ✅ done
@@ -98,7 +98,9 @@ hard commitments.
 - ✅ **Scan diffing / regression tracking** — `narwhal diff old.json new.json`:
   score delta + new/resolved/worsened/improved findings, `--fail-on-regression` CI
   gate. Database-free (diffs the JSON we already emit). — [#14](https://github.com/aindong/narwhal/issues/14)
-- ⬜ **PageSpeed/CrUX integration (opt-in)** — real Core Web Vitals field data.
+- ✅ **CrUX integration (opt-in)** — `narwhal vitals`: real Core Web Vitals field
+  data (LCP/INP/CLS at p75) from the Chrome UX Report API, gated behind an API key.
+  Built against CrUX directly (PSI is dropping CrUX field data in 2026).
   — [#15](https://github.com/aindong/narwhal/issues/15)
 - ✅ **Harden `--render` (Playwright)** — actionable missing-browser error, capped
   `networkidle` settle, guaranteed browser cleanup, honest render-failure errors,
