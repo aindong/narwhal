@@ -36,8 +36,8 @@ hard commitments.
 
 ## 🔴 P0 — Foundation
 
-- ⬜ **CI on GitHub Actions** — run the test suite across Python 3.8–3.12, with and
-  without optional deps; add a status badge. — [#1](https://github.com/aindong/narwhal/issues/1)
+- ✅ **CI on GitHub Actions** — test suite across Python 3.8–3.12 (+ Windows), with
+  and without optional deps; status badge in the README. — [#1](https://github.com/aindong/narwhal/issues/1)
 - ⬜ **v1.0.0 tag + Release** — pin the plugin version for reproducible installs.
   — [#2](https://github.com/aindong/narwhal/issues/2)
 
