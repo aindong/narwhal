@@ -13,7 +13,9 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <url> --only cont
 ```
 (Fallback: `uvx --from git+https://github.com/aindong/narwhal narwhal scan <url> --only content --format json`.)
 This gives word count, Flesch readability, dominant terms/entities, author/date
-signals, and Open Graph completeness. Also **read the actual page text** yourself.
+signals, Open Graph completeness, and **filler / AI-writing-pattern detection**
+(with example phrases + lexical diversity). Also **read the actual page text**
+yourself to confirm and add nuance the heuristics miss.
 
 ## Reason beyond the script (this is where you add the most value)
 Heuristics can't judge quality — you can:

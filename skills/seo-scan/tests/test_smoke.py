@@ -17,6 +17,7 @@ from lib import sitemap as sm  # noqa: E402
 from lib import text as textlib  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib import simhash  # noqa: E402
+from lib import content_quality as cq  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
@@ -323,6 +324,41 @@ class TestCrawlPoliteness(unittest.TestCase):
         cands = [f"https://site.com/{i}" for i in range(20)]
         urls, skipped = crawl_site.select_urls(cands, base, rt, True, 5)
         self.assertEqual(len(urls), 5)
+
+
+class TestContentQuality(unittest.TestCase):
+    AI = ("In today's fast-paced world, it is worth noting that we must delve into "
+          "the ever-evolving realm of marketing. When it comes to unlocking the "
+          "potential of your brand, our cutting-edge seamless solutions play a "
+          "crucial role. Needless to say, this is a testament to our game-changing "
+          "approach that will elevate your presence. ") * 2
+    CLEAN = ("We measured load times on 40 store pages with WebPageTest. Median LCP "
+             "was 3.2 seconds, driven by a 1.4 MB hero PNG. Converting it to WebP and "
+             "setting width and height cut the median to 1.9 seconds. Checkout pages "
+             "improved less because a third-party script blocks the main thread. ") * 2
+
+    def test_flags_filler_and_ai(self):
+        r = cq.analyze(self.AI)
+        self.assertGreater(r["filler_per_100w"], 1.0)
+        self.assertGreaterEqual(r["ai_distinct"], 4)
+        self.assertTrue(r["filler_examples"])
+
+    def test_clean_text_is_clean(self):
+        r = cq.analyze(self.CLEAN)
+        self.assertEqual(r["filler_count"], 0)
+        self.assertEqual(r["ai_distinct"], 0)
+
+    def test_short_text_safe(self):
+        r = cq.analyze("Too short.")
+        self.assertEqual(r["filler_per_100w"], 0.0)  # under 100 words -> not scored
+
+    def test_auditor_flags_ai_content(self):
+        import audit_content
+        from lib.report import Report
+        rep = Report("u")
+        audit_content._quality(self.AI, rep)
+        titles = [f.title for f in rep.findings]
+        self.assertTrue(any("AI-generated" in t or "Filler" in t for t in titles))
 
 
 class TestSimhash(unittest.TestCase):

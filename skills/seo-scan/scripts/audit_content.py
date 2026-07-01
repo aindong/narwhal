@@ -12,8 +12,10 @@ import re
 
 try:
     from lib import text as textlib
+    from lib import content_quality
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
+    from .lib import content_quality  # type: ignore
 
 CAT = "content"
 
@@ -34,6 +36,7 @@ def audit(doc, resp, report, ctx=None) -> None:
     _word_count(wc, report, th)
     _readability(text, report)
     _keywords(doc, text, report)
+    _quality(text, report)
     _authorship(doc, text, report)
     _freshness(doc, text, report)
     _og_social(doc, report)
@@ -100,6 +103,49 @@ def _keywords(doc, text, report):
                    "frequent body terms.",
                    "Make sure the main content actually develops the topic promised "
                    "by the title and H1 (helps ranking and AI topical grounding).")
+
+
+def _quality(text, report):
+    """Flag filler/padding language, AI-writing patterns, and low diversity."""
+    q = content_quality.analyze(text)
+    if q["word_count"] < 100:
+        return  # too short to judge reliably
+
+    if q["filler_per_100w"] >= 1.0:
+        report.add(CAT, "medium", "Filler / padding language",
+                   f"{q['filler_count']} filler phrases "
+                   f"(~{q['filler_per_100w']} per 100 words).",
+                   "Cut hollow phrasing and lead with substance; padding dilutes the "
+                   "content for readers and AI extraction.",
+                   evidence="; ".join(q["filler_examples"]))
+    elif q["filler_count"] >= 2:
+        report.add(CAT, "low", "Some filler phrasing",
+                   f"{q['filler_count']} filler phrases detected.",
+                   "Tighten wording; prefer specifics over padding.",
+                   evidence="; ".join(q["filler_examples"]))
+
+    if q["ai_distinct"] >= 4:
+        report.add(CAT, "medium", "Reads as AI-generated / generic",
+                   f"{q['ai_distinct']} distinct AI-writing patterns "
+                   f"({q['ai_pattern_count']} total).",
+                   "Rewrite in an original voice with first-hand specifics and "
+                   "examples — generic AI-sounding prose is a helpful-content risk.",
+                   evidence="; ".join(q["ai_examples"]))
+    elif q["ai_distinct"] >= 2:
+        report.add(CAT, "low", "Some generic/AI-sounding phrasing",
+                   f"{q['ai_distinct']} AI-writing patterns detected.",
+                   "Replace cliché phrasing with concrete, experience-backed detail.",
+                   evidence="; ".join(q["ai_examples"]))
+
+    if q["word_count"] >= 400 and q["lexical_diversity"] < 0.35:
+        report.add(CAT, "low", "Repetitive vocabulary",
+                   f"Lexical diversity {q['lexical_diversity']} (unique/total words).",
+                   "Vary wording and add substance; heavy repetition signals thin or "
+                   "spun content.")
+    if (q["filler_per_100w"] < 1.0 and q["ai_distinct"] < 2
+            and q["lexical_diversity"] >= 0.35):
+        report.ok(CAT, "Clean, specific writing",
+                  f"low filler, diverse vocabulary ({q['lexical_diversity']})")
 
 
 def _authorship(doc, text, report):

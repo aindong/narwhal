@@ -61,3 +61,12 @@ judgments. The content auditor surfaces heuristic proxies for these signals.
   the page helps the user better than what already exists.
 - Warning signs the auditor approximates: no author, no dates, no specifics, no
   sources, filler phrasing. Fixing those usually means adding genuine expertise.
+
+## Filler & AI-writing detection
+- The content auditor flags **filler/padding phrases** ("in today's fast-paced
+  world", "when it comes to", "needless to say"…) and **AI-writing patterns**
+  ("it's worth noting", "delve into", "a testament to", "unlock the potential"…),
+  plus low **lexical diversity** (repetitive vocabulary), with example matches.
+- These are *signals*, not proof — a few is fine; a high density suggests hollow or
+  generically-generated content. The fix is always the same: replace cliché phrasing
+  with concrete, first-hand specifics, data, and examples.
