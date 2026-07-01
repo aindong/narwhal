@@ -109,6 +109,25 @@ To update later, run `/plugin marketplace update narwhal`; to remove, `/plugin
 uninstall seo-scan@narwhal`. (`narwhal` is the marketplace name; `seo-scan` is the
 plugin.)
 
+### Run instantly with `uvx` (no install, no PyPI)
+
+If you have [`uv`](https://docs.astral.sh/uv/), run Narwhal straight from GitHub in
+a throwaway environment — always the latest, nothing left behind:
+
+```bash
+uvx --from git+https://github.com/aindong/narwhal narwhal scan https://example.com
+uvx --from git+https://github.com/aindong/narwhal narwhal crawl https://example.com --max-pages 25
+uvx --from git+https://github.com/aindong/narwhal narwhal schema Article --field headline="…"
+```
+
+The unified `narwhal` command has three subcommands: `scan`, `crawl`, `schema`
+(run any with `-h`). Prefer a stable command? Alias it:
+
+```bash
+alias narwhal='uvx --from git+https://github.com/aindong/narwhal narwhal'
+narwhal scan https://example.com --fail-under 80
+```
+
 ### Claude Code — manual (no plugin system)
 
 Copy or symlink `skills/seo-scan/` into `~/.claude/skills/` (user-wide) or

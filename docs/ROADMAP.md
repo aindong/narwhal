@@ -45,8 +45,9 @@ hard commitments.
 
 - ✅ **`--fail-under <score>` exit code** — Narwhal as a CI quality gate (on both
   `scan.py` and `crawl_site.py`). — [#3](https://github.com/aindong/narwhal/issues/3)
-- ⬜ **Unified `narwhal` CLI + PyPI packaging** — one entrypoint (`scan`/`crawl`/
-  `schema`), `pipx install`. — [#4](https://github.com/aindong/narwhal/issues/4)
+- ✅ **Unified `narwhal` CLI + `uvx` packaging** — one entrypoint (`scan`/`crawl`/
+  `schema`), runnable via `uvx --from git+…` with no install and no PyPI. PyPI
+  publish is optional and deferred. — [#4](https://github.com/aindong/narwhal/issues/4)
 - ⬜ **Polite crawler** — honor robots.txt, rate-limit, bounded concurrency,
   caching. — [#5](https://github.com/aindong/narwhal/issues/5)
 - ⬜ **Robust robots.txt matching** — wildcards + Allow/Disallow precedence; report
