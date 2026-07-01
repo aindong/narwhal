@@ -12,6 +12,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/aindong/narwhal/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/aindong/narwhal/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-2ea44f">
   <img alt="Python 3.8+" src="https://img.shields.io/badge/Python-3.8%2B-3776ab?logo=python&logoColor=white">
   <img alt="Agents: Claude Code, Codex, Cursor, OpenCode" src="https://img.shields.io/badge/agents-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Cursor%20%C2%B7%20OpenCode-1f6feb">
