@@ -4,10 +4,10 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
-> **Status (v1.8.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
-> features below, and now **#13 (HTML/PDF)**, **#14 (scan diffing)**, **#15 (CrUX
-> vitals)**, **#16 (harden render)**, and **#17 (MCP server)**. The only P2 left is
-> **#18 (dark-mode logo)**. See [STATUS.md](STATUS.md) for the full snapshot.
+> **Status (v1.9.0):** all P0 + P1 **and all P2** shipped — #1–#18 closed, plus the
+> beyond-roadmap features below. The roadmap backlog is clear; remaining tracked
+> work is #19 (tune the multi-agent audit) and #20 (default trafilatura). See
+> [STATUS.md](STATUS.md) for the full snapshot.
 
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
 > **Status:** ⬜ planned · 🟡 in progress · ✅ done
@@ -108,8 +108,9 @@ hard commitments.
 - ✅ **MCP server wrapper** — `narwhal mcp` exposes all auditors (scan/crawl/audit/
   sitemap/llms/schema/diff) as MCP tools over stdio (FastMCP; optional `mcp` extra).
   — [#17](https://github.com/aindong/narwhal/issues/17)
-- ⬜ **Dark-mode logo + README `<picture>`** — high-contrast in both themes.
-  — [#18](https://github.com/aindong/narwhal/issues/18)
+- ✅ **Dark-mode logo + README `<picture>`** — `assets/logo-dark.png`; README
+  auto-swaps via `prefers-color-scheme`. Derived deterministically from the light
+  logo (`assets/make-dark-logo.py`). — [#18](https://github.com/aindong/narwhal/issues/18)
 
 ---
 

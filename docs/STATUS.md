@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.8.0**_
+_Last updated: 2026-07-01 · version **1.9.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -42,8 +42,12 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **#15 shipped:** **Real Core Web Vitals** — `narwhal vitals` (`crux.py`) fetches
   LCP/INP/CLS field data from the CrUX API. Opt-in (API key), never on the default
   path; honest when no key / no data. Verified vs the live CrUX API contract.
+- **#18 shipped:** **Dark-mode logo** — `assets/logo-dark.png`; README auto-swaps
+  via `<picture>`. Derived deterministically from the light logo
+  (`assets/make-dark-logo.py`).
+- **P2 backlog (#13–#18) fully cleared.**
 - **Tests:** 94, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
-- **Released:** v1.0.0 → v1.8.0. Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.9.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -65,9 +69,12 @@ narwhal/
 ```
 
 ## What's next (open issues)
-- **#18** (P2) Dark-mode logo + README `<picture>` auto-swap — the last P2 item.
-- **#19** Tune the multi-agent audit from real runs.
+The P0–P2 roadmap is complete. Remaining tracked work:
+- **#19** Tune the multi-agent audit from real runs (ongoing quality work).
 - **#20** Make the optional `trafilatura` main-content path the default.
+- Plus the not-yet-ticketed ideas at the bottom of [ROADMAP.md](ROADMAP.md)
+  (microdata/RDFa, OG-image validation, image-weight checks, a11y lens, hreflang
+  bidirectionality, per-finding "learn more" deep links).
 
 ### Also worth doing (not yet ticketed)
 - **Tune the multi-agent audit from real runs** — the 10 agents were authored, then

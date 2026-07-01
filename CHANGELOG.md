@@ -4,6 +4,18 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] — 2026-07-01
+
+### Added
+- **Dark-mode logo** (`assets/logo-dark.png` + `-512`): the navy structure and
+  "NARWHAL" wordmark are recolored to light icy-blue so the mark reads on dark
+  backgrounds, while the teal/aqua stays vivid. The README auto-swaps to it via a
+  `<picture>` element (`prefers-color-scheme: dark`). Derived deterministically
+  from the light logo (`assets/make-dark-logo.py`, luminance fold) — same artwork,
+  regenerable in one command.
+
+This release also marks the **P2 roadmap backlog (#13–#18) fully cleared.**
+
 ## [1.8.0] — 2026-07-01
 
 ### Added

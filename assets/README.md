@@ -6,13 +6,22 @@
 | `logo-512.png` | Downscaled 512×512 transparent version for README / web embeds |
 | `logo-white.png` | Same primary logo on a solid **white** background (for photos, print, or where a fill is needed) |
 | `logo-alt.png` | Alternate mark (dynamic leaping-narwhal pose), transparent — swap in by renaming to `logo.png` |
+| `logo-dark.png` | **Dark-mode** variant, transparent, 2048×2048 — recolored so the navy structure/wordmark reads as light icy-blue on dark backgrounds |
+| `logo-dark-512.png` | Downscaled 512×512 dark-mode version for README / web embeds |
 
 All transparent PNGs are keyed from a flat white background (distance-to-white
 alpha), so edges are anti-aliased and the badge interior is see-through.
 
-**Dark backgrounds:** the mark uses deep-navy elements, so it reads best on light
-or medium backgrounds. For dark-mode / dark marketing surfaces, use a light or
-inverted variant (not yet generated — ask to add one).
+**Dark backgrounds:** the primary mark uses deep-navy elements that fade on dark
+surfaces, so use **`logo-dark.png`** there. The README auto-swaps to it via a
+`<picture>` element with `prefers-color-scheme: dark`. The dark variant is derived
+deterministically from `logo.png` (luminance fold: darks lighten, the teal/aqua
+stays vivid) — regenerate it with:
+
+```
+python assets/make-dark-logo.py assets/logo.png assets/logo-dark.png
+# then downscale to assets/logo-dark-512.png
+```
 
 **Concept:** a narwhal breaching from ocean waves, its spiral tusk rising into a
 growth arrow over a bar/line chart — search & AI-answer visibility trending up.

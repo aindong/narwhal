@@ -5,4 +5,4 @@ When installed as a package (via uvx/pip) these modules are importable as
 also runs standalone (e.g. ``python scan.py <url>``).
 """
 
-__version__ = "1.8.0"
+__version__ = "1.9.0"

@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/logo-512.png" alt="Narwhal logo" width="240">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark-512.png">
+    <img src="assets/logo-512.png" alt="Narwhal logo" width="240">
+  </picture>
 </p>
 
 <h1 align="center">Narwhal</h1>
