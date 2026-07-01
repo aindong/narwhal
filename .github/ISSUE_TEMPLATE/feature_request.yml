@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new auditor, check, output, or improvement
+title: "[Feature]: "
+labels: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What gap or need does this address? Who benefits?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should Narwhal do? Sketch the behavior, flags, or output.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Technical SEO
+        - Content / E-E-A-T
+        - Structured data / schema
+        - GEO / LLMO (AI search)
+        - Crawler / site-level
+        - Output / reporting
+        - CLI / packaging / config
+        - Plugin / integrations
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Prior art, references (e.g. Google guidance), acceptance criteria.

@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in the scanner or a script isn't working as expected
+title: "[Bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting! Please include enough detail to reproduce.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run, and what went wrong?
+      placeholder: "python skills/seo-scan/scripts/scan.py https://… → …"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Target URL (if shareable)
+      description: The site/page being scanned, if it can be shared.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - scan.py (single page)
+        - crawl_site.py (site)
+        - generate_schema.py
+        - technical auditor
+        - content auditor
+        - schema auditor
+        - geo auditor
+        - plugin / install
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Python version, and any optional libs installed (requests/bs4/lxml/trafilatura/playwright).
+      placeholder: "Windows 11, Python 3.12, only requests installed"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output / traceback
+      render: shell
