@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.4.0**_
+_Last updated: 2026-07-01 · version **1.5.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -29,8 +29,12 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   (`--format html`: score gauge, per-area breakdown, severity cards) on `scan` and
   `audit`; PDF via WeasyPrint with graceful HTML fallback (`--format pdf`). Sample
   in `docs/samples/`.
-- **Tests:** 72, green in CI across Python 3.8–3.12 + Windows.
-- **Released:** v1.0.0 → v1.4.0. Plugin installs as `narwhal@narwhal`.
+- **#14 shipped:** **Scan diffing / regression tracking** — `narwhal diff
+  old.json new.json` (score delta + new/resolved/worsened/improved findings,
+  `--fail-on-regression` CI gate). Database-free by design: diffs the JSON we
+  already emit (`diff_scan.py`).
+- **Tests:** 79, green in CI across Python 3.8–3.12 + Windows.
+- **Released:** v1.0.0 → v1.5.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -41,7 +45,7 @@ narwhal/
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
 │   ├── scripts/           scan, crawl_site, validate_sitemap, generate_schema,
-│   │                      generate_llms, audit, cli + lib/ (http, htmlx, report,
+│   │                      generate_llms, audit, diff_scan, cli + lib/ (http, htmlx, report,
 │   │                      robots, links, sitemap, simhash, text, content_quality,
 │   │                      config)
 │   ├── references/        deep-dive guidance per auditor
@@ -52,7 +56,6 @@ narwhal/
 ```
 
 ## What's next (open issues — all P2)
-- **#14** Scan diffing / regression tracking (SQLite snapshots) — recommended next.
 - **#15** Optional PageSpeed/CrUX for real Core Web Vitals (opt-in; the
   `narwhal-performance` agent already flags hygiene and points here).
 - **#16** Harden the Playwright `--render` path + tests.

@@ -96,6 +96,20 @@ grouped into sections; a curation starting point, not a finished file):
 python scripts/generate_llms.py https://example.com -o llms.txt
 ```
 
+**Track health over time / catch regressions** (no database — diff two saved JSON
+reports). Save a scan as JSON now, re-scan later, and compare:
+```
+python scripts/scan.py https://example.com --format json -o before.json
+# ...later...
+python scripts/scan.py https://example.com --format json -o after.json
+python scripts/diff_scan.py before.json after.json
+```
+The diff reports the score delta and which findings are **new**, **resolved**,
+**worsened**, or **improved** (dynamic titles like "Thin content (210 words)" are
+matched across runs). Add `--fail-on-regression` for a CI gate: it exits non-zero
+if the score dropped or a new critical/high finding appeared. Works on `audit`
+JSON too (uses the overall score + homepage findings).
+
 ## What each auditor covers
 
 | Auditor | Focus |

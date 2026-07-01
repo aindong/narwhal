@@ -20,6 +20,8 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --format json -o out.json` | Machine-readable output |
 | `python scan.py <url> --format html -o report.html` | Self-contained, styled HTML report (also on `audit.py`) |
 | `python scan.py <url> --format pdf -o report.pdf` | PDF report (needs WeasyPrint; falls back to HTML) |
+| `python diff_scan.py old.json new.json` | Diff two JSON reports: score delta, new/resolved/worsened findings |
+| `python diff_scan.py old.json new.json --fail-on-regression` | CI gate: exit non-zero if score dropped or a new critical/high appeared |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |

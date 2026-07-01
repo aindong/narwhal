@@ -113,6 +113,25 @@ with what was observed and a concrete fix.
   ```
 - `--allow-private` — permit localhost/staging targets (off by default; see below).
 
+### Track health over time (regression tracking, no database)
+
+Narwhal stays stateless: instead of a database, save a scan as JSON and diff two
+runs. Human-readable, git-friendly, and the agent can read the diff directly.
+
+```bash
+python skills/seo-scan/scripts/scan.py https://example.com --format json -o before.json
+# ...after changes...
+python skills/seo-scan/scripts/scan.py https://example.com --format json -o after.json
+python skills/seo-scan/scripts/diff_scan.py before.json after.json
+```
+
+The diff shows the **score delta** and which findings are **new**, **resolved**,
+**worsened**, or **improved** (dynamic titles like `Thin content (210 words)` are
+matched across runs). Add `--fail-on-regression` as a **CI gate** — it exits
+non-zero if the score dropped or a new critical/high finding appeared. Commit the
+JSON snapshots alongside your repo to keep a lightweight history. Works on `audit`
+JSON too.
+
 ## Install
 
 ### Claude Code — plugin (recommended, one command)
@@ -156,8 +175,8 @@ uvx --from git+https://github.com/aindong/narwhal narwhal sitemap https://exampl
 uvx --from git+https://github.com/aindong/narwhal narwhal llms https://example.com
 ```
 
-The unified `narwhal` command has five subcommands: `scan`, `crawl`, `schema`,
-`sitemap`, `llms` (run any with `-h`). Prefer a stable command? Alias it:
+The unified `narwhal` command has subcommands `audit`, `scan`, `crawl`, `schema`,
+`sitemap`, `llms`, and `diff` (run any with `-h`). Prefer a stable command? Alias it:
 
 ```bash
 alias narwhal='uvx --from git+https://github.com/aindong/narwhal narwhal'

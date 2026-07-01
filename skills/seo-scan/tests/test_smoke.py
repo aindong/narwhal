@@ -600,6 +600,82 @@ class TestHtmlRenderer(unittest.TestCase):
         self.assertIn("<svg", html)
 
 
+class TestScanDiff(unittest.TestCase):
+    def setUp(self):
+        import diff_scan
+        self.diff = diff_scan
+
+    def _report(self, findings, score_url="https://x.com/p"):
+        r = Report(score_url, final_url=score_url, fetched_status=200)
+        for cat, sev, title in findings:
+            r.add(cat, sev, title)
+        import json
+        return json.loads(r.to_json())
+
+    def test_added_resolved_and_score_delta(self):
+        old = self._report([("technical", "critical", "Canonical points elsewhere"),
+                            ("technical", "high", "Meta description missing")])
+        new = self._report([("technical", "high", "Meta description missing"),
+                            ("schema", "critical", "Broken JSON-LD")])
+        d = self.diff.diff_reports(old, new)
+        self.assertEqual([f["title"] for f in d["added"]], ["Broken JSON-LD"])
+        self.assertEqual([f["title"] for f in d["resolved"]], ["Canonical points elsewhere"])
+        self.assertEqual(d["unchanged"], 1)
+        self.assertTrue(d["regression"])          # new critical finding
+        self.assertEqual([f["title"] for f in d["new_critical_high"]], ["Broken JSON-LD"])
+
+    def test_dynamic_title_suffix_matches_across_runs(self):
+        # "Thin content (210 words)" and "(95 words)" are the same finding.
+        old = self._report([("content", "medium", "Thin content (210 words)")])
+        new = self._report([("content", "high", "Thin content (95 words)")])
+        d = self.diff.diff_reports(old, new)
+        self.assertEqual(d["added"], [])
+        self.assertEqual(d["resolved"], [])
+        self.assertEqual(len(d["worsened"]), 1)
+        self.assertEqual(d["worsened"][0]["from"], "medium")
+        self.assertEqual(d["worsened"][0]["to"], "high")
+
+    def test_improvement_is_not_a_regression(self):
+        old = self._report([("technical", "high", "Meta description missing")])
+        new = self._report([])
+        d = self.diff.diff_reports(old, new)
+        self.assertFalse(d["regression"])
+        self.assertEqual(len(d["resolved"]), 1)
+        self.assertIn("Improved", self.diff._verdict(d))
+
+    def test_regression_on_score_drop_without_new_high(self):
+        old = self._report([("geo", "low", "No llms.txt")])
+        new = self._report([("geo", "low", "No llms.txt"),
+                            ("content", "medium", "Thin content")])
+        d = self.diff.diff_reports(old, new)
+        self.assertTrue(d["regression"])          # score dropped (added medium)
+        self.assertEqual(d["new_critical_high"], [])
+
+    def test_accepts_audit_shape_json(self):
+        old = {"site": "https://x.com", "overall_score": 60,
+               "homepage": {"url": "https://x.com", "score": 60,
+                            "findings": [{"category": "technical",
+                                          "severity": "high",
+                                          "title": "Meta description missing"}]}}
+        new = {"site": "https://x.com", "overall_score": 72,
+               "homepage": {"url": "https://x.com", "score": 72, "findings": []}}
+        d = self.diff.diff_reports(old, new)
+        self.assertEqual(d["score_delta"], 12)
+        self.assertEqual(len(d["resolved"]), 1)
+
+    def test_unrecognized_json_raises(self):
+        with self.assertRaises(ValueError):
+            self.diff._normalize({"nope": 1})
+
+    def test_render_markdown_smoke(self):
+        old = self._report([("technical", "high", "Meta description missing")])
+        new = self._report([("schema", "critical", "Broken JSON-LD")])
+        md = self.diff.render_markdown(self.diff.diff_reports(old, new))
+        self.assertIn("Narwhal Scan Diff", md)
+        self.assertIn("New findings", md)
+        self.assertIn("Resolved", md)
+
+
 class TestFailUnderGate(unittest.TestCase):
     def test_no_threshold_never_fails(self):
         self.assertFalse(below_threshold(0, None))

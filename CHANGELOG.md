@@ -4,6 +4,19 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-07-01
+
+### Added
+- **Scan diffing / regression tracking** (`narwhal diff old.json new.json`): compare
+  two saved JSON reports — score delta plus **new / resolved / worsened / improved**
+  findings. Deliberately database-free (diff the JSON we already emit): human-readable,
+  git-friendly, and directly readable by the agent.
+  - Dynamic finding titles (e.g. `Thin content (210 words)`) are normalized so the
+    same issue matches run-to-run.
+  - `--fail-on-regression` exit code for CI gating (score dropped, or a new
+    critical/high finding appeared).
+  - Accepts both `scan` and `audit --format json` output; Markdown + JSON output.
+
 ## [1.4.0] — 2026-07-01
 
 ### Added

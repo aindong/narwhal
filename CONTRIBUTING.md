@@ -35,6 +35,7 @@ narwhal/
     │   ├── validate_sitemap.py
     │   ├── generate_schema.py / generate_llms.py
     │   ├── audit.py         # comprehensive page + crawl + sitemap
+    │   ├── diff_scan.py     # diff two JSON reports (regression tracking)
     │   ├── cli.py           # unified `narwhal` entrypoint (scan/crawl/…)
     │   ├── audit_*.py       # one file per auditor (technical/content/schema/geo)
     │   └── lib/             # http, htmlx, report, robots, links, sitemap,
