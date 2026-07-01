@@ -36,6 +36,7 @@ narwhal/
     │   ├── generate_schema.py / generate_llms.py
     │   ├── audit.py         # comprehensive page + crawl + sitemap
     │   ├── diff_scan.py     # diff two JSON reports (regression tracking)
+    │   ├── render_report.py # `narwhal render` — Markdown -> branded HTML/PDF report
     │   ├── crux.py          # `narwhal vitals` — real Core Web Vitals via CrUX (opt-in)
     │   ├── psi.py           # `narwhal vitals --lab` — PageSpeed Insights (Lighthouse) lab data
     │   ├── mcp_server.py    # `narwhal mcp` — MCP server exposing the auditors

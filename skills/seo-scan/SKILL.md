@@ -135,6 +135,15 @@ It returns a performance score + LCP, TBT (lab proxy for INP), CLS, FCP, SI, TTI
 key is optional (keyless quota is shared/often exhausted); set `PAGESPEED_API_KEY`
 or reuse the CrUX key with the PageSpeed Insights API also enabled.
 
+**Turn a Markdown report into a branded HTML/PDF** (e.g. after synthesizing an
+audit — write it to a `.md`, then render):
+```
+python scripts/render_report.py report.md -o report.html      # branded HTML
+python scripts/render_report.py report.md --format pdf -o report.pdf   # needs WeasyPrint
+```
+The output is self-contained (inline CSS + logo), with the Narwhal header/footer —
+same look as the scan/audit reports.
+
 ## What each auditor covers
 
 | Auditor | Focus |

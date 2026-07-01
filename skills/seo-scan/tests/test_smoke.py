@@ -795,6 +795,34 @@ class TestEnvLoader(unittest.TestCase):
             self.assertEqual(os.environ["CRUX_API_KEY"], "from_dotenv")
 
 
+class TestRenderReport(unittest.TestCase):
+    def setUp(self):
+        import render_report
+        self.rr = render_report
+
+    def test_renders_branded_self_contained_html(self):
+        html = self.rr.render("# My Audit\n\nSome **bold** text.", subtitle="https://x.com")
+        self.assertTrue(html.lstrip().startswith("<!DOCTYPE html>"))
+        self.assertIn('<header class="brand">', html)          # branded
+        self.assertIn("data:image/png;base64,", html)          # inline logo
+        self.assertIn("<strong>bold</strong>", html)
+        self.assertNotIn("<script", html)
+
+    def test_first_h1_becomes_title_and_leaves_body(self):
+        html = self.rr.render("# Narwhal Site Audit\n\n## Summary\n\nBody.")
+        self.assertIn("Narwhal Site Audit", html)              # used as the title
+        self.assertNotIn("# Narwhal Site Audit", html)          # H1 removed from body
+        self.assertIn("<h2>Summary</h2>", html)                 # rest of body intact
+
+    def test_explicit_title_overrides(self):
+        html = self.rr.render("# Ignored\n\nBody.", title="Custom Title")
+        self.assertIn("Custom Title", html)
+
+    def test_markdown_links_render(self):
+        html = self.rr.render("See [the docs](https://example.com/docs).")
+        self.assertIn('<a href="https://example.com/docs">the docs</a>', html)
+
+
 class TestAuditVitals(unittest.TestCase):
     def _data(self, vitals):
         from collections import Counter

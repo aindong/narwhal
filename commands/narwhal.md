@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|scan|crawl|sitemap|llms|schema|vitals|diff> <site>
+argument-hint: <audit|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -63,12 +63,16 @@ Fold its verdict into the performance section. Label it correctly — **field**
 - **Quick wins** — low-effort, high-impact.
 - **Core Web Vitals** — the field/lab verdict from Step 2b.
 - **Per-area detail** — one concise section per specialist.
-Offer to write it to `narwhal-audit-report.md`. For a **shareable HTML/PDF** that
-already includes the Core Web Vitals section, run:
+
+**Step 4 — Deliver the branded report file.** Write the synthesized report to
+`narwhal-audit-report.md`, then render it into a **self-contained, branded HTML
+report** (Narwhal logo + styling, containing *your* synthesis):
 ```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --vitals --format html -o narwhal-audit.html
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/render_report.py" narwhal-audit-report.md --subtitle "$2" -o narwhal-audit-report.html
 ```
-(swap `--format pdf` for a PDF — needs WeasyPrint, else it writes HTML).
+Also try a **PDF** (add `--format pdf -o narwhal-audit-report.pdf`); it needs
+WeasyPrint and prints a note + writes HTML instead if it's missing. Tell the user
+the exact file path(s) produced, and that a PDF needs `pip install weasyprint`.
 
 **Formatting (important):** write the report in plain **GitHub-flavored Markdown**
 — `#`/`##` headings, `|`-delimited pipe tables, `-` bullet lists, `**bold**`. Do
@@ -95,6 +99,7 @@ wall of raw output.
 | `schema` | `generate_schema.py $2 …` | here `$2` is the schema **Type** (e.g. Article) |
 | `vitals` | `crux.py $2` | **real** Core Web Vitals (LCP/INP/CLS) from CrUX — see key note below |
 | `diff` | `diff_scan.py $2 $3` | compare two saved JSON reports (`$2`=old, `$3`=new); add `--fail-on-regression` for a gate |
+| `render` | `render_report.py $2 -o report.html` | here `$2` is a Markdown file → branded HTML (`--format pdf` for PDF) |
 
 Read the report back **in your own words, leading with the highest-severity fixes** —
 summarize, don't paste everything.

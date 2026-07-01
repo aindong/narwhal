@@ -4,6 +4,18 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.15.0] — 2026-07-02
+
+### Added
+- **`/narwhal audit` now delivers a branded report file** — not just chat output. It
+  writes `narwhal-audit-report.md`, then renders a self-contained, branded **HTML**
+  report (`narwhal-audit-report.html`) of the synthesis and offers a **PDF**.
+- **`narwhal render <file.md>`** (`render_report.py`) — turns any Markdown report
+  into a branded HTML/PDF (inline CSS + logo, same look as scan/audit reports).
+  Reuses the report renderer; `--format html|pdf`, first `# heading` becomes the
+  title, reads stdin with `-`.
+- The Markdown→HTML converter now renders `[text](https://…)` **links**.
+
 ## [1.14.0] — 2026-07-01
 
 ### Added

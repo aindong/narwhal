@@ -275,6 +275,15 @@ inherits it) or drop a `.env` in your project (see *Real Core Web Vitals* above)
 Then `/narwhal vitals example.com` just works, and `/narwhal audit` automatically
 includes real field data when a key is present.
 
+**`/narwhal audit` produces a shareable report file.** It doesn't just print in the
+chat — after the multi-agent synthesis it writes `narwhal-audit-report.md` and
+renders a **self-contained, branded HTML report** (`narwhal-audit-report.html`),
+then offers a **PDF** (`--format pdf`, needs WeasyPrint). Under the hood that's the
+`render` action, which turns any Markdown into a branded report:
+```bash
+narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
+```
+
 To update later, run `/plugin marketplace update narwhal`; to remove, `/plugin
 uninstall narwhal@narwhal`. (The first `narwhal` is the marketplace, the second is
 the plugin.)
