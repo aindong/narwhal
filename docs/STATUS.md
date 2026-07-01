@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.13.0**_
+_Last updated: 2026-07-01 · version **1.14.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -48,7 +48,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   via `<picture>`. Derived deterministically from the light logo
   (`assets/make-dark-logo.py`).
 - **P2 backlog (#13–#18) fully cleared.**
-- **Tests:** 106, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 107, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -57,7 +57,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   (or PSI lab fallback) and adds a Core Web Vitals section to **all** formats
   (md/html/pdf/json); `/narwhal audit` passes `--vitals`. md_to_html now does
   `_italic_`.
-- **Released:** v1.0.0 → v1.13.0. Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.14.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -70,7 +70,7 @@ narwhal/
 │   ├── scripts/           scan, crawl_site, validate_sitemap, generate_schema,
 │   │                      generate_llms, audit, diff_scan, crux, psi, mcp_server, cli + lib/ (http, htmlx, report,
 │   │                      robots, links, sitemap, simhash, text, content_quality,
-│   │                      config)
+│   │                      config, env, brand)
 │   ├── references/        deep-dive guidance per auditor
 │   └── tests/             offline unittest suite (no network, no deps)
 ├── docs/                  ROADMAP, CONFIG, STATUS (this), index, samples/

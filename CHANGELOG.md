@@ -4,6 +4,16 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.14.0] — 2026-07-01
+
+### Added
+- **Branded HTML/PDF reports** — the Narwhal logo now appears in the report header
+  (next to the title) and footer. It's embedded **inline as a base64 data URI**
+  (`lib/brand.py`), so reports stay fully self-contained (no external request,
+  works offline and in the pip/uvx package where `assets/` isn't shipped).
+  Regenerate with `assets/make-brand-logo.py`. Applies to `scan` and `audit`
+  HTML/PDF output.
+
 ## [1.13.0] — 2026-07-01
 
 ### Added

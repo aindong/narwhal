@@ -23,6 +23,15 @@ python assets/make-dark-logo.py assets/logo.png assets/logo-dark.png
 # then downscale to assets/logo-dark-512.png
 ```
 
+**Report logo (HTML/PDF):** the generated reports embed the mark inline as a
+base64 data URI (so they stay self-contained and work in the pip/uvx package where
+`assets/` isn't shipped). It lives in `skills/seo-scan/scripts/lib/brand.py`;
+regenerate it from the logo with:
+
+```
+python assets/make-brand-logo.py            # uses logo-512.png at 128px
+```
+
 **Concept:** a narwhal breaching from ocean waves, its spiral tusk rising into a
 growth arrow over a bar/line chart — search & AI-answer visibility trending up.
 Palette: deep ocean navy → teal/aqua.
