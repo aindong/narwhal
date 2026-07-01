@@ -23,6 +23,10 @@
   <img alt="Dependencies: zero required" src="https://img.shields.io/badge/deps-zero%20required-8957e5">
 </p>
 
+<p align="center">
+  <img src="assets/demo.gif" alt="Narwhal terminal demo: scan, audit, and Core Web Vitals" width="760">
+</p>
+
 Narwhal scans a web page or whole site for **SEO** and **GEO/LLMO** (visibility in
 AI answer engines) and hands back a **prioritized, fix-first report**. It ships as
 an agent skill: use it from Claude Code via
