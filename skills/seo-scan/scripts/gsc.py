@@ -93,6 +93,7 @@ def analyze(rows_now: list, rows_prev: list, *,
 
     Rows carry ``keys=[page, query]`` plus clicks/impressions/ctr/position.
     Pure and offline-testable; every number comes from the rows."""
+    min_impressions = max(1, min_impressions)   # 0 would divide by zero below
     now, prev = _totals(rows_now), _totals(rows_prev)
     summary = {**now, "clicks_prev": prev["clicks"],
                "impressions_prev": prev["impressions"],
@@ -249,11 +250,13 @@ def fetch(target: str, token: str, *, days=28, timeout=30) -> dict:
     prev_end = start - _dt.timedelta(days=1)
     prev_start = prev_end - _dt.timedelta(days=days - 1)
 
+    ROW_LIMIT = 25000   # API max per request; we flag (not hide) hitting it
+
     def rows(d1, d2):
         st, pl, e = _http_json(
             QUERY_ENDPOINT.format(prop=quote(prop, safe="")), token=token,
             body={"startDate": d1.isoformat(), "endDate": d2.isoformat(),
-                  "dimensions": ["page", "query"], "rowLimit": 25000,
+                  "dimensions": ["page", "query"], "rowLimit": ROW_LIMIT,
                   "type": "web"},
             timeout=timeout)
         if pl is None:
@@ -266,6 +269,7 @@ def fetch(target: str, token: str, *, days=28, timeout=30) -> dict:
         return {"found": False, "error": str(exc)}
     return {"found": True, "property": prop, "days": days,
             "window": {"start": start.isoformat(), "end": end.isoformat()},
+            "capped": max(len(rows_now), len(rows_prev)) >= ROW_LIMIT,
             "rows_now": rows_now, "rows_prev": rows_prev}
 
 
@@ -280,7 +284,7 @@ def gather(target: str, *, days=28, timeout=30, min_impressions=50) -> dict:
     if not r.get("found"):
         return r
     return {"found": True, "property": r["property"], "days": days,
-            "window": r["window"],
+            "window": r["window"], "capped": r.get("capped", False),
             **analyze(r["rows_now"], r["rows_prev"],
                       min_impressions=min_impressions)}
 
@@ -290,10 +294,19 @@ def gather(target: str, *, days=28, timeout=30, min_impressions=50) -> dict:
 def run_auth(client_id: str, client_secret: str, *, timeout=300,
              write_env=False) -> int:
     """One-time loopback OAuth consent flow -> prints (or stores) the refresh
-    token. Listens only on 127.0.0.1; contacts only Google's fixed hosts."""
+    token. Listens only on 127.0.0.1; contacts only Google's fixed hosts. Uses
+    a ``state`` nonce (rejects injected callbacks) and PKCE (S256), per
+    Google's guidance for installed apps — both stdlib."""
+    import base64  # noqa: PLC0415
+    import hashlib  # noqa: PLC0415
     import http.server  # noqa: PLC0415
+    import secrets  # noqa: PLC0415
     import webbrowser  # noqa: PLC0415
 
+    state = secrets.token_urlsafe(24)
+    verifier = secrets.token_urlsafe(48)
+    challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     captured: dict = {}
 
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -316,7 +329,9 @@ def run_auth(client_id: str, client_secret: str, *, timeout=300,
     url = AUTH_ENDPOINT + "?" + urlencode({
         "client_id": client_id, "redirect_uri": redirect,
         "response_type": "code", "scope": SCOPE,
-        "access_type": "offline", "prompt": "consent"})
+        "access_type": "offline", "prompt": "consent",
+        "state": state, "code_challenge": challenge,
+        "code_challenge_method": "S256"})
     print("Open this URL to authorize read-only Search Console access:\n\n  "
           + url + "\n\nWaiting for the browser redirect …")
     webbrowser.open(url)
@@ -328,9 +343,14 @@ def run_auth(client_id: str, client_secret: str, *, timeout=300,
         print(f"Authorization failed: {captured.get('error', 'no code received')}",
               file=sys.stderr)
         return 2
+    if captured.get("state") != state:
+        print("Authorization failed: state mismatch (the callback did not come "
+              "from the consent flow we started).", file=sys.stderr)
+        return 2
     status, payload, err = _http_json(TOKEN_ENDPOINT, form={
         "client_id": client_id, "client_secret": client_secret, "code": code,
-        "redirect_uri": redirect, "grant_type": "authorization_code"})
+        "redirect_uri": redirect, "grant_type": "authorization_code",
+        "code_verifier": verifier})
     refresh = (payload or {}).get("refresh_token")
     if not refresh:
         print(f"Token exchange failed (HTTP {status}): {err}", file=sys.stderr)
@@ -380,6 +400,9 @@ def render_markdown(r: dict, target: str) -> str:
         f"**Avg position:** {s['position']:.1f}",
         "",
     ]
+    if r.get("capped"):
+        lines += ["_Note: the API row cap (25,000) was hit — totals cover the "
+                  "returned rows, not necessarily the whole property._", ""]
 
     def section(title, rows_, header, fmt, empty):
         lines.extend([f"## {title}", ""])
@@ -502,7 +525,7 @@ def main(argv=None) -> int:
     r = fetch(args.url, token, days=args.days, timeout=args.timeout)
     if r.get("found"):
         r = {"found": True, "property": r["property"], "days": r["days"],
-             "window": r["window"],
+             "window": r["window"], "capped": r.get("capped", False),
              **analyze(r["rows_now"], r["rows_prev"],
                        min_impressions=args.min_impressions)}
     out = render_json(r) if args.format == "json" else render_markdown(r, args.url)

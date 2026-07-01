@@ -1150,6 +1150,17 @@ class TestGscAnalysis(unittest.TestCase):
             {"found": False, "error": "no matching property"}, "https://x.com")
         self.assertIn("no matching property", md)
 
+    def test_min_impressions_zero_does_not_crash(self):
+        rows = [self._row("https://x.com/a", "q", 0, 0, 5.0)]
+        r = self.gsc.analyze(rows, rows, min_impressions=0)  # clamped to 1
+        self.assertEqual(r["laggards"], [])
+
+    def test_capped_result_is_flagged_in_report(self):
+        md = self.gsc.render_markdown(
+            {"found": True, "property": "sc-domain:x.com", "days": 28,
+             "capped": True, **self.gsc.analyze([], [])}, "https://x.com")
+        self.assertIn("row cap", md)
+
 
 class TestGscProperty(unittest.TestCase):
     def setUp(self):
