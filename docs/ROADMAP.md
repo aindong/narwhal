@@ -67,8 +67,9 @@ hard commitments.
 ### GEO & content depth
 - ⬜ **`llms.txt` generator** — build a starter `/llms.txt` from sitemap + metadata.
   — [#10](https://github.com/aindong/narwhal/issues/10)
-- ⬜ **Readability + entity extraction** — Flesch–Kincaid, top terms/entities,
-  topical-focus check. — [#11](https://github.com/aindong/narwhal/issues/11)
+- ✅ **Readability + entity extraction** — Flesch reading ease + FK grade in the
+  content auditor, dominant terms/phrases + candidate entities, and a title/H1
+  vs body topical-focus check. — [#11](https://github.com/aindong/narwhal/issues/11)
 - ⬜ **Duplicate / near-duplicate detection** — shingling/SimHash across a crawl;
   flag dupes missing canonical. — [#12](https://github.com/aindong/narwhal/issues/12)
 

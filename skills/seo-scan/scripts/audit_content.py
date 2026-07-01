@@ -10,9 +10,13 @@ from __future__ import annotations
 
 import re
 
+try:
+    from lib import text as textlib
+except ImportError:  # when imported as a package
+    from .lib import text as textlib  # type: ignore
+
 CAT = "content"
 
-_SENTENCE = re.compile(r"[.!?]+")
 _WORD = re.compile(r"[A-Za-z][A-Za-z'-]+")
 _DATE_HINT = re.compile(
     r"\b(20\d{2})\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}",
@@ -27,7 +31,8 @@ def audit(doc, resp, report, ctx=None) -> None:
     wc = len(words)
 
     _word_count(wc, report)
-    _readability(text, words, report)
+    _readability(text, report)
+    _keywords(doc, text, report)
     _authorship(doc, text, report)
     _freshness(doc, text, report)
     _og_social(doc, report)
@@ -47,18 +52,51 @@ def _word_count(wc, report):
         report.ok(CAT, "Sufficient content depth", f"~{wc} words")
 
 
-def _readability(text, words, report):
-    sentences = [s for s in _SENTENCE.split(text) if s.strip()]
-    if not sentences or not words:
+def _readability(text, report):
+    fre = textlib.flesch_reading_ease(text)
+    if fre is None:
         return
-    avg = len(words) / len(sentences)
-    if avg > 25:
-        report.add(CAT, "low", "Long average sentence length",
-                   f"~{avg:.0f} words per sentence.",
-                   "Break up long sentences; short, scannable prose is easier to "
-                   "quote and rank.")
+    grade = textlib.flesch_kincaid_grade(text)
+    label = textlib.reading_ease_label(fre)
+    detail = f"Flesch reading ease {fre} ({label}); ~grade {grade}"
+    if fre < 30:
+        report.add(CAT, "medium", "Content is very hard to read",
+                   detail + ".",
+                   "Shorten sentences and prefer plainer words. Dense prose is "
+                   "harder for readers and for AI engines to quote cleanly.")
+    elif fre < 50:
+        report.add(CAT, "low", "Content is fairly hard to read",
+                   detail + ".",
+                   "Consider shorter sentences/simpler words unless the audience "
+                   "is specialist.")
     else:
-        report.ok(CAT, "Readable sentence length", f"~{avg:.0f} words/sentence")
+        report.ok(CAT, "Readable prose", detail)
+
+
+def _keywords(doc, text, report):
+    keywords = textlib.top_keywords(text, 8)
+    if not keywords:
+        return
+    top_terms = {k for k, _ in keywords}
+    summary = ", ".join(f"{k} ({c})" for k, c in keywords[:6])
+    bigrams = textlib.top_bigrams(text, 3)
+    if bigrams:
+        summary += "  ·  phrases: " + ", ".join(k for k, _ in bigrams)
+    report.ok(CAT, "Dominant topics detected", summary)
+
+    # Topical focus: do the title/H1 terms show up in the body's top keywords?
+    focus_words = set(textlib.words((doc.title or "").lower()))
+    h1s = [t for lvl, t in doc.headings if lvl == 1]
+    if h1s:
+        focus_words |= set(textlib.words(h1s[0].lower()))
+    focus_words = {w for w in focus_words if len(w) >= 3
+                   and w not in textlib.STOPWORDS}
+    if focus_words and not (focus_words & top_terms):
+        report.add(CAT, "low", "Body may not reinforce the title topic",
+                   "None of the title/H1 keywords appear among the page's most "
+                   "frequent body terms.",
+                   "Make sure the main content actually develops the topic promised "
+                   "by the title and H1 (helps ranking and AI topical grounding).")
 
 
 def _authorship(doc, text, report):

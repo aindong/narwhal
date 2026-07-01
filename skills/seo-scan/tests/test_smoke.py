@@ -14,6 +14,7 @@ sys.path.insert(0, SCRIPTS)
 
 from lib import htmlx, http, links  # noqa: E402
 from lib import sitemap as sm  # noqa: E402
+from lib import text as textlib  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
@@ -204,6 +205,44 @@ class TestLinks(unittest.TestCase):
         # rate-limited / bot-blocked / auth-walled are not "dead links"
         for code in (401, 403, 429, 451, 999):
             self.assertFalse(links.is_broken(code))
+
+
+class TestText(unittest.TestCase):
+    SIMPLE = "The cat sat on the mat. The dog ran to the park. We had fun."
+    COMPLEX = ("Notwithstanding the aforementioned considerations, the "
+               "epistemological ramifications necessitate substantial "
+               "deliberation regarding methodological presuppositions.")
+
+    def test_syllables(self):
+        self.assertEqual(textlib.syllables("cat"), 1)
+        self.assertEqual(textlib.syllables("apple"), 2)
+        self.assertGreaterEqual(textlib.syllables("beautiful"), 3)
+
+    def test_reading_ease_orders(self):
+        simple = textlib.flesch_reading_ease(self.SIMPLE)
+        hard = textlib.flesch_reading_ease(self.COMPLEX)
+        self.assertGreater(simple, hard)
+        self.assertEqual(textlib.reading_ease_label(simple), "easy")
+
+    def test_grade_level(self):
+        self.assertLess(textlib.flesch_kincaid_grade(self.SIMPLE),
+                        textlib.flesch_kincaid_grade(self.COMPLEX))
+
+    def test_top_keywords_skips_stopwords(self):
+        text = "SEO audit tools. SEO audit matters. Audit your SEO regularly."
+        kws = dict(textlib.top_keywords(text, 5))
+        self.assertIn("seo", kws)
+        self.assertIn("audit", kws)
+        self.assertNotIn("your", kws)  # stopword
+
+    def test_candidate_entities(self):
+        text = "Google Search Console is great. Google Search Console helps SEO."
+        ents = dict(textlib.candidate_entities(text))
+        self.assertIn("Google Search Console", ents)
+
+    def test_empty_text_safe(self):
+        self.assertIsNone(textlib.flesch_reading_ease(""))
+        self.assertEqual(textlib.top_keywords(""), [])
 
 
 class TestSitemap(unittest.TestCase):

@@ -37,7 +37,18 @@ judgments. The content auditor surfaces heuristic proxies for these signals.
 ## Readability
 - Aim for scannable prose: short paragraphs, ~15–20 words/sentence average,
   descriptive subheads, lists where appropriate.
+- The auditor reports a **Flesch Reading Ease** score and an approximate
+  **Flesch–Kincaid grade level**: 70+ is easy, 50–70 moderate, 30–50 difficult,
+  <30 very difficult. Match the target to your audience — general-audience content
+  should usually land 50+; specialist/technical content can be denser.
 - Readable content is also more *quotable* — see `geo-llmo.md`.
+
+## Topical focus
+- The auditor extracts the page's most frequent terms and phrases (its "dominant
+  topics") and candidate entities. If none of the **title/H1** keywords appear
+  among the body's top terms, the page may not actually develop the topic it
+  promises — bad for ranking and for AI topical grounding. Keep the title, H1, and
+  body reinforcing one clear subject.
 
 ## Social / preview metadata
 - Open Graph (`og:title`, `og:description`, `og:image`) and `twitter:card` don't
