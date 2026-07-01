@@ -50,6 +50,8 @@ Useful flags:
 - `--render` — render JavaScript with Playwright (for SPAs / client-rendered pages).
 - `--format json` — machine-readable output (use `-o report.json` to save).
 - `--only technical,geo` — run a subset: `technical`, `content`, `schema`, `geo`.
+- `--fail-under N` — exit non-zero if the score is below `N` (CI quality gate;
+  `crawl_site.py` gates on the average score).
 
 **Audit a whole site** (discovers URLs via sitemap or internal links, rolls up
 the issues that recur most — the highest-leverage fixes):

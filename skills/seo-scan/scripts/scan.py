@@ -24,7 +24,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, htmlx  # noqa: E402
-from lib.report import Report  # noqa: E402
+from lib.report import Report, below_threshold  # noqa: E402
 
 import audit_content  # noqa: E402
 import audit_geo  # noqa: E402
@@ -109,6 +109,8 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=20)
     ap.add_argument("--allow-private", action="store_true",
                     help="permit private/localhost hosts (off by default for SSRF safety)")
+    ap.add_argument("--fail-under", type=int, metavar="N",
+                    help="exit non-zero if the health score is below N (for CI gating)")
     args = ap.parse_args(argv)
 
     # Windows consoles default to cp1252 and choke on the severity icons; force
@@ -130,6 +132,11 @@ def main(argv=None) -> int:
               f"(score {report.score()}/100)")
     else:
         print(out)
+
+    if below_threshold(report.score(), args.fail_under):
+        print(f"FAIL: health score {report.score()}/100 is below the "
+              f"--fail-under threshold of {args.fail_under}.", file=sys.stderr)
+        return 1
     return 0
 
 

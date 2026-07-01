@@ -123,6 +123,15 @@ class Report:
         return "\n".join(lines).rstrip() + "\n"
 
 
+def below_threshold(score, threshold) -> bool:
+    """True when a `--fail-under` gate should fail the run.
+
+    ``threshold`` of None means no gate (always passes). Used by scan.py and
+    crawl_site.py to drive a non-zero exit code for CI quality gating.
+    """
+    return threshold is not None and score < threshold
+
+
 def _grade(score: int) -> str:
     if score >= 90:
         return "excellent"

@@ -22,6 +22,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, htmlx  # noqa: E402
+from lib.report import below_threshold  # noqa: E402
 import scan as scanner  # noqa: E402
 
 SITEMAP_CANDIDATES = ("/sitemap.xml", "/sitemap_index.xml")
@@ -133,6 +134,8 @@ def main(argv=None) -> int:
     ap.add_argument("-o", "--output")
     ap.add_argument("--timeout", type=int, default=20)
     ap.add_argument("--allow-private", action="store_true")
+    ap.add_argument("--fail-under", type=int, metavar="N",
+                    help="exit non-zero if the average score is below N (for CI gating)")
     args = ap.parse_args(argv)
 
     try:
@@ -150,6 +153,11 @@ def main(argv=None) -> int:
               f"({result['pages_scanned']} pages, avg {result['avg_score']}/100)")
     else:
         print(out)
+
+    if below_threshold(result["avg_score"], args.fail_under):
+        print(f"FAIL: average score {result['avg_score']}/100 is below the "
+              f"--fail-under threshold of {args.fail_under}.", file=sys.stderr)
+        return 1
     return 0
 
 

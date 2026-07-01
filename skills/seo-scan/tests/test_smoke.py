@@ -13,7 +13,7 @@ SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
 sys.path.insert(0, SCRIPTS)
 
 from lib import htmlx, http  # noqa: E402
-from lib.report import Report  # noqa: E402
+from lib.report import Report, below_threshold  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
 import generate_schema  # noqa: E402
 
@@ -103,6 +103,23 @@ class TestAuditors(unittest.TestCase):
         html = GOOD_PAGE.replace('"image":"/x.png"}', '"image": }')  # broken JSON
         report = self._run(html)
         self.assertTrue(any(f.title == "Invalid JSON-LD" for f in report.findings))
+
+
+class TestFailUnderGate(unittest.TestCase):
+    def test_no_threshold_never_fails(self):
+        self.assertFalse(below_threshold(0, None))
+        self.assertFalse(below_threshold(100, None))
+
+    def test_below_threshold_fails(self):
+        self.assertTrue(below_threshold(57, 80))
+
+    def test_at_or_above_threshold_passes(self):
+        self.assertFalse(below_threshold(80, 80))
+        self.assertFalse(below_threshold(95, 80))
+
+    def test_works_with_float_average(self):
+        self.assertTrue(below_threshold(79.5, 80))
+        self.assertFalse(below_threshold(80.0, 80))
 
 
 class TestSchemaGenerator(unittest.TestCase):

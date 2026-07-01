@@ -83,6 +83,11 @@ with what was observed and a concrete fix.
   `python -m playwright install chromium`.
 - `--format json [-o file]` — machine-readable output.
 - `--only technical,content,schema,geo` — run a subset of auditors.
+- `--fail-under N` — exit non-zero if the score is below `N`. Use it as a **CI
+  quality gate** (also on `crawl_site.py`, where it checks the average score):
+  ```bash
+  python skills/seo-scan/scripts/scan.py https://example.com --fail-under 80
+  ```
 - `--allow-private` — permit localhost/staging targets (off by default; see below).
 
 ## Install

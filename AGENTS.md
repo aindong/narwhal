@@ -19,6 +19,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --format json -o out.json` | Machine-readable output |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
+| `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |
 | `python crawl_site.py <url> --max-pages 25` | Site-wide scan + recurring-issue rollup |
 | `python generate_schema.py <Type> --field k=v …` | Emit valid schema.org JSON-LD |
 | `python generate_schema.py --list` | List supported schema types |
