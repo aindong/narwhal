@@ -15,6 +15,12 @@ from typing import Optional
 SEVERITY = ("critical", "high", "medium", "low", "good")
 _WEIGHT = {"critical": 12, "high": 6, "medium": 3, "low": 1, "good": 0}
 _ICON = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵", "good": "🟢"}
+CATEGORY_LABELS = {
+    "technical": "Technical SEO",
+    "content": "Content & E-E-A-T",
+    "schema": "Structured data",
+    "geo": "GEO / LLMO",
+}
 
 
 @dataclass
@@ -57,11 +63,21 @@ class Report:
             buckets[f.severity].append(f)
         return buckets
 
-    def score(self) -> int:
+    def by_category(self) -> dict:
+        cats = {}
+        for f in self.findings:
+            cats.setdefault(f.category, []).append(f)
+        return cats
+
+    def _penalty(self, findings) -> int:
         weights = self.weights or _WEIGHT
-        penalty = sum(weights.get(f.severity, _WEIGHT[f.severity])
-                      for f in self.findings)
-        return max(0, 100 - penalty)
+        return sum(weights.get(f.severity, _WEIGHT[f.severity]) for f in findings)
+
+    def score(self) -> int:
+        return max(0, 100 - self._penalty(self.findings))
+
+    def category_score(self, findings) -> int:
+        return max(0, 100 - self._penalty(findings))
 
     def counts(self) -> dict:
         b = self.by_severity()
@@ -84,12 +100,13 @@ class Report:
             ensure_ascii=False,
         )
 
-    def to_markdown(self) -> str:
+    def to_markdown(self, title: str = "SEO & GEO Audit") -> str:
         score = self.score()
         grade = _grade(score)
         counts = self.counts()
+        buckets = self.by_severity()
         lines = [
-            f"# SEO & GEO Scan — {self.final_url or self.url}",
+            f"# {title} — {self.final_url or self.url}",
             "",
             f"**Health score: {score}/100 ({grade})**  ·  "
             f"status {self.fetched_status}"
@@ -101,25 +118,66 @@ class Report:
             f"| {counts['low']} | {counts['good']} |",
             "",
         ]
-        buckets = self.by_severity()
-        issue_order = ("critical", "high", "medium", "low")
-        if any(buckets[s] for s in issue_order):
-            lines.append("## Prioritized fixes")
+
+        # --- Executive summary ---------------------------------------------
+        lines.append("## Summary")
+        lines.append("")
+        lines.append(self._summary_text(score, grade, counts))
+        lines.append("")
+        priorities = buckets["critical"] + buckets["high"]
+        if priorities:
+            lines.append("**Top priorities:**")
+            for f in priorities[:3]:
+                lines.append(f"- {_ICON[f.severity]} {f.title} "
+                             f"({CATEGORY_LABELS.get(f.category, f.category)})")
             lines.append("")
-            n = 1
-            for sev in issue_order:
-                for f in buckets[sev]:
-                    lines.append(f"### {n}. {_ICON[sev]} {f.title}  ")
-                    lines.append(f"*{f.category} · {sev}*")
-                    lines.append("")
-                    if f.detail:
-                        lines.append(f"- **Observed:** {f.detail}")
-                    if f.evidence:
-                        lines.append(f"- **Evidence:** `{_trim(f.evidence)}`")
-                    if f.recommendation:
-                        lines.append(f"- **Fix:** {f.recommendation}")
-                    lines.append("")
-                    n += 1
+
+        # --- Breakdown by area ---------------------------------------------
+        cats = self.by_category()
+        if cats:
+            lines.append("## Breakdown by area")
+            lines.append("")
+            lines.append("| Area | Score | 🔴 | 🟠 | 🟡 | 🔵 | 🟢 |")
+            lines.append("|:--|:--:|:--:|:--:|:--:|:--:|:--:|")
+            for key in ("technical", "content", "schema", "geo"):
+                fs = cats.get(key)
+                if not fs:
+                    continue
+                c = {s: sum(1 for f in fs if f.severity == s) for s in SEVERITY}
+                lines.append(
+                    f"| {CATEGORY_LABELS.get(key, key)} | {self.category_score(fs)} "
+                    f"| {c['critical']} | {c['high']} | {c['medium']} | {c['low']} "
+                    f"| {c['good']} |")
+            lines.append("")
+
+        # --- Priority fixes (critical + high + medium) ---------------------
+        priority = buckets["critical"] + buckets["high"] + buckets["medium"]
+        if priority:
+            lines.append("## Priority fixes")
+            lines.append("")
+            for n, f in enumerate(priority, 1):
+                lines.append(f"### {n}. {_ICON[f.severity]} {f.title}  ")
+                lines.append(f"*{CATEGORY_LABELS.get(f.category, f.category)} · "
+                             f"{f.severity}*")
+                lines.append("")
+                if f.detail:
+                    lines.append(f"- **Observed:** {f.detail}")
+                if f.evidence:
+                    lines.append(f"- **Evidence:** `{_trim(f.evidence)}`")
+                if f.recommendation:
+                    lines.append(f"- **Fix:** {f.recommendation}")
+                lines.append("")
+
+        # --- Quick wins (low severity) -------------------------------------
+        if buckets["low"]:
+            lines.append("## Quick wins")
+            lines.append("")
+            for f in buckets["low"]:
+                fix = f" — {f.recommendation}" if f.recommendation else ""
+                lines.append(f"- 🔵 **{f.title}**{fix}")
+            lines.append("")
+
+        # --- Passing checks ------------------------------------------------
         if buckets["good"]:
             lines.append("## Passing checks")
             lines.append("")
@@ -128,6 +186,27 @@ class Report:
                 lines.append(f"- 🟢 **{f.title}**{extra}")
             lines.append("")
         return "\n".join(lines).rstrip() + "\n"
+
+    def _summary_text(self, score, grade, counts) -> str:
+        crit, high = counts["critical"], counts["high"]
+        med, low = counts["medium"], counts["low"]
+        prio = crit + high
+        target = self.final_url or self.url
+        if prio == 0 and med == 0:
+            lead = (f"This page is in **{grade}** shape ({score}/100) — no critical, "
+                    f"high, or medium issues found.")
+        else:
+            bits = []
+            if crit:
+                bits.append(f"{crit} critical")
+            if high:
+                bits.append(f"{high} high")
+            if med:
+                bits.append(f"{med} medium")
+            lead = (f"This page scores **{score}/100 ({grade})**. "
+                    f"{', '.join(bits)} issue(s) need attention"
+                    + (f", plus {low} quick win(s)." if low else "."))
+        return lead
 
 
 def below_threshold(score, threshold) -> bool:

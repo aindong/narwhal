@@ -101,7 +101,18 @@ Narwhal ships as a Claude Code plugin. Add the marketplace and install it:
 /plugin install seo-scan@narwhal
 ```
 
-That's it — the `seo-scan` skill and its scripts load automatically. Then just ask:
+That's it — the skill and its scripts load automatically. Then use the slash
+command:
+
+```text
+/narwhal audit example.com      # full single-page audit
+/narwhal crawl example.com      # site-wide crawl (links + duplicates)
+/narwhal sitemap example.com    # validate the XML sitemap(s)
+/narwhal llms example.com       # generate a starter llms.txt
+```
+
+`/narwhal <action> <site>` takes actions `scan`/`audit`, `crawl`, `sitemap`,
+`llms`, `schema`. You can also just ask Claude naturally:
 
 > Run an SEO and GEO audit on https://example.com
 
