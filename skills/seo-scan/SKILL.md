@@ -124,6 +124,17 @@ key is missing, relay the three ways to provide one and the free-key link
 URLs return "no data" — suggest `--origin`. Get a key: enable the *Chrome UX Report
 API* in Google Cloud Console and create an API key (free, 150 queries/min).
 
+When CrUX has **no data** (most pages are below its traffic floor), use lab data —
+a PageSpeed Insights (Lighthouse) synthetic test that works for any URL:
+```
+python scripts/crux.py https://example.com/page --lab                 # mobile
+python scripts/crux.py https://example.com/page --lab --strategy desktop
+```
+It returns a performance score + LCP, TBT (lab proxy for INP), CLS, FCP, SI, TTI.
+**Always label lab data as synthetic/estimate, not real-user field data.** The PSI
+key is optional (keyless quota is shared/often exhausted); set `PAGESPEED_API_KEY`
+or reuse the CrUX key with the PageSpeed Insights API also enabled.
+
 ## What each auditor covers
 
 | Auditor | Focus |

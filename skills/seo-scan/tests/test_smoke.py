@@ -788,6 +788,62 @@ class TestEnvLoader(unittest.TestCase):
             self.assertEqual(os.environ["CRUX_API_KEY"], "from_dotenv")
 
 
+class TestPsiLab(unittest.TestCase):
+    def setUp(self):
+        import psi
+        self.psi = psi
+
+    def _lhr(self, score=0.87, lcp=2100, tbt=150, cls=0.05):
+        return {"lighthouseVersion": "11.0",
+                "categories": {"performance": {"score": score}},
+                "audits": {
+                    "largest-contentful-paint": {"numericValue": lcp, "displayValue": "2.1 s"},
+                    "total-blocking-time": {"numericValue": tbt, "displayValue": "150 ms"},
+                    "cumulative-layout-shift": {"numericValue": cls, "displayValue": "0.05"},
+                    "first-contentful-paint": {"numericValue": 1600, "displayValue": "1.6 s"},
+                    "speed-index": {"numericValue": 3000, "displayValue": "3.0 s"},
+                    "interactive": {"numericValue": 4200, "displayValue": "4.2 s"},
+                }}
+
+    def test_score_bands(self):
+        self.assertEqual(self.psi.rate_score(95), "good")
+        self.assertEqual(self.psi.rate_score(70), "needs-improvement")
+        self.assertEqual(self.psi.rate_score(30), "poor")
+
+    def test_parse_lighthouse(self):
+        p = self.psi.parse_lighthouse(self._lhr())
+        self.assertEqual(p["perf_score"], 87)             # 0.87 -> 87
+        self.assertEqual(p["perf_rating"], "needs-improvement")
+        labels = {r["metric"]: r for r in p["rows"]}
+        self.assertEqual(labels["LCP"]["rating"], "good")
+        self.assertTrue(labels["LCP"]["core"])
+        self.assertFalse(labels["FCP"]["core"])           # secondary
+        self.assertEqual(len(p["rows"]), 6)
+
+    def test_tbt_thresholds_as_inp_proxy(self):
+        p = self.psi.parse_lighthouse(self._lhr(tbt=700))
+        tbt = [r for r in p["rows"] if r["metric"] == "TBT"][0]
+        self.assertEqual(tbt["rating"], "poor")           # >600ms
+
+    def test_missing_metric_skipped(self):
+        lhr = self._lhr()
+        del lhr["audits"]["speed-index"]
+        p = self.psi.parse_lighthouse(lhr)
+        self.assertNotIn("SI", {r["metric"] for r in p["rows"]})
+
+    def test_render_not_found_suggests_key_on_quota(self):
+        md = self.psi.render_markdown(
+            {"found": False, "url": "https://x.com", "strategy": "mobile",
+             "error": "Quota exceeded for quota metric 'Queries'"})
+        self.assertIn("PAGESPEED_API_KEY", md)
+
+    def test_crux_no_data_points_to_lab(self):
+        import crux
+        md = crux.render_markdown(
+            {"found": False, "target": "https://x.com/", "error": "no data"})
+        self.assertIn("--lab", md)
+
+
 class TestRenderHardening(unittest.TestCase):
     def test_missing_browser_gives_actionable_hint(self):
         # Playwright installed but Chromium binary absent — the message must tell

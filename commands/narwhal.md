@@ -92,14 +92,21 @@ wall of raw output.
 Read the report back **in your own words, leading with the highest-severity fixes** —
 summarize, don't paste everything.
 
-**`vitals` — API key:** this is the one action that calls an external service. The
-script auto-resolves the key from the environment (`CRUX_API_KEY`) or a `.env` file
-in the project, so if the user has set it, just run `crux.py $2` and report the
-result. If it prints "A CrUX API key is required", relay the three ways to provide
-one (— `--crux-key`, the `CRUX_API_KEY` env var, or a `.env` file —) and the free
-key link `https://developer.chrome.com/docs/crux/api`; don't guess field numbers.
-Use `--origin` for the whole-site aggregate, `--form-factor phone|desktop|tablet`
-to narrow the device.
+**`vitals` — field vs lab, and API keys:** this action calls an external service.
+Two data sources:
+- **Field (default):** `crux.py $2` → real-user CrUX data. Needs `CRUX_API_KEY`
+  (auto-resolved from env or a `.env`; if missing, relay the three ways to set it —
+  `--crux-key`, the env var, or `.env` — and the free key link
+  `https://developer.chrome.com/docs/crux/api`). Use `--origin` for the whole-site
+  aggregate, `--form-factor phone|desktop|tablet` to narrow the device.
+- **Lab (`--lab`):** `crux.py $2 --lab` → PageSpeed Insights (Lighthouse) synthetic
+  metrics that work for **any URL regardless of traffic**. Use this when CrUX has
+  **no data** (low-traffic pages). Key is optional but recommended
+  (`PAGESPEED_API_KEY`, or reuse the CrUX key with the PageSpeed Insights API
+  enabled) — keyless quota is shared and often exhausted. `--strategy mobile|desktop`.
+
+Always label lab data as synthetic/estimate, never as real-user field data; never
+guess numbers.
 
 Edge cases: if `$1` is empty/unrecognized, treat it as `audit`. If `$2` (the site) is
 missing, ask for it. Only add `--allow-private` for local/staging targets.

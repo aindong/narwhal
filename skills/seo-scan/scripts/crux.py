@@ -147,6 +147,9 @@ def render_markdown(r: dict) -> str:
     lines = [f"# Core Web Vitals (field data) — {r['target']}{ff}", ""]
     if not r.get("found"):
         lines += [r.get("error", "No data."), "",
+                  "**Tip:** for a page below CrUX's traffic floor, run "
+                  "`narwhal vitals <url> --lab` — PageSpeed Insights (Lighthouse) "
+                  "gives synthetic **lab** metrics for any URL.", "",
                   "_Source: Chrome UX Report (real Chrome users, 28-day)._"]
         return "\n".join(lines) + "\n"
 
@@ -185,6 +188,11 @@ def main(argv=None) -> int:
                     help="query origin-level data (aggregate across the whole site)")
     ap.add_argument("--form-factor", choices=list(_FORM_FACTORS),
                     help="restrict to phone/desktop/tablet (default: all)")
+    ap.add_argument("--lab", action="store_true",
+                    help="use PageSpeed Insights (Lighthouse) LAB data instead of "
+                         "CrUX field data — works for any URL regardless of traffic")
+    ap.add_argument("--strategy", choices=("mobile", "desktop"), default="mobile",
+                    help="device for --lab (default: mobile)")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("--timeout", type=int, default=20)
     ap.add_argument("-o", "--output")
@@ -195,8 +203,26 @@ def main(argv=None) -> int:
     except (AttributeError, ValueError):
         pass
 
-    # Resolve the key: --crux-key > CRUX_API_KEY env var > .env file.
     from lib import env as envlib  # noqa: PLC0415
+
+    # --lab: PageSpeed Insights (Lighthouse) lab data. Key is optional (keyless
+    # runs at a low quota); reuse PAGESPEED_API_KEY or the CrUX key if present.
+    if args.lab:
+        import psi  # noqa: PLC0415
+        key = envlib.resolve("PAGESPEED_API_KEY", args.crux_key) or \
+            envlib.resolve("CRUX_API_KEY")
+        r = psi.analyze(args.url, key, strategy=args.strategy,
+                        timeout=max(args.timeout, 60))
+        out = psi.render_json(r) if args.format == "json" else psi.render_markdown(r)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as fh:
+                fh.write(out)
+            print(f"Wrote {args.format} lab vitals to {args.output}")
+        else:
+            print(out)
+        return 1 if r.get("found") and r.get("perf_rating") == "poor" else 0
+
+    # Default: CrUX field data. Resolve key: --crux-key > CRUX_API_KEY env > .env.
     api_key = envlib.resolve("CRUX_API_KEY", args.crux_key)
     if not api_key:
         print("A CrUX API key is required (this is the only feature that calls an "

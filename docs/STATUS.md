@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.11.0**_
+_Last updated: 2026-07-01 · version **1.12.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -42,16 +42,18 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **#15 shipped:** **Real Core Web Vitals** — `narwhal vitals` (`crux.py`) fetches
   LCP/INP/CLS field data from the CrUX API. Opt-in (API key), never on the default
   path; honest when no key / no data. Verified vs the live CrUX API contract.
+  **`--lab` (v1.12.0, `psi.py`)** adds PageSpeed Insights Lighthouse *lab* data for
+  any URL (fills CrUX's low-traffic gap); labeled synthetic, key optional.
 - **#18 shipped:** **Dark-mode logo** — `assets/logo-dark.png`; README auto-swaps
   via `<picture>`. Derived deterministically from the light logo
   (`assets/make-dark-logo.py`).
 - **P2 backlog (#13–#18) fully cleared.**
-- **Tests:** 97, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 103, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
   and the skill; `audit` folds in real CrUX vitals when `CRUX_API_KEY` is set.
-- **Released:** v1.0.0 → v1.11.0. Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.12.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -62,7 +64,7 @@ narwhal/
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
 │   ├── scripts/           scan, crawl_site, validate_sitemap, generate_schema,
-│   │                      generate_llms, audit, diff_scan, crux, mcp_server, cli + lib/ (http, htmlx, report,
+│   │                      generate_llms, audit, diff_scan, crux, psi, mcp_server, cli + lib/ (http, htmlx, report,
 │   │                      robots, links, sitemap, simhash, text, content_quality,
 │   │                      config)
 │   ├── references/        deep-dive guidance per auditor

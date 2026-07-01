@@ -4,6 +4,22 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] — 2026-07-01
+
+### Added
+- **PageSpeed Insights (Lighthouse) lab data** via `narwhal vitals <url> --lab`
+  (`psi.py`) — the companion to CrUX field data. Works for **any URL regardless of
+  traffic**, so it fills the gap when CrUX has no field data (most pages). Returns
+  an overall performance score plus LCP, **TBT** (the lab proxy for INP), CLS, FCP,
+  Speed Index, and TTI, each rated.
+  - Clearly labeled **lab/synthetic** (an estimate for catching regressions), never
+    conflated with real-user field data. Lab has no INP.
+  - PSI key optional (keyless runs at a shared, easily-exhausted quota, so a key is
+    recommended): `PAGESPEED_API_KEY`, or reuse the CrUX key with the PageSpeed
+    Insights API also enabled. `--strategy mobile|desktop`.
+  - The CrUX "no data" message now points to `--lab`; verified against the live
+    PSI v5 API contract.
+
 ## [1.11.0] — 2026-07-01
 
 ### Added

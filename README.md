@@ -210,6 +210,29 @@ CrUX only has data for pages/origins with enough real traffic — low-traffic UR
 return "no data" (try `--origin` for the site-wide aggregate). Without a key,
 `narwhal vitals` prints how to get one and exits; it never guesses field numbers.
 
+#### No CrUX data? Use lab metrics (`--lab`)
+
+CrUX is empty for pages below its traffic floor — most pages. For those, add
+**`--lab`** to run a **PageSpeed Insights (Lighthouse)** test, which works for
+**any URL** regardless of traffic:
+
+```bash
+narwhal vitals https://example.com/page --lab               # mobile (default)
+narwhal vitals https://example.com/page --lab --strategy desktop
+```
+
+You get an overall **performance score** plus **LCP, TBT** (the lab proxy for INP),
+**CLS**, FCP, Speed Index, and TTI. **Lab data is a synthetic single run — an
+estimate for catching regressions, not real-user field data**, and Narwhal labels
+it that way. The PSI key is *optional* (keyless works at a low, shared quota that's
+often exhausted, so a key is recommended): set `PAGESPEED_API_KEY`, or **reuse your
+CrUX key** by enabling *both* the Chrome UX Report API and the PageSpeed Insights
+API on the same Google Cloud project.
+
+**Which do I want?** CrUX (default) = *real users, popular pages*. PSI `--lab` =
+*synthetic, any page*. Use CrUX when it has data; fall back to `--lab` when it
+doesn't.
+
 ## Install
 
 ### Claude Code — plugin (recommended, one command)
