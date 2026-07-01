@@ -4,6 +4,25 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.13.0] — 2026-07-01
+
+### Added
+- **Core Web Vitals in the audit report** — `narwhal audit <site> --vitals` now runs
+  CrUX **field** data (origin-level, when `CRUX_API_KEY` is set) and falls back to
+  PageSpeed Insights **lab** data for low-traffic sites, then includes a **Core Web
+  Vitals** section in **every** output format: Markdown, **HTML, PDF**, and JSON
+  (plus a headline in the report's metrics strip). Field vs lab is clearly labeled.
+  ```bash
+  narwhal audit https://example.com --vitals --format pdf -o audit.pdf
+  ```
+- The `/narwhal audit` command passes `--vitals` in its baseline step, folds the
+  verdict into the report, and offers a shareable HTML/PDF that includes it.
+
+### Fixed
+- The Markdown→HTML converter now renders `_italic_` (so the honest field/lab notes
+  in HTML/PDF reports no longer show literal underscores); word-boundary-guarded so
+  `snake_case` and paths are untouched.
+
 ## [1.12.0] — 2026-07-01
 
 ### Added

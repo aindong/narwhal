@@ -463,6 +463,8 @@ def _inline_md(text: str) -> str:
     out = _esc(text)
     out = re.sub(r"`([^`]+)`", r"<code>\1</code>", out)
     out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
+    # _italic_ — only at word boundaries so snake_case / paths aren't matched.
+    out = re.sub(r"(?<!\w)_([^_]+)_(?!\w)", r"<em>\1</em>", out)
     return out
 
 

@@ -110,7 +110,12 @@ with what was observed and a concrete fix.
   styled HTML** report (score gauge, severity-coloured finding cards — see the
   [sample](docs/samples/sample-report.html)), or **PDF** (needs WeasyPrint; falls
   back to HTML if it isn't installed). `html`/`pdf` also work on `audit.py` for a
-  shareable, stakeholder-ready deliverable.
+  shareable, stakeholder-ready deliverable — and `audit.py --vitals` adds a **Core
+  Web Vitals** section (CrUX field data, or PSI lab fallback) right into that
+  HTML/PDF/Markdown/JSON:
+  ```bash
+  python skills/seo-scan/scripts/audit.py https://example.com --vitals --format pdf -o audit.pdf
+  ```
 - `--only technical,content,schema,geo` — run a subset of auditors.
 - `--fail-under N` — exit non-zero if the score is below `N`. Use it as a **CI
   quality gate** (also on `crawl_site.py`, where it checks the average score):

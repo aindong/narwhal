@@ -28,11 +28,14 @@ combining deterministic measurement with specialist reasoning.
 
 **Step 1 — Deterministic baseline (hard data, fast).** Run:
 ```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --format json -o narwhal-audit.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --vitals --format json -o narwhal-audit.json
 ```
 This gives homepage + site-wide + sitemap data, per-area subscores, broken links,
-and duplicate clusters. Skim it to detect the **business type** (SaaS, publisher,
-e-commerce, local/brick-and-mortar, directory/people-search…).
+and duplicate clusters. `--vitals` also fetches **real Core Web Vitals** — CrUX
+field data (if `CRUX_API_KEY` is set), falling back to PageSpeed Insights **lab**
+data for low-traffic sites (see `vitals` below for keys); it lands in
+`narwhal-audit.json` under `vitals`. Skim it to detect the **business type** (SaaS,
+publisher, e-commerce, local/brick-and-mortar, directory/people-search…).
 
 **Step 2 — Fan out specialists IN PARALLEL.** In a *single message*, spawn these
 subagents with the Task tool (pass each the URL `$2` and the path `narwhal-audit.json`):
@@ -44,14 +47,12 @@ subagents with the Task tool (pass each the URL `$2` and the path `narwhal-audit
 
 Each returns a domain score + prioritized findings with exact fixes.
 
-**Step 2b — Real Core Web Vitals (optional).** If a `CRUX_API_KEY` is set (env or a
-`.env` file), also run:
-```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/crux.py" $2 --origin
-```
-and fold the **real** LCP/INP/CLS field verdict into the performance section. If no
-key is set, skip it silently and note that `/narwhal vitals` (with a free CrUX key)
-gives real field data — do not fabricate numbers.
+**Step 2b — Core Web Vitals.** The `vitals` block is already in
+`narwhal-audit.json` from Step 1's `--vitals` (CrUX field, or PSI lab fallback).
+Fold its verdict into the performance section. Label it correctly — **field**
+(real users, CrUX) vs **lab** (synthetic, PSI) — and never fabricate numbers. If
+`vitals` came back empty (no key at all), note that setting `CRUX_API_KEY` /
+`PAGESPEED_API_KEY` unlocks it and move on.
 
 **Step 3 — Synthesize one report.** Merge the specialists into:
 - **SEO Health Score (0–100)** — reconcile the deterministic scores with the
@@ -60,8 +61,14 @@ gives real field data — do not fabricate numbers.
 - **Prioritized action plan** — Critical → High → Medium → Low, each with the fix and
   a rough effort tag. Call out fixes that resolve several findings at once.
 - **Quick wins** — low-effort, high-impact.
+- **Core Web Vitals** — the field/lab verdict from Step 2b.
 - **Per-area detail** — one concise section per specialist.
-Offer to write it to `narwhal-audit-report.md`.
+Offer to write it to `narwhal-audit-report.md`. For a **shareable HTML/PDF** that
+already includes the Core Web Vitals section, run:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --vitals --format html -o narwhal-audit.html
+```
+(swap `--format pdf` for a PDF — needs WeasyPrint, else it writes HTML).
 
 **Formatting (important):** write the report in plain **GitHub-flavored Markdown**
 — `#`/`##` headings, `|`-delimited pipe tables, `-` bullet lists, `**bold**`. Do

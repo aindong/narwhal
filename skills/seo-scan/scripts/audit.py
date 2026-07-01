@@ -42,7 +42,7 @@ def _demote(md: str) -> str:
 
 def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=False,
         obey_robots=True, render=False, max_links=100, max_sitemaps=12,
-        config=None) -> dict:
+        config=None, vitals=False, strategy="mobile") -> dict:
     """Run the three sub-audits. The link and sitemap caps default lower than the
     standalone tools' — an audit is an overview, so it favors speed over an
     exhaustive link/sitemap sweep (the dedicated commands go deeper)."""
@@ -56,7 +56,58 @@ def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=Fal
     sitemap = validate_sitemap.analyze(
         site, allow_private=allow_private, timeout=timeout,
         sample=config.default("sample"), max_sitemaps=max_sitemaps)
-    return {"site": site, "page": page, "site_result": site_result, "sitemap": sitemap}
+    data = {"site": site, "page": page, "site_result": site_result, "sitemap": sitemap}
+    if vitals:
+        data["vitals"] = gather_vitals(site, timeout=timeout, strategy=strategy)
+    return data
+
+
+def gather_vitals(site: str, *, timeout=20, strategy="mobile") -> dict:
+    """Core Web Vitals for the audit: real CrUX **field** data first (origin-level),
+    then PageSpeed Insights **lab** data as a fallback when CrUX has none (most
+    sites). Opt-in — only runs with ``--vitals`` because it makes external API
+    calls. Honest about which is which; never fabricates numbers."""
+    import crux  # noqa: PLC0415
+    import psi  # noqa: PLC0415
+    from lib import env as envlib  # noqa: PLC0415
+
+    crux_key = envlib.resolve("CRUX_API_KEY")
+    field = crux.analyze(site, crux_key, origin=True, timeout=timeout) if crux_key else None
+
+    lab = None
+    if not (field and field.get("found")):
+        psi_key = envlib.resolve("PAGESPEED_API_KEY") or crux_key
+        lab = psi.analyze(site, psi_key, strategy=strategy, timeout=max(timeout, 60))
+    return {"field": field, "lab": lab}
+
+
+def _vitals_markdown(v: dict) -> str:
+    """The Core Web Vitals section body (Markdown), demoted to slot under an H2."""
+    import crux  # noqa: PLC0415
+    import psi  # noqa: PLC0415
+    field, lab = v.get("field"), v.get("lab")
+    if field and field.get("found"):
+        return _demote(crux.render_markdown(field))
+    if lab is not None:
+        note = ("_CrUX has no real-user field data for this site (below its traffic "
+                "floor), so this is PageSpeed Insights **lab** data instead._\n\n"
+                if field is not None else "")
+        return note + _demote(psi.render_markdown(lab))
+    if field is not None:                       # CrUX tried, no data, no lab
+        return _demote(crux.render_markdown(field))
+    return ("_No Core Web Vitals collected. Set `CRUX_API_KEY` for real-user field "
+            "data, or `PAGESPEED_API_KEY` for lab data, then re-run with `--vitals`._")
+
+
+def _vitals_headline(v: dict) -> str:
+    """A short one-liner for the header/metrics strip, or '' if nothing usable."""
+    field, lab = v.get("field"), v.get("lab")
+    if field and field.get("found"):
+        verdict = {True: "pass", False: "fail"}.get(field.get("cwv_pass"), "partial")
+        return f"CWV (field): {verdict}"
+    if lab and lab.get("found") and lab.get("perf_score") is not None:
+        return f"Perf (lab): {lab['perf_score']}/100"
+    return ""
 
 
 def overall_score(data: dict) -> float:
@@ -71,6 +122,8 @@ def render_markdown(data: dict) -> str:
     broken = len(site_res.get("links", {}).get("broken", [])) if site_res.get("links") else 0
     dupes = len(site_res.get("duplicates", []))
 
+    cwv = data.get("vitals")
+    headline = _vitals_headline(cwv) if cwv else ""
     header = [
         f"# Narwhal Site Audit — {data['site']}",
         "",
@@ -78,7 +131,8 @@ def render_markdown(data: dict) -> str:
         f"**Site average:** {site_res['avg_score']}/100  ·  "
         f"**Pages scanned:** {site_res['pages_scanned']}  ",
         f"**Broken links:** {broken}  ·  **Near-duplicate clusters:** {dupes}  ·  "
-        f"**Sitemap URLs:** {sm.get('total_urls', 0)}",
+        f"**Sitemap URLs:** {sm.get('total_urls', 0)}"
+        + (f"  ·  **{headline}**" if headline else ""),
         "",
         "---",
         "",
@@ -94,6 +148,8 @@ def render_markdown(data: dict) -> str:
         "",
         _demote(validate_sitemap.render_markdown(sm)),
     ]
+    if cwv:
+        header += ["", "## 4. Core Web Vitals", "", _vitals_markdown(cwv)]
     return "\n".join(header).rstrip() + "\n"
 
 
@@ -109,6 +165,7 @@ def render_html(data: dict) -> str:
     dupes = len(site_res.get("duplicates", []))
     overall = int(round(overall_score(data)))
 
+    cwv = data.get("vitals")
     metrics = [
         ("Homepage", f"{page.score()}/100"),
         ("Site average", f"{site_res['avg_score']}/100"),
@@ -117,6 +174,10 @@ def render_html(data: dict) -> str:
         ("Near-dupe clusters", dupes),
         ("Sitemap URLs", sm.get("total_urls", 0)),
     ]
+    headline = _vitals_headline(cwv) if cwv else ""
+    if headline:
+        label, _, val = headline.partition(": ")
+        metrics.append((label, val))
     cells = "".join(
         f'<div class="metric"><span class="m-num">{report_lib._esc(v)}</span>'
         f'<span class="m-lab">{report_lib._esc(k)}</span></div>'
@@ -137,7 +198,13 @@ def render_html(data: dict) -> str:
                + report_lib.md_to_html(_demote(validate_sitemap.render_markdown(sm)))
                + "</section>")
 
-    body = hero + homepage + sitewide + sitemap
+    vitals_html = ""
+    if cwv:
+        vitals_html = ('<h2 class="section">4. Core Web Vitals</h2><section class="card">'
+                       + report_lib.md_to_html(_vitals_markdown(cwv))
+                       + "</section>")
+
+    body = hero + homepage + sitewide + sitemap + vitals_html
     return report_lib.html_document("Narwhal Site Audit", data["site"], body)
 
 
@@ -150,6 +217,8 @@ def render_json(data: dict) -> str:
         "crawl": json.loads(crawl_site.render_json(data["site_result"])),
         "sitemap": json.loads(validate_sitemap.render_json(data["sitemap"])),
     }
+    if "vitals" in data:
+        payload["vitals"] = data["vitals"]   # {field: crux result, lab: psi result}
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
@@ -169,6 +238,12 @@ def main(argv=None) -> int:
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--ignore-robots", action="store_true")
     ap.add_argument("--allow-private", action="store_true")
+    ap.add_argument("--vitals", action="store_true",
+                    help="include real Core Web Vitals in the report — CrUX field "
+                         "data (needs CRUX_API_KEY), falling back to PageSpeed "
+                         "Insights lab data. Makes external API calls.")
+    ap.add_argument("--strategy", choices=("mobile", "desktop"), default="mobile",
+                    help="device for the lab (PSI) fallback (default: mobile)")
     ap.add_argument("--format", choices=("markdown", "json", "html", "pdf"),
                     default="markdown",
                     help="output format; pdf needs WeasyPrint (falls back to html)")
@@ -186,7 +261,8 @@ def main(argv=None) -> int:
     data = run(args.url, max_pages=args.max_pages, concurrency=args.concurrency,
                timeout=args.timeout, allow_private=args.allow_private,
                obey_robots=not args.ignore_robots, render=args.render,
-               max_links=args.max_links, max_sitemaps=args.max_sitemaps, config=cfg)
+               max_links=args.max_links, max_sitemaps=args.max_sitemaps, config=cfg,
+               vitals=args.vitals, strategy=args.strategy)
     renderers = {
         "json": render_json,
         "markdown": render_markdown,

@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.12.0**_
+_Last updated: 2026-07-01 · version **1.13.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -48,12 +48,16 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   via `<picture>`. Derived deterministically from the light logo
   (`assets/make-dark-logo.py`).
 - **P2 backlog (#13–#18) fully cleared.**
-- **Tests:** 103, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 106, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
-  and the skill; `audit` folds in real CrUX vitals when `CRUX_API_KEY` is set.
-- **Released:** v1.0.0 → v1.12.0. Plugin installs as `narwhal@narwhal`.
+  and the skill.
+- **Vitals in the audit report (v1.13.0):** `audit.py --vitals` runs CrUX field
+  (or PSI lab fallback) and adds a Core Web Vitals section to **all** formats
+  (md/html/pdf/json); `/narwhal audit` passes `--vitals`. md_to_html now does
+  `_italic_`.
+- **Released:** v1.0.0 → v1.13.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

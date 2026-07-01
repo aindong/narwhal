@@ -788,6 +788,52 @@ class TestEnvLoader(unittest.TestCase):
             self.assertEqual(os.environ["CRUX_API_KEY"], "from_dotenv")
 
 
+class TestAuditVitals(unittest.TestCase):
+    def _data(self, vitals):
+        from collections import Counter
+        page = Report("https://x.com", final_url="https://x.com", fetched_status=200)
+        page.add("technical", "high", "Meta description missing")
+        return {
+            "site": "https://x.com", "page": page,
+            "site_result": {"base": "https://x.com", "avg_score": 72,
+                            "pages_scanned": 2, "pages": [], "recurring": Counter(),
+                            "links": {"broken": [], "checked": 3, "skipped_over_cap": 0},
+                            "duplicates": []},
+            "sitemap": {"start": "https://x.com", "seeds": []},
+            "vitals": vitals,
+        }
+
+    def test_field_vitals_in_all_formats(self):
+        import json
+        field = {"found": True, "target": "origin https://x.com", "form_factor": None,
+                 "cwv_pass": True, "period": "2026-06-28",
+                 "rows": [{"metric": "LCP", "key": "largest_contentful_paint",
+                           "unit": "ms", "p75": 2100.0, "rating": "good", "core": True}]}
+        data = self._data({"field": field, "lab": None})
+        md = audit_mod.render_markdown(data)
+        self.assertIn("## 4. Core Web Vitals", md)
+        self.assertIn("CWV (field): pass", md)
+        self.assertIn("Core Web Vitals", audit_mod.render_html(data))
+        self.assertEqual(json.loads(audit_mod.render_json(data))["vitals"]["field"]["cwv_pass"], True)
+
+    def test_lab_fallback_when_no_field(self):
+        lab = {"found": True, "url": "https://x.com", "strategy": "mobile",
+               "perf_score": 83, "perf_rating": "needs-improvement",
+               "rows": [{"metric": "LCP", "id": "largest-contentful-paint",
+                         "unit": "ms", "value": 2600.0, "display": "2.6 s",
+                         "rating": "needs-improvement", "core": True}],
+               "lighthouse_version": "11"}
+        data = self._data({"field": {"found": False, "error": "no data"}, "lab": lab})
+        md = audit_mod.render_markdown(data)
+        self.assertIn("Perf (lab): 83/100", md)
+        self.assertIn("lab", md.lower())
+
+    def test_no_vitals_key_means_no_section(self):
+        data = self._data(None)
+        del data["vitals"]
+        self.assertNotIn("Core Web Vitals", audit_mod.render_markdown(data))
+
+
 class TestPsiLab(unittest.TestCase):
     def setUp(self):
         import psi
