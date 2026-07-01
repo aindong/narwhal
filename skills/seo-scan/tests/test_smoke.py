@@ -1047,5 +1047,199 @@ class TestSchemaGenerator(unittest.TestCase):
             generate_schema.build("NotAType", {})
 
 
+class TestGscAnalysis(unittest.TestCase):
+    """Pure GSC analysis: canned Search Analytics rows in, insights out.
+
+    Row shape mirrors the API: keys=[page, query], clicks, impressions, ctr,
+    position. No network anywhere in these tests."""
+
+    def setUp(self):
+        import gsc
+        self.gsc = gsc
+
+    @staticmethod
+    def _row(page, query, clicks, impressions, position):
+        return {"keys": [page, query], "clicks": clicks,
+                "impressions": impressions,
+                "ctr": (clicks / impressions) if impressions else 0.0,
+                "position": position}
+
+    def test_striking_distance_selection(self):
+        rows = [
+            self._row("https://x.com/a", "widget guide", 5, 400, 11.2),   # in
+            self._row("https://x.com/b", "widget price", 2, 80, 9.0),     # in
+            self._row("https://x.com/c", "widgets", 50, 5000, 3.1),       # pos too good
+            self._row("https://x.com/d", "widget kit", 0, 900, 34.0),     # pos too deep
+            self._row("https://x.com/e", "buy widget", 0, 10, 12.0),      # too few impressions
+        ]
+        r = self.gsc.analyze(rows, [])
+        picked = [(s["query"], s["page"]) for s in r["striking"]]
+        self.assertEqual(picked, [("widget guide", "https://x.com/a"),
+                                  ("widget price", "https://x.com/b")])  # impressions desc
+
+    def test_ctr_laggard_needs_low_ctr_and_top10(self):
+        rows = [
+            # pos 3, CTR 0.5% vs expected ~10% -> laggard
+            self._row("https://x.com/lag", "q1", 5, 1000, 3.0),
+            # pos 3, healthy CTR -> not a laggard
+            self._row("https://x.com/ok", "q2", 100, 1000, 3.0),
+            # terrible CTR but pos 15 (not top-10) -> not a laggard
+            self._row("https://x.com/deep", "q3", 1, 1000, 15.0),
+        ]
+        r = self.gsc.analyze(rows, [])
+        pages = [entry["page"] for entry in r["laggards"]]
+        self.assertEqual(pages, ["https://x.com/lag"])
+        self.assertLess(r["laggards"][0]["ctr"],
+                        r["laggards"][0]["expected_ctr"] / 2)
+
+    def test_decaying_pages_need_drop_and_floor(self):
+        prev = [
+            self._row("https://x.com/fall", "q", 100, 2000, 5.0),
+            self._row("https://x.com/tiny", "q", 4, 50, 5.0),    # below floor
+            self._row("https://x.com/hold", "q", 100, 2000, 5.0),
+        ]
+        now = [
+            self._row("https://x.com/fall", "q", 40, 1800, 6.0),   # -60% clicks
+            self._row("https://x.com/tiny", "q", 1, 40, 5.0),      # -75% but tiny
+            self._row("https://x.com/hold", "q", 95, 2100, 5.0),   # -5%
+        ]
+        r = self.gsc.analyze(now, prev)
+        self.assertEqual([d["page"] for d in r["decaying"]], ["https://x.com/fall"])
+        d = r["decaying"][0]
+        self.assertEqual((d["clicks_prev"], d["clicks_now"]), (100, 40))
+
+    def test_cannibalization_two_pages_sharing_a_query(self):
+        rows = [
+            self._row("https://x.com/a", "red widget", 10, 300, 6.0),
+            self._row("https://x.com/b", "red widget", 8, 280, 8.0),
+            self._row("https://x.com/a", "solo query", 20, 500, 4.0),  # one page only
+            # two pages but second has a negligible share:
+            self._row("https://x.com/c", "blue widget", 30, 950, 5.0),
+            self._row("https://x.com/d", "blue widget", 0, 20, 40.0),
+        ]
+        r = self.gsc.analyze(rows, [])
+        self.assertEqual([c["query"] for c in r["cannibalization"]], ["red widget"])
+        self.assertEqual(len(r["cannibalization"][0]["pages"]), 2)
+
+    def test_summary_totals_and_deltas(self):
+        prev = [self._row("https://x.com/a", "q", 50, 1000, 8.0)]
+        now = [self._row("https://x.com/a", "q", 80, 1000, 6.0)]
+        s = self.gsc.analyze(now, prev)["summary"]
+        self.assertEqual((s["clicks"], s["clicks_prev"]), (80, 50))
+        self.assertEqual(s["impressions"], 1000)
+        self.assertAlmostEqual(s["ctr"], 0.08)
+        self.assertAlmostEqual(s["position"], 6.0)
+
+    def test_expected_ctr_is_monotonic_and_clamped(self):
+        e = self.gsc.expected_ctr
+        self.assertGreater(e(1), e(5))
+        self.assertGreater(e(5), e(10))
+        self.assertEqual(e(10), e(30))   # clamped past position 10
+        self.assertEqual(e(0.5), e(1))   # clamped above position 1
+
+    def test_render_markdown_mentions_every_section(self):
+        rows = [self._row("https://x.com/a", "widget guide", 5, 400, 11.2)]
+        md = self.gsc.render_markdown(
+            {"found": True, "property": "sc-domain:x.com", "days": 28,
+             **self.gsc.analyze(rows, rows)}, "https://x.com")
+        for needle in ("Striking distance", "heuristic"):
+            self.assertIn(needle, md)
+
+    def test_render_markdown_not_found(self):
+        md = self.gsc.render_markdown(
+            {"found": False, "error": "no matching property"}, "https://x.com")
+        self.assertIn("no matching property", md)
+
+
+class TestGscProperty(unittest.TestCase):
+    def setUp(self):
+        import gsc
+        self.pick = gsc.pick_property
+
+    SITES = [{"siteUrl": "sc-domain:example.com"},
+             {"siteUrl": "https://other.example.org/"},
+             {"siteUrl": "https://example.com/blog/"}]
+
+    def test_url_prefix_beats_domain_property(self):
+        self.assertEqual(self.pick(self.SITES, "https://example.com/blog/post"),
+                         "https://example.com/blog/")
+
+    def test_domain_property_matches_any_scheme_and_www(self):
+        self.assertEqual(self.pick(self.SITES, "http://www.example.com/page"),
+                         "sc-domain:example.com")
+
+    def test_no_match_returns_none(self):
+        self.assertIsNone(self.pick(self.SITES, "https://unrelated.net/"))
+
+
+class TestGscCli(unittest.TestCase):
+    def test_no_credentials_is_honest_exit_2(self):
+        import contextlib
+        import io
+        import gsc
+        saved = {k: os.environ.get(k) for k in
+                 ("GSC_ACCESS_TOKEN", "GSC_CLIENT_ID", "GSC_CLIENT_SECRET",
+                  "GSC_REFRESH_TOKEN")}
+        os.environ.update({k: "" for k in saved})  # blank out, incl. any .env
+        try:
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                rc = gsc.main(["https://example.com"])
+            self.assertEqual(rc, 2)
+            for needle in ("GSC_ACCESS_TOKEN", "--auth", "GSC_REFRESH_TOKEN"):
+                self.assertIn(needle, err.getvalue())
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+
+class TestAuditGsc(unittest.TestCase):
+    def _data(self, gsc_block):
+        from collections import Counter
+        page = Report("https://x.com", final_url="https://x.com", fetched_status=200)
+        data = {
+            "site": "https://x.com", "page": page,
+            "site_result": {"base": "https://x.com", "avg_score": 72,
+                            "pages_scanned": 2, "pages": [], "recurring": Counter(),
+                            "links": {"broken": [], "checked": 3, "skipped_over_cap": 0},
+                            "duplicates": []},
+            "sitemap": {"start": "https://x.com", "seeds": []},
+        }
+        if gsc_block is not None:
+            data["gsc"] = gsc_block
+        return data
+
+    def _gsc_block(self):
+        import gsc
+        row = {"keys": ["https://x.com/a", "widget guide"], "clicks": 5,
+               "impressions": 400, "ctr": 0.0125, "position": 11.2}
+        return {"found": True, "property": "sc-domain:x.com", "days": 28,
+                **gsc.analyze([row], [row])}
+
+    def test_gsc_section_without_vitals_numbers_correctly(self):
+        import json
+        md = audit_mod.render_markdown(self._data(self._gsc_block()))
+        self.assertIn("## 4. Search performance", md)
+        self.assertIn("Search performance", audit_mod.render_html(self._data(self._gsc_block())))
+        payload = json.loads(audit_mod.render_json(self._data(self._gsc_block())))
+        self.assertTrue(payload["gsc"]["found"])
+
+    def test_gsc_after_vitals_is_section_5(self):
+        data = self._data(self._gsc_block())
+        data["vitals"] = {"field": {"found": False, "target": "origin https://x.com",
+                                    "form_factor": None, "error": "no data"},
+                          "lab": None}
+        md = audit_mod.render_markdown(data)
+        self.assertIn("## 4. Core Web Vitals", md)
+        self.assertIn("## 5. Search performance", md)
+
+    def test_no_gsc_means_no_section(self):
+        self.assertNotIn("Search performance",
+                         audit_mod.render_markdown(self._data(None)))
+
+
 if __name__ == "__main__":
     unittest.main()

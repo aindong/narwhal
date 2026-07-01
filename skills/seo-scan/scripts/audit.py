@@ -42,7 +42,7 @@ def _demote(md: str) -> str:
 
 def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=False,
         obey_robots=True, render=False, max_links=100, max_sitemaps=12,
-        config=None, vitals=False, strategy="mobile") -> dict:
+        config=None, vitals=False, strategy="mobile", gsc=False) -> dict:
     """Run the three sub-audits. The link and sitemap caps default lower than the
     standalone tools' — an audit is an overview, so it favors speed over an
     exhaustive link/sitemap sweep (the dedicated commands go deeper)."""
@@ -59,6 +59,9 @@ def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=Fal
     data = {"site": site, "page": page, "site_result": site_result, "sitemap": sitemap}
     if vitals:
         data["vitals"] = gather_vitals(site, timeout=timeout, strategy=strategy)
+    if gsc:
+        import gsc as gsc_mod  # noqa: PLC0415
+        data["gsc"] = gsc_mod.gather(site, timeout=timeout)
     return data
 
 
@@ -110,6 +113,42 @@ def _vitals_headline(v: dict) -> str:
     return ""
 
 
+def _gsc_markdown(g: dict, site: str) -> str:
+    """The Search-performance section body (Markdown), demoted under an H2."""
+    import gsc as gsc_mod  # noqa: PLC0415
+    if not g.get("found"):
+        return (f"_No Search Console data: {g.get('error', 'unavailable')}_"
+                if g.get("error") else "_No Search Console data collected._")
+    return _demote(gsc_mod.render_markdown(g, site))
+
+
+def _gsc_headline(g: dict) -> str:
+    """Short header-strip metric, or '' when there's no data."""
+    if not g.get("found"):
+        return ""
+    s = g["summary"]
+    delta = ""
+    if s.get("clicks_prev"):
+        d = round(100 * (s["clicks"] - s["clicks_prev"]) / s["clicks_prev"])
+        delta = f" ({'+' if d >= 0 else ''}{d}%)"
+    return f"GSC clicks ({g.get('days', 28)}d): {s['clicks']}{delta}"
+
+
+def _extra_sections(data: dict) -> list:
+    """The conditional report sections after the three fixed ones, numbered in
+    order of presence: (number, title, markdown-body)."""
+    out, n = [], 4
+    cwv = data.get("vitals")
+    if cwv:
+        out.append((n, "Core Web Vitals", _vitals_markdown(cwv)))
+        n += 1
+    g = data.get("gsc")
+    if g:
+        out.append((n, "Search performance (GSC)", _gsc_markdown(g, data["site"])))
+        n += 1
+    return out
+
+
 def overall_score(data: dict) -> float:
     """The audit's headline score: the lower of homepage and site-average."""
     return min(data["page"].score(), data["site_result"]["avg_score"])
@@ -123,7 +162,11 @@ def render_markdown(data: dict) -> str:
     dupes = len(site_res.get("duplicates", []))
 
     cwv = data.get("vitals")
-    headline = _vitals_headline(cwv) if cwv else ""
+    headlines = [h for h in
+                 ((_vitals_headline(cwv) if cwv else ""),
+                  (_gsc_headline(data["gsc"]) if data.get("gsc") else ""))
+                 if h]
+    headline = "  ·  ".join(f"**{h}**" for h in headlines)
     header = [
         f"# Narwhal Site Audit — {data['site']}",
         "",
@@ -132,7 +175,7 @@ def render_markdown(data: dict) -> str:
         f"**Pages scanned:** {site_res['pages_scanned']}  ",
         f"**Broken links:** {broken}  ·  **Near-duplicate clusters:** {dupes}  ·  "
         f"**Sitemap URLs:** {sm.get('total_urls', 0)}"
-        + (f"  ·  **{headline}**" if headline else ""),
+        + (f"  ·  {headline}" if headline else ""),
         "",
         "---",
         "",
@@ -148,8 +191,8 @@ def render_markdown(data: dict) -> str:
         "",
         _demote(validate_sitemap.render_markdown(sm)),
     ]
-    if cwv:
-        header += ["", "## 4. Core Web Vitals", "", _vitals_markdown(cwv)]
+    for n, title, body in _extra_sections(data):
+        header += ["", f"## {n}. {title}", "", body]
     return "\n".join(header).rstrip() + "\n"
 
 
@@ -174,10 +217,11 @@ def render_html(data: dict) -> str:
         ("Near-dupe clusters", dupes),
         ("Sitemap URLs", sm.get("total_urls", 0)),
     ]
-    headline = _vitals_headline(cwv) if cwv else ""
-    if headline:
-        label, _, val = headline.partition(": ")
-        metrics.append((label, val))
+    for headline in ((_vitals_headline(cwv) if cwv else ""),
+                     (_gsc_headline(data["gsc"]) if data.get("gsc") else "")):
+        if headline:
+            label, _, val = headline.partition(": ")
+            metrics.append((label, val))
     cells = "".join(
         f'<div class="metric"><span class="m-num">{report_lib._esc(v)}</span>'
         f'<span class="m-lab">{report_lib._esc(k)}</span></div>'
@@ -198,13 +242,12 @@ def render_html(data: dict) -> str:
                + report_lib.md_to_html(_demote(validate_sitemap.render_markdown(sm)))
                + "</section>")
 
-    vitals_html = ""
-    if cwv:
-        vitals_html = ('<h2 class="section">4. Core Web Vitals</h2><section class="card">'
-                       + report_lib.md_to_html(_vitals_markdown(cwv))
-                       + "</section>")
+    extra_html = "".join(
+        f'<h2 class="section">{n}. {title}</h2><section class="card">'
+        + report_lib.md_to_html(body) + "</section>"
+        for n, title, body in _extra_sections(data))
 
-    body = hero + homepage + sitewide + sitemap + vitals_html
+    body = hero + homepage + sitewide + sitemap + extra_html
     return report_lib.html_document("Narwhal Site Audit", data["site"], body)
 
 
@@ -219,6 +262,8 @@ def render_json(data: dict) -> str:
     }
     if "vitals" in data:
         payload["vitals"] = data["vitals"]   # {field: crux result, lab: psi result}
+    if "gsc" in data:
+        payload["gsc"] = data["gsc"]         # gsc.gather() result
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
@@ -244,6 +289,11 @@ def main(argv=None) -> int:
                          "Insights lab data. Makes external API calls.")
     ap.add_argument("--strategy", choices=("mobile", "desktop"), default="mobile",
                     help="device for the lab (PSI) fallback (default: mobile)")
+    ap.add_argument("--gsc", action="store_true",
+                    help="include real Google Search Console query data "
+                         "(striking distance, CTR laggards, decaying pages, "
+                         "cannibalization). Needs GSC OAuth credentials — see "
+                         "`narwhal gsc --auth`. Makes external API calls.")
     ap.add_argument("--format", choices=("markdown", "json", "html", "pdf"),
                     default="markdown",
                     help="output format; pdf needs WeasyPrint (falls back to html)")
@@ -262,7 +312,7 @@ def main(argv=None) -> int:
                timeout=args.timeout, allow_private=args.allow_private,
                obey_robots=not args.ignore_robots, render=args.render,
                max_links=args.max_links, max_sitemaps=args.max_sitemaps, config=cfg,
-               vitals=args.vitals, strategy=args.strategy)
+               vitals=args.vitals, strategy=args.strategy, gsc=args.gsc)
     renderers = {
         "json": render_json,
         "markdown": render_markdown,

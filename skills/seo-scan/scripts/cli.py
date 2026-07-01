@@ -29,6 +29,9 @@ Usage:
   narwhal diff <old.json> <new.json>  Compare two JSON reports (regression tracking)
   narwhal render <file.md> [options]  Render a Markdown report as branded HTML/PDF
   narwhal vitals <url> [options]    Real Core Web Vitals from CrUX (opt-in; needs an API key)
+  narwhal gsc <url> [options]       Real Search Console query data — striking distance, CTR
+                                    laggards, decay, cannibalization (opt-in; OAuth — one-time
+                                    setup: narwhal gsc --auth)
   narwhal mcp                         Run the MCP server (stdio) — needs the `mcp` extra
   narwhal --version
 
@@ -58,6 +61,7 @@ def main(argv=None) -> int:
         "render": "render_report",
         "vitals": "crux",
         "crux": "crux",
+        "gsc": "gsc",
         "mcp": "mcp_server",
     }.get(cmd)
     if module is None:
