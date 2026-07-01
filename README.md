@@ -84,26 +84,41 @@ with what was observed and a concrete fix.
 - `--only technical,content,schema,geo` — run a subset of auditors.
 - `--allow-private` — permit localhost/staging targets (off by default; see below).
 
-## Using it as an agent skill
+## Install
 
-- **Claude Code / Claude:** the skill lives at
-  [`skills/seo-scan/SKILL.md`](skills/seo-scan/SKILL.md). Copy or symlink
-  `skills/seo-scan/` into `~/.claude/skills/` (user-wide) or `.claude/skills/`
-  (per project), or run the installer below. Then just ask Claude to "run an SEO
-  and GEO audit on <url>".
-- **Codex / Cursor / OpenCode / others:** the root
-  [`AGENTS.md`](AGENTS.md) documents the same tools in the format those agents
-  read. Point the agent at this repo and ask for an audit.
+### Claude Code — plugin (recommended, one command)
 
-### Install into Claude Code
+Narwhal ships as a Claude Code plugin. Add the marketplace and install it:
+
+```text
+/plugin marketplace add aindong/narwhal
+/plugin install seo-scan@narwhal
+```
+
+That's it — the `seo-scan` skill and its scripts load automatically. Then just ask:
+
+> Run an SEO and GEO audit on https://example.com
+
+To update later, run `/plugin marketplace update narwhal`; to remove, `/plugin
+uninstall seo-scan@narwhal`. (`narwhal` is the marketplace name; `seo-scan` is the
+plugin.)
+
+### Claude Code — manual (no plugin system)
+
+Copy or symlink `skills/seo-scan/` into `~/.claude/skills/` (user-wide) or
+`.claude/skills/` (per project), or run the installer:
+
 ```bash
-# macOS / Linux
-bash install.sh
+bash install.sh        # macOS / Linux
 ```
 ```powershell
-# Windows
-./install.ps1
+./install.ps1          # Windows
 ```
+
+### Codex / Cursor / OpenCode / other agents
+
+Point the agent at this repo — the root [`AGENTS.md`](AGENTS.md) documents the same
+tools in the format those agents read. Then ask for an audit.
 
 ## Design principles
 

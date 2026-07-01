@@ -1,0 +1,17 @@
+{
+  "name": "narwhal",
+  "owner": {
+    "name": "aindong"
+  },
+  "metadata": {
+    "description": "Narwhal plugins — SEO & GEO/LLMO scanning for AI coding agents.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "seo-scan",
+      "source": "./",
+      "description": "Audit a page or whole site for SEO and GEO/LLMO (AI-search) visibility: technical SEO, content/E-E-A-T, schema.org JSON-LD, and citability for ChatGPT, Claude, Perplexity, and Google AI Overviews. Local-first, no API keys."
+    }
+  ]
+}
