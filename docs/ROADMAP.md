@@ -4,9 +4,9 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
-> **Status (v1.3.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
-> features below. Remaining work is the P2 tier (#13–#18). See
-> [STATUS.md](STATUS.md) for the full handoff snapshot.
+> **Status (v1.4.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
+> features below, and now **#13 (HTML/PDF export)**. Remaining P2 work is #14–#18.
+> See [STATUS.md](STATUS.md) for the full handoff snapshot.
 
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
 > **Status:** ⬜ planned · 🟡 in progress · ✅ done
@@ -91,8 +91,9 @@ hard commitments.
 
 ## 🔵 P2 — Outputs & integrations
 
-- ⬜ **HTML + PDF report export** — shareable, styled reports.
-  — [#13](https://github.com/aindong/narwhal/issues/13)
+- ✅ **HTML + PDF report export** — self-contained styled HTML (`--format html`,
+  score gauge + severity cards) on `scan` and `audit`; PDF via WeasyPrint with
+  graceful HTML fallback (`--format pdf`). — [#13](https://github.com/aindong/narwhal/issues/13)
 - ⬜ **Scan diffing / regression tracking** — SQLite snapshots, compare runs.
   — [#14](https://github.com/aindong/narwhal/issues/14)
 - ⬜ **PageSpeed/CrUX integration (opt-in)** — real Core Web Vitals field data.

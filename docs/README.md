@@ -18,6 +18,9 @@ Documentation index for the Narwhal SEO & GEO/LLMO scanning toolkit.
 ## Using the tool
 - **[Project README](../README.md)** — what it is, install (Claude Code plugin or
   manual), and quick start.
+- **[Sample HTML report](samples/sample-report.html)** — example
+  `--format html` output (open in a browser). `--format pdf` produces the same,
+  as a PDF, when WeasyPrint is installed.
 - **[SKILL.md](../skills/seo-scan/SKILL.md)** — the Claude Code skill entry: when to
   use it, how to run each script, guardrails.
 - **[AGENTS.md](../AGENTS.md)** — the same toolkit for Codex / Cursor / OpenCode and

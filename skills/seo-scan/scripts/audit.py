@@ -22,7 +22,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
-from lib.report import below_threshold  # noqa: E402
+from lib import report as report_lib  # noqa: E402
+from lib.report import below_threshold, deliver  # noqa: E402
 import scan as scanner  # noqa: E402
 import crawl_site  # noqa: E402
 import validate_sitemap  # noqa: E402
@@ -96,6 +97,50 @@ def render_markdown(data: dict) -> str:
     return "\n".join(header).rstrip() + "\n"
 
 
+def render_html(data: dict) -> str:
+    """A self-contained, styled HTML audit: overall score gauge, a metrics
+    strip, the homepage findings (rich cards), then the site-wide and sitemap
+    sections. Reuses the shared HTML helpers and the sub-reports' Markdown so no
+    presentation logic is duplicated."""
+    page = data["page"]
+    site_res = data["site_result"]
+    sm = data["sitemap"]
+    broken = len(site_res.get("links", {}).get("broken", [])) if site_res.get("links") else 0
+    dupes = len(site_res.get("duplicates", []))
+    overall = int(round(overall_score(data)))
+
+    metrics = [
+        ("Homepage", f"{page.score()}/100"),
+        ("Site average", f"{site_res['avg_score']}/100"),
+        ("Pages scanned", site_res["pages_scanned"]),
+        ("Broken links", broken),
+        ("Near-dupe clusters", dupes),
+        ("Sitemap URLs", sm.get("total_urls", 0)),
+    ]
+    cells = "".join(
+        f'<div class="metric"><span class="m-num">{report_lib._esc(v)}</span>'
+        f'<span class="m-lab">{report_lib._esc(k)}</span></div>'
+        for k, v in metrics)
+    hero = (
+        '<header class="hero">'
+        f'{report_lib.score_gauge(overall)}'
+        '<div class="hero-txt"><div class="grade" '
+        f'style="color:{report_lib._grade_color(overall)}">Overall</div>'
+        f'<div class="metrics">{cells}</div></div></header>')
+
+    homepage = ('<h2 class="section">1. Homepage audit</h2>'
+                + "".join(page._html_sections()))
+    sitewide = ('<h2 class="section">2. Site-wide</h2><section class="card">'
+                + report_lib.md_to_html(_demote(crawl_site.render_markdown(site_res)))
+                + "</section>")
+    sitemap = ('<h2 class="section">3. Sitemap</h2><section class="card">'
+               + report_lib.md_to_html(_demote(validate_sitemap.render_markdown(sm)))
+               + "</section>")
+
+    body = hero + homepage + sitewide + sitemap
+    return report_lib.html_document("Narwhal Site Audit", data["site"], body)
+
+
 def render_json(data: dict) -> str:
     import json
     payload = {
@@ -124,7 +169,9 @@ def main(argv=None) -> int:
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--ignore-robots", action="store_true")
     ap.add_argument("--allow-private", action="store_true")
-    ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    ap.add_argument("--format", choices=("markdown", "json", "html", "pdf"),
+                    default="markdown",
+                    help="output format; pdf needs WeasyPrint (falls back to html)")
     ap.add_argument("-o", "--output")
     ap.add_argument("--fail-under", type=int, metavar="N", default=d.get("fail_under"),
                     help="exit non-zero if the overall score (min of homepage & "
@@ -140,14 +187,17 @@ def main(argv=None) -> int:
                timeout=args.timeout, allow_private=args.allow_private,
                obey_robots=not args.ignore_robots, render=args.render,
                max_links=args.max_links, max_sitemaps=args.max_sitemaps, config=cfg)
-    out = render_json(data) if args.format == "json" else render_markdown(data)
-    if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
-        print(f"Wrote {args.format} audit to {args.output} "
-              f"(overall {overall_score(data)}/100)")
-    else:
-        print(out)
+    renderers = {
+        "json": render_json,
+        "markdown": render_markdown,
+        "html": render_html,
+        "pdf": render_html,  # PDF is produced by converting the HTML
+    }
+    content = renderers[args.format](data)
+    rc = deliver(args.format, args.output, content, label="audit",
+                 score=int(round(overall_score(data))))
+    if rc:
+        return rc
 
     if below_threshold(overall_score(data), args.fail_under):
         print(f"FAIL: overall score {overall_score(data)}/100 is below the "

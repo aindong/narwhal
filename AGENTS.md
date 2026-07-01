@@ -18,6 +18,8 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python audit.py <url>` | Comprehensive site audit: homepage + crawl + sitemap in one report |
 | `python scan.py <url>` | Audit one page → prioritized Markdown report |
 | `python scan.py <url> --format json -o out.json` | Machine-readable output |
+| `python scan.py <url> --format html -o report.html` | Self-contained, styled HTML report (also on `audit.py`) |
+| `python scan.py <url> --format pdf -o report.pdf` | PDF report (needs WeasyPrint; falls back to HTML) |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |

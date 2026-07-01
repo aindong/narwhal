@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.3.0**_
+_Last updated: 2026-07-01 · version **1.4.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -25,8 +25,12 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **Beyond the roadmap:** `/narwhal <action> <site>` command, plugin renamed to
   `narwhal`, audit-style report, comprehensive `audit`, **multi-agent deep audit**
   (10 specialists), filler/AI-writing content scorer, link-check perf fix.
-- **Tests:** 65, green in CI across Python 3.8–3.12 + Windows.
-- **Released:** v1.0.0 → v1.3.0. Plugin installs as `narwhal@narwhal`.
+- **#13 shipped:** **HTML + PDF report export** — self-contained styled HTML
+  (`--format html`: score gauge, per-area breakdown, severity cards) on `scan` and
+  `audit`; PDF via WeasyPrint with graceful HTML fallback (`--format pdf`). Sample
+  in `docs/samples/`.
+- **Tests:** 72, green in CI across Python 3.8–3.12 + Windows.
+- **Released:** v1.0.0 → v1.4.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -42,14 +46,13 @@ narwhal/
 │   │                      config)
 │   ├── references/        deep-dive guidance per auditor
 │   └── tests/             offline unittest suite (no network, no deps)
-├── docs/                  ROADMAP, CONFIG, STATUS (this), index
+├── docs/                  ROADMAP, CONFIG, STATUS (this), index, samples/
 ├── narwhal.example.toml   config template
 └── pyproject.toml         uvx/pip packaging (narwhal-seo)
 ```
 
 ## What's next (open issues — all P2)
-- **#13** HTML + PDF report export — highest user-facing value (shareable audit).
-- **#14** Scan diffing / regression tracking (SQLite snapshots).
+- **#14** Scan diffing / regression tracking (SQLite snapshots) — recommended next.
 - **#15** Optional PageSpeed/CrUX for real Core Web Vitals (opt-in; the
   `narwhal-performance` agent already flags hygiene and points here).
 - **#16** Harden the Playwright `--render` path + tests.

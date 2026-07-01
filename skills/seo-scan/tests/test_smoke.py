@@ -19,6 +19,7 @@ from lib import config as configlib  # noqa: E402
 from lib import simhash  # noqa: E402
 from lib import content_quality as cq  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
+from lib import report as report_lib  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
 import generate_schema  # noqa: E402
@@ -506,6 +507,97 @@ class TestConfig(unittest.TestCase):
                               200, {}, "", 1), strict, {"thresholds": {"title_max": 10}})
         titles = [f.title for f in strict.findings]
         self.assertIn("Title may be truncated in SERPs", titles)
+
+
+class TestHtmlRenderer(unittest.TestCase):
+    def _report(self):
+        r = Report("https://x.com/p", final_url="https://x.com/p",
+                   fetched_status=200)
+        r.add("technical", "critical", "Missing <title>", "No title element.",
+              "Add a unique title.", evidence="<head></head>")
+        r.add("content", "medium", "Thin content", "Only 120 words.",
+              "Expand the copy.")
+        r.add("geo", "low", "No llms.txt", "", "Add /llms.txt.")
+        r.ok("schema", "JSON-LD present", "Article detected")
+        return r
+
+    def test_to_html_is_self_contained_document(self):
+        html = self._report().to_html()
+        self.assertTrue(html.lstrip().startswith("<!DOCTYPE html>"))
+        self.assertIn("</html>", html)
+        self.assertIn("<style>", html)          # inline CSS, not linked
+        self.assertNotIn("<link", html)          # no external stylesheet
+        self.assertNotIn("<script", html)        # no scripts
+        self.assertIn("<svg", html)              # score gauge present
+
+    def test_to_html_escapes_untrusted_text(self):
+        r = Report("https://x.com/")
+        r.add("technical", "high", "Bad <tag> & \"quote\"",
+              "Detail with <b>markup</b>", "Fix <it>")
+        html = r.to_html()
+        self.assertIn("&lt;tag&gt;", html)
+        self.assertNotIn("<b>markup</b>", html)  # would be an injection
+
+    def test_to_html_shows_score_and_findings(self):
+        html = self._report().to_html()
+        self.assertIn("Missing &lt;title&gt;", html)
+        self.assertIn("Thin content", html)
+        self.assertIn("Priority fixes", html)
+        self.assertIn("Passing checks", html)
+
+    def test_md_to_html_covers_our_subset(self):
+        md = ("# Title\n\n## Section\n\n| A | B |\n|:--|:--|\n| 1 | `x` |\n\n"
+              "- one\n- two\n\n> a note with **bold**\n\n---\n")
+        out = report_lib.md_to_html(md)
+        for tag in ("<h1>", "<h2>", "<table>", "<th>", "<td>", "<ul>",
+                    "<li>", "<blockquote>", "<strong>", "<code>", "<hr>"):
+            self.assertIn(tag, out)
+
+    def test_pdf_deliver_falls_back_to_html(self):
+        import tempfile
+        import contextlib
+        import io
+        # WeasyPrint isn't a test dependency, so deliver() must gracefully
+        # write HTML instead of crashing.
+        d = tempfile.mkdtemp()
+        pdf = os.path.join(d, "r.pdf")
+        with contextlib.redirect_stderr(io.StringIO()), \
+                contextlib.redirect_stdout(io.StringIO()):
+            rc = report_lib.deliver("pdf", pdf, "<html><body>hi</body></html>",
+                                    score=88)
+        self.assertEqual(rc, 0)
+        self.assertTrue(os.path.exists(pdf) or
+                        os.path.exists(os.path.join(d, "r.html")))
+
+    def test_pdf_without_output_is_usage_error(self):
+        import contextlib
+        import io
+        with contextlib.redirect_stderr(io.StringIO()):
+            rc = report_lib.deliver("pdf", None, "<html></html>")
+        self.assertEqual(rc, 2)
+
+    def test_audit_render_html(self):
+        from collections import Counter
+        page = self._report()
+        data = {
+            "site": "https://x.com",
+            "page": page,
+            "site_result": {
+                "base": "https://x.com", "avg_score": 70, "pages_scanned": 2,
+                "pages": [{"score": 56, "url": "https://x.com/"},
+                          {"score": 84, "url": "https://x.com/a"}],
+                "recurring": Counter({("technical", "high", "No meta description"): 2}),
+                "links": {"broken": [], "checked": 8, "skipped_over_cap": 0},
+                "duplicates": [],
+            },
+            "sitemap": {"start": "https://x.com", "seeds": []},
+        }
+        html = audit_mod.render_html(data)
+        self.assertTrue(html.lstrip().startswith("<!DOCTYPE html>"))
+        self.assertIn("Homepage audit", html)
+        self.assertIn("Site-wide", html)
+        self.assertIn("Sitemap", html)
+        self.assertIn("<svg", html)
 
 
 class TestFailUnderGate(unittest.TestCase):

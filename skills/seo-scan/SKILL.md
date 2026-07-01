@@ -54,7 +54,9 @@ python scripts/scan.py https://example.com/page
 
 Useful flags:
 - `--render` — render JavaScript with Playwright (for SPAs / client-rendered pages).
-- `--format json` — machine-readable output (use `-o report.json` to save).
+- `--format json|html|pdf` — machine-readable JSON, a self-contained styled HTML
+  report, or PDF (needs WeasyPrint; falls back to HTML). Use `-o <file>` to save.
+  `html`/`pdf` also work on `audit.py` for a shareable, stakeholder-ready report.
 - `--only technical,geo` — run a subset: `technical`, `content`, `schema`, `geo`.
 - `--fail-under N` — exit non-zero if the score is below `N` (CI quality gate;
   `crawl_site.py` gates on the average score).

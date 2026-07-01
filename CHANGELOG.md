@@ -4,6 +4,23 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-07-01
+
+### Added
+- **HTML report export** (`--format html`): a self-contained, styled report —
+  inline CSS, an SVG score gauge, a per-area breakdown with score bars, and
+  severity-coloured finding cards. No external resources, so it renders offline
+  and is easy to share. Available on both `scan.py` and the flagship `audit.py`.
+- **PDF export** (`--format pdf`): renders the HTML to PDF via WeasyPrint when it's
+  installed, and gracefully falls back to writing HTML (with a clear note) when it
+  isn't — no crash, no hard dependency.
+- Sample HTML report in [`docs/samples/`](docs/samples/sample-report.html); new
+  optional `pdf` extra (`pip install narwhal-seo[pdf]`).
+
+### Changed
+- Report output writing is unified through `report.deliver()`, shared by `scan.py`
+  and `audit.py`, so all four formats behave consistently.
+
 ## [1.3.0] — 2026-07-01
 
 ### Added

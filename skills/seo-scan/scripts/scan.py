@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, htmlx, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
-from lib.report import Report, below_threshold  # noqa: E402
+from lib.report import Report, below_threshold, deliver  # noqa: E402
 
 import audit_content  # noqa: E402
 import audit_geo  # noqa: E402
@@ -123,7 +123,9 @@ def main(argv=None) -> int:
     ap.add_argument("url", help="URL to audit")
     ap.add_argument("--render", action="store_true",
                     help="render JS with Playwright if installed")
-    ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    ap.add_argument("--format", choices=("markdown", "json", "html", "pdf"),
+                    default="markdown",
+                    help="output format; pdf needs WeasyPrint (falls back to html)")
     ap.add_argument("--only", help="comma-separated subset: technical,content,schema,geo")
     ap.add_argument("-o", "--output", help="write report to a file")
     ap.add_argument("--timeout", type=int, default=cfg.default("timeout"))
@@ -145,14 +147,16 @@ def main(argv=None) -> int:
     report = scan(args.url, render=args.render, allow_private=args.allow_private,
                   timeout=args.timeout, only=only, config=cfg)
 
-    out = report.to_json() if args.format == "json" else report.to_markdown()
-    if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
-        print(f"Wrote {args.format} report to {args.output} "
-              f"(score {report.score()}/100)")
-    else:
-        print(out)
+    renderers = {
+        "json": report.to_json,
+        "markdown": report.to_markdown,
+        "html": report.to_html,
+        "pdf": report.to_html,  # PDF is produced by converting the HTML
+    }
+    content = renderers[args.format]()
+    rc = deliver(args.format, args.output, content, score=report.score())
+    if rc:
+        return rc
 
     if below_threshold(report.score(), args.fail_under):
         print(f"FAIL: health score {report.score()}/100 is below the "

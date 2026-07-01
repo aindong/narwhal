@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "narwhal-seo"
-version = "1.3.0"
+version = "1.4.0"
 description = "Local-first SEO & GEO/LLMO (AI-search) scanning for pages and sites."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -23,6 +23,7 @@ extras = [
   "trafilatura>=1.6",
 ]
 render = ["playwright>=1.40"]
+pdf = ["weasyprint>=60"]  # PDF export for `--format pdf` (HTML export needs nothing)
 
 [project.scripts]
 narwhal = "narwhal.cli:main"
