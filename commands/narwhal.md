@@ -53,6 +53,13 @@ Each returns a domain score + prioritized findings with exact fixes.
 - **Per-area detail** — one concise section per specialist.
 Offer to write it to `narwhal-audit-report.md`.
 
+**Formatting (important):** write the report in plain **GitHub-flavored Markdown**
+— `#`/`##` headings, `|`-delimited pipe tables, `-` bullet lists, `**bold**`. Do
+**NOT** draw Unicode/ASCII box tables (`┌─┬─┐│└┘`) or fixed-width column art: they
+corrupt in terminals and when streamed. Keep any table to ≤4 **narrow** columns; if
+it would be wide, use a list instead. Produce one clean report — don't paste each
+specialist's raw output verbatim.
+
 Guardrails: never fabricate metrics (real Core Web Vitals need CrUX/PageSpeed);
 be honest where a claim needs an external tool. Keep the synthesis tight, not a
 wall of raw output.
