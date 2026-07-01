@@ -20,7 +20,8 @@ except ImportError:  # running as loose scripts
 USAGE = """narwhal — SEO & GEO/LLMO scanner
 
 Usage:
-  narwhal scan <url> [options]      Audit a single page (alias: audit)
+  narwhal audit <url> [options]     Comprehensive site audit (page + crawl + sitemap)
+  narwhal scan <url> [options]      Audit a single page
   narwhal crawl <url> [options]     Audit a whole site (sitemap/link discovery)
   narwhal schema <Type> [options]   Generate schema.org JSON-LD
   narwhal sitemap <url> [options]   Validate a site's XML sitemap(s)
@@ -43,7 +44,7 @@ def main(argv=None) -> int:
     cmd, rest = argv[0], argv[1:]
     module = {
         "scan": "scan",
-        "audit": "scan",
+        "audit": "audit",
         "crawl": "crawl_site",
         "crawl_site": "crawl_site",
         "schema": "generate_schema",

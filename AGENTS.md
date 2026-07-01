@@ -15,6 +15,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 
 | Command | Purpose |
 |---|---|
+| `python audit.py <url>` | Comprehensive site audit: homepage + crawl + sitemap in one report |
 | `python scan.py <url>` | Audit one page → prioritized Markdown report |
 | `python scan.py <url> --format json -o out.json` | Machine-readable output |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
@@ -30,7 +31,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python generate_llms.py <url> -o llms.txt` | Generate a starter llms.txt (curate before publishing) |
 
 Auditor names: `technical`, `content`, `schema`, `geo`.
-Unified CLI subcommands: `narwhal scan|crawl|schema|sitemap|llms`.
+Unified CLI subcommands: `narwhal audit|scan|crawl|schema|sitemap|llms`.
 
 ## Setup
 Runs on a bare Python 3.8+ install (stdlib fallback). Optional extras improve

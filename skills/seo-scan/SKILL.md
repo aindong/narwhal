@@ -41,6 +41,12 @@ python -m playwright install chromium   # only needed for --render
 All scripts live in `scripts/`. Run them and read the report back to the user in
 your own words — lead with the highest-severity fixes.
 
+**Comprehensive site audit** (the flagship `audit` action — combines a homepage
+audit + site crawl + sitemap validation into one report):
+```
+python scripts/audit.py https://example.com
+```
+
 **Audit one page** (Markdown report to stdout):
 ```
 python scripts/scan.py https://example.com/page

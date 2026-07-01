@@ -98,7 +98,7 @@ Narwhal ships as a Claude Code plugin. Add the marketplace and install it:
 
 ```text
 /plugin marketplace add aindong/narwhal
-/plugin install seo-scan@narwhal
+/plugin install narwhal@narwhal
 ```
 
 That's it — the skill and its scripts load automatically. Then use the slash
@@ -117,8 +117,8 @@ command:
 > Run an SEO and GEO audit on https://example.com
 
 To update later, run `/plugin marketplace update narwhal`; to remove, `/plugin
-uninstall seo-scan@narwhal`. (`narwhal` is the marketplace name; `seo-scan` is the
-plugin.)
+uninstall narwhal@narwhal`. (The first `narwhal` is the marketplace, the second is
+the plugin.)
 
 ### Run instantly with `uvx` (no install, no PyPI)
 

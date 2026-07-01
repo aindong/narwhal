@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "seo-scan",
+      "name": "narwhal",
       "source": "./",
       "description": "Audit a page or whole site for SEO and GEO/LLMO (AI-search) visibility: technical SEO, content/E-E-A-T, schema.org JSON-LD, and citability for ChatGPT, Claude, Perplexity, and Google AI Overviews. Local-first, no API keys."
     }

@@ -23,6 +23,7 @@ import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
 import generate_schema  # noqa: E402
 import crawl_site  # noqa: E402
 import generate_llms  # noqa: E402
+import audit as audit_mod  # noqa: E402
 
 GOOD_PAGE = """<!doctype html><html lang="en"><head>
 <title>What is GEO? A practical guide to AI search optimization</title>
@@ -370,6 +371,21 @@ class TestSimhash(unittest.TestCase):
             {"url": "u1", "fingerprint": fp_a, "canonical": "https://x.com/canon"},
             {"url": "u2", "fingerprint": fp_a2, "canonical": "https://x.com/canon"}], 90.0)
         self.assertTrue(good[0]["canonical_ok"])
+
+
+class TestAuditCompose(unittest.TestCase):
+    def test_demote_drops_h1_and_pushes_headings(self):
+        md = "# Title\n\nintro\n\n## Section\n\ntext\n\n### Sub\n"
+        out = audit_mod._demote(md)
+        self.assertNotIn("# Title", out)
+        self.assertIn("### Section", out)   # ## -> ###
+        self.assertIn("#### Sub", out)      # ### -> ####
+        self.assertIn("intro", out)
+
+    def test_overall_score_is_lower_of_two(self):
+        data = {"page": Report("u"), "site_result": {"avg_score": 42.0}}
+        # empty page report scores 100; overall should be the site average
+        self.assertEqual(audit_mod.overall_score(data), 42.0)
 
 
 class TestLlmsTxt(unittest.TestCase):

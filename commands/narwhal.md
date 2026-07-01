@@ -32,14 +32,15 @@ uvx --from git+https://github.com/aindong/narwhal narwhal <action> <args>
 
 | `$1` | Run |
 |---|---|
-| `scan` or `audit` | `scan.py $2` — full single-page audit report |
+| `audit` | `audit.py $2` — comprehensive: homepage audit + site crawl + sitemap in one report |
+| `scan` | `scan.py $2` — full single-page audit report |
 | `crawl` | `crawl_site.py $2 --check-links` — site-wide, with broken links + dupes |
 | `sitemap` | `validate_sitemap.py $2` — validate XML sitemap(s) |
 | `llms` | `generate_llms.py $2 -o llms.txt` — generate a starter llms.txt |
 | `schema` | `generate_schema.py $2 …` — here `$2` is the schema **Type** (e.g. Article) |
 
 Defaults & edge cases:
-- If `$1` is empty or unrecognized, treat it as `scan` and use `$ARGUMENTS` as the URL.
+- If `$1` is empty or unrecognized, treat it as `audit` and use `$ARGUMENTS` as the URL.
 - If `$2` (the site URL) is missing, ask the user for it before running.
 - Pass through obvious extra options the user included in `$ARGUMENTS`.
 
