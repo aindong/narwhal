@@ -17,6 +17,7 @@ from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
 import generate_schema  # noqa: E402
+import crawl_site  # noqa: E402
 
 GOOD_PAGE = """<!doctype html><html lang="en"><head>
 <title>What is GEO? A practical guide to AI search optimization</title>
@@ -158,6 +159,34 @@ class TestRobots(unittest.TestCase):
         rt = RobotsTxt.parse(
             "Sitemap: https://x.com/sitemap.xml\nUser-agent: *\nDisallow:")
         self.assertEqual(rt.sitemaps, ["https://x.com/sitemap.xml"])
+
+
+class TestCrawlPoliteness(unittest.TestCase):
+    def test_skips_disallowed_keeps_base(self):
+        rt = RobotsTxt.parse("User-agent: seo-scan\nDisallow: /private")
+        base = "https://site.com/"
+        cands = [base, "https://site.com/public",
+                 "https://site.com/private/x", "https://site.com/about"]
+        urls, skipped = crawl_site.select_urls(cands, base, rt, True, 100)
+        self.assertEqual(skipped, 1)
+        self.assertNotIn("https://site.com/private/x", urls)
+        self.assertIn(base, urls)
+        self.assertIn("https://site.com/about", urls)
+
+    def test_ignore_robots_keeps_all(self):
+        rt = RobotsTxt.parse("User-agent: *\nDisallow: /")
+        base = "https://site.com/"
+        cands = [base, "https://site.com/a", "https://site.com/b"]
+        urls, skipped = crawl_site.select_urls(cands, base, rt, False, 100)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(len(urls), 3)
+
+    def test_caps_at_max_pages(self):
+        rt = RobotsTxt.parse("")
+        base = "https://site.com/"
+        cands = [f"https://site.com/{i}" for i in range(20)]
+        urls, skipped = crawl_site.select_urls(cands, base, rt, True, 5)
+        self.assertEqual(len(urls), 5)
 
 
 class TestFailUnderGate(unittest.TestCase):

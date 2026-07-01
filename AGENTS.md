@@ -21,6 +21,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |
 | `python crawl_site.py <url> --max-pages 25` | Site-wide scan + recurring-issue rollup |
+| `python crawl_site.py <url> --concurrency 4 --delay 0.5` | Polite crawl: honors robots.txt, parallel, rate-limited |
 | `python generate_schema.py <Type> --field k=v …` | Emit valid schema.org JSON-LD |
 | `python generate_schema.py --list` | List supported schema types |
 

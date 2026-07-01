@@ -67,8 +67,8 @@ pip install -r skills/seo-scan/requirements.txt
 # 2. audit a single page
 python skills/seo-scan/scripts/scan.py https://example.com/page
 
-# 3. audit a whole site (rolls up the issues that recur most)
-python skills/seo-scan/scripts/crawl_site.py https://example.com --max-pages 25
+# 3. audit a whole site (polite crawler: honors robots.txt, parallel, rate-limited)
+python skills/seo-scan/scripts/crawl_site.py https://example.com --max-pages 25 --concurrency 4
 
 # 4. generate valid schema.org JSON-LD
 python skills/seo-scan/scripts/generate_schema.py Article \

@@ -48,8 +48,9 @@ hard commitments.
 - ✅ **Unified `narwhal` CLI + `uvx` packaging** — one entrypoint (`scan`/`crawl`/
   `schema`), runnable via `uvx --from git+…` with no install and no PyPI. PyPI
   publish is optional and deferred. — [#4](https://github.com/aindong/narwhal/issues/4)
-- ⬜ **Polite crawler** — honor robots.txt, rate-limit, bounded concurrency,
-  caching. — [#5](https://github.com/aindong/narwhal/issues/5)
+- ✅ **Polite crawler** — honors robots.txt (skips disallowed URLs), bounded
+  `--concurrency`, `--delay` rate-limit, site-level signals cached once per site,
+  trailing-slash dedup. — [#5](https://github.com/aindong/narwhal/issues/5)
 - ✅ **Robust robots.txt matching** — `lib/robots.py`: user-agent groups, `*`/`$`
   wildcards, longest-match with Allow-over-Disallow ties (RFC 9309). Powers the GEO
   AI-crawler check; reused by the crawler (#5). — [#6](https://github.com/aindong/narwhal/issues/6)

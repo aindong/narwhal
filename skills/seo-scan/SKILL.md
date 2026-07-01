@@ -58,6 +58,11 @@ the issues that recur most — the highest-leverage fixes):
 ```
 python scripts/crawl_site.py https://example.com --max-pages 25
 ```
+The crawler is polite by default: it **honors robots.txt** (skips disallowed URLs;
+reported in the summary), fetches site-level signals once, and scans pages in
+parallel. Tune with `--concurrency N` (default 4), `--delay SECONDS` (sequential
+rate-limit), and `--ignore-robots` to override. `--fail-under N` gates on the
+average score.
 
 **Generate schema.org JSON-LD:**
 ```

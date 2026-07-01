@@ -74,7 +74,10 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
 
 def scan(url: str, *, render=False, allow_private=False, timeout=20,
-         only=None) -> Report:
+         only=None, ctx=None) -> Report:
+    """Audit a single page. Pass ``ctx`` (from :func:`gather_context`) to reuse
+    site-level signals across many pages — the crawler does this so robots.txt,
+    sitemap, and llms.txt are fetched once per site rather than once per page."""
     resp = http.fetch(url, render=render, allow_private=allow_private, timeout=timeout)
     report = Report(url=url, final_url=resp.final_url, fetched_status=resp.status,
                     rendered=resp.rendered)
@@ -87,8 +90,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         return report
 
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
-    ctx = gather_context(resp.final_url or url,
-                         allow_private=allow_private, timeout=timeout)
+    if ctx is None:
+        ctx = gather_context(resp.final_url or url,
+                             allow_private=allow_private, timeout=timeout)
 
     selected = only or list(AUDITORS)
     for name in selected:
