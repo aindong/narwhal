@@ -139,6 +139,14 @@ Deep-dive reasoning behind each check lives in
 [`skills/seo-scan/references/`](skills/seo-scan/references/):
 `technical-seo.md`, `content-eeat.md`, `schema.md`, `geo-llmo.md`.
 
+## Roadmap & docs
+
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — where Narwhal is headed (priorities,
+  milestones), linked to tracking issues.
+- **[docs/](docs/README.md)** — documentation index.
+- **[Issues](https://github.com/aindong/narwhal/issues)** — detailed tasks; see also
+  [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Requirements
 
 Python 3.8+. Optional extras in
