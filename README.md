@@ -144,19 +144,53 @@ Everything above is local and honest about what it can measure — it will **nev
 fabricate** field metrics. When you want *real* Core Web Vitals (what actual Chrome
 users experience), Narwhal can query Google's **Chrome UX Report (CrUX) API**. This
 is the one feature that calls an external service, so it's **opt-in** and needs a
-free [CrUX API key](https://developer.chrome.com/docs/crux/api):
+free API key.
+
+> **CrUX vs. PageSpeed Insights.** Both surface Core Web Vitals, but they're
+> different things. **PageSpeed Insights (PSI)** runs a Lighthouse *lab* test and
+> historically also echoed CrUX *field* data — but as of 2026 Google is **removing
+> CrUX field data from the PSI API**. So Narwhal talks to the **CrUX API directly**,
+> which is the source of truth for real-user field data (LCP/INP/CLS at the 75th
+> percentile). No Lighthouse lab score is fetched — our local `technical` auditor
+> and the `narwhal-performance` agent already cover performance *hygiene*.
+
+#### Get a free API key (one-time, ~2 minutes)
+
+The CrUX API is **free** — no billing, no credit card. Quota is 150 queries/minute
+per project (can't be paid to raise, but that's plenty for audits).
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) and
+   **create or select a project** (top bar).
+2. **Enable the API:** go to
+   [**Chrome UX Report API**](https://console.cloud.google.com/apis/library/chromeuxreport.googleapis.com)
+   and click **Enable**.
+3. **Create the key:** go to
+   [**APIs & Services → Credentials**](https://console.cloud.google.com/apis/credentials)
+   → **Create credentials** → **API key**. Copy the key.
+   *(Optional but recommended: click the key → **Restrict key** → restrict it to the
+   Chrome UX Report API.)*
+
+Full details: [Google's CrUX API guide](https://developer.chrome.com/docs/crux/api).
+
+#### Use it
 
 ```bash
+# pass the key directly...
 narwhal vitals https://example.com/page --crux-key YOUR_KEY
-# or set it once:
-export CRUX_API_KEY=YOUR_KEY
+
+# ...or set it once in your environment (Narwhal reads CRUX_API_KEY):
+export CRUX_API_KEY=YOUR_KEY          # Windows PowerShell: $env:CRUX_API_KEY="YOUR_KEY"
 narwhal vitals https://example.com --origin --form-factor phone
 ```
 
 You get **LCP, INP, CLS** (the Core Web Vitals; INP replaced FID in 2024) at the
 75th percentile, each rated good / needs-improvement / poor, plus a pass/fail
-verdict. CrUX only has data for pages/origins with enough real traffic — low-traffic
-URLs return "no data" (try `--origin`).
+verdict (and FCP/TTFB as secondary). Flags: `--origin` aggregates across the whole
+site, `--form-factor phone|desktop|tablet` narrows the device, `--format json`.
+
+CrUX only has data for pages/origins with enough real traffic — low-traffic URLs
+return "no data" (try `--origin` for the site-wide aggregate). Without a key,
+`narwhal vitals` prints how to get one and exits; it never guesses field numbers.
 
 ## Install
 
