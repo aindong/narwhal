@@ -4,6 +4,26 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-07-01
+
+### Changed
+- **Hardened the `--render` (Playwright) path.** Verified against Playwright 1.61:
+  - Missing Chromium binary now yields an actionable one-line fix
+    (`python -m playwright install chromium`) instead of a raw error.
+  - Navigation waits on `domcontentloaded` then a **capped** `networkidle` settle
+    (5s max) — `networkidle` alone could hang on analytics/long-polling sites.
+  - Browser is always closed via `try/finally` (no leak on error); container-safe
+    launch (`--disable-dev-shm-usage`, sandbox kept on for untrusted pages).
+  - A render that can't run reports an honest error rather than silently degrading
+    to raw HTML.
+- `pdf_from_html` now also handles WeasyPrint being installed without its native
+  libraries (`OSError`), falling back to HTML instead of crashing.
+
+### Added
+- CI **`render-smoke`** job: installs Playwright + Chromium and asserts the
+  `--render` path executes JavaScript end to end (serves a JS page, checks the
+  post-JS DOM). Bumped `actions/checkout` to v5.
+
 ## [1.6.0] — 2026-07-01
 
 ### Added

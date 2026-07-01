@@ -676,6 +676,37 @@ class TestScanDiff(unittest.TestCase):
         self.assertIn("Resolved", md)
 
 
+class TestRenderHardening(unittest.TestCase):
+    def test_missing_browser_gives_actionable_hint(self):
+        # Playwright installed but Chromium binary absent — the message must tell
+        # the user exactly how to fix it, not surface a raw stack string.
+        msg = http._browser_launch_hint(
+            Exception("Executable doesn't exist at /home/.cache/ms-playwright/..."))
+        self.assertIn("playwright install chromium", msg)
+
+    def test_generic_render_error_is_labelled(self):
+        msg = http._browser_launch_hint(Exception("some other failure"))
+        self.assertIn("Playwright render failed", msg)
+        self.assertIn("some other failure", msg)
+
+    def test_pdf_from_html_survives_missing_native_libs(self):
+        # Simulate WeasyPrint present but its native libs missing (OSError on
+        # import) — pdf_from_html must return False, not raise.
+        import builtins
+        real_import = builtins.__import__
+
+        def fake_import(name, *a, **k):
+            if name == "weasyprint":
+                raise OSError("cannot load library 'libgobject-2.0-0'")
+            return real_import(name, *a, **k)
+
+        builtins.__import__ = fake_import
+        try:
+            self.assertFalse(report_lib.pdf_from_html("<html></html>", "x.pdf"))
+        finally:
+            builtins.__import__ = real_import
+
+
 class TestMcpServer(unittest.TestCase):
     def setUp(self):
         import mcp_server

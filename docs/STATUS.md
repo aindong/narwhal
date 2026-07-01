@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.6.0**_
+_Last updated: 2026-07-01 · version **1.7.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -36,8 +36,11 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **#17 shipped:** **MCP server** — `narwhal mcp` exposes all auditors as MCP
   tools over stdio (`mcp_server.py`, FastMCP; optional `mcp` extra). Verified
   against the current MCP Python SDK release.
-- **Tests:** 84, green in CI across Python 3.8–3.12 + Windows.
-- **Released:** v1.0.0 → v1.6.0. Plugin installs as `narwhal@narwhal`.
+- **#16 shipped:** **Hardened `--render`** — actionable missing-browser message,
+  capped networkidle settle, guaranteed browser cleanup, honest failures; new CI
+  `render-smoke` job executes JS end to end (verified vs Playwright 1.61).
+- **Tests:** 87, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Released:** v1.0.0 → v1.7.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -63,8 +66,6 @@ narwhal/
   (`chromeuxreport.googleapis.com`), not PageSpeed Insights: as of 2026 Google is
   removing CrUX field data from PSI. Metrics are INP/LCP/CLS (FID is gone).
   Opt-in via API key; the `narwhal-performance` agent already points here.
-- **#16** Harden the Playwright `--render` path + tests (Playwright 1.61: timeouts,
-  clear errors, `--only-shell` install note, CI smoke).
 - **#18** Dark-mode logo + README `<picture>` auto-swap.
 
 ### Also worth doing (not yet ticketed)

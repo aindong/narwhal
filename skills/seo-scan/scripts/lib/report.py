@@ -540,7 +540,9 @@ def pdf_from_html(html: str, path: str) -> bool:
     """
     try:
         from weasyprint import HTML  # type: ignore
-    except ImportError:
+    except (ImportError, OSError):
+        # ImportError: package absent. OSError: package present but its native
+        # libraries (pango/cairo/…) aren't — treat both as "no PDF, use HTML".
         return False
     HTML(string=html).write_pdf(path)
     return True

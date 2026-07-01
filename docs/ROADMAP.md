@@ -4,9 +4,9 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
-> **Status (v1.6.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
-> features below, and now **#13 (HTML/PDF export)**, **#14 (scan diffing)**, and
-> **#17 (MCP server)**. Remaining P2 work is #15, #16, #18. See
+> **Status (v1.7.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
+> features below, and now **#13 (HTML/PDF)**, **#14 (scan diffing)**, **#16 (harden
+> render)**, and **#17 (MCP server)**. Remaining P2 work is #15 and #18. See
 > [STATUS.md](STATUS.md) for the full snapshot.
 
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
@@ -100,8 +100,9 @@ hard commitments.
   gate. Database-free (diffs the JSON we already emit). — [#14](https://github.com/aindong/narwhal/issues/14)
 - ⬜ **PageSpeed/CrUX integration (opt-in)** — real Core Web Vitals field data.
   — [#15](https://github.com/aindong/narwhal/issues/15)
-- ⬜ **Harden `--render` (Playwright)** — SPA fixtures, timeouts, clear errors, CI
-  smoke test. — [#16](https://github.com/aindong/narwhal/issues/16)
+- ✅ **Harden `--render` (Playwright)** — actionable missing-browser error, capped
+  `networkidle` settle, guaranteed browser cleanup, honest render-failure errors,
+  and a CI render-smoke that executes JS end to end. — [#16](https://github.com/aindong/narwhal/issues/16)
 - ✅ **MCP server wrapper** — `narwhal mcp` exposes all auditors (scan/crawl/audit/
   sitemap/llms/schema/diff) as MCP tools over stdio (FastMCP; optional `mcp` extra).
   — [#17](https://github.com/aindong/narwhal/issues/17)

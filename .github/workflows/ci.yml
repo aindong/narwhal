@@ -21,7 +21,7 @@ jobs:
           - os: windows-latest
             python-version: "3.12"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -34,7 +34,7 @@ jobs:
     name: with-extras (py3.12, ubuntu-latest)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -42,3 +42,19 @@ jobs:
         run: pip install -r skills/seo-scan/requirements.txt
       - name: Run tests (with extras)
         run: python -m unittest discover -s skills/seo-scan/tests -v
+
+  # Prove the --render (Playwright) path actually executes JavaScript end to end.
+  render-smoke:
+    name: render-smoke (playwright chromium, py3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Playwright + Chromium
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Render smoke test
+        run: python skills/seo-scan/tests/render_smoke.py

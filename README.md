@@ -99,7 +99,10 @@ with what was observed and a concrete fix.
 
 ### Useful flags (`scan.py`)
 - `--render` — render JavaScript via Playwright (for SPAs). Needs
-  `python -m playwright install chromium`.
+  `pip install playwright` then `python -m playwright install chromium`. If the
+  browser isn't installed you get a clear one-line fix, not a stack trace; a
+  render that can't run reports an honest error rather than silently falling back
+  to raw HTML.
 - `--format json|html|pdf [-o file]` — machine-readable JSON, a **self-contained,
   styled HTML** report (score gauge, severity-coloured finding cards — see the
   [sample](docs/samples/sample-report.html)), or **PDF** (needs WeasyPrint; falls

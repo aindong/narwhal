@@ -175,22 +175,66 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes) -> Response:
         return Response(url, url, 0, {}, "", 0, error=str(exc))
 
 
+def _browser_launch_hint(exc) -> str:
+    """Turn a Playwright launch/render error into an actionable message.
+
+    The most common failure is Playwright being installed while its Chromium
+    binary isn't — the fix is one command, so we say so plainly instead of
+    surfacing the raw stack message."""
+    msg = str(exc)
+    if "Executable doesn't exist" in msg or "playwright install" in msg:
+        return ("Playwright is installed but its Chromium browser isn't. "
+                "Run: python -m playwright install chromium")
+    return f"Playwright render failed: {msg}"
+
+
 def _try_render(url, timeout, user_agent) -> Optional[Response]:
+    """Render ``url`` with headless Chromium and return the post-JS DOM.
+
+    Returns ``None`` only when Playwright isn't installed at all, so the caller
+    transparently falls back to a plain fetch. Every other problem (missing
+    browser binary, navigation timeout, page error) comes back as a Response
+    with a clear, actionable ``error`` — a ``--render`` request never silently
+    degrades to raw HTML, which would misrepresent what was measured."""
     try:
-        from playwright.sync_api import sync_playwright  # noqa: PLC0415
+        from playwright.sync_api import (  # noqa: PLC0415
+            Error as PWError,
+            TimeoutError as PWTimeout,
+            sync_playwright,
+        )
     except ImportError:
-        return None
+        return None  # Playwright absent -> caller uses a normal HTTP fetch.
+
     start = time.time()
+    nav_ms = max(1, timeout) * 1000
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page(user_agent=user_agent)
-            resp = page.goto(url, wait_until="networkidle", timeout=timeout * 1000)
-            html = page.content()
-            status = resp.status if resp else 0
-            headers = {k.lower(): v for k, v in (resp.headers if resp else {}).items()}
-            final_url = page.url
-            browser.close()
+            try:
+                # --disable-dev-shm-usage avoids /dev/shm exhaustion in containers/CI;
+                # the sandbox stays ON since we render untrusted pages.
+                browser = p.chromium.launch(
+                    headless=True, args=["--disable-dev-shm-usage"])
+            except PWError as exc:
+                return Response(url, url, 0, {}, "", 0, rendered=True,
+                                error=_browser_launch_hint(exc))
+            try:
+                page = browser.new_page(user_agent=user_agent)
+                page.set_default_timeout(nav_ms)
+                resp = page.goto(url, wait_until="domcontentloaded", timeout=nav_ms)
+                # Best-effort settle for late XHR/hydration. networkidle can hang on
+                # sites with long-polling/analytics, so cap it and proceed with
+                # whatever rendered rather than failing the whole scan.
+                try:
+                    page.wait_for_load_state("networkidle", timeout=min(nav_ms, 5000))
+                except PWTimeout:
+                    pass
+                html = page.content()
+                status = resp.status if resp else 0
+                headers = {k.lower(): v
+                           for k, v in (resp.headers if resp else {}).items()}
+                final_url = page.url
+            finally:
+                browser.close()
         return Response(
             url=url,
             final_url=final_url,
@@ -200,6 +244,13 @@ def _try_render(url, timeout, user_agent) -> Optional[Response]:
             elapsed_ms=int((time.time() - start) * 1000),
             rendered=True,
         )
+    except PWTimeout as exc:
+        return Response(url, url, 0, {}, "", 0, rendered=True,
+                        error=f"Render timed out after {timeout}s "
+                              f"(try a higher --timeout): {exc}")
+    except PWError as exc:
+        return Response(url, url, 0, {}, "", 0, rendered=True,
+                        error=_browser_launch_hint(exc))
     except Exception as exc:  # noqa: BLE001
         return Response(url, url, 0, {}, "", 0, rendered=True, error=str(exc))
 
