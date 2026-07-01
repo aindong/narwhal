@@ -58,8 +58,9 @@ hard commitments.
   outbound links (internal + external) for 4xx/5xx/dead, grouped by source page;
   gated codes (401/403/429) treated as not-broken to avoid false positives.
   — [#7](https://github.com/aindong/narwhal/issues/7)
-- ⬜ **Deeper sitemap validation** — nested indexes, `lastmod`, 404 sampling.
-  — [#8](https://github.com/aindong/narwhal/issues/8)
+- ✅ **Deeper sitemap validation** — `narwhal sitemap`: recurses sitemap indexes,
+  validates `loc` (absolute/same-host) and `lastmod` (W3C), samples URLs for 404s,
+  gzip-aware, reports partial counts when capped. — [#8](https://github.com/aindong/narwhal/issues/8)
 - ⬜ **Config file (`narwhal.toml`)** — thresholds, ignore rules, severity weights.
   — [#9](https://github.com/aindong/narwhal/issues/9)
 

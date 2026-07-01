@@ -25,8 +25,10 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python crawl_site.py <url> --check-links` | Also check outbound links (internal + external) for 4xx/5xx/dead |
 | `python generate_schema.py <Type> --field k=v …` | Emit valid schema.org JSON-LD |
 | `python generate_schema.py --list` | List supported schema types |
+| `python validate_sitemap.py <url> --sample 20` | Validate XML sitemap(s): indexes, lastmod, 404 sampling, gzip |
 
 Auditor names: `technical`, `content`, `schema`, `geo`.
+Unified CLI subcommands: `narwhal scan|crawl|schema|sitemap`.
 
 ## Setup
 Runs on a bare Python 3.8+ install (stdlib fallback). Optional extras improve

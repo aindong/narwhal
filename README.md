@@ -118,10 +118,11 @@ a throwaway environment — always the latest, nothing left behind:
 uvx --from git+https://github.com/aindong/narwhal narwhal scan https://example.com
 uvx --from git+https://github.com/aindong/narwhal narwhal crawl https://example.com --max-pages 25
 uvx --from git+https://github.com/aindong/narwhal narwhal schema Article --field headline="…"
+uvx --from git+https://github.com/aindong/narwhal narwhal sitemap https://example.com
 ```
 
-The unified `narwhal` command has three subcommands: `scan`, `crawl`, `schema`
-(run any with `-h`). Prefer a stable command? Alias it:
+The unified `narwhal` command has four subcommands: `scan`, `crawl`, `schema`,
+`sitemap` (run any with `-h`). Prefer a stable command? Alias it:
 
 ```bash
 alias narwhal='uvx --from git+https://github.com/aindong/narwhal narwhal'

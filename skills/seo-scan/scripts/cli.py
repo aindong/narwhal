@@ -23,6 +23,7 @@ Usage:
   narwhal scan <url> [options]      Audit a single page
   narwhal crawl <url> [options]     Audit a whole site (sitemap/link discovery)
   narwhal schema <Type> [options]   Generate schema.org JSON-LD
+  narwhal sitemap <url> [options]   Validate a site's XML sitemap(s)
   narwhal --version
 
 Run any subcommand with -h for its options, e.g. `narwhal scan -h`.
@@ -44,6 +45,7 @@ def main(argv=None) -> int:
         "crawl": "crawl_site",
         "crawl_site": "crawl_site",
         "schema": "generate_schema",
+        "sitemap": "validate_sitemap",
     }.get(cmd)
     if module is None:
         print(f"Unknown command: {cmd!r}\n", file=sys.stderr)

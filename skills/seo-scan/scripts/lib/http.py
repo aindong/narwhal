@@ -210,6 +210,37 @@ def fetch_text(url: str, **kwargs) -> Optional[str]:
     return resp.text if resp.ok else None
 
 
+def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
+                user_agent: str = DEFAULT_UA, allow_private: bool = False,
+                max_bytes: int = 20_000_000):
+    """Fetch raw bytes (for gzipped sitemaps etc.). Returns ``(bytes, error)``."""
+    try:
+        url = normalize_url(url)
+        assert_public_host(url, allow_private=allow_private)
+    except (ValueError, SSRFError) as exc:
+        return None, str(exc)
+    try:
+        import requests  # noqa: PLC0415
+        try:
+            r = requests.get(url, headers={"User-Agent": user_agent},
+                             timeout=timeout, allow_redirects=True)
+            return (r.content[:max_bytes], None if r.ok else f"HTTP {r.status_code}")
+        except requests.RequestException as exc:
+            return None, type(exc).__name__
+    except ImportError:
+        pass
+    import urllib.error  # noqa: PLC0415
+    import urllib.request  # noqa: PLC0415
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": user_agent})
+        with urllib.request.urlopen(req, timeout=timeout) as fh:
+            return fh.read(max_bytes), None
+    except urllib.error.HTTPError as exc:
+        return None, f"HTTP {exc.code}"
+    except Exception as exc:  # noqa: BLE001
+        return None, type(exc).__name__
+
+
 def head(url: str, *, timeout: int = DEFAULT_TIMEOUT, user_agent: str = DEFAULT_UA,
          allow_private: bool = False):
     """Check a URL's reachability cheaply. Returns ``(status, error)``.

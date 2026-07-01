@@ -72,6 +72,13 @@ python scripts/generate_schema.py Article --field headline="…" --field author=
 python scripts/generate_schema.py --list      # supported types
 ```
 
+**Validate a site's XML sitemap(s)** (discovers from robots.txt/common paths or
+takes a sitemap URL; recurses indexes, validates `loc`/`lastmod`, samples URLs for
+404s, handles gzip):
+```
+python scripts/validate_sitemap.py https://example.com --sample 20
+```
+
 ## What each auditor covers
 
 | Auditor | Focus |

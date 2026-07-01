@@ -13,6 +13,7 @@ SCRIPTS = os.path.join(os.path.dirname(HERE), "scripts")
 sys.path.insert(0, SCRIPTS)
 
 from lib import htmlx, http, links  # noqa: E402
+from lib import sitemap as sm  # noqa: E402
 from lib.report import Report, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import audit_technical, audit_content, audit_schema, audit_geo  # noqa: E402
@@ -203,6 +204,54 @@ class TestLinks(unittest.TestCase):
         # rate-limited / bot-blocked / auth-walled are not "dead links"
         for code in (401, 403, 429, 451, 999):
             self.assertFalse(links.is_broken(code))
+
+
+class TestSitemap(unittest.TestCase):
+    URLSET = """<?xml version="1.0"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://example.com/a</loc><lastmod>2026-01-15</lastmod></url>
+      <url><loc>https://example.com/b</loc><lastmod>2026-01-15T09:30:00+00:00</lastmod></url>
+      <url><loc>/relative</loc></url>
+      <url><loc>https://other.com/x</loc><lastmod>15-01-2026</lastmod></url>
+    </urlset>"""
+
+    INDEX = """<?xml version="1.0"?>
+    <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <sitemap><loc>https://example.com/sitemap-1.xml</loc></sitemap>
+      <sitemap><loc>https://example.com/sitemap-2.xml</loc></sitemap>
+    </sitemapindex>"""
+
+    def test_parse_urlset(self):
+        kind, entries = sm.parse(self.URLSET)
+        self.assertEqual(kind, "urlset")
+        self.assertEqual(len(entries), 4)
+        self.assertEqual(entries[0]["loc"], "https://example.com/a")
+        self.assertEqual(entries[0]["lastmod"], "2026-01-15")
+
+    def test_parse_index(self):
+        kind, entries = sm.parse(self.INDEX)
+        self.assertEqual(kind, "index")
+        self.assertEqual(len(entries), 2)
+        self.assertTrue(entries[0]["loc"].endswith("sitemap-1.xml"))
+
+    def test_lastmod_validation(self):
+        self.assertTrue(sm.valid_lastmod("2026-01-15"))
+        self.assertTrue(sm.valid_lastmod("2026-01-15T09:30:00+00:00"))
+        self.assertTrue(sm.valid_lastmod("2026-01-15T09:30:00Z"))
+        self.assertFalse(sm.valid_lastmod("15-01-2026"))
+        self.assertFalse(sm.valid_lastmod("not a date"))
+        self.assertFalse(sm.valid_lastmod(None))
+
+    def test_loc_problems(self):
+        self.assertEqual(sm.loc_problem("/relative", "example.com"), "not-absolute")
+        self.assertEqual(sm.loc_problem("https://other.com/x", "example.com"), "cross-host")
+        self.assertIsNone(sm.loc_problem("https://example.com/a", "example.com"))
+
+    def test_gzip_decode(self):
+        import gzip
+        raw = gzip.compress(self.URLSET.encode("utf-8"))
+        self.assertIn("<urlset", sm.decode(raw))
+        self.assertIn("<urlset", sm.decode(self.URLSET.encode("utf-8")))  # plain too
 
 
 class TestCrawlPoliteness(unittest.TestCase):
