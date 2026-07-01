@@ -1,14 +1,29 @@
 <p align="center">
-  <img src="assets/logo-512.png" alt="Narwhal logo" width="220">
+  <img src="assets/logo-512.png" alt="Narwhal logo" width="240">
 </p>
 
-<h1 align="center">Narwhal — SEO & GEO/LLMO scanning skills</h1>
+<h1 align="center">Narwhal</h1>
 
-A local-first toolkit that scans a web page or site for **SEO** and **GEO/LLMO**
-(visibility in AI answer engines like ChatGPT, Claude, Perplexity, and Google AI
-Overviews). It ships as an agent skill so Claude Code — and any agent that reads
-`AGENTS.md` (Codex, Cursor, OpenCode, …) — can audit a URL and hand back a
-prioritized, fix-first report.
+<p align="center"><strong>Local-first SEO &amp; GEO/LLMO scanning — as an agent skill.</strong></p>
+
+<p align="center">
+  Audit any page or site for search rankings <em>and</em> AI-answer visibility
+  <br>(ChatGPT · Claude · Perplexity · Google AI Overviews) — straight from your coding agent.
+</p>
+
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-2ea44f">
+  <img alt="Python 3.8+" src="https://img.shields.io/badge/Python-3.8%2B-3776ab?logo=python&logoColor=white">
+  <img alt="Agents: Claude Code, Codex, Cursor, OpenCode" src="https://img.shields.io/badge/agents-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Cursor%20%C2%B7%20OpenCode-1f6feb">
+  <img alt="Local-first" src="https://img.shields.io/badge/data-local--first-14b8a6">
+  <img alt="Dependencies: zero required" src="https://img.shields.io/badge/deps-zero%20required-8957e5">
+</p>
+
+Narwhal scans a web page or whole site for **SEO** and **GEO/LLMO** (visibility in
+AI answer engines) and hands back a **prioritized, fix-first report**. It ships as
+an agent skill: use it from Claude Code via
+[`SKILL.md`](skills/seo-scan/SKILL.md), or from any agent that reads
+[`AGENTS.md`](AGENTS.md) — Codex, Cursor, OpenCode, and friends.
 
 No accounts, no API keys, nothing phones home. It runs on a bare Python install
 and gets sharper when optional parsing/rendering libraries are present.
