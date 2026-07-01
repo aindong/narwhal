@@ -4,6 +4,17 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-07-01
+
+### Added
+- **MCP server** (`narwhal mcp`): exposes the auditors as Model Context Protocol
+  tools over stdio — `scan_page`, `crawl_site`, `audit_site`, `validate_sitemap`,
+  `generate_llms`, `generate_schema`, `diff_reports`. A thin, typed adapter over the
+  existing scripts (results match the CLI). Built on the MCP Python SDK's `FastMCP`;
+  verified against the current release. Optional `mcp` extra
+  (`pip install "narwhal-seo[mcp]"`) + `narwhal-mcp` console script; the core
+  toolkit stays zero-dependency and prints a friendly hint when `mcp` is absent.
+
 ## [1.5.0] — 2026-07-01
 
 ### Added

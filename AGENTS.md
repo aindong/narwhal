@@ -22,6 +22,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --format pdf -o report.pdf` | PDF report (needs WeasyPrint; falls back to HTML) |
 | `python diff_scan.py old.json new.json` | Diff two JSON reports: score delta, new/resolved/worsened findings |
 | `python diff_scan.py old.json new.json --fail-on-regression` | CI gate: exit non-zero if score dropped or a new critical/high appeared |
+| `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server: exposes scan_page/crawl_site/audit_site/validate_sitemap/generate_llms/generate_schema/diff_reports over stdio |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |

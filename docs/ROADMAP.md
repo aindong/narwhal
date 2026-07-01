@@ -4,9 +4,10 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
-> **Status (v1.5.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
-> features below, and now **#13 (HTML/PDF export)** and **#14 (scan diffing)**.
-> Remaining P2 work is #15–#18. See [STATUS.md](STATUS.md) for the full snapshot.
+> **Status (v1.6.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
+> features below, and now **#13 (HTML/PDF export)**, **#14 (scan diffing)**, and
+> **#17 (MCP server)**. Remaining P2 work is #15, #16, #18. See
+> [STATUS.md](STATUS.md) for the full snapshot.
 
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
 > **Status:** ⬜ planned · 🟡 in progress · ✅ done
@@ -101,8 +102,9 @@ hard commitments.
   — [#15](https://github.com/aindong/narwhal/issues/15)
 - ⬜ **Harden `--render` (Playwright)** — SPA fixtures, timeouts, clear errors, CI
   smoke test. — [#16](https://github.com/aindong/narwhal/issues/16)
-- ⬜ **MCP server wrapper** — expose `scan_page` / `crawl_site` / `generate_schema`
-  as MCP tools. — [#17](https://github.com/aindong/narwhal/issues/17)
+- ✅ **MCP server wrapper** — `narwhal mcp` exposes all auditors (scan/crawl/audit/
+  sitemap/llms/schema/diff) as MCP tools over stdio (FastMCP; optional `mcp` extra).
+  — [#17](https://github.com/aindong/narwhal/issues/17)
 - ⬜ **Dark-mode logo + README `<picture>`** — high-contrast in both themes.
   — [#18](https://github.com/aindong/narwhal/issues/18)
 

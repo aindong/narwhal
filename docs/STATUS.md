@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-01 · version **1.5.0**_
+_Last updated: 2026-07-01 · version **1.6.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -33,8 +33,11 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   old.json new.json` (score delta + new/resolved/worsened/improved findings,
   `--fail-on-regression` CI gate). Database-free by design: diffs the JSON we
   already emit (`diff_scan.py`).
-- **Tests:** 79, green in CI across Python 3.8–3.12 + Windows.
-- **Released:** v1.0.0 → v1.5.0. Plugin installs as `narwhal@narwhal`.
+- **#17 shipped:** **MCP server** — `narwhal mcp` exposes all auditors as MCP
+  tools over stdio (`mcp_server.py`, FastMCP; optional `mcp` extra). Verified
+  against the current MCP Python SDK release.
+- **Tests:** 84, green in CI across Python 3.8–3.12 + Windows.
+- **Released:** v1.0.0 → v1.6.0. Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -45,7 +48,7 @@ narwhal/
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
 │   ├── scripts/           scan, crawl_site, validate_sitemap, generate_schema,
-│   │                      generate_llms, audit, diff_scan, cli + lib/ (http, htmlx, report,
+│   │                      generate_llms, audit, diff_scan, mcp_server, cli + lib/ (http, htmlx, report,
 │   │                      robots, links, sitemap, simhash, text, content_quality,
 │   │                      config)
 │   ├── references/        deep-dive guidance per auditor
@@ -56,10 +59,12 @@ narwhal/
 ```
 
 ## What's next (open issues — all P2)
-- **#15** Optional PageSpeed/CrUX for real Core Web Vitals (opt-in; the
-  `narwhal-performance` agent already flags hygiene and points here).
-- **#16** Harden the Playwright `--render` path + tests.
-- **#17** MCP server wrapper for the auditors.
+- **#15** Optional real Core Web Vitals field data — **use the CrUX API**
+  (`chromeuxreport.googleapis.com`), not PageSpeed Insights: as of 2026 Google is
+  removing CrUX field data from PSI. Metrics are INP/LCP/CLS (FID is gone).
+  Opt-in via API key; the `narwhal-performance` agent already points here.
+- **#16** Harden the Playwright `--render` path + tests (Playwright 1.61: timeouts,
+  clear errors, `--only-shell` install note, CI smoke).
 - **#18** Dark-mode logo + README `<picture>` auto-swap.
 
 ### Also worth doing (not yet ticketed)

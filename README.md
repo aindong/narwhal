@@ -200,6 +200,31 @@ bash install.sh        # macOS / Linux
 Point the agent at this repo — the root [`AGENTS.md`](AGENTS.md) documents the same
 tools in the format those agents read. Then ask for an audit.
 
+### MCP server (any MCP client)
+
+Narwhal can also run as a [Model Context Protocol](https://modelcontextprotocol.io)
+server, exposing every auditor as a native tool (`scan_page`, `crawl_site`,
+`audit_site`, `validate_sitemap`, `generate_llms`, `generate_schema`,
+`diff_reports`) over stdio. It's a thin, typed adapter over the same scripts — no
+new analysis, so results match the CLI exactly.
+
+```bash
+pip install "narwhal-seo[mcp]"   # or: pip install "mcp>=1.12"
+narwhal mcp                       # runs the stdio server
+```
+
+Register it with a client — e.g. Claude Desktop's `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "narwhal": { "command": "narwhal", "args": ["mcp"] }
+  }
+}
+```
+
+MCP is optional; the core toolkit stays zero-dependency.
+
 ## Design principles
 
 - **Local-only by default.** No external services are called. Optional API

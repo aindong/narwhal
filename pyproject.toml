@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "narwhal-seo"
-version = "1.5.0"
+version = "1.6.0"
 description = "Local-first SEO & GEO/LLMO (AI-search) scanning for pages and sites."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -24,9 +24,11 @@ extras = [
 ]
 render = ["playwright>=1.40"]
 pdf = ["weasyprint>=60"]  # PDF export for `--format pdf` (HTML export needs nothing)
+mcp = ["mcp>=1.12"]       # `narwhal mcp` — expose the auditors as MCP tools
 
 [project.scripts]
 narwhal = "narwhal.cli:main"
+narwhal-mcp = "narwhal.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/aindong/narwhal"

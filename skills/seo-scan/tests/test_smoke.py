@@ -676,6 +676,56 @@ class TestScanDiff(unittest.TestCase):
         self.assertIn("Resolved", md)
 
 
+class TestMcpServer(unittest.TestCase):
+    def setUp(self):
+        import mcp_server
+        self.m = mcp_server
+
+    def test_tool_names_are_stable(self):
+        names = [n for _, n in self.m._TOOLS]
+        self.assertEqual(
+            set(names),
+            {"scan_page", "crawl_site", "audit_site", "validate_sitemap",
+             "generate_llms", "generate_schema", "diff_reports"})
+        self.assertEqual(len(names), len(set(names)))   # no dupes
+
+    def test_every_tool_has_a_docstring(self):
+        # FastMCP surfaces the docstring as the tool description — required.
+        for fn, _ in self.m._TOOLS:
+            self.assertTrue((fn.__doc__ or "").strip(), fn.__name__)
+
+    def test_schema_tool_offline(self):
+        s = self.m._schema("Article", {"headline": "How GEO works"})
+        self.assertEqual(s["@type"], "Article")
+        self.assertEqual(s["headline"], "How GEO works")
+
+    def test_diff_tool_offline(self):
+        import json
+        old = json.dumps({"final_url": "https://x.com", "score": 80,
+                          "findings": [{"category": "technical", "severity": "high",
+                                        "title": "Meta description missing"}]})
+        new = json.dumps({"final_url": "https://x.com", "score": 90, "findings": []})
+        d = self.m._diff(old, new)
+        self.assertEqual(d["score_delta"], 10)
+        self.assertEqual(len(d["resolved"]), 1)
+
+    def test_server_builds_when_mcp_present_else_reports_missing(self):
+        import contextlib
+        import io
+        try:
+            import mcp.server.fastmcp  # noqa: F401
+            have_mcp = True
+        except ImportError:
+            have_mcp = False
+        if have_mcp:
+            server = self.m.build_server()
+            self.assertEqual(type(server).__name__, "FastMCP")
+        else:
+            # Graceful path: no `mcp` package -> friendly message, exit 1, no server.
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(self.m.main([]), 1)
+
+
 class TestFailUnderGate(unittest.TestCase):
     def test_no_threshold_never_fails(self):
         self.assertFalse(below_threshold(0, None))

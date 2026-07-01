@@ -8,3 +8,4 @@ lxml>=4.9             # fastest parser backend for BeautifulSoup
 trafilatura>=1.6      # better main-content / boilerplate separation (optional)
 playwright>=1.40      # JS rendering for SPAs; needs `playwright install chromium`
 weasyprint>=60        # PDF export for `--format pdf` (HTML export needs nothing)
+mcp>=1.12             # `narwhal mcp` — expose the auditors as MCP tools (stdio)

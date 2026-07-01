@@ -15,7 +15,7 @@ import sys
 try:
     from . import __version__
 except ImportError:  # running as loose scripts
-    __version__ = "1.5.0"
+    __version__ = "1.6.0"
 
 USAGE = """narwhal — SEO & GEO/LLMO scanner
 
@@ -27,6 +27,7 @@ Usage:
   narwhal sitemap <url> [options]   Validate a site's XML sitemap(s)
   narwhal llms <url> [options]      Generate a starter llms.txt
   narwhal diff <old.json> <new.json>  Compare two JSON reports (regression tracking)
+  narwhal mcp                         Run the MCP server (stdio) — needs the `mcp` extra
   narwhal --version
 
 Run any subcommand with -h for its options, e.g. `narwhal scan -h`.
@@ -52,6 +53,7 @@ def main(argv=None) -> int:
         "sitemap": "validate_sitemap",
         "llms": "generate_llms",
         "diff": "diff_scan",
+        "mcp": "mcp_server",
     }.get(cmd)
     if module is None:
         print(f"Unknown command: {cmd!r}\n", file=sys.stderr)
