@@ -1,0 +1,9 @@
+# The toolkit runs on a bare Python 3.8+ standard library. These extras are all
+# OPTIONAL and auto-detected — install them for higher-fidelity parsing and for
+# JavaScript rendering. Nothing here is required for a basic scan.
+
+requests>=2.28        # faster, more robust fetching than urllib (recommended)
+beautifulsoup4>=4.11  # accurate HTML parsing (falls back to stdlib html.parser)
+lxml>=4.9             # fastest parser backend for BeautifulSoup
+trafilatura>=1.6      # better main-content / boilerplate separation (optional)
+playwright>=1.40      # JS rendering for SPAs; needs `playwright install chromium`
