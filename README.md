@@ -58,6 +58,25 @@ And yes, it works as a backronym too:
 | **Structured data** | JSON-LD detection, required/recommended property validation, deprecated rich-result types, JSON-LD generation |
 | **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and **AI-crawler access** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) |
 
+## Multi-agent deep audit
+
+`/narwhal audit <site>` (in Claude Code) is more than a script — it's a
+**parallel, multi-agent** audit:
+
+1. Runs the deterministic baseline (`audit.py`) for fast, reproducible hard data
+   (homepage + site crawl + sitemap, per-area subscores, broken links, duplicates).
+2. **Fans out ~10 specialist subagents in parallel** — technical, content, schema,
+   geo, performance, links, duplication, sitemap, sxo (+ local when relevant). Each
+   runs the deterministic scripts as its **tools**, then adds expert reasoning and
+   exact fixes for its domain.
+3. **Synthesizes** one report: an SEO Health Score, executive summary, prioritized
+   action plan (Critical → Low), and quick wins.
+
+The scripts do the **measurement** (fast, zero-dep, reproducible); the agents do the
+**reasoning** (business context, what heuristics miss, concrete fixes). Specialist
+definitions live in [`agents/`](agents/). The other actions (`scan`, `crawl`,
+`sitemap`, `llms`, `schema`) run directly for quick, deterministic output.
+
 ## Quick start
 
 ```bash

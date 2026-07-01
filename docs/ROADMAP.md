@@ -34,6 +34,15 @@ hard commitments.
 
 ---
 
+## ✨ Beyond the original roadmap (shipped)
+
+- ✅ **`/narwhal <action> <site>` command** + `audit` alias.
+- ✅ **Audit-style report** — executive summary, per-area subscores, quick wins.
+- ✅ **Comprehensive `audit`** — combined homepage + crawl + sitemap.
+- ✅ **Multi-agent deep audit** — `/narwhal audit` fans out ~10 specialist subagents
+  (`agents/`) in parallel over the deterministic baseline, then synthesizes a health
+  score + prioritized action plan.
+
 ## 🔴 P0 — Foundation
 
 - ✅ **CI on GitHub Actions** — test suite across Python 3.8–3.12 (+ Windows), with

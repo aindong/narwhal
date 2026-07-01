@@ -50,6 +50,13 @@ python -m playwright install chromium   # only for --render
    data needs CrUX/PageSpeed). State what was measured vs. what needs an external
    source.
 
+## Multi-agent deep audit (Claude Code)
+`/narwhal audit <site>` runs the deterministic `audit.py` baseline, then fans out
+~10 specialist subagents in parallel (defined in `agents/`: technical, content,
+schema, geo, performance, links, duplication, sitemap, sxo, + local when relevant),
+and synthesizes an SEO Health Score + prioritized action plan. Each agent uses the
+scripts above as its tools and adds reasoning on top.
+
 ## Configuration
 An optional `narwhal.toml` (auto-discovered from the project root) tunes scoring
 weights, thresholds, CLI defaults, and ignore rules. Precedence: CLI > config >

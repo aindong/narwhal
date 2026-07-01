@@ -120,6 +120,15 @@ not absolute — always explain the *specific* fixes, not just the number. When 
 finding is a heuristic (readability, citability, entity clarity), say so; these
 flag pages worth a human look rather than issuing verdicts.
 
+## Deep audit (multi-agent)
+
+For a comprehensive audit, `/narwhal audit <site>` runs the deterministic
+`audit.py` baseline and then fans out ~10 specialist subagents in parallel (in the
+plugin's `agents/` dir) — technical, content, schema, geo, performance, links,
+duplication, sitemap, sxo, and local — each using these scripts as tools and adding
+reasoning + exact fixes, synthesized into one prioritized report. The individual
+scripts above remain the fast, deterministic path.
+
 ## Configuration
 
 An optional `narwhal.toml` at the project root (auto-discovered) tunes scoring
