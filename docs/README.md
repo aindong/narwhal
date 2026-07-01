@@ -3,8 +3,11 @@
 Documentation index for the Narwhal SEO & GEO/LLMO scanning toolkit.
 
 ## Planning
+- **[STATUS.md](STATUS.md)** — current state & handoff snapshot (architecture,
+  what's done, what's next, dev/release workflow).
 - **[ROADMAP.md](ROADMAP.md)** — where the project is headed, grouped by priority
   and release milestone, linked to tracking issues.
+- **[../CHANGELOG.md](../CHANGELOG.md)** — release history.
 - **[Issues](https://github.com/aindong/narwhal/issues)** — detailed tasks and
   acceptance criteria (the source of truth for individual work items).
 

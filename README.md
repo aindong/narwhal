@@ -220,8 +220,10 @@ Full reference: **[docs/CONFIG.md](docs/CONFIG.md)** · commented template:
 
 ## Roadmap & docs
 
+- **[docs/STATUS.md](docs/STATUS.md)** — current state & handoff snapshot.
 - **[docs/ROADMAP.md](docs/ROADMAP.md)** — where Narwhal is headed (priorities,
   milestones), linked to tracking issues.
+- **[CHANGELOG.md](CHANGELOG.md)** — release history.
 - **[docs/](docs/README.md)** — documentation index.
 - **[Issues](https://github.com/aindong/narwhal/issues)** — detailed tasks; see also
   [CONTRIBUTING.md](CONTRIBUTING.md).

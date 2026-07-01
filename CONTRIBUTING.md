@@ -23,17 +23,28 @@ python skills/seo-scan/scripts/scan.py https://example.com
 ## Project layout
 
 ```
-skills/seo-scan/
-├── SKILL.md                 # Claude Code skill entry
-├── scripts/
-│   ├── scan.py              # single-page orchestrator
-│   ├── crawl_site.py        # site-level scan + rollup
-│   ├── generate_schema.py   # JSON-LD generator
-│   ├── audit_*.py           # one file per auditor (technical/content/schema/geo)
-│   └── lib/                 # http (SSRF-safe fetch), htmlx (parser), report (findings)
-├── references/              # deep-dive guidance per auditor
-└── tests/                   # offline unittest suite (no network, no deps)
+narwhal/
+├── .claude-plugin/          # plugin.json + marketplace.json (plugin name: narwhal)
+├── commands/narwhal.md      # /narwhal <action> <site> — dispatch + audit orchestration
+├── agents/                  # 10 specialist subagents (narwhal-*.md) for the deep audit
+└── skills/seo-scan/
+    ├── SKILL.md             # auto-triggering Claude Code skill
+    ├── scripts/
+    │   ├── scan.py          # single-page orchestrator
+    │   ├── crawl_site.py    # polite site crawl + rollup (links, dupes)
+    │   ├── validate_sitemap.py
+    │   ├── generate_schema.py / generate_llms.py
+    │   ├── audit.py         # comprehensive page + crawl + sitemap
+    │   ├── cli.py           # unified `narwhal` entrypoint (scan/crawl/…)
+    │   ├── audit_*.py       # one file per auditor (technical/content/schema/geo)
+    │   └── lib/             # http, htmlx, report, robots, links, sitemap,
+    │                        #   simhash, text, content_quality, config
+    ├── references/          # deep-dive guidance per auditor
+    └── tests/               # offline unittest suite (no network, no deps)
 ```
+
+See [docs/STATUS.md](docs/STATUS.md) for the architecture (deterministic scripts +
+multi-agent orchestration) and the release process.
 
 ## Design principles (please preserve these)
 

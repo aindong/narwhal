@@ -4,6 +4,10 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
+> **Status (v1.3.0):** all P0 + P1 shipped (#1–#12 closed) plus the beyond-roadmap
+> features below. Remaining work is the P2 tier (#13–#18). See
+> [STATUS.md](STATUS.md) for the full handoff snapshot.
+
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
 > **Status:** ⬜ planned · 🟡 in progress · ✅ done
 
