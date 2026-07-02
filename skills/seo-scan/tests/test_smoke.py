@@ -920,6 +920,81 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertEqual(sev.get("Few question-based headings"), "medium")
 
 
+class TestHreflang(unittest.TestCase):
+    """Offline tests for cross-page hreflang validation (#25)."""
+
+    def _alts(self, *pairs):
+        return [{"lang": l, "href": h} for l, h in pairs]
+
+    def test_valid_codes(self):
+        from lib import hreflang
+        for good in ("en", "en-GB", "zh-Hans", "zh-Hans-CN", "es-419", "x-default"):
+            self.assertTrue(hreflang.valid_code(good), good)
+        for bad in ("english", "en_US", "e", "en-GBR-x"):
+            self.assertFalse(hreflang.valid_code(bad), bad)
+
+    def test_extract_resolves_relative(self):
+        from lib import hreflang
+        doc = htmlx.parse('<link rel="alternate" hreflang="fr" href="/fr/">',
+                          base_url="https://x.com/en/")
+        self.assertEqual(hreflang.extract(doc, "https://x.com/en/"),
+                         [{"lang": "fr", "href": "https://x.com/fr/"}])
+
+    def test_reciprocal_cluster_is_clean(self):
+        from lib import hreflang
+        en = self._alts(("en", "https://x.com/en/"), ("fr", "https://x.com/fr/"),
+                        ("x-default", "https://x.com/en/"))
+        fr = self._alts(("fr", "https://x.com/fr/"), ("en", "https://x.com/en/"))
+        r = hreflang.analyze({"https://x.com/en/": en, "https://x.com/fr/": fr})
+        self.assertEqual(r["missing_return"], [])
+        self.assertEqual(r["missing_self"], [])
+        self.assertTrue(r["has_x_default"])
+        self.assertEqual(r["unverified_targets"], 0)
+
+    def test_missing_return_named_precisely(self):
+        from lib import hreflang
+        en = self._alts(("en", "https://x.com/en/"), ("fr", "https://x.com/fr/"))
+        fr = self._alts(("fr", "https://x.com/fr/"))   # no link back to /en/
+        r = hreflang.analyze({"https://x.com/en/": en, "https://x.com/fr/": fr})
+        self.assertEqual(len(r["missing_return"]), 1)
+        m = r["missing_return"][0]
+        self.assertEqual((m["page"], m["target"]),
+                         ("https://x.com/en/", "https://x.com/fr/"))
+        self.assertEqual(r["missing_self"], [])   # both pages list themselves
+
+    def test_unverified_outside_sample(self):
+        from lib import hreflang
+        en = self._alts(("en", "https://x.com/en/"), ("de", "https://x.com/de/"))
+        r = hreflang.analyze({"https://x.com/en/": en})
+        self.assertEqual(r["unverified_targets"], 1)   # /de/ was never seen
+        self.assertEqual(r["missing_return"], [])       # never reported broken
+
+    def test_probe_fetches_same_host_alternates(self):
+        from lib import hreflang
+        pages = {"https://x.com/en/": self._alts(
+            ("fr", "https://x.com/fr/"), ("ja", "https://other.com/ja/"))}
+        fetched = []
+
+        def fake_fetch(u):
+            fetched.append(u)
+            return '<link rel="alternate" hreflang="en" href="https://x.com/en/">'
+
+        probed = hreflang.probe(pages, fetch_text=fake_fetch)
+        self.assertEqual(fetched, ["https://x.com/fr/"])    # same-host only
+        self.assertIn("https://x.com/fr/", probed)
+
+    def test_render_reports_pairs_and_honesty(self):
+        from lib import hreflang
+        en = self._alts(("en", "https://x.com/en/"), ("fr", "https://x.com/fr/"),
+                        ("it", "https://x.com/it/"))
+        fr = self._alts(("fr", "https://x.com/fr/"))
+        r = hreflang.analyze({"https://x.com/en/": en, "https://x.com/fr/": fr})
+        md = "\n".join(hreflang.render_markdown(r))
+        self.assertIn("Missing return tags", md)
+        self.assertIn("https://x.com/en/ → https://x.com/fr/", md)
+        self.assertIn("unverified**, not", md)              # /it/ outside sample
+
+
 class TestImageChecks(unittest.TestCase):
     """Offline tests for image weight/format + og:image validation (#24)."""
 

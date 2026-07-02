@@ -4,6 +4,26 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.24.0] — 2026-07-02
+
+### Added
+- **Cross-page hreflang validation** (closes #25 — the last P1 of the next
+  wave; `lib/hreflang.py`). When a crawled site uses hreflang, the crawl now
+  verifies the *relationships*, not just per-page syntax:
+  - **Missing return tags** reported as exact `A → B (lang)` pairs — one-way
+    hreflang is ignored by Google, so this is the killer check.
+  - **Missing self-references** (each page must list itself) and **invalid
+    language codes** (BCP-47 subset: lang / optional script / optional region).
+  - **Sample-wide x-default** presence check.
+  - **Capped alternate probe**: up to 5 same-host alternates the crawl didn't
+    reach are fetched (link tags only) so reciprocity is actually verifiable.
+  - **Cap-aware honesty**: targets outside the crawled/probed sample are
+    counted *unverified* — never reported broken.
+  - Verified live on a 137-locale international site: probe verified 5
+    alternates reciprocal, correctly flagged the missing x-default, and labeled
+    786 outside-sample targets unverified. 7 new tests (170 total), green with
+    and without parser extras.
+
 ## [1.23.0] — 2026-07-02
 
 ### Added

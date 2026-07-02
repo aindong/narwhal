@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, links, simhash, sitegraph  # noqa: E402
+from lib import hreflang, http, htmlx, links, simhash, sitegraph  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
@@ -230,12 +230,15 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             results = list(ex.map(scan_one, urls))
 
     pages, issue_counter, pages_links, page_fps = [], Counter(), {}, []
+    pages_hreflang: dict = {}
     for u, rep in results:
         pages.append({"url": u, "score": rep.score(), "counts": rep.counts()})
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
         pages_links[u] = rep.meta.get("links", [])
+        if rep.meta.get("hreflang"):
+            pages_hreflang[u] = rep.meta["hreflang"]
         if detect_dupes and rep.meta.get("fingerprint"):
             page_fps.append({"url": u, "fingerprint": rep.meta["fingerprint"],
                              "canonical": rep.meta.get("canonical")})
@@ -249,6 +252,15 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         base, [u for u, _ in results], pages_links,
         candidates, bool(ctx.get("sitemap_found")))
     result["sitemap_candidates"] = len(candidates)
+    # Hreflang reciprocity — only when the site actually uses hreflang. Probe a
+    # few same-host alternates (capped) so return tags are verifiable instead of
+    # all "unverified".
+    if pages_hreflang:
+        seen_pages = {u: rep.meta.get("hreflang", []) for u, rep in results}
+        probed = hreflang.probe(pages_hreflang, allow_private=allow_private,
+                                timeout=min(timeout, 8))
+        result["hreflang"] = hreflang.analyze({**seen_pages, **probed})
+        result["hreflang"]["probed"] = len(probed)
     if check_links:
         result["links"] = check_broken_links(
             pages_links, allow_private=allow_private, timeout=timeout,
@@ -276,6 +288,10 @@ def render_markdown(result: dict) -> str:
         for (cat, sev, title), n in recurring:
             lines.append(f"| {n} | {sev} | {cat} | {title} |")
         lines.append("")
+
+    hl = result.get("hreflang")
+    if hl and hl.get("used"):
+        lines += hreflang.render_markdown(hl)
 
     graph = result.get("graph")
     if graph is not None:

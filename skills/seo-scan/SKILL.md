@@ -92,6 +92,11 @@ rate-limit), and `--ignore-robots` to override. `--fail-under N` gates on the
 average score. Add `--check-links` to check outbound links (internal + external)
 for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
 rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).
+**Hreflang reciprocity** is validated automatically when the site uses
+hreflang: missing return tags reported as exact A → B pairs, missing
+self-references, invalid codes, x-default presence; up to 5 same-host
+alternates are probed so return tags are verifiable, and anything outside
+the sample is labeled unverified — never broken.
 **Site-structure analysis** is always included: click depth from the start
 URL, pages unreachable within the sample, zero-inbound pages (weak link
 equity), most-linked pages, and sitemap **orphan candidates** — all

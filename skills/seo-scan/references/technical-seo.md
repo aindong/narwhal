@@ -85,3 +85,13 @@ GET (~64 KB) that parses PNG/GIF/JPEG/WebP headers for dimensions: unreachable �
 high, under 200px → medium (previews break), under 1200px wide → low (no large
 card). Skip with `--no-image-checks`; crawls skip these automatically (they
 would multiply requests per page).
+
+## Hreflang reciprocity (cross-page)
+hreflang only works when reciprocal: if A lists B, B must list A back, and every
+page must include itself in its own cluster — one-way pairs are ignored by
+Google. During a crawl, Narwhal collects each page's cluster, probes up to 5
+same-host alternates it didn't crawl (fetch + parse link tags only), and reports
+missing return tags as exact A → B pairs, missing self-references, invalid codes
+(BCP-47 subset: lang, optional script, optional region), and a sample-wide
+x-default check. Targets outside the crawled/probed sample are counted
+**unverified**, never broken.

@@ -133,8 +133,9 @@ without breaking local-first (nothing below needs a paid API).
 - ✅ **Image weight/format + og:image validation** — HEAD-checked weights,
   AVIF/WebP candidates, width/height (CLS), og:image reachability + real
   dimensions from a ranged GET. — [#24](https://github.com/aindong/narwhal/issues/24)
-- ⬜ **Hreflang bidirectional validation** across a crawl.
-  — [#25](https://github.com/aindong/narwhal/issues/25)
+- ✅ **Hreflang bidirectional validation** — reciprocity + self-reference +
+  code syntax across a crawl, with a capped same-host alternate probe;
+  outside-sample targets are unverified, never broken. — [#25](https://github.com/aindong/narwhal/issues/25)
 
 ### P2 — the strategy loop, done our way
 - ⬜ **Content-brief flow** — briefs grounded in real GSC queries + the compare

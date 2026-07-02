@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, images, jsdiff, links, simhash  # noqa: E402
+from lib import hreflang, http, htmlx, images, jsdiff, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
 
@@ -99,6 +99,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
     report._doc = doc   # non-serialized handle for tools that need the parse (compare)
     report.meta["extraction"] = doc.extraction
+    alts = hreflang.extract(doc, resp.final_url or url)
+    if alts:   # only when in use — keeps most reports free of empty keys
+        report.meta["hreflang"] = alts
     if collect_links:
         report.meta["links"] = links.extract_links(doc, resp.final_url or url)
     if collect_fingerprint:

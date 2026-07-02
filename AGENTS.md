@@ -35,6 +35,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |
 | `python crawl_site.py <url> --max-pages 25` | Site-wide scan + recurring-issue rollup |
 | (crawl output) | Always includes a site-structure `graph`: click depth, orphan candidates, zero-inbound pages — sample-aware |
+| (crawl output) | Hreflang reciprocity when in use: exact missing return-tag pairs, self-reference, codes, x-default; outside-sample targets labeled unverified |
 | `python crawl_site.py <url> --concurrency 4 --delay 0.5` | Polite crawl: honors robots.txt, parallel, rate-limited |
 | `python crawl_site.py <url> --check-links` | Also check outbound links (internal + external) for 4xx/5xx/dead |
 | `python crawl_site.py <url>` | Also detects near-duplicate content by default (`--no-dupes`, `--dup-threshold`) |
