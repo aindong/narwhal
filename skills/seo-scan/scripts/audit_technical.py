@@ -11,8 +11,10 @@ from urllib.parse import urljoin, urlparse
 
 try:
     from lib import htmlx
+    from lib import jsdiff
 except ImportError:  # when imported as a package
     from .lib import htmlx  # type: ignore
+    from .lib import jsdiff  # type: ignore
 
 CAT = "technical"
 
@@ -32,6 +34,8 @@ def audit(doc, resp, report, ctx=None) -> None:
     _http_hygiene(resp, report)
     _robots_txt(ctx, report)
     _sitemap(ctx, report)
+    if ctx.get("jsdep"):   # only present when a --render scan measured it
+        jsdiff.technical_findings(ctx["jsdep"], report)
 
 
 def _title(doc, report, th=None):

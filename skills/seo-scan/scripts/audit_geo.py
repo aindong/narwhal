@@ -13,9 +13,11 @@ import re
 try:
     from lib.robots import RobotsTxt
     from lib import htmlx
+    from lib import jsdiff
 except ImportError:  # when imported as a package
     from .lib.robots import RobotsTxt  # type: ignore
     from .lib import htmlx  # type: ignore
+    from .lib import jsdiff  # type: ignore
 
 CAT = "geo"
 
@@ -53,6 +55,8 @@ def audit(doc, resp, report, ctx=None) -> None:
     _llms_txt(ctx, report)
     _ai_crawler_access(ctx, report)
     _entity_clarity(doc, report)
+    if ctx.get("jsdep"):   # only present when a --render scan measured it
+        jsdiff.geo_finding(ctx["jsdep"], report)
 
 
 def _question_headings(doc, report, article=False):

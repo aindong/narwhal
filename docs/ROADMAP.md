@@ -127,8 +127,9 @@ without breaking local-first (nothing below needs a paid API).
 - ✅ **Site-graph analysis** — click depth, orphan candidates, unreachable and
   zero-inbound pages, most-linked pages; always on in `crawl`/`audit`, sample-
   aware honesty. — [#22](https://github.com/aindong/narwhal/issues/22)
-- ⬜ **JS-dependence check** — diff raw vs rendered content ("X% of your content
-  needs JavaScript"). — [#23](https://github.com/aindong/narwhal/issues/23)
+- ✅ **JS-dependence check** — `--render` diffs served HTML vs rendered DOM:
+  JS-only content share (tiered findings), post-JS headings, client-injected
+  metadata; GEO finding for AI fetchers. — [#23](https://github.com/aindong/narwhal/issues/23)
 - ⬜ **Image weight/format + og:image validation.**
   — [#24](https://github.com/aindong/narwhal/issues/24)
 - ⬜ **Hreflang bidirectional validation** across a crawl.

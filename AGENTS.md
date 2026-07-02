@@ -29,7 +29,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python gsc.py <url>` | Real Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — opt-in OAuth (`GSC_ACCESS_TOKEN`, or one-time `gsc.py --auth`) |
 | `python audit.py <url> --gsc` | Fold the GSC data into the audit report/JSON (degrades to a note without credentials) |
 | `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server: exposes scan_page/crawl_site/audit_site/validate_sitemap/generate_llms/generate_schema/diff_reports over stdio |
-| `python scan.py <url> --render` | Render JS (SPAs) via Playwright if installed |
+| `python scan.py <url> --render` | Render JS (SPAs) via Playwright; also diffs raw vs rendered → JS-dependence findings (% JS-only content, client-injected metadata) |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |
 | `python crawl_site.py <url> --max-pages 25` | Site-wide scan + recurring-issue rollup |

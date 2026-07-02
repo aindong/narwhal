@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, links, simhash  # noqa: E402
+from lib import http, htmlx, jsdiff, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
 
@@ -109,6 +109,18 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                              allow_private=allow_private, timeout=timeout)
     # expose tunable thresholds to auditors without mutating a shared ctx
     ctx = {**ctx, "thresholds": ctx.get("thresholds", config.thresholds)}
+
+    # JS-dependence: when we actually rendered, fetch the served HTML too and
+    # diff — content that only exists post-JS is invisible to non-rendering
+    # crawlers (incl. most AI fetchers). Without Playwright there is no rendered
+    # DOM, so nothing is measured and nothing is said (never guess).
+    if resp.rendered and not resp.error:
+        raw_resp = http.fetch(url, allow_private=allow_private, timeout=timeout)
+        if raw_resp.ok:
+            dep = jsdiff.analyze(raw_resp.text, resp.text, resp.final_url or url)
+            ctx["jsdep"] = dep
+            report.meta["js_dependence"] = {
+                k: dep[k] for k in ("words_raw", "words_rendered", "js_only_pct")}
 
     selected = only or list(AUDITORS)
     for name in selected:

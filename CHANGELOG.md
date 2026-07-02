@@ -4,6 +4,22 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.22.0] — 2026-07-02
+
+### Added
+- **JS-dependence check** (closes #23, `lib/jsdiff.py`): scans run with
+  `--render` now diff the **served HTML against the rendered DOM** and report —
+  the **JS-only share of the content** ("1 word served vs 407 after JavaScript —
+  100% JS-only", tiered: ≥30% high / ≥10% medium), **headings that only exist
+  post-JS** (as evidence), and **client-injected head metadata**
+  (title/description/canonical high; JSON-LD medium). A GEO finding fires on
+  heavy dependence — most AI answer-engine fetchers don't execute JavaScript.
+  - Honest by design: without Playwright there is no rendered DOM, so the check
+    is silent — it never guesses. Server-rendered pages get a passing note.
+  - Verified end to end with real Chromium: a local CSR fixture (100% JS-only
+    detected) and a real SSR site (0% + a genuine client-injected JSON-LD
+    finding). 5 new tests (159 total), green with and without parser extras.
+
 ## [1.21.0] — 2026-07-02
 
 ### Added

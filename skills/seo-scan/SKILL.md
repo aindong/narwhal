@@ -53,7 +53,11 @@ python scripts/scan.py https://example.com/page
 ```
 
 Useful flags:
-- `--render` — render JavaScript with Playwright (for SPAs / client-rendered pages).
+- `--render` — render JavaScript with Playwright (for SPAs / client-rendered
+  pages). Also measures **JS dependence**: the served HTML is diffed against
+  the rendered DOM — % of content that is JS-only, headings that appear only
+  post-JS, and client-injected metadata (title/description/canonical/JSON-LD).
+  Heavy JS dependence is flagged in technical + GEO (AI fetchers don't run JS).
 - `--format json|html|pdf` — machine-readable JSON, a self-contained styled HTML
   report, or PDF (needs WeasyPrint; falls back to HTML). Use `-o <file>` to save.
   `html`/`pdf` also work on `audit.py` for a shareable, stakeholder-ready report.

@@ -64,3 +64,14 @@ check, plus what to do when the automated check isn't enough.
   DOM). Recommend PageSpeed Insights / CrUX for real numbers.
 - **Crawl budget & log analysis** for large sites needs server logs.
 - **JavaScript indexing edge cases** may need Search Console's URL Inspection.
+
+## JS dependence (raw vs rendered)
+When a scan runs with `--render`, Narwhal diffs the **served HTML** against the
+**rendered DOM**: word-count delta (the JS-only share of the content), headings
+that only exist post-JS, and head metadata (title/description/canonical/JSON-LD)
+injected client-side. Thresholds: ≥30% JS-only → high, ≥10% → medium. Why it
+matters: crawlers that don't execute JavaScript — most AI answer-engine fetchers,
+and indexing pipelines before their render pass — see only the served HTML.
+Client-injected metadata is especially risky: it may be read never or late.
+Without Playwright there is no rendered DOM, so the check stays silent (never
+guessed).

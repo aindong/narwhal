@@ -920,6 +920,68 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertEqual(sev.get("Few question-based headings"), "medium")
 
 
+class TestJsDependence(unittest.TestCase):
+    """Offline tests for the raw-vs-rendered JS-dependence diff (#23)."""
+
+    RAW = "<title>T</title><h1>Shell</h1><p>server text here</p>"
+    RENDERED = ("<title>T</title><meta name=\"description\" content=\"injected\">"
+                "<link rel=\"canonical\" href=\"https://x.com/p\">"
+                "<script type=\"application/ld+json\">{}</script>"
+                "<h1>Shell</h1><h2>Loaded by JS</h2><p>server text here "
+                + "client rendered word " * 30 + "</p>")
+
+    def test_analyze_measures_delta(self):
+        from lib import jsdiff
+        dep = jsdiff.analyze(self.RAW, self.RENDERED, "https://x.com/p")
+        self.assertGreaterEqual(dep["js_only_pct"], 90)
+        self.assertIn("Loaded by JS", dep["js_only_headings"])
+        m = dep["meta_js_only"]
+        self.assertTrue(m["description"] and m["canonical"] and m["jsonld"])
+        self.assertFalse(m["title"])          # title exists in both
+
+    def test_identical_documents_are_zero(self):
+        from lib import jsdiff
+        dep = jsdiff.analyze(self.RAW, self.RAW, "https://x.com/p")
+        self.assertEqual(dep["js_only_pct"], 0)
+        self.assertEqual(dep["js_only_headings"], [])
+        self.assertFalse(any(dep["meta_js_only"].values()))
+
+    def test_technical_findings_tiered(self):
+        from lib import jsdiff
+        rep = Report("u")
+        jsdiff.technical_findings(
+            jsdiff.analyze(self.RAW, self.RENDERED, "u"), rep)
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Most content requires JavaScript"), "high")
+        self.assertEqual(sev.get("Head metadata injected by JavaScript"), "high")
+        self.assertEqual(sev.get("JSON-LD injected by JavaScript"), "medium")
+        # low-JS page -> passing note instead
+        rep2 = Report("u")
+        jsdiff.technical_findings(jsdiff.analyze(self.RAW, self.RAW, "u"), rep2)
+        self.assertIn("Content is server-rendered",
+                      {f.title for f in rep2.findings})
+
+    def test_geo_finding_only_when_heavy(self):
+        from lib import jsdiff
+        rep = Report("u")
+        jsdiff.geo_finding(jsdiff.analyze(self.RAW, self.RENDERED, "u"), rep)
+        self.assertIn("AI answer engines may not see this content",
+                      {f.title for f in rep.findings})
+        rep2 = Report("u")
+        jsdiff.geo_finding(jsdiff.analyze(self.RAW, self.RAW, "u"), rep2)
+        self.assertEqual(rep2.findings, [])
+
+    def test_auditors_silent_without_jsdep(self):
+        # No --render measurement -> ctx has no jsdep -> no JS findings at all.
+        doc = htmlx.parse(self.RAW, base_url="https://x.com/p")
+        rep = Report("u")
+        resp = http.Response("u", "u", 200, {}, self.RAW, 1)
+        audit_technical.audit(doc, resp, rep, {})
+        audit_geo.audit(doc, resp, rep, {})
+        titles = {f.title for f in rep.findings}
+        self.assertFalse(any("JavaScript" in t for t in titles))
+
+
 class TestSiteGraph(unittest.TestCase):
     """Offline tests for the site-structure analysis (#22)."""
 

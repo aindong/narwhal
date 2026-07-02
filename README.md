@@ -156,7 +156,11 @@ Every report includes a 0–100 health score and findings grouped by severity, e
 with what was observed and a concrete fix.
 
 ### Useful flags (`scan.py`)
-- `--render` — render JavaScript via Playwright (for SPAs). Needs
+- `--render` — render JavaScript via Playwright (for SPAs), and **measure JS
+  dependence**: the served HTML is diffed against the rendered DOM — "X% of
+  your content is JS-only" (with the missing headings as evidence), plus
+  client-injected title/description/canonical/JSON-LD. Crawlers that don't run
+  JS (most AI fetchers) never see that content. Needs
   `pip install playwright` then `python -m playwright install chromium`. If the
   browser isn't installed you get a clear one-line fix, not a stack trace; a
   render that can't run reports an honest error rather than silently falling back
