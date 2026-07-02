@@ -84,6 +84,10 @@ rate-limit), and `--ignore-robots` to override. `--fail-under N` gates on the
 average score. Add `--check-links` to check outbound links (internal + external)
 for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
 rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).
+**Site-structure analysis** is always included: click depth from the start
+URL, pages unreachable within the sample, zero-inbound pages (weak link
+equity), most-linked pages, and sitemap **orphan candidates** — all
+sample-aware (the report states the crawl size next to every claim).
 **Near-duplicate content detection** runs by default (SimHash fingerprints;
 clusters pages ≥`--dup-threshold` % similar and flags clusters lacking a
 consistent canonical; disable with `--no-dupes`).

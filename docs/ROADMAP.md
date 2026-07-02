@@ -124,8 +124,9 @@ without breaking local-first (nothing below needs a paid API).
 - ✅ **`narwhal compare`** — side-by-side competitor gap analysis from our own
   scans (scoreboard, fact table, gaps to close, where you lead; MCP tool
   `compare_pages`). — [#21](https://github.com/aindong/narwhal/issues/21)
-- ⬜ **Site-graph analysis** — click depth, orphan pages (sitemap ∩ crawl),
-  internal-link distribution. — [#22](https://github.com/aindong/narwhal/issues/22)
+- ✅ **Site-graph analysis** — click depth, orphan candidates, unreachable and
+  zero-inbound pages, most-linked pages; always on in `crawl`/`audit`, sample-
+  aware honesty. — [#22](https://github.com/aindong/narwhal/issues/22)
 - ⬜ **JS-dependence check** — diff raw vs rendered content ("X% of your content
   needs JavaScript"). — [#23](https://github.com/aindong/narwhal/issues/23)
 - ⬜ **Image weight/format + og:image validation.**

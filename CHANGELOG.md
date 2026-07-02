@@ -4,6 +4,26 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.21.0] — 2026-07-02
+
+### Added
+- **Site-structure analysis in every crawl** (closes #22, `lib/sitegraph.py`):
+  the crawler now builds the internal-link graph from pages it already parsed
+  (zero extra requests) and reports — **click depth** from the start URL (buried
+  pages flagged past 3 clicks), pages **unreachable** from the start within the
+  sample, **zero-inbound** pages (weak link equity), **most-linked** pages, and
+  sitemap **orphan candidates** (sitemap URLs no crawled page links to; crawled
+  pages are excluded — they're covered by zero-inbound with more certainty).
+  - **Sample-aware honesty**: every claim carries the crawl-sample size; orphan
+    detection only runs when a sitemap was actually found.
+  - In `crawl` and `audit` Markdown/JSON automatically (`graph` block); the
+    `narwhal-links` specialist is pointed at it.
+  - Link collection is now always on during crawls (pure parsing, no extra
+    network), so the graph needs no flag.
+  - Verified live on a real 12-page crawl (correctly surfaced unlinked taxonomy
+    pages and an unlinked content section as orphan candidates). 5 new tests
+    (154 total), green with and without the optional parser extras.
+
 ## [1.20.0] — 2026-07-02
 
 ### Added

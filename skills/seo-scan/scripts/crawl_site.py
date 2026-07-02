@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, links, simhash  # noqa: E402
+from lib import http, htmlx, links, simhash, sitegraph  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
@@ -212,8 +212,10 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     urls, skipped = select_urls(candidates, base, rt, obey_robots, max_pages)
 
     def scan_one(u):
+        # collect_links is always on: link extraction is pure parsing (no extra
+        # requests) and feeds the site-graph analysis even without --check-links.
         return u, scanner.scan(u, render=render, allow_private=allow_private,
-                               timeout=timeout, ctx=ctx, collect_links=check_links,
+                               timeout=timeout, ctx=ctx, collect_links=True,
                                collect_fingerprint=detect_dupes, config=config)
 
     results = []
@@ -232,8 +234,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
-        if check_links:
-            pages_links[u] = rep.meta.get("links", [])
+        pages_links[u] = rep.meta.get("links", [])
         if detect_dupes and rep.meta.get("fingerprint"):
             page_fps.append({"url": u, "fingerprint": rep.meta["fingerprint"],
                              "canonical": rep.meta.get("canonical")})
@@ -241,6 +242,12 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter}
+    # Site structure (click depth, orphans, link equity) — pure computation on
+    # data already in hand; orphan detection only makes sense sitemap-sourced.
+    result["graph"] = sitegraph.analyze(
+        base, [u for u, _ in results], pages_links,
+        candidates, bool(ctx.get("sitemap_found")))
+    result["sitemap_candidates"] = len(candidates)
     if check_links:
         result["links"] = check_broken_links(
             pages_links, allow_private=allow_private, timeout=timeout,
@@ -268,6 +275,11 @@ def render_markdown(result: dict) -> str:
         for (cat, sev, title), n in recurring:
             lines.append(f"| {n} | {sev} | {cat} | {title} |")
         lines.append("")
+
+    graph = result.get("graph")
+    if graph is not None:
+        lines += sitegraph.render_markdown(
+            graph, sitemap_total=result.get("sitemap_candidates", 0))
 
     link_info = result.get("links")
     if link_info is not None:

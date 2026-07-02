@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.20.0**_
+_Last updated: 2026-07-02 · version **1.21.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -64,7 +64,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   Depth findings state their extraction basis (trafilatura vs visible text).
   `${CLAUDE_PLUGIN_ROOT}` confirmed resolving for subagents. Scores on well-run
   sites corrected: jvns 62→79, HN 52→66, pydocs 75→86, Verge 71→80.
-- **Tests:** 149, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 154, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -107,7 +107,7 @@ The original roadmap (#1–#20) is **complete**. The **next wave (v2.x)** came o
 of the 2026-07 project self-review — relative + strategic answers, still
 local-first (see ROADMAP "Next wave" for detail):
 - ~~#21~~ `narwhal compare` — **shipped v1.20.0** (compare.py, /narwhal compare, MCP compare_pages)
-- **#22** Site-graph analysis — click depth, orphans, link distribution (P1)
+- ~~#22~~ Site-graph analysis — **shipped v1.21.0** (lib/sitegraph.py, always-on in crawl/audit)
 - **#23** JS-dependence check — raw vs rendered content diff (P1)
 - **#24** Image weight/format + og:image validation (P1)
 - **#25** Hreflang bidirectional validation (P1)

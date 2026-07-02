@@ -24,6 +24,13 @@ gated codes like 401/403/429 are treated as not-broken (avoid false positives).
   hub/spoke structure? (Infer from the crawl's link graph.)
 - **External links:** do outbound links point to reputable, relevant sources?
 
+## Site-structure data (use it)
+The crawl JSON includes a `graph` block: click depth from the start URL,
+pages unreachable within the sample, pages with zero inbound internal links,
+most-linked pages, and sitemap **orphan candidates**. Interpret it sample-aware:
+"unlinked" means *within the crawled sample* — say so. Deep/orphaned pages that
+matter to the business are your highest-value internal-linking findings.
+
 ## Judgment rules (tuned from real audits)
 - **Classify the page first** (homepage / hub-index / article / product) and weigh
   every script finding against that role — index/hub pages legitimately fail

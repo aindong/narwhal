@@ -920,6 +920,69 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertEqual(sev.get("Few question-based headings"), "medium")
 
 
+class TestSiteGraph(unittest.TestCase):
+    """Offline tests for the site-structure analysis (#22)."""
+
+    def _links(self, *urls):
+        return [{"url": u, "internal": True} for u in urls]
+
+    def _graph(self, sitemap_found=True, sitemap_urls=None):
+        from lib import sitegraph
+        base = "https://x.com/"
+        # chain: base -> a -> b -> c -> d (depth 4); e crawled but never linked
+        crawled = [base] + [f"https://x.com/{p}" for p in ("a", "b", "c", "d", "e")]
+        pages_links = {
+            base: self._links("https://x.com/a"),
+            "https://x.com/a": self._links("https://x.com/b"),
+            "https://x.com/b": self._links("https://x.com/c"),
+            "https://x.com/c": self._links("https://x.com/d",
+                                           "https://x.com/uncrawled"),
+            "https://x.com/d": [{"url": "https://elsewhere.com/", "internal": False}],
+            "https://x.com/e": [],
+        }
+        return sitegraph.analyze(
+            base, crawled, pages_links,
+            sitemap_urls if sitemap_urls is not None else crawled
+            + ["https://x.com/orphan"],
+            sitemap_found)
+
+    def test_click_depth_and_deep_pages(self):
+        g = self._graph()
+        self.assertEqual(g["max_depth"], 4)
+        self.assertEqual([p["url"] for p in g["deep_pages"]], ["https://x.com/d"])
+
+    def test_unreachable_and_zero_inbound(self):
+        g = self._graph()
+        self.assertEqual(g["unreachable_from_start"], ["https://x.com/e"])
+        self.assertEqual(g["zero_inbound"], ["https://x.com/e"])   # base excluded
+
+    def test_orphan_candidates_only_with_sitemap(self):
+        g = self._graph()
+        self.assertTrue(g["orphans"]["checked"])
+        self.assertEqual(g["orphans"]["candidates"], ["https://x.com/orphan"])
+        # /uncrawled was linked from /c, so it is NOT an orphan candidate
+        g2 = self._graph(sitemap_found=False)
+        self.assertFalse(g2["orphans"]["checked"])
+        self.assertEqual(g2["orphans"]["candidates"], [])
+
+    def test_trailing_slash_and_fragment_are_one_node(self):
+        from lib import sitegraph
+        base = "https://x.com/"
+        crawled = [base, "https://x.com/a/"]
+        pages_links = {base: [{"url": "https://x.com/a#section", "internal": True}]}
+        g = sitegraph.analyze(base, crawled, pages_links, [], False)
+        self.assertEqual(g["unreachable_from_start"], [])   # /a/ == /a#section
+        self.assertEqual(g["max_depth"], 1)
+
+    def test_render_markdown_states_sample_size(self):
+        from lib import sitegraph
+        md = "\n".join(sitegraph.render_markdown(self._graph(), sitemap_total=7))
+        self.assertIn("Site structure (6 crawled pages", md)
+        self.assertIn("Orphan candidates", md)
+        self.assertIn("crawl sample", md)                  # honesty note
+        self.assertIn("Raise `--max-pages`", md)
+
+
 class TestCompare(unittest.TestCase):
     """Offline tests for `narwhal compare` (#21): facts extraction, gap
     analysis, and rendering — everything except the network fetch."""
