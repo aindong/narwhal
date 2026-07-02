@@ -130,8 +130,9 @@ without breaking local-first (nothing below needs a paid API).
 - ✅ **JS-dependence check** — `--render` diffs served HTML vs rendered DOM:
   JS-only content share (tiered findings), post-JS headings, client-injected
   metadata; GEO finding for AI fetchers. — [#23](https://github.com/aindong/narwhal/issues/23)
-- ⬜ **Image weight/format + og:image validation.**
-  — [#24](https://github.com/aindong/narwhal/issues/24)
+- ✅ **Image weight/format + og:image validation** — HEAD-checked weights,
+  AVIF/WebP candidates, width/height (CLS), og:image reachability + real
+  dimensions from a ranged GET. — [#24](https://github.com/aindong/narwhal/issues/24)
 - ⬜ **Hreflang bidirectional validation** across a crawl.
   — [#25](https://github.com/aindong/narwhal/issues/25)
 

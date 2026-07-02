@@ -31,6 +31,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server: exposes scan_page/crawl_site/audit_site/validate_sitemap/generate_llms/generate_schema/diff_reports over stdio |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright; also diffs raw vs rendered → JS-dependence findings (% JS-only content, client-injected metadata) |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
+| (scan default) | Image weight/format checks + og:image validation (HEAD-only + one ranged GET); `--no-image-checks` to skip |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |
 | `python crawl_site.py <url> --max-pages 25` | Site-wide scan + recurring-issue rollup |
 | (crawl output) | Always includes a site-structure `graph`: click depth, orphan candidates, zero-inbound pages — sample-aware |

@@ -292,6 +292,78 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
         return None, type(exc).__name__
 
 
+def head_info(url: str, *, timeout: int = DEFAULT_TIMEOUT,
+              user_agent: str = DEFAULT_UA, allow_private: bool = False):
+    """HEAD a URL and return ``(status, headers, error)`` with lowercase header
+    names. Used by the image checks (content-length / content-type) — like
+    :func:`head` but keeps the response headers. Never raises."""
+    try:
+        url = normalize_url(url)
+        assert_public_host(url, allow_private=allow_private)
+    except (ValueError, SSRFError) as exc:
+        return 0, {}, str(exc)
+    try:
+        import requests  # noqa: PLC0415
+        try:
+            r = requests.head(url, headers={"User-Agent": user_agent},
+                              timeout=timeout, allow_redirects=True)
+            return r.status_code, {k.lower(): v for k, v in r.headers.items()}, None
+        except requests.RequestException as exc:
+            return 0, {}, type(exc).__name__
+    except ImportError:
+        pass
+    import urllib.error  # noqa: PLC0415
+    import urllib.request  # noqa: PLC0415
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": user_agent},
+                                     method="HEAD")
+        with urllib.request.urlopen(req, timeout=timeout) as fh:
+            return fh.status, {k.lower(): v for k, v in fh.headers.items()}, None
+    except urllib.error.HTTPError as exc:
+        return exc.code, {k.lower(): v for k, v in (exc.headers or {}).items()}, None
+    except Exception as exc:  # noqa: BLE001
+        return 0, {}, type(exc).__name__
+
+
+def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
+                user_agent: str = DEFAULT_UA, allow_private: bool = False):
+    """Fetch at most the first ``n`` bytes of a URL (Range request; the read is
+    capped even when the server ignores Range). Returns ``(bytes, error)`` —
+    used to probe image dimensions without downloading whole files."""
+    try:
+        url = normalize_url(url)
+        assert_public_host(url, allow_private=allow_private)
+    except (ValueError, SSRFError) as exc:
+        return None, str(exc)
+    headers = {"User-Agent": user_agent, "Range": f"bytes=0-{n - 1}"}
+    try:
+        import requests  # noqa: PLC0415
+        try:
+            r = requests.get(url, headers=headers, timeout=timeout,
+                             allow_redirects=True, stream=True)
+            buf = b""
+            for chunk in r.iter_content(chunk_size=8192):
+                buf += chunk
+                if len(buf) >= n:
+                    break
+            r.close()
+            return buf[:n], None if r.status_code < 400 else f"HTTP {r.status_code}"
+        except requests.RequestException as exc:
+            return None, type(exc).__name__
+    except ImportError:
+        pass
+    import urllib.error  # noqa: PLC0415
+    import urllib.request  # noqa: PLC0415
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as fh:
+            return fh.read(n), None
+    except urllib.error.HTTPError as exc:
+        return None, f"HTTP {exc.code}"
+    except Exception as exc:  # noqa: BLE001
+        return None, type(exc).__name__
+
+
 def head(url: str, *, timeout: int = DEFAULT_TIMEOUT, user_agent: str = DEFAULT_UA,
          allow_private: bool = False):
     """Check a URL's reachability cheaply. Returns ``(status, error)``.

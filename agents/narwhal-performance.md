@@ -34,6 +34,11 @@ LCP good <2.5s / poor >4s · INP good <200ms / poor >500ms · CLS good <0.1 / po
 (INP replaced FID in 2024; the CrUX API is the field-data source — PageSpeed Insights
 is dropping CrUX field data in 2026.)
 
+## Hard data available
+The technical scan JSON includes image findings (heavy images with real KB
+sizes, legacy formats, missing width/height, og:image dimensions) measured via
+capped HEAD/ranged requests — cite those numbers instead of estimating.
+
 ## Judgment rules (tuned from real audits)
 - **Classify the page first** (homepage / hub-index / article / product) and weigh
   every script finding against that role — index/hub pages legitimately fail

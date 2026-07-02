@@ -216,7 +216,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         # requests) and feeds the site-graph analysis even without --check-links.
         return u, scanner.scan(u, render=render, allow_private=allow_private,
                                timeout=timeout, ctx=ctx, collect_links=True,
-                               collect_fingerprint=detect_dupes, config=config)
+                               collect_fingerprint=detect_dupes, config=config,
+                               check_images=False)
 
     results = []
     if concurrency <= 1:

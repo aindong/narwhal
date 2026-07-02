@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import http, htmlx, jsdiff, links, simhash  # noqa: E402
+from lib import http, htmlx, images, jsdiff, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
 
@@ -76,7 +76,7 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
 def scan(url: str, *, render=False, allow_private=False, timeout=20,
          only=None, ctx=None, collect_links=False, collect_fingerprint=False,
-         config=None) -> Report:
+         config=None, check_images=True) -> Report:
     """Audit a single page. Pass ``ctx`` (from :func:`gather_context`) to reuse
     site-level signals across many pages — the crawler does this so robots.txt,
     sitemap, and llms.txt are fetched once per site rather than once per page.
@@ -127,6 +127,17 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         fn = AUDITORS.get(name)
         if fn:
             fn(doc, resp, report, ctx)
+
+    # Image weight/format + og:image checks: a few HEADs and one ranged GET per
+    # page, so they're on for single-page scans but skipped during crawls
+    # (which would multiply the requests by every crawled page).
+    if check_images and "technical" in selected:
+        facts = images.audit_images(doc, resp.final_url or url,
+                                    allow_private=allow_private,
+                                    timeout=min(timeout, 8))
+        report.meta["images"] = {k: facts[k] for k in
+                                 ("checked", "unchecked", "missing_dims")}
+        images.findings(facts, report)
     return report
 
 
@@ -145,6 +156,8 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=cfg.default("timeout"))
     ap.add_argument("--allow-private", action="store_true",
                     help="permit private/localhost hosts (off by default for SSRF safety)")
+    ap.add_argument("--no-image-checks", action="store_true",
+                    help="skip image weight/og:image checks (a few HEAD requests)")
     ap.add_argument("--fail-under", type=int, metavar="N",
                     default=cfg.defaults.get("fail_under"),
                     help="exit non-zero if the health score is below N (for CI gating)")
@@ -159,7 +172,8 @@ def main(argv=None) -> int:
 
     only = [s.strip() for s in args.only.split(",")] if args.only else None
     report = scan(args.url, render=args.render, allow_private=args.allow_private,
-                  timeout=args.timeout, only=only, config=cfg)
+                  timeout=args.timeout, only=only, config=cfg,
+                  check_images=not args.no_image_checks)
 
     renderers = {
         "json": report.to_json,

@@ -15,7 +15,7 @@ import sys
 try:
     from . import __version__
 except ImportError:  # running as loose scripts
-    __version__ = "1.22.0"
+    __version__ = "1.23.0"
 
 USAGE = """narwhal — SEO & GEO/LLMO scanner
 

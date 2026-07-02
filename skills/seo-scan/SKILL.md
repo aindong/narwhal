@@ -62,6 +62,10 @@ Useful flags:
   report, or PDF (needs WeasyPrint; falls back to HTML). Use `-o <file>` to save.
   `html`/`pdf` also work on `audit.py` for a shareable, stakeholder-ready report.
 - `--only technical,geo` — run a subset: `technical`, `content`, `schema`, `geo`.
+- Image checks run by default on single-page scans (a few HEADs + one ~64 KB
+  ranged GET): heavy images (>200 KB), legacy formats worth AVIF/WebP, missing
+  width/height (CLS), and og:image validation (reachable? real dimensions?).
+  Skip with `--no-image-checks`; crawls skip them automatically.
 - `--fail-under N` — exit non-zero if the score is below `N` (CI quality gate;
   `crawl_site.py` gates on the average score).
 

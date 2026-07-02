@@ -920,6 +920,100 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertEqual(sev.get("Few question-based headings"), "medium")
 
 
+class TestImageChecks(unittest.TestCase):
+    """Offline tests for image weight/format + og:image validation (#24)."""
+
+    @staticmethod
+    def _png(w, h):
+        import struct
+        return (b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR"
+                + struct.pack(">II", w, h) + b"\x08\x02\x00\x00\x00")
+
+    def test_probe_dimensions_formats(self):
+        import struct
+        from lib import images
+        self.assertEqual(images.probe_dimensions(self._png(1200, 630)), (1200, 630))
+        gif = b"GIF89a" + struct.pack("<HH", 320, 240) + b"\x00" * 20
+        self.assertEqual(images.probe_dimensions(gif), (320, 240))
+        jpeg = (b"\xff\xd8" + b"\xff\xe0\x00\x10" + b"JFIF\x00" + b"\x00" * 10
+                + b"\xff\xc0\x00\x11\x08" + struct.pack(">HH", 630, 1200)
+                + b"\x03" + b"\x00" * 10)
+        self.assertEqual(images.probe_dimensions(jpeg), (1200, 630))
+        webpx = (b"RIFF\x00\x00\x00\x00WEBPVP8X" + b"\x00" * 8
+                 + (799).to_bytes(3, "little") + (419).to_bytes(3, "little"))
+        self.assertEqual(images.probe_dimensions(webpx), (800, 420))
+        self.assertIsNone(images.probe_dimensions(b"not an image at all......"))
+
+    def _facts(self, html, head_map, og_bytes=b""):
+        """Run audit_images with injected (offline) network functions."""
+        from lib import images
+        doc = htmlx.parse(html, base_url="https://x.com/")
+
+        def fake_head(url, **kw):
+            return head_map.get(url, (404, {}, None))
+
+        def fake_range(url, n, **kw):
+            return og_bytes[:n], None
+
+        return images.audit_images(doc, "https://x.com/",
+                                   head_info=fake_head, fetch_range=fake_range)
+
+    def test_heavy_and_legacy_images_flagged(self):
+        html = ('<img src="/hero.jpg"><img src="/big.png" width="1" height="1">'
+                '<img src="/ok.webp" width="1" height="1">')
+        head = {
+            "https://x.com/hero.jpg": (200, {"content-length": str(600 * 1024),
+                                             "content-type": "image/jpeg"}, None),
+            "https://x.com/big.png": (200, {"content-length": str(250 * 1024),
+                                            "content-type": "image/png"}, None),
+            "https://x.com/ok.webp": (200, {"content-length": str(40 * 1024),
+                                            "content-type": "image/webp"}, None),
+        }
+        facts = self._facts(html, head)
+        rep = Report("u")
+        from lib import images
+        images.findings(facts, rep)
+        sev = {f.title: f.severity for f in rep.findings}
+        heavy_titles = [t for t in sev if t.startswith("Heavy images")]
+        self.assertTrue(heavy_titles and sev[heavy_titles[0]] == "medium")  # 600KB
+        legacy = [t for t in sev if t.startswith("Legacy image formats")]
+        self.assertTrue(legacy and sev[legacy[0]] == "low")
+
+    def test_missing_dimensions_flagged(self):
+        html = '<img src="/a.png"><img src="/b.png"><img src="/c.png">'
+        facts = self._facts(html, {})
+        rep = Report("u")
+        from lib import images
+        images.findings(facts, rep)
+        self.assertIn("Images without width/height attributes",
+                      {f.title for f in rep.findings})
+
+    def test_og_image_broken_and_too_small(self):
+        from lib import images
+        html = '<meta property="og:image" content="/og.png">'
+        # broken (404)
+        facts = self._facts(html, {"https://x.com/og.png": (404, {}, None)})
+        rep = Report("u")
+        images.findings(facts, rep)
+        self.assertEqual({f.title: f.severity for f in rep.findings}
+                         .get("og:image is broken"), "high")
+        # reachable but tiny (100x100 png)
+        facts = self._facts(html, {"https://x.com/og.png":
+                                   (200, {"content-type": "image/png"}, None)},
+                            og_bytes=self._png(100, 100))
+        rep = Report("u")
+        images.findings(facts, rep)
+        self.assertEqual({f.title: f.severity for f in rep.findings}
+                         .get("og:image is too small"), "medium")
+        # healthy 1200x630
+        facts = self._facts(html, {"https://x.com/og.png":
+                                   (200, {"content-type": "image/png"}, None)},
+                            og_bytes=self._png(1200, 630))
+        rep = Report("u")
+        images.findings(facts, rep)
+        self.assertIn("og:image looks healthy", {f.title for f in rep.findings})
+
+
 class TestJsDependence(unittest.TestCase):
     """Offline tests for the raw-vs-rendered JS-dependence diff (#23)."""
 

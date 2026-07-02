@@ -75,3 +75,13 @@ and indexing pipelines before their render pass — see only the served HTML.
 Client-injected metadata is especially risky: it may be read never or late.
 Without Playwright there is no rendered DOM, so the check stays silent (never
 guessed).
+
+## Image weight, formats, and og:image
+Single-page scans HEAD-check up to 10 page images (headers only — never full
+downloads): >200 KB is heavy (top LCP cause; >=500 KB or 3+ heavy escalates),
+JPEG/PNG over 100 KB are flagged as AVIF/WebP candidates, and >30% of <img> tags
+missing width/height is a CLS risk. The og:image is validated with one ranged
+GET (~64 KB) that parses PNG/GIF/JPEG/WebP headers for dimensions: unreachable →
+high, under 200px → medium (previews break), under 1200px wide → low (no large
+card). Skip with `--no-image-checks`; crawls skip these automatically (they
+would multiply requests per page).

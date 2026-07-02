@@ -4,6 +4,27 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.23.0] — 2026-07-02
+
+### Added
+- **Image weight/format checks + og:image validation** (closes #24,
+  `lib/images.py`). Single-page scans now check, within a strict budget (up to
+  10 HEAD requests — headers only — plus one ~64 KB ranged GET):
+  - **Heavy images**: >200 KB flagged with real sizes as evidence (≥500 KB or
+    3+ heavy escalates to medium) — a top LCP cause.
+  - **Legacy formats worth converting**: JPEG/PNG over 100 KB → AVIF/WebP
+    candidates.
+  - **Missing width/height** on >30% of images → CLS risk (pure, no network).
+  - **og:image validation**: reachability (broken → high) and **real
+    dimensions** parsed from partial bytes — a stdlib PNG/GIF/JPEG/WebP header
+    prober (`probe_dimensions`), no imaging library. Under 200px → medium;
+    under 1200px wide → low; healthy gets a passing note with the dimensions.
+  - `--no-image-checks` to skip; crawls skip automatically (per-page HEADs
+    would multiply). New SSRF-guarded `http.head_info` and `http.fetch_range`.
+  - Verified live: real og:images probed correctly (1200×630 and 2048×1024) and
+    genuine heavy/legacy findings on two major sites. 4 new tests (163 total),
+    green with and without parser extras.
+
 ## [1.22.0] — 2026-07-02
 
 ### Added
