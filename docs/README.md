@@ -11,6 +11,12 @@ Documentation index for the Narwhal SEO & GEO/LLMO scanning toolkit.
 - **[Issues](https://github.com/aindong/narwhal/issues)** — detailed tasks and
   acceptance criteria (the source of truth for individual work items).
 
+## Quality & tuning
+- **[tuning/](tuning/README.md)** — how the checks and specialist agents are
+  tuned against real sites: the methodology loop, before/after scan snapshots,
+  and per-round results (start with the
+  [2026-07 round](tuning/2026-07-round-1/RESULTS.md)).
+
 ## Configuration
 - **[CONFIG.md](CONFIG.md)** — how to use `narwhal.toml` (weights, thresholds,
   CLI defaults, ignore rules). Template: [`narwhal.example.toml`](../narwhal.example.toml).

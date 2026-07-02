@@ -1,0 +1,227 @@
+{
+  "url": "https://docs.python.org/3/",
+  "final_url": "https://docs.python.org/3/",
+  "status": 200,
+  "rendered": false,
+  "score": 75,
+  "counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 4,
+    "low": 7,
+    "good": 14
+  },
+  "meta": {
+    "elapsed_ms": 659
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "20 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Meta description is short",
+      "detail": "Description is 34 characters.",
+      "recommendation": "Aim for 140–160 characters to use the full SERP snippet.",
+      "evidence": "The official Python documentation."
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Exactly one H1",
+      "detail": "Python 3.14.6 documentation",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Heading levels skip a level",
+      "detail": "An H1 is followed by an H3.",
+      "recommendation": "Keep heading nesting sequential (no H2→H4 jumps).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Canonical points elsewhere",
+      "detail": "Canonical is https://docs.python.org/3/index.html but page URL is https://docs.python.org/3/.",
+      "recommendation": "Confirm this is intentional (cross-domain/variant canonical).",
+      "evidence": "https://docs.python.org/3/index.html"
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "All images have alt attributes",
+      "detail": "3 images",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "1 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://docs.python.org/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "high",
+      "title": "Thin content",
+      "detail": "~152 words of main text.",
+      "recommendation": "Expand to cover the topic fully; thin pages struggle to rank and are rarely cited by AI answers.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 33.5 (difficult); ~grade 11.2.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "python (7), documentation (4), theme (3), auto (3), light (3), dark (3)  ·  phrases: theme auto, auto light, light dark",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Clean, specific writing",
+      "detail": "low filler, diverse vocabulary (0.632)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "medium",
+      "title": "No visible author/byline",
+      "detail": "No author meta tag or byline detected near the top.",
+      "recommendation": "Add a named author with credentials — a core E-E-A-T (experience/expertise) signal.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Date/freshness signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No Twitter/X card type",
+      "detail": "Missing <meta name=\"twitter:card\">.",
+      "recommendation": "Add twitter:card (e.g. summary_large_image) for X previews.",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "medium",
+      "title": "No structured data (JSON-LD)",
+      "detail": "The page has no application/ld+json markup.",
+      "recommendation": "Add JSON-LD for the page's entity (Article, Product, Organization…) to unlock rich results and clarify meaning for AI search.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "medium",
+      "title": "Few question-based headings",
+      "detail": "0 of 8 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "2/3 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "medium",
+      "title": "No statistics or citations",
+      "detail": "No numbers, data points, or source references detected.",
+      "recommendation": "Add concrete stats and cite primary sources — AI answers favor and attribute evidence-backed content.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Direct answer near the top",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "url": "https://www.allbirds.com",
+  "final_url": "https://www.allbirds.com/",
+  "status": 200,
+  "rendered": false,
+  "score": 83,
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 3,
+    "low": 8,
+    "good": 15
+  },
+  "meta": {
+    "elapsed_ms": 664
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "50 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Meta description length is in range",
+      "detail": "151 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Multiple H1 headings",
+      "detail": "Found 2 H1 elements.",
+      "recommendation": "Use one H1; demote the rest to H2/H3.",
+      "evidence": "Wildly Comfortable. Super Natural. | Table of Contents"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Heading levels skip a level",
+      "detail": "An H1 is followed by an H3.",
+      "recommendation": "Keep heading nesting sequential (no H2→H4 jumps).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://www.allbirds.com/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "hreflang cluster present",
+      "detail": "86 locales",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Images missing alt text",
+      "detail": "3 of 46 <img> tags have no alt attribute.",
+      "recommendation": "Add descriptive alt text (empty alt=\"\" only for decorative images).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "11 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://www.allbirds.com/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~15846 words",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 33.3 (difficult); ~grade 14.4.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "information (294), may (181), allbirds (179), personal (131), platform (100), services (96)  ·  phrases: personal information, third parties, privacy policy",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Some filler phrasing",
+      "detail": "8 filler phrases detected.",
+      "recommendation": "Tighten wording; prefer specifics over padding.",
+      "evidence": "in order to; each and every"
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Repetitive vocabulary",
+      "detail": "Lexical diversity 0.127 (unique/total words).",
+      "recommendation": "Vary wording and add substance; heavy repetition signals thin or spun content.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "medium",
+      "title": "No structured data (JSON-LD)",
+      "detail": "The page has no application/ld+json markup.",
+      "recommendation": "Add JSON-LD for the page's entity (Article, Product, Organization…) to unlock rich results and clarify meaning for AI search.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Few question-based headings",
+      "detail": "1 of 40 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings. (Most useful on article/guide pages; lower priority here.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "243/256 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "1 stats, 17 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "llms.txt published",
+      "detail": "https://www.allbirds.com/llms.txt",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

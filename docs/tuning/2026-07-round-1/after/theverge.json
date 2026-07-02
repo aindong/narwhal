@@ -1,0 +1,211 @@
+{
+  "url": "https://www.theverge.com",
+  "final_url": "https://www.theverge.com/",
+  "status": 200,
+  "rendered": false,
+  "score": 80,
+  "counts": {
+    "critical": 0,
+    "high": 2,
+    "medium": 0,
+    "low": 8,
+    "good": 14
+  },
+  "meta": {
+    "elapsed_ms": 578
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Homepage title is just the brand",
+      "detail": "Title is 9 characters.",
+      "recommendation": "Fine for a known brand; consider \"Brand — what you do\" (~50–60 chars) to also rank for the value proposition.",
+      "evidence": "The Verge"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Meta description may be truncated",
+      "detail": "Description is 221 characters.",
+      "recommendation": "Trim to ~155 characters.",
+      "evidence": "The Verge is about technology and how it makes us feel. Founded in 2011, we offer our audience everything from breaking news to reviews to award-winning features and investigations, on our site, in video, and in podcasts."
+    },
+    {
+      "category": "technical",
+      "severity": "high",
+      "title": "No H1 heading",
+      "detail": "The page has no <h1>.",
+      "recommendation": "Add a single H1 that states the page's main topic.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://www.theverge.com",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "All images have alt attributes",
+      "detail": "112 images",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "35 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://www.theverge.com/sitemaps/google_news",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~2837 words",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 45.5 (difficult); ~grade 12.4.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "jul (46), verge (15), apple (12), andrew (12), game (9), jay (9)  ·  phrases: jay peters, peters jul, andrew webster",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Clean, specific writing",
+      "detail": "low filler, diverse vocabulary (0.444)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Date/freshness signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "NewsMediaOrganization, WebSite",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "low",
+      "title": "Article-like page without Article schema",
+      "detail": "Long-form content with no Article/BlogPosting markup.",
+      "recommendation": "Add Article JSON-LD (headline, author, datePublished) to aid rich results and AI attribution.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Few question-based headings",
+      "detail": "0 of 9 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings. (Most useful on article/guide pages; lower priority here.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "46/49 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "10 stats, 5 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "high",
+      "title": "AI crawlers are blocked in robots.txt",
+      "detail": "Disallowed from the site root: ChatGPT-User (OpenAI (ChatGPT on-demand fetch)), ClaudeBot (Anthropic (Claude)), Claude-Web (Anthropic (Claude on-demand)), PerplexityBot (Perplexity), Google-Extended (Google (Gemini / AI Overviews training)), CCBot (Common Crawl (feeds many LLMs)), Bytespider (ByteDance).",
+      "recommendation": "If you want visibility in AI answers, allow these agents. If the block is intentional (content protection), ignore this.",
+      "evidence": "ChatGPT-User (OpenAI (ChatGPT on-demand fetch)), ClaudeBot (Anthropic (Claude)), Claude-Web (Anthropic (Claude on-demand)), PerplexityBot (Perplexity), Google-Extended (Google (Gemini / AI Overviews training)), CCBot (Common Crawl (feeds many LLMs)), Bytespider (ByteDance)"
+    }
+  ]
+}

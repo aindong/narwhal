@@ -417,6 +417,33 @@ MCP is optional; the core toolkit stays zero-dependency.
 - **Fix-first output.** Reports lead with the highest-severity, highest-leverage
   changes — not a data dump.
 
+## Tuned against the real web (and we publish the evidence)
+
+Narwhal's checks and specialist agents are trained in the open: we periodically
+**sweep a diverse batch of real, public sites, hunt our own false positives, fix
+them at the root cause, and commit the before/after scan snapshots** to
+[`docs/tuning/`](docs/tuning/README.md) so you can audit the auditor.
+
+The rule that keeps it honest: **a score never improves by loosening a check** —
+only by removing findings that were *wrong*, each with a named root cause and a
+regression test. In the [2026-07 round](docs/tuning/2026-07-round-1/RESULTS.md)
+that meant fixing a parser bug that reported false "No H1" on most real blogs,
+counting anchor text as content (link-hubs aren't "thin"), and teaching every
+check **page-type awareness** (a homepage isn't judged like an article):
+
+| Site (page type) | Before | After |
+|:--|--:|--:|
+| jvns.ca (personal blog) | 62 | **79** |
+| news.ycombinator.com (link-hub) | 52 | **66** |
+| docs.python.org (docs index) | 75 | **86** |
+| theverge.com (news publisher) | 71 | **80** |
+
+The multi-agent specialists are graded the same way — run live on real sites,
+their reasoning scored, and the best behaviors encoded back into their prompts as
+*Judgment rules* (classify the page type first, sample a real article, respect a
+site's deliberate AI-crawler opt-outs). Full methodology and raw data:
+[docs/tuning](docs/tuning/README.md).
+
 ## Reference guides
 
 Deep-dive reasoning behind each check lives in
