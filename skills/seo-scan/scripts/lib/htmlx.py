@@ -178,7 +178,9 @@ def _parse_bs4(html: str, base_url: str) -> Doc:
         if s.string:
             doc.scripts_ld.append(s.string.strip())
 
-    for bad in soup(["script", "style", "noscript", "template"]):
+    # <title> is head metadata, not page copy — drop it from visible text so the
+    # bs4 backend agrees with the stdlib backend (doc.title already captured it).
+    for bad in soup(["script", "style", "noscript", "template", "title"]):
         bad.extract()
     doc.text = collapse(soup.get_text(" "))
     return doc
