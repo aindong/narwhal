@@ -31,6 +31,7 @@ narwhal/
     ├── SKILL.md             # auto-triggering Claude Code skill
     ├── scripts/
     │   ├── scan.py          # single-page orchestrator
+    │   ├── compare.py       # side-by-side competitor gap analysis
     │   ├── crawl_site.py    # polite site crawl + rollup (links, dupes)
     │   ├── validate_sitemap.py
     │   ├── generate_schema.py / generate_llms.py

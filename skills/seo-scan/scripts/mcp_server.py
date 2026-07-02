@@ -124,6 +124,23 @@ def _schema(type: str, fields: dict) -> dict:
     return schema_mod.build(type, {k: str(v) for k, v in (fields or {}).items()})
 
 
+def _compare(your_url: str, competitor_urls: list, render: bool = False) -> dict:
+    """Compare YOUR page against 1–3 competitor pages (local-first gap analysis).
+
+    Args:
+        your_url: The page you own/optimize.
+        competitor_urls: 1–3 competitor page URLs to compare against.
+        render: Render JavaScript with Playwright first (for SPAs).
+
+    Returns per-page facts (scores, schema types, meta strategy, depth,
+    structure, evidence, social packaging), the gaps competitors have that you
+    don't, and where you lead. On-page differences only — no rank/keyword data.
+    """
+    import compare as compare_mod
+    urls = [your_url] + list(competitor_urls)[: compare_mod.MAX_COMPETITORS]
+    return compare_mod.run(urls, render=render)
+
+
 def _diff(old_json: str, new_json: str) -> dict:
     """Diff two JSON reports (from scan or audit) to track regressions over time.
 
@@ -141,6 +158,7 @@ def _diff(old_json: str, new_json: str) -> dict:
 # (function, public tool name) — names are what MCP clients see.
 _TOOLS = [
     (_scan, "scan_page"),
+    (_compare, "compare_pages"),
     (_crawl, "crawl_site"),
     (_audit, "audit_site"),
     (_sitemap, "validate_sitemap"),

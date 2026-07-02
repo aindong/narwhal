@@ -4,6 +4,27 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.20.0] — 2026-07-02
+
+### Added
+- **`narwhal compare <you> <rival…>` — side-by-side competitor comparison**
+  (closes #21). Runs the same auditors on your page and 1–3 competitor pages,
+  extracts comparable facts (per-area scores, schema types, title/meta strategy,
+  depth, structure, question headings, evidence, social packaging), and reports:
+  a **scoreboard**, a **side-by-side fact table**, **"Gaps to close"** (what they
+  have that you don't, each with the action), and **"Where you lead"**.
+  - **Local-first by design**: it only fetches the pages you name — no rank or
+    keyword APIs — and the report says explicitly that a gap is an on-page
+    difference, *not proof of why anyone ranks*.
+  - Resilient: a dead/unresolvable competitor URL is skipped with a note instead
+    of sinking the run (found via live testing).
+  - Plugin-native (`/narwhal compare`), MCP tool (`compare_pages`), documented in
+    SKILL/AGENTS/README; Markdown/JSON output; schema-type gaps grouped into one
+    actionable entry.
+  - Verified live: vercel.com vs stripe.com and jvns.ca vs blog.cloudflare.com
+    (the latter independently re-found the OG/Twitter gap our content specialist
+    had reported). 6 new tests (149 total).
+
 ## [1.19.0] — 2026-07-02
 
 Real-world tuning round (#19, #20): scans of 8 diverse live sites (SaaS,

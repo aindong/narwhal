@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|fix|gsc|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
+argument-hint: <audit|fix|gsc|compare|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -180,6 +180,7 @@ manual-action list. Never fabricate a score.
 | `$1` | Run | Then |
 |---|---|---|
 | `scan` | `scan.py $2` | full single-page audit report |
+| `compare` | `compare.py $2 $3 [$4 $5]` | side-by-side competitor gap analysis — `$2` is the user's page, the rest are competitors; leads with "gaps to close". Local-first: on-page differences only, never claim it explains rankings |
 | `crawl` | `crawl_site.py $2 --check-links` | site-wide (broken links + dupes) |
 | `sitemap` | `validate_sitemap.py $2` | validate XML sitemap(s) |
 | `llms` | `generate_llms.py $2 -o llms.txt` | generate a starter llms.txt |

@@ -17,6 +17,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 |---|---|
 | `python audit.py <url>` | Comprehensive site audit: homepage + crawl + sitemap in one report |
 | `python scan.py <url>` | Audit one page → prioritized Markdown report |
+| `python compare.py <you> <rival...>` | Side-by-side competitor gap analysis (same auditors, on-page facts only) |
 | `python scan.py <url> --format json -o out.json` | Machine-readable output |
 | `python scan.py <url> --format html -o report.html` | Self-contained, styled HTML report (also on `audit.py`) |
 | `python scan.py <url> --format pdf -o report.pdf` | PDF report (needs WeasyPrint; falls back to HTML) |

@@ -920,6 +920,112 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertEqual(sev.get("Few question-based headings"), "medium")
 
 
+class TestCompare(unittest.TestCase):
+    """Offline tests for `narwhal compare` (#21): facts extraction, gap
+    analysis, and rendering — everything except the network fetch."""
+
+    RIVAL = """
+    <html><head><title>Complete guide to widget calibration (2026)</title>
+    <meta name="description" content="A thorough, evidence-backed guide to calibrating widgets, with data.">
+    <meta property="og:title" content="t"><meta property="og:description" content="d">
+    <meta property="og:image" content="i"><meta name="twitter:card" content="summary">
+    <meta name="author" content="Jane"><meta property="article:published_time" content="2026-01-01">
+    <link rel="canonical" href="https://rival.com/guide">
+    <script type="application/ld+json">{"@type":"Article","headline":"x"}</script>
+    <script type="application/ld+json">{"@graph":[{"@type":"FAQPage"},{"@type":"Organization"}]}</script>
+    </head><body><h1>Guide</h1><h2>What is calibration?</h2><h2>How do you calibrate?</h2>
+    <p>According to a 2026 study, 45% of widgets drift. """ + "calibration detail word " * 200 + """</p>
+    </body></html>"""
+
+    YOURS = """
+    <html><head><title>Widgets</title></head>
+    <body><h1>Widgets</h1><h2>Overview</h2><p>""" + "brief text word " * 40 + "</p></body></html>"
+
+    def _facts(self, html, url):
+        import compare
+        doc = htmlx.parse(html, base_url=url)
+        rep = Report(url, final_url=url, fetched_status=200)
+        resp = http.Response(url, url, 200, {}, html, 1)
+        for fn in (audit_technical.audit, audit_content.audit,
+                   audit_schema.audit, audit_geo.audit):
+            fn(doc, resp, rep, {})
+        return compare.facts(rep, doc)
+
+    def test_facts_extraction(self):
+        f = self._facts(self.RIVAL, "https://rival.com/guide")
+        self.assertEqual(f["schema_types"], ["Article", "FAQPage", "Organization"])
+        self.assertTrue(f["og_complete"] and f["twitter_card"] and f["canonical"])
+        self.assertTrue(f["author_signal"] and f["date_signal"])
+        self.assertEqual(f["question_ratio"], 1.0)     # both H2s are questions
+        self.assertGreater(f["meta_desc_len"], 0)
+        self.assertGreater(f["stats_cites"], 0)         # "45%" + "according to"
+
+    def test_gap_analysis_finds_their_advantages(self):
+        import compare
+        you = self._facts(self.YOURS, "https://you.com/widgets")
+        rival = self._facts(self.RIVAL, "https://rival.com/guide")
+        r = compare.gap_analysis(you, [rival])
+        whats = {g["what"] for g in r["gaps"]}
+        self.assertIn("Meta description", whats)
+        self.assertTrue(any(w.startswith("Schema types:") and "FAQPage" in w
+                        for w in whats))
+        self.assertIn("Content depth", whats)
+        self.assertIn("Question-based headings", whats)
+        self.assertIn("Complete Open Graph tags", whats)
+
+    def test_gap_analysis_reports_your_leads(self):
+        import compare
+        you = self._facts(self.RIVAL, "https://you.com/guide")     # you are strong
+        rival = self._facts(self.YOURS, "https://rival.com/weak")  # rival is weak
+        r = compare.gap_analysis(you, [rival])
+        self.assertEqual(r["gaps"], [])   # nothing they have that you don't
+        lead_whats = " ".join(l["what"] for l in r["leads"])
+        self.assertIn("Meta description", lead_whats)
+        self.assertIn("Schema types only you have", lead_whats)
+
+    def test_render_markdown_shape(self):
+        import compare
+        you = self._facts(self.YOURS, "https://you.com/widgets")
+        rival = self._facts(self.RIVAL, "https://rival.com/guide")
+        md = compare.render_markdown(
+            {"failed": [], "you": you, "competitors": [rival],
+             **compare.gap_analysis(you, [rival])})
+        self.assertIn("## Scoreboard", md)
+        self.assertIn("## Side by side", md)
+        self.assertIn("## Gaps to close", md)
+        self.assertIn("not proof of why anyone ranks", md)   # honesty footer
+
+    def test_main_requires_two_urls(self):
+        import contextlib
+        import io
+        import compare
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(compare.main(["https://only-one.com"]), 2)
+
+    def test_one_dead_url_does_not_sink_the_run(self):
+        # Live testing found an unresolvable competitor host raised SSRFError
+        # and crashed the whole comparison — it must be skipped instead.
+        import unittest.mock
+        import compare
+
+        def fake_scan(url, **kw):
+            if "dead" in url:
+                raise http.SSRFError("Cannot resolve host")
+            doc = htmlx.parse("<title>Fine page title here</title><h1>ok</h1>"
+                              "<p>" + "word " * 350 + "</p>", base_url=url)
+            rep = Report(url, final_url=url, fetched_status=200)
+            rep._doc = doc
+            return rep
+
+        with unittest.mock.patch.object(compare.scanner, "scan", fake_scan):
+            r = compare.run(["https://you.com", "https://dead.example",
+                             "https://rival.com"])
+        self.assertEqual(len(r["failed"]), 1)
+        self.assertNotIn("error", r)                 # compare still ran
+        self.assertEqual(r["you"]["url"], "https://you.com")
+        self.assertEqual(len(r["competitors"]), 1)
+
+
 class TestRenderReport(unittest.TestCase):
     def setUp(self):
         import render_report
@@ -1099,8 +1205,9 @@ class TestMcpServer(unittest.TestCase):
         names = [n for _, n in self.m._TOOLS]
         self.assertEqual(
             set(names),
-            {"scan_page", "crawl_site", "audit_site", "validate_sitemap",
-             "generate_llms", "generate_schema", "diff_reports"})
+            {"scan_page", "compare_pages", "crawl_site", "audit_site",
+             "validate_sitemap", "generate_llms", "generate_schema",
+             "diff_reports"})
         self.assertEqual(len(names), len(set(names)))   # no dupes
 
     def test_every_tool_has_a_docstring(self):

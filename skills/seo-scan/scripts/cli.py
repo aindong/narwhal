@@ -15,13 +15,14 @@ import sys
 try:
     from . import __version__
 except ImportError:  # running as loose scripts
-    __version__ = "1.19.0"
+    __version__ = "1.20.0"
 
 USAGE = """narwhal — SEO & GEO/LLMO scanner
 
 Usage:
   narwhal audit <url> [options]     Comprehensive site audit (page + crawl + sitemap)
   narwhal scan <url> [options]      Audit a single page
+  narwhal compare <you> <rival...>  Side-by-side competitor gap analysis (local-first)
   narwhal crawl <url> [options]     Audit a whole site (sitemap/link discovery)
   narwhal schema <Type> [options]   Generate schema.org JSON-LD
   narwhal sitemap <url> [options]   Validate a site's XML sitemap(s)
@@ -52,6 +53,7 @@ def main(argv=None) -> int:
     module = {
         "scan": "scan",
         "audit": "audit",
+        "compare": "compare",
         "crawl": "crawl_site",
         "crawl_site": "crawl_site",
         "schema": "generate_schema",

@@ -65,6 +65,7 @@ And yes, it works as a backronym too:
 | **Structured data** | JSON-LD detection, required/recommended property validation, deprecated rich-result types, JSON-LD generation |
 | **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and **AI-crawler access** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
+| **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only) |
 
 ## Multi-agent deep audit
 
@@ -312,6 +313,7 @@ command:
 /narwhal sitemap example.com    # validate the XML sitemap(s)
 /narwhal llms example.com       # generate a starter llms.txt
 /narwhal vitals example.com     # real Core Web Vitals from CrUX (needs a key — see below)
+/narwhal compare you.com rival.com   # side-by-side competitor gap analysis
 ```
 
 `/narwhal <action> <site>` takes actions `scan`/`audit`, `crawl`, `sitemap`,

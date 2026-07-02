@@ -121,8 +121,9 @@ wave adds the **relative** and **strategic** answers users actually ask for —
 without breaking local-first (nothing below needs a paid API).
 
 ### P1 — high value, zero new dependencies
-- ⬜ **`narwhal compare`** — side-by-side competitor gap analysis from our own
-  scans. — [#21](https://github.com/aindong/narwhal/issues/21)
+- ✅ **`narwhal compare`** — side-by-side competitor gap analysis from our own
+  scans (scoreboard, fact table, gaps to close, where you lead; MCP tool
+  `compare_pages`). — [#21](https://github.com/aindong/narwhal/issues/21)
 - ⬜ **Site-graph analysis** — click depth, orphan pages (sitemap ∩ crawl),
   internal-link distribution. — [#22](https://github.com/aindong/narwhal/issues/22)
 - ⬜ **JS-dependence check** — diff raw vs rendered content ("X% of your content

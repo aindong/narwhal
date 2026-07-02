@@ -61,6 +61,17 @@ Useful flags:
 - `--fail-under N` — exit non-zero if the score is below `N` (CI quality gate;
   `crawl_site.py` gates on the average score).
 
+**Compare against competitors** (local-first — your page first, then 1-3
+competitor pages; same auditors run on each, then a gap analysis):
+```
+python scripts/compare.py https://you.com/page https://rival.com/page
+```
+Reports a scoreboard, a side-by-side fact table, **"Gaps to close"** (what they
+have that you don't: schema types, meta strategy, depth, question headings,
+evidence, social packaging) and **"Where you lead"**. Honesty rule: it compares
+served HTML only — never claim a gap explains rankings, and no rank/keyword data
+is used or implied.
+
 **Audit a whole site** (discovers URLs via sitemap or internal links, rolls up
 the issues that recur most — the highest-leverage fixes):
 ```
