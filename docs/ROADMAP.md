@@ -4,10 +4,10 @@ This is the planning source of truth for where Narwhal is headed. Each item link
 to its tracking issue — issues hold the detailed tasks and acceptance criteria;
 this page is the map.
 
-> **Status (v1.9.0):** all P0 + P1 **and all P2** shipped — #1–#18 closed, plus the
-> beyond-roadmap features below. The roadmap backlog is clear; remaining tracked
-> work is #19 (tune the multi-agent audit) and #20 (default trafilatura). See
-> [STATUS.md](STATUS.md) for the full snapshot.
+> **Status (v1.19.0):** the original roadmap is **complete** — #1–#20 all closed,
+> plus the beyond-roadmap features below (fix loop, GSC, branded reports, tuning
+> rounds). Active planning now lives in the **[🌊 Next wave](#-next-wave-v2x--from-the-2026-07-project-review)**
+> section: #21–#28. See [STATUS.md](STATUS.md) for the full snapshot.
 
 > **Legend:** 🔴 P0 (foundation) · 🟠 P1 (high-leverage) · 🔵 P2 (later)
 > **Status:** ⬜ planned · 🟡 in progress · ✅ done
@@ -114,16 +114,45 @@ hard commitments.
 
 ---
 
+## 🌊 Next wave (v2.x) — from the 2026-07 project review
+
+The honest self-review after v1.19.0: Narwhal is a rigorous *auditor*; the next
+wave adds the **relative** and **strategic** answers users actually ask for —
+without breaking local-first (nothing below needs a paid API).
+
+### P1 — high value, zero new dependencies
+- ⬜ **`narwhal compare`** — side-by-side competitor gap analysis from our own
+  scans. — [#21](https://github.com/aindong/narwhal/issues/21)
+- ⬜ **Site-graph analysis** — click depth, orphan pages (sitemap ∩ crawl),
+  internal-link distribution. — [#22](https://github.com/aindong/narwhal/issues/22)
+- ⬜ **JS-dependence check** — diff raw vs rendered content ("X% of your content
+  needs JavaScript"). — [#23](https://github.com/aindong/narwhal/issues/23)
+- ⬜ **Image weight/format + og:image validation.**
+  — [#24](https://github.com/aindong/narwhal/issues/24)
+- ⬜ **Hreflang bidirectional validation** across a crawl.
+  — [#25](https://github.com/aindong/narwhal/issues/25)
+
+### P2 — the strategy loop, done our way
+- ⬜ **Content-brief flow** — briefs grounded in real GSC queries + the compare
+  gap, not fabricated volumes. — [#26](https://github.com/aindong/narwhal/issues/26)
+- ⬜ **E-commerce checks** — Product/offers completeness, page-vs-schema
+  mismatches, conditional store specialist.
+  — [#27](https://github.com/aindong/narwhal/issues/27)
+
+### P3 — internal quality
+- ⬜ **Test-suite health** — split the monolith, golden-file report tests.
+  — [#28](https://github.com/aindong/narwhal/issues/28)
+
+---
+
 ## Ideas / not yet ticketed
 
 Captured here so they aren't lost; promote to an issue when scoped.
 
 - Microdata / RDFa parsing (not just JSON-LD) in the schema auditor.
-- Open Graph image validation (fetch, dimensions, aspect ratio).
-- Image weight / next-gen-format checks (needs fetching images).
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
-- Hreflang return-tag validation across a full crawl (bidirectionality).
 - Per-finding "learn more" deep links into the `references/` guides.
+- Single-source the version (today it's synced across 5 files by hand).
 
 ---
 

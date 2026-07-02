@@ -103,10 +103,17 @@ narwhal/
 ```
 
 ## What's next (open issues)
-The tracked roadmap (P0–P3, #1–#20) is **complete**. Remaining candidates are the
-not-yet-ticketed ideas at the bottom of [ROADMAP.md](ROADMAP.md) (microdata/RDFa,
-OG-image validation, image-weight checks, a11y lens, hreflang bidirectionality,
-per-finding "learn more" deep links) — promote to an issue when scoped.
+The original roadmap (#1–#20) is **complete**. The **next wave (v2.x)** came out
+of the 2026-07 project self-review — relative + strategic answers, still
+local-first (see ROADMAP "Next wave" for detail):
+- **#21** `narwhal compare` — competitor gap analysis (P1, recommended first)
+- **#22** Site-graph analysis — click depth, orphans, link distribution (P1)
+- **#23** JS-dependence check — raw vs rendered content diff (P1)
+- **#24** Image weight/format + og:image validation (P1)
+- **#25** Hreflang bidirectional validation (P1)
+- **#26** Content-brief flow (GSC + compare grounded) (P2)
+- **#27** E-commerce checks + conditional store specialist (P2)
+- **#28** Test-suite health: split monolith + golden-file tests (P3)
 
 ### Ongoing quality practice
 Specialist tuning (#19) is a loop, not a one-shot: each real `/narwhal audit` run
