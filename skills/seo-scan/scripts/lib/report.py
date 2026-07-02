@@ -47,6 +47,7 @@ class Report:
     meta: dict = field(default_factory=dict)
     weights: dict = None          # override severity penalties (from config)
     ignore: object = None         # callable(category, title) -> bool
+    hard_fail: bool = False       # unfetchable page -> score is 0, not 100-12
 
     def add(self, *args, **kwargs) -> None:
         finding = Finding(*args, **kwargs)
@@ -74,6 +75,10 @@ class Report:
         return sum(weights.get(f.severity, _WEIGHT[f.severity]) for f in findings)
 
     def score(self) -> int:
+        if self.hard_fail:
+            # A page we couldn't fetch has no measurable health — reporting
+            # "88/100" (100 minus one critical) was found misleading in tuning.
+            return 0
         return max(0, 100 - self._penalty(self.findings))
 
     def category_score(self, findings) -> int:

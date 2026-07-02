@@ -4,6 +4,37 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.25.0] — 2026-07-02
+
+Tuning Round 2 (documented with raw snapshots in `docs/tuning/2026-07-round-2/`):
+corpus grown 8 → 14 pages by adding page *types* — product URL, real articles, a
+Recipe-schema page, a French site, an international hreflang site, and a
+deliberately dead URL. Two live specialist runs graded (schema: validated the
+full Recipe graph beyond the script; performance: measured real wire sizes and
+caught a caveat in our own image check).
+
+### Fixed
+- **Unfetchable pages now score 0** — a 404 used to score 88/100 (one critical
+  finding = −12), which read as "healthy". New `Report.hard_fail`.
+- **og:image behind a rate-limiting CDN is no longer "broken"** — gated codes
+  (429/403/…) now report "could not be verified" (low), reusing the broken-link
+  checker's UNDETERMINED semantics.
+- **Non-English pages skip English-calibrated checks** (Flesch readability,
+  filler/AI-writing patterns) — and claim nothing, instead of mislabeling
+  French prose "very hard to read".
+
+### Changed
+- **Readability severity is article-scoped** — terse marketing homepages get
+  low, not medium.
+- **"No structured data" is low on hub/index pages** (no single entity to mark
+  up); articles/products/homepages keep medium.
+- **Heavy-image findings are srcset-aware** — when every heavy image carries
+  srcset, the finding is framed as *fallback weight* (what scrapers and
+  srcset-unaware clients download) and capped at low. Lesson credited to the
+  graded performance-agent run; also encoded in the agent's prompt.
+
+6 new regression tests (176 total), green with and without parser extras.
+
 ## [1.24.0] — 2026-07-02
 
 ### Added

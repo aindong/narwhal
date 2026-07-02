@@ -56,11 +56,16 @@ RECOMMENDED = {
 def audit(doc, resp, report, ctx=None) -> None:
     blobs = doc.scripts_ld
     if not blobs:
-        report.add(CAT, "medium", "No structured data (JSON-LD)",
+        # Hub/index pages have no single entity to mark up — absence there is a
+        # note, not a real gap (articles/products/homepages keep medium).
+        hub = htmlx.is_hub_page(doc)
+        report.add(CAT, "low" if hub else "medium",
+                   "No structured data (JSON-LD)",
                    "The page has no application/ld+json markup.",
                    "Add JSON-LD for the page's entity (Article, Product, "
                    "Organization…) to unlock rich results and clarify meaning for "
-                   "AI search.")
+                   "AI search."
+                   + (" (Least critical on listing/index pages.)" if hub else ""))
         return
 
     found_types = []

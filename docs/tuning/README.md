@@ -28,6 +28,33 @@ Two principles keep the loop honest:
 
 ## Rounds
 
+### [2026-07 · Round 2](2026-07-round-2/RESULTS.md) — shipped in v1.25.0
+
+**Corpus grown 8 → 14 pages**, adding *page types* rather than just more sites:
+a product URL, real articles (blog + docs tutorial), a Recipe-schema page, a
+**French-language** site, an international 137-locale hreflang site, and a
+**deliberately dead URL**. The Round 1 sites re-ran as a regression check
+(all stable).
+
+**What the sweep caught** (fixed at source, 6 regression tests added):
+
+| Discovery | Fix |
+|:--|:--|
+| A 404 page scored **88/100** (one critical = −12) | Unfetchable pages hard-fail to **0** |
+| og:image behind a rate-limiting CDN reported "**broken**" (HTTP 429) | Gated codes → "could not be verified (low)", never broken |
+| French prose judged by **English-calibrated** Flesch + filler patterns | Non-English pages skip those checks — and claim nothing |
+| "Very hard to read (medium)" on terse marketing homepages | Article-scoped severity (medium on articles, low elsewhere) |
+| "No JSON-LD (medium)" on listing/index pages with no single entity | Hub-aware: low on hubs |
+| Heavy-image weights overstate on `srcset` sites (browsers fetch smaller variants) | Finding reframed as **fallback weight**, severity capped low — *a lesson taught by the graded performance agent* |
+
+**Agent grading** (2 specialists, live): the **schema** specialist validated the
+recipe page's full JSON-LD graph beyond the script — image aspect-ratio arrays,
+review `datePublished`, a semantically-wrong `NewsArticle` co-type, and knowing
+the sitelinks SearchAction is deprecated — with paste-ready fixes. The
+**performance** specialist measured real Brotli wire sizes, verified the image
+CDN's WebP negotiation with Accept headers, and *identified the srcset caveat in
+our own scanner* — which is now encoded in both the check and its prompt.
+
 ### [2026-07 · Round 1](2026-07-round-1/RESULTS.md) — shipped in v1.19.0
 
 **Corpus:** 8 public sites chosen for page-type diversity — SaaS (Stripe,

@@ -38,12 +38,17 @@ def audit(doc, resp, report, ctx=None) -> None:
     # category, front pages), and byline checks misfire on non-articles.
     hub = htmlx.is_hub_page(doc)
     article = htmlx.looks_article(doc)
+    # Flesch and the filler/AI-pattern lists are English-calibrated. Running
+    # them on a declared non-English page measures nothing real — skip them
+    # (and claim nothing) rather than mislabel French prose "hard to read".
+    english = not doc.lang or doc.lang.strip().lower().startswith("en")
 
     th = (ctx or {}).get("thresholds", {})
     _word_count(wc, report, th, hub=hub, basis=doc.extraction)
-    _readability(text, report, hub=hub)
+    if english:
+        _readability(text, report, hub=hub, article=article)
+        _quality(text, report)
     _keywords(doc, text, report)
-    _quality(text, report)
     _authorship(doc, text, report, article=article)
     _freshness(doc, text, report)
     _og_social(doc, report)
@@ -75,7 +80,7 @@ def _word_count(wc, report, th=None, hub=False, basis="visible text"):
         report.ok(CAT, "Sufficient content depth", f"~{wc} words ({basis})")
 
 
-def _readability(text, report, hub=False):
+def _readability(text, report, hub=False, article=False):
     if hub:
         return  # Flesch over nav/link fragments measures nothing real
     fre = textlib.flesch_reading_ease(text)
@@ -85,10 +90,14 @@ def _readability(text, report, hub=False):
     label = textlib.reading_ease_label(fre)
     detail = f"Flesch reading ease {fre} ({label}); ~grade {grade}"
     if fre < 30:
-        report.add(CAT, "medium", "Content is very hard to read",
+        # Dense terse fragments on marketing/home pages score badly without
+        # being a real reading problem — medium is reserved for articles.
+        report.add(CAT, "medium" if article else "low",
+                   "Content is very hard to read",
                    detail + ".",
                    "Shorten sentences and prefer plainer words. Dense prose is "
-                   "harder for readers and for AI engines to quote cleanly.")
+                   "harder for readers and for AI engines to quote cleanly."
+                   + ("" if article else " (Weighs most on article pages.)"))
     elif fre < 50:
         report.add(CAT, "low", "Content is fairly hard to read",
                    detail + ".",

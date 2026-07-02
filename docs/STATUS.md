@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.24.0**_
+_Last updated: 2026-07-02 · version **1.25.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -64,7 +64,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   Depth findings state their extraction basis (trafilatura vs visible text).
   `${CLAUDE_PLUGIN_ROOT}` confirmed resolving for subagents. Scores on well-run
   sites corrected: jvns 62→79, HN 52→66, pydocs 75→86, Verge 71→80.
-- **Tests:** 170, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 176, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`

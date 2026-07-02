@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 
 from . import http
+from .links import UNDETERMINED
 
 MAX_IMAGES = 10            # HEAD budget per page
 HEAVY_KB = 200             # a page image above this is "heavy"
@@ -84,6 +85,7 @@ def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
     # --- pure facts from the markup -----------------------------------------
     srcs, missing_dims = [], 0
     seen = set()
+    srcset_map = {}
     for img in doc.images:
         src = (img.get("src") or "").strip()
         if not (img.get("width") and img.get("height")):
@@ -94,6 +96,7 @@ def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
         if full.startswith("http") and full not in seen:
             seen.add(full)
             srcs.append(full)
+            srcset_map[full] = bool(img.get("srcset"))
 
     # --- weight/format via HEAD (parallel, capped) --------------------------
     checked = []
@@ -105,7 +108,8 @@ def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
             size = headers.get("content-length")
             return {"url": u, "status": status,
                     "type": (headers.get("content-type") or "").split(";")[0],
-                    "kb": round(int(size) / 1024) if (size or "").isdigit() else None}
+                    "kb": round(int(size) / 1024) if (size or "").isdigit() else None,
+                    "srcset": srcset_map.get(u, False)}
         with ThreadPoolExecutor(max_workers=min(8, len(targets))) as ex:
             checked = list(ex.map(one, targets))
 
@@ -143,14 +147,28 @@ def findings(facts: dict, report) -> None:
     heavy = facts["heavy"]
     if heavy:
         worst = heavy[0]
+        all_srcset = all(h.get("srcset") for h in heavy)
+        # Weight is measured on the raw `src` (no Accept header). With srcset,
+        # real browsers usually download smaller/modern variants — the raw src
+        # is the fallback scrapers and non-srcset clients get. Overstating that
+        # as the user experience was a live-audit lesson; say what was measured.
         sev = "medium" if worst["kb"] >= VERY_HEAVY_KB or len(heavy) >= 3 else "low"
+        if all_srcset:
+            sev = "low"
         listing = ", ".join(f"{h['url'].rsplit('/', 1)[-1]} ({h['kb']} KB)"
                             for h in heavy[:4])
         report.add(cat, sev, f"Heavy images ({len(heavy)} over {HEAVY_KB} KB)",
                    f"Largest: {worst['kb']} KB. Checked {facts['checked']} of "
-                   f"{facts['checked'] + facts['unchecked']} images (HEAD only).",
+                   f"{facts['checked'] + facts['unchecked']} images (HEAD on the "
+                   "raw src)."
+                   + (" All carry srcset, so browsers likely fetch smaller "
+                      "variants — this is the fallback weight." if all_srcset
+                      else ""),
                    "Compress/resize and serve modern formats (AVIF/WebP); heavy "
-                   "images are a top LCP cause.", evidence=listing)
+                   "images are a top LCP cause."
+                   + (" Also lighten the src fallback (it's what scrapers and "
+                      "srcset-unaware clients download)." if all_srcset else ""),
+                   evidence=listing)
     elif facts["checked"]:
         report.ok(cat, "No heavy images detected",
                   f"{facts['checked']} checked, all under {HEAVY_KB} KB")
@@ -178,7 +196,15 @@ def findings(facts: dict, report) -> None:
 
     og = facts["og_image"]
     if og.get("present"):
-        if not og["is_image"]:
+        if og["status"] in UNDETERMINED:
+            # Rate-limited / bot-gated (429, 403…) is NOT broken — social
+            # platforms fetching with their own agents usually get through.
+            # (Found as a false positive on a rate-limiting CDN in tuning.)
+            report.add(cat, "low", "og:image could not be verified",
+                       f"HTTP {og['status']} (gated/rate-limited) at {og['url']}.",
+                       "Likely fine — the host throttles bots. Confirm the "
+                       "preview in a social-card debugger.")
+        elif not og["is_image"]:
             report.add(cat, "high", "og:image is broken",
                        f"HTTP {og['status']} or non-image content at {og['url']}.",
                        "Point og:image at a reachable image — broken previews "

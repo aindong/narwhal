@@ -1,0 +1,27 @@
+{
+  "url": "https://www.allbirds.com/products/mens-tree-runners",
+  "final_url": "https://www.allbirds.com/products/mens-tree-runners",
+  "status": 404,
+  "rendered": false,
+  "score": 88,
+  "counts": {
+    "critical": 1,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "good": 0
+  },
+  "meta": {
+    "elapsed_ms": 850
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "critical",
+      "title": "Page could not be fetched",
+      "detail": "Status 404",
+      "recommendation": "Verify the URL is public and returns 200 before auditing.",
+      "evidence": null
+    }
+  ]
+}

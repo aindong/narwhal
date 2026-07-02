@@ -40,6 +40,11 @@ sizes, legacy formats, missing width/height, og:image dimensions) measured via
 capped HEAD/ranged requests — cite those numbers instead of estimating.
 
 ## Judgment rules (tuned from real audits)
+- **Raw `src` weight ≠ user experience on srcset/CDN-negotiated sites.** The
+  scanner HEADs the raw src without an Accept header; with srcset, browsers
+  usually fetch smaller or modern-format variants (verify with an Accept header
+  when it matters). Frame heavy-image findings as "fallback weight" there —
+  still worth fixing (scrapers/AI fetchers get it), but not the browser path.
 - **Classify the page first** (homepage / hub-index / article / product) and weigh
   every script finding against that role — index/hub pages legitimately fail
   article-shaped checks, and homepages legitimately carry brand-only titles.

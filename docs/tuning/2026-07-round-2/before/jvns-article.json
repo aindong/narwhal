@@ -1,0 +1,225 @@
+{
+  "url": "https://jvns.ca/blog/2026/05/15/moving-away-from-tailwind--and-learning-to-structure-my-css-/",
+  "final_url": "https://jvns.ca/blog/2026/05/15/moving-away-from-tailwind--and-learning-to-structure-my-css-/",
+  "status": 200,
+  "rendered": false,
+  "score": 77,
+  "counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 3,
+    "low": 8,
+    "good": 13
+  },
+  "meta": {
+    "elapsed_ms": 1093,
+    "extraction": "visible text",
+    "images": {
+      "checked": 0,
+      "unchecked": 0,
+      "missing_dims": 0
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "59 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Meta description is short",
+      "detail": "Description is 59 characters.",
+      "recommendation": "Aim for 140–160 characters to use the full SERP snippet.",
+      "evidence": "Moving away from Tailwind, and learning to structure my CSS"
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Multiple H1 headings",
+      "detail": "Found 2 H1 elements.",
+      "recommendation": "Use one H1; demote the rest to H2/H3.",
+      "evidence": "Julia Evans | Moving away from Tailwind, and learning to structure my CSS"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Heading levels skip a level",
+      "detail": "An H1 is followed by an H3.",
+      "recommendation": "Keep heading nesting sequential (no H2→H4 jumps).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://jvns.ca/blog/2026/05/15/moving-away-from-tailwind--and-learning-to-structure-my-css-/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://jvns.ca/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~1938 words (visible text)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Readable prose",
+      "detail": "Flesch reading ease 65.8 (moderate); ~grade 8.5",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "css (56), tailwind (42), like (24), components (11), want (11), really (10)  ·  phrases: build system, base styles, years ago",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Repetitive vocabulary",
+      "detail": "Lexical diversity 0.314 (unique/total words).",
+      "recommendation": "Vary wording and add substance; heavy repetition signals thin or spun content.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Authorship signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Date/freshness signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Incomplete Open Graph tags",
+      "detail": "Missing: og:description, og:image.",
+      "recommendation": "Add og:title, og:description and og:image for rich social and chat-app link previews.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No Twitter/X card type",
+      "detail": "Missing <meta name=\"twitter:card\">.",
+      "recommendation": "Add twitter:card (e.g. summary_large_image) for X previews.",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "medium",
+      "title": "No structured data (JSON-LD)",
+      "detail": "The page has no application/ld+json markup.",
+      "recommendation": "Add JSON-LD for the page's entity (Article, Product, Organization…) to unlock rich results and clarify meaning for AI search.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "medium",
+      "title": "Few question-based headings",
+      "detail": "1 of 15 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "32/32 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "4 stats, 0 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "high",
+      "title": "AI crawlers are blocked in robots.txt",
+      "detail": "Disallowed from the site root: GPTBot (OpenAI (ChatGPT training/browse)), Google-Extended (Google (Gemini / AI Overviews training)).",
+      "recommendation": "If you want visibility in AI answers, allow these agents. If the block is intentional (content protection), ignore this.",
+      "evidence": "GPTBot (OpenAI (ChatGPT training/browse)), Google-Extended (Google (Gemini / AI Overviews training))"
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Title and H1 don't share terms",
+      "detail": "The <title> and <h1> have no words in common.",
+      "recommendation": "Align them on the core entity so engines get one clear topic signal.",
+      "evidence": null
+    }
+  ]
+}

@@ -1,0 +1,603 @@
+{
+  "url": "https://www.allbirds.com",
+  "final_url": "https://www.allbirds.com/",
+  "status": 200,
+  "rendered": false,
+  "score": 79,
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 4,
+    "low": 9,
+    "good": 16
+  },
+  "meta": {
+    "elapsed_ms": 740,
+    "extraction": "visible text",
+    "hreflang": [
+      {
+        "lang": "en-US",
+        "href": "https://www.allbirds.com/"
+      },
+      {
+        "lang": "x-default",
+        "href": "https://www.allbirds.com/"
+      },
+      {
+        "lang": "en-NZ",
+        "href": "https://www.allbirds.co.nz/"
+      },
+      {
+        "lang": "en-AU",
+        "href": "https://www.allbirds.com.au/"
+      },
+      {
+        "lang": "en-GB",
+        "href": "https://www.allbirds.co.uk/"
+      },
+      {
+        "lang": "ja",
+        "href": "https://www.goldwin.co.jp/store/brand/allbirds//"
+      },
+      {
+        "lang": "ko-KR",
+        "href": "https://www.allbirds.co.kr/"
+      },
+      {
+        "lang": "en-kw",
+        "href": "https://www.allbirds.com.kw/"
+      },
+      {
+        "lang": "en-AE",
+        "href": "https://www.allbirds.ae/"
+      },
+      {
+        "lang": "en-SA",
+        "href": "https://www.allbirds.sa/"
+      },
+      {
+        "lang": "en-PH",
+        "href": "https://allbirds.com.ph/"
+      },
+      {
+        "lang": "en-MY",
+        "href": "https://allbirds.com.my/"
+      },
+      {
+        "lang": "en-SG",
+        "href": "https://allbirds.com.sg/"
+      },
+      {
+        "lang": "nl-BE",
+        "href": "https://www.allbirds.be/"
+      },
+      {
+        "lang": "fr-LU",
+        "href": "https://www.allbirds.lu/"
+      },
+      {
+        "lang": "nl",
+        "href": "https://www.allbirdsbenelux.nl/"
+      },
+      {
+        "lang": "en-IE",
+        "href": "https://www.allbirds.ie/"
+      },
+      {
+        "lang": "de-CH",
+        "href": "https://allbirds.ch/"
+      },
+      {
+        "lang": "fr-CH",
+        "href": "https://allbirds.ch/fr/"
+      },
+      {
+        "lang": "de-LI",
+        "href": "https://allbirds.li/"
+      },
+      {
+        "lang": "fr-LI",
+        "href": "https://allbirds.li/fr/"
+      },
+      {
+        "lang": "de-DE",
+        "href": "https://allbirds.de/"
+      },
+      {
+        "lang": "fr-DE",
+        "href": "https://allbirds.de/fr/"
+      },
+      {
+        "lang": "en-DE",
+        "href": "https://allbirds.de/en/"
+      },
+      {
+        "lang": "it-DE",
+        "href": "https://allbirds.de/it/"
+      },
+      {
+        "lang": "pl-DE",
+        "href": "https://allbirds.de/pl/"
+      },
+      {
+        "lang": "sk-DE",
+        "href": "https://allbirds.de/sk/"
+      },
+      {
+        "lang": "cs-DE",
+        "href": "https://allbirds.de/cs/"
+      },
+      {
+        "lang": "de-AT",
+        "href": "https://allbirds.at/"
+      },
+      {
+        "lang": "fr-AT",
+        "href": "https://allbirds.at/fr/"
+      },
+      {
+        "lang": "en-AT",
+        "href": "https://allbirds.at/en/"
+      },
+      {
+        "lang": "it-AT",
+        "href": "https://allbirds.at/it/"
+      },
+      {
+        "lang": "pl-AT",
+        "href": "https://allbirds.at/pl/"
+      },
+      {
+        "lang": "sk-AT",
+        "href": "https://allbirds.at/sk/"
+      },
+      {
+        "lang": "cs-AT",
+        "href": "https://allbirds.at/cs/"
+      },
+      {
+        "lang": "fr-FR",
+        "href": "https://allbirds.fr/"
+      },
+      {
+        "lang": "de-FR",
+        "href": "https://allbirds.fr/de/"
+      },
+      {
+        "lang": "en-FR",
+        "href": "https://allbirds.fr/en/"
+      },
+      {
+        "lang": "it-FR",
+        "href": "https://allbirds.fr/it/"
+      },
+      {
+        "lang": "pl-FR",
+        "href": "https://allbirds.fr/pl/"
+      },
+      {
+        "lang": "sk-FR",
+        "href": "https://allbirds.fr/sk/"
+      },
+      {
+        "lang": "cs-FR",
+        "href": "https://allbirds.fr/cs/"
+      },
+      {
+        "lang": "it-IT",
+        "href": "https://allbirds.it/"
+      },
+      {
+        "lang": "de-IT",
+        "href": "https://allbirds.it/de/"
+      },
+      {
+        "lang": "en-IT",
+        "href": "https://allbirds.it/en/"
+      },
+      {
+        "lang": "fr-IT",
+        "href": "https://allbirds.it/fr/"
+      },
+      {
+        "lang": "pl-IT",
+        "href": "https://allbirds.it/pl/"
+      },
+      {
+        "lang": "sk-IT",
+        "href": "https://allbirds.it/sk/"
+      },
+      {
+        "lang": "cs-IT",
+        "href": "https://allbirds.it/cs/"
+      },
+      {
+        "lang": "it-SM",
+        "href": "https://allbirds.sm/"
+      },
+      {
+        "lang": "de-SM",
+        "href": "https://allbirds.sm/de/"
+      },
+      {
+        "lang": "en-SM",
+        "href": "https://allbirds.sm/en/"
+      },
+      {
+        "lang": "fr-SM",
+        "href": "https://allbirds.sm/fr/"
+      },
+      {
+        "lang": "pl-SM",
+        "href": "https://allbirds.sm/pl/"
+      },
+      {
+        "lang": "sk-SM",
+        "href": "https://allbirds.sm/sk/"
+      },
+      {
+        "lang": "cs-SM",
+        "href": "https://allbirds.sm/cs/"
+      },
+      {
+        "lang": "mt-MT",
+        "href": "https://allbirds.mt/"
+      },
+      {
+        "lang": "de-MT",
+        "href": "https://allbirds.mt/de/"
+      },
+      {
+        "lang": "fr-MT",
+        "href": "https://allbirds.mt/fr/"
+      },
+      {
+        "lang": "it-MT",
+        "href": "https://allbirds.mt/it/"
+      },
+      {
+        "lang": "pl-MT",
+        "href": "https://allbirds.mt/pl/"
+      },
+      {
+        "lang": "sk-MT",
+        "href": "https://allbirds.mt/sk/"
+      },
+      {
+        "lang": "cs-MT",
+        "href": "https://allbirds.mt/cs/"
+      },
+      {
+        "lang": "pl-PL",
+        "href": "https://allbirds.com.pl/"
+      },
+      {
+        "lang": "de-PL",
+        "href": "https://allbirds.com.pl/de/"
+      },
+      {
+        "lang": "en-PL",
+        "href": "https://allbirds.com.pl/en/"
+      },
+      {
+        "lang": "fr-PL",
+        "href": "https://allbirds.com.pl/fr/"
+      },
+      {
+        "lang": "it-PL",
+        "href": "https://allbirds.com.pl/it/"
+      },
+      {
+        "lang": "sk-PL",
+        "href": "https://allbirds.com.pl/sk/"
+      },
+      {
+        "lang": "cs-PL",
+        "href": "https://allbirds.com.pl/cs/"
+      },
+      {
+        "lang": "cs-CZ",
+        "href": "https://allbirds.cz/"
+      },
+      {
+        "lang": "de-CZ",
+        "href": "https://allbirds.cz/de/"
+      },
+      {
+        "lang": "en-CZ",
+        "href": "https://allbirds.cz/en/"
+      },
+      {
+        "lang": "fr-CZ",
+        "href": "https://allbirds.cz/fr/"
+      },
+      {
+        "lang": "it-CZ",
+        "href": "https://allbirds.cz/it/"
+      },
+      {
+        "lang": "pl-CZ",
+        "href": "https://allbirds.cz/pl/"
+      },
+      {
+        "lang": "sk-CZ",
+        "href": "https://allbirds.cz/sk/"
+      },
+      {
+        "lang": "sk-SK",
+        "href": "https://allbirdsslovakia.sk/"
+      },
+      {
+        "lang": "de-SK",
+        "href": "https://allbirdsslovakia.sk/de/"
+      },
+      {
+        "lang": "en-SK",
+        "href": "https://allbirdsslovakia.sk/en/"
+      },
+      {
+        "lang": "fr-SK",
+        "href": "https://allbirdsslovakia.sk/fr/"
+      },
+      {
+        "lang": "it-SK",
+        "href": "https://allbirdsslovakia.sk/it/"
+      },
+      {
+        "lang": "pl-SK",
+        "href": "https://allbirdsslovakia.sk/pl/"
+      },
+      {
+        "lang": "cs-SK",
+        "href": "https://allbirdsslovakia.sk/cs/"
+      },
+      {
+        "lang": "en-CA",
+        "href": "https://www.allbirds.ca/"
+      },
+      {
+        "lang": "fr-CA",
+        "href": "https://www.allbirds.ca/fr/"
+      }
+    ],
+    "images": {
+      "checked": 10,
+      "unchecked": 5,
+      "missing_dims": 0
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "50 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Meta description length is in range",
+      "detail": "151 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Multiple H1 headings",
+      "detail": "Found 2 H1 elements.",
+      "recommendation": "Use one H1; demote the rest to H2/H3.",
+      "evidence": "Wildly Comfortable. Super Natural. | Table of Contents"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Heading levels skip a level",
+      "detail": "An H1 is followed by an H3.",
+      "recommendation": "Keep heading nesting sequential (no H2→H4 jumps).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://www.allbirds.com/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "hreflang cluster present",
+      "detail": "86 locales",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Images missing alt text",
+      "detail": "3 of 46 <img> tags have no alt attribute.",
+      "recommendation": "Add descriptive alt text (empty alt=\"\" only for decorative images).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "11 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://www.allbirds.com/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~15846 words (visible text)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 33.3 (difficult); ~grade 14.4.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "information (294), allbirds (179), personal (131), platform (100), services (96), privacy (79)  ·  phrases: personal information, third parties, privacy policy",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Some filler phrasing",
+      "detail": "8 filler phrases detected.",
+      "recommendation": "Tighten wording; prefer specifics over padding.",
+      "evidence": "in order to; each and every"
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Repetitive vocabulary",
+      "detail": "Lexical diversity 0.127 (unique/total words).",
+      "recommendation": "Vary wording and add substance; heavy repetition signals thin or spun content.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "medium",
+      "title": "No structured data (JSON-LD)",
+      "detail": "The page has no application/ld+json markup.",
+      "recommendation": "Add JSON-LD for the page's entity (Article, Product, Organization…) to unlock rich results and clarify meaning for AI search.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Few question-based headings",
+      "detail": "1 of 40 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings. (Most useful on article/guide pages; lower priority here.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "243/256 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "1 stats, 17 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "llms.txt published",
+      "detail": "https://www.allbirds.com/llms.txt",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Heavy images (2 over 200 KB)",
+      "detail": "Largest: 647 KB. Checked 10 of 15 images (HEAD only).",
+      "recommendation": "Compress/resize and serve modern formats (AVIF/WebP); heavy images are a top LCP cause.",
+      "evidence": "26Q1_DasherNZ_Site_Homepage_Hero_Desktop_16x9-3.jpg?v=1779316981&width=2560 (647 KB), 26Q1_DasherNZ_Site_Homepage_Hero_Mobile_9x16_2.jpg?v=1779316979&width=1024 (205 KB)"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Legacy image formats with real weight (2)",
+      "detail": "JPEG/PNG files over 100 KB that AVIF/WebP would shrink substantially.",
+      "recommendation": "Serve AVIF/WebP with <picture> or content negotiation.",
+      "evidence": "26Q1_DasherNZ_Site_Homepage_Hero_Desktop_16x9-3.jpg?v=1779316981&width=2560 (647 KB, jpeg), 26Q1_DasherNZ_Site_Homepage_Hero_Mobile_9x16_2.jpg?v=1779316979&width=1024 (205 KB, jpeg)"
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "og:image looks healthy",
+      "detail": "1200x630px, reachable",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

@@ -91,6 +91,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     report.meta["elapsed_ms"] = resp.elapsed_ms
 
     if not resp.ok:
+        report.hard_fail = True   # no measurable health; score is 0, not 88
         report.add("technical", "critical", "Page could not be fetched",
                    f"Status {resp.status}" + (f": {resp.error}" if resp.error else ""),
                    "Verify the URL is public and returns 200 before auditing.")

@@ -1,0 +1,233 @@
+{
+  "url": "https://news.ycombinator.com",
+  "final_url": "https://news.ycombinator.com/",
+  "status": 200,
+  "rendered": false,
+  "score": 69,
+  "counts": {
+    "critical": 0,
+    "high": 2,
+    "medium": 3,
+    "low": 10,
+    "good": 11
+  },
+  "meta": {
+    "elapsed_ms": 865,
+    "extraction": "visible text",
+    "images": {
+      "checked": 2,
+      "unchecked": 0,
+      "missing_dims": 0
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Homepage title is just the brand",
+      "detail": "Title is 11 characters.",
+      "recommendation": "Fine for a known brand; consider \"Brand — what you do\" (~50–60 chars) to also rank for the value proposition.",
+      "evidence": "Hacker News"
+    },
+    {
+      "category": "technical",
+      "severity": "high",
+      "title": "Missing meta description",
+      "detail": "No <meta name=\"description\"> found.",
+      "recommendation": "Add a compelling 140–160 character summary with the target query.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "high",
+      "title": "No H1 heading",
+      "detail": "The page has no <h1>.",
+      "recommendation": "Add a single H1 that states the page's main topic.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "No canonical URL",
+      "detail": "No <link rel=\"canonical\"> present.",
+      "recommendation": "Add a self-referencing canonical to consolidate signals.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Images missing alt text",
+      "detail": "2 of 2 <img> tags have no alt attribute.",
+      "recommendation": "Add descriptive alt text (empty alt=\"\" only for decorative images).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "31 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Generic anchor text",
+      "detail": "1 links use phrases like 'click here'.",
+      "recommendation": "Use keyword-relevant anchor text describing the destination.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "robots.txt has no Sitemap directive",
+      "detail": "No 'Sitemap:' line in robots.txt.",
+      "recommendation": "Add 'Sitemap: https://…/sitemap.xml' to robots.txt.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "No XML sitemap found",
+      "detail": "No sitemap.xml at the common locations or in robots.txt.",
+      "recommendation": "Publish an XML sitemap and submit it in Search Console.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is on the short side",
+      "detail": "~483 words (measured on visible text).",
+      "recommendation": "Consider deepening coverage if this is a primary landing page.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Clean, specific writing",
+      "detail": "low filler, diverse vocabulary (0.516)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "points (30), ago (30), hide (30), comments (29), hours (27), google (4)  ·  phrases: ago hide, hide comments, hours ago",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Body may not reinforce the title topic",
+      "detail": "None of the title/H1 keywords appear among the page's most frequent body terms.",
+      "recommendation": "Make sure the main content actually develops the topic promised by the title and H1 (helps ranking and AI topical grounding).",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Authorship signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Date/freshness signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Incomplete Open Graph tags",
+      "detail": "Missing: og:title, og:description, og:image.",
+      "recommendation": "Add og:title, og:description and og:image for rich social and chat-app link previews.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No Twitter/X card type",
+      "detail": "Missing <meta name=\"twitter:card\">.",
+      "recommendation": "Add twitter:card (e.g. summary_large_image) for X previews.",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "low",
+      "title": "No structured data (JSON-LD)",
+      "detail": "The page has no application/ld+json markup.",
+      "recommendation": "Add JSON-LD for the page's entity (Article, Product, Organization…) to unlock rich results and clarify meaning for AI search. (Least critical on listing/index pages.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "10/10 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "2 stats, 0 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Direct answer near the top",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "No heavy images detected",
+      "detail": "2 checked, all under 200 KB",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

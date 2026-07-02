@@ -920,6 +920,96 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertEqual(sev.get("Few question-based headings"), "medium")
 
 
+class TestRound2Tuning(unittest.TestCase):
+    """Regression tests for the 2026-07 Round 2 tuning sweep fixes."""
+
+    def test_og_image_rate_limited_is_not_broken(self):
+        # A 429 from an image CDN is gating, not a dead og:image.
+        from lib import images
+        html = '<meta property="og:image" content="/og.png">'
+        doc = htmlx.parse(html, base_url="https://x.com/")
+        facts = images.audit_images(
+            doc, "https://x.com/",
+            head_info=lambda u, **kw: (429, {}, None),
+            fetch_range=lambda u, n, **kw: (b"", None))
+        rep = Report("u")
+        images.findings(facts, rep)
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("og:image could not be verified"), "low")
+        self.assertNotIn("og:image is broken", sev)
+
+    def test_unfetchable_page_scores_zero(self):
+        rep = Report("u", hard_fail=True)
+        rep.add("technical", "critical", "Page could not be fetched")
+        self.assertEqual(rep.score(), 0)
+
+    def test_non_english_page_skips_english_calibrated_checks(self):
+        html = ('<html lang="fr"><body><p>'
+                + "Ceci est un texte français assez long pour l'analyse. " * 40
+                + "</p></body></html>")
+        doc = htmlx.parse(html, base_url="https://x.fr/")
+        rep = Report("u")
+        resp = http.Response("u", "u", 200, {}, html, 1)
+        audit_content.audit(doc, resp, rep, {})
+        titles = {f.title for f in rep.findings}
+        self.assertFalse(any("read" in t.lower() for t in titles))      # no Flesch
+        self.assertNotIn("Clean, specific writing", titles)             # no claim
+        self.assertNotIn("Filler / padding language", titles)
+
+    def test_very_hard_readability_low_on_non_article(self):
+        # dense fragments; guarantee non-hub (few links) and non-article
+        dense = ("Infrastructure orchestration automation transformation "
+                 "internationalization decentralization synchronization "
+                 "implementation. " * 40)
+        doc = htmlx.parse(f"<p>{dense}</p>", base_url="https://x.com/pricing")
+        rep = Report("u")
+        resp = http.Response("u", "u", 200, {}, "", 1)
+        audit_content.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        if "Content is very hard to read" in sev:                       # Flesch<30
+            self.assertEqual(sev["Content is very hard to read"], "low")
+        art = htmlx.parse('<meta property="og:type" content="article">'
+                          f"<p>{dense}</p>", base_url="https://x.com/post")
+        rep2 = Report("u")
+        audit_content.audit(art, resp, rep2, {})
+        sev2 = {f.title: f.severity for f in rep2.findings}
+        if "Content is very hard to read" in sev2:
+            self.assertEqual(sev2["Content is very hard to read"], "medium")
+
+    def test_heavy_image_with_srcset_is_fallback_weight_low(self):
+        # srcset means browsers fetch smaller variants — the raw-src weight is
+        # the scraper/fallback path, so the severity caps at low + honest text.
+        from lib import images
+        html = '<img src="/hero.jpg" srcset="/hero-640.webp 640w" width="1" height="1">'
+        doc = htmlx.parse(html, base_url="https://x.com/")
+        facts = images.audit_images(
+            doc, "https://x.com/",
+            head_info=lambda u, **kw: (200, {"content-length": str(900 * 1024),
+                                             "content-type": "image/jpeg"}, None),
+            fetch_range=lambda u, n, **kw: (b"", None))
+        rep = Report("u")
+        images.findings(facts, rep)
+        heavy = [f for f in rep.findings if f.title.startswith("Heavy images")]
+        self.assertEqual(heavy[0].severity, "low")           # 900KB but srcset
+        self.assertIn("fallback weight", heavy[0].detail)
+
+    def test_no_jsonld_low_on_hub_pages(self):
+        links_html = "".join(f'<a href="/{i}">interesting story number {i}</a> '
+                             for i in range(30))
+        hub = htmlx.parse(f"<body>{links_html}</body>", base_url="https://x.com/")
+        rep = Report("u")
+        resp = http.Response("u", "u", 200, {}, "", 1)
+        audit_schema.audit(hub, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("No structured data (JSON-LD)"), "low")
+        prose = htmlx.parse("<p>" + "word " * 400 + "</p>",
+                            base_url="https://x.com/post")
+        rep2 = Report("u")
+        audit_schema.audit(prose, resp, rep2, {})
+        sev2 = {f.title: f.severity for f in rep2.findings}
+        self.assertEqual(sev2.get("No structured data (JSON-LD)"), "medium")
+
+
 class TestHreflang(unittest.TestCase):
     """Offline tests for cross-page hreflang validation (#25)."""
 

@@ -1,0 +1,241 @@
+{
+  "url": "https://en.wikipedia.org/wiki/Narwhal",
+  "final_url": "https://en.wikipedia.org/wiki/Narwhal",
+  "status": 200,
+  "rendered": false,
+  "score": 73,
+  "counts": {
+    "critical": 0,
+    "high": 2,
+    "medium": 2,
+    "low": 9,
+    "good": 14
+  },
+  "meta": {
+    "elapsed_ms": 629,
+    "extraction": "visible text",
+    "images": {
+      "checked": 10,
+      "unchecked": 16,
+      "missing_dims": 1
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "19 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "high",
+      "title": "Missing meta description",
+      "detail": "No <meta name=\"description\"> found.",
+      "recommendation": "Add a compelling 140–160 character summary with the target query.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Exactly one H1",
+      "detail": "Narwhal",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://en.wikipedia.org/wiki/Narwhal",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Images missing alt text",
+      "detail": "3 of 26 <img> tags have no alt attribute.",
+      "recommendation": "Add descriptive alt text (empty alt=\"\" only for decorative images).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "21 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "No XML sitemap found",
+      "detail": "No sitemap.xml at the common locations or in robots.txt.",
+      "recommendation": "Publish an XML sitemap and submit it in Search Console.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~8288 words (visible text)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 39.9 (difficult); ~grade 9.1.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "narwhal (99), narwhals (87), whale (69), doi (69), issn (49), monodon (43)  ·  phrases: monodon monoceros, heide-j rgensen, beaked whale",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Clean, specific writing",
+      "detail": "low filler, diverse vocabulary (0.357)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Incomplete Open Graph tags",
+      "detail": "Missing: og:description.",
+      "recommendation": "Add og:title, og:description and og:image for rich social and chat-app link previews.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No Twitter/X card type",
+      "detail": "Missing <meta name=\"twitter:card\">.",
+      "recommendation": "Add twitter:card (e.g. summary_large_image) for X previews.",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "Article",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "low",
+      "title": "No Organization/WebSite entity",
+      "detail": "No site-level Organization or WebSite markup detected.",
+      "recommendation": "Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Few question-based headings",
+      "detail": "0 of 19 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings. (Most useful on article/guide pages; lower priority here.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "119/125 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "8 stats, 16 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "No heavy images detected",
+      "detail": "10 checked, all under 200 KB",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "high",
+      "title": "og:image is broken",
+      "detail": "HTTP 429 or non-image content at https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/%D0%9D%D0%B0%D1%80%D0%B2%D0%B0%D0%BB_%D0%B2_%D1%80%D0%BE%D1%81%D1%81%D0%B8%D0%B9%D1%81%D0%BA%D0%BE%D0%B9_%D0%90%D1%80%D0%BA%D1%82%D0%B8%D0%BA%D0%B5.jpg/1280px-%D0%9D%D0%B0%D1%80%D0%B2%D0%B0%D0%BB_%D0%B2_%D1%80%D0%BE%D1%81%D1%81%D0%B8%D0%B9%D1%81%D0%BA%D0%BE%D0%B9_%D0%90%D1%80%D0%BA%D1%82%D0%B8%D0%BA%D0%B5.jpg.",
+      "recommendation": "Point og:image at a reachable image — broken previews suppress clicks everywhere links are shared.",
+      "evidence": null
+    }
+  ]
+}

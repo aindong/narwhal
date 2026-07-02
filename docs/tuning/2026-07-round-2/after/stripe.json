@@ -1,0 +1,599 @@
+{
+  "url": "https://stripe.com",
+  "final_url": "https://stripe.com/",
+  "status": 200,
+  "rendered": false,
+  "score": 87,
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 2,
+    "low": 7,
+    "good": 19
+  },
+  "meta": {
+    "elapsed_ms": 578,
+    "extraction": "visible text",
+    "hreflang": [
+      {
+        "lang": "x-default",
+        "href": "https://stripe.com/"
+      },
+      {
+        "lang": "en-US",
+        "href": "https://stripe.com/"
+      },
+      {
+        "lang": "es-US",
+        "href": "https://stripe.com/es-us"
+      },
+      {
+        "lang": "zh-US",
+        "href": "https://stripe.com/zh-us"
+      },
+      {
+        "lang": "en-AE",
+        "href": "https://stripe.com/ae"
+      },
+      {
+        "lang": "de-AT",
+        "href": "https://stripe.com/at"
+      },
+      {
+        "lang": "en-AT",
+        "href": "https://stripe.com/en-at"
+      },
+      {
+        "lang": "en-AU",
+        "href": "https://stripe.com/au"
+      },
+      {
+        "lang": "nl-BE",
+        "href": "https://stripe.com/nl-be"
+      },
+      {
+        "lang": "fr-BE",
+        "href": "https://stripe.com/fr-be"
+      },
+      {
+        "lang": "de-BE",
+        "href": "https://stripe.com/de-be"
+      },
+      {
+        "lang": "en-BE",
+        "href": "https://stripe.com/en-be"
+      },
+      {
+        "lang": "en-BG",
+        "href": "https://stripe.com/en-bg"
+      },
+      {
+        "lang": "pt-BR",
+        "href": "https://stripe.com/br"
+      },
+      {
+        "lang": "en-BR",
+        "href": "https://stripe.com/en-br"
+      },
+      {
+        "lang": "en-CA",
+        "href": "https://stripe.com/en-ca"
+      },
+      {
+        "lang": "fr-CA",
+        "href": "https://stripe.com/fr-ca"
+      },
+      {
+        "lang": "de-CH",
+        "href": "https://stripe.com/de-ch"
+      },
+      {
+        "lang": "fr-CH",
+        "href": "https://stripe.com/fr-ch"
+      },
+      {
+        "lang": "it-CH",
+        "href": "https://stripe.com/it-ch"
+      },
+      {
+        "lang": "en-CH",
+        "href": "https://stripe.com/en-ch"
+      },
+      {
+        "lang": "en-CY",
+        "href": "https://stripe.com/en-cy"
+      },
+      {
+        "lang": "en-CZ",
+        "href": "https://stripe.com/en-cz"
+      },
+      {
+        "lang": "de-DE",
+        "href": "https://stripe.com/de"
+      },
+      {
+        "lang": "en-DE",
+        "href": "https://stripe.com/en-de"
+      },
+      {
+        "lang": "en-DK",
+        "href": "https://stripe.com/en-dk"
+      },
+      {
+        "lang": "en-EE",
+        "href": "https://stripe.com/en-ee"
+      },
+      {
+        "lang": "es-ES",
+        "href": "https://stripe.com/es"
+      },
+      {
+        "lang": "en-ES",
+        "href": "https://stripe.com/en-es"
+      },
+      {
+        "lang": "en-FI",
+        "href": "https://stripe.com/en-fi"
+      },
+      {
+        "lang": "sv-FI",
+        "href": "https://stripe.com/sv-fi"
+      },
+      {
+        "lang": "fr-FR",
+        "href": "https://stripe.com/fr"
+      },
+      {
+        "lang": "en-FR",
+        "href": "https://stripe.com/en-fr"
+      },
+      {
+        "lang": "en-GB",
+        "href": "https://stripe.com/gb"
+      },
+      {
+        "lang": "en-GI",
+        "href": "https://stripe.com/en-gi"
+      },
+      {
+        "lang": "en-GR",
+        "href": "https://stripe.com/en-gr"
+      },
+      {
+        "lang": "en-HK",
+        "href": "https://stripe.com/en-hk"
+      },
+      {
+        "lang": "zh-HK",
+        "href": "https://stripe.com/zh-hk"
+      },
+      {
+        "lang": "en-HR",
+        "href": "https://stripe.com/en-hr"
+      },
+      {
+        "lang": "it-HR",
+        "href": "https://stripe.com/it-hr"
+      },
+      {
+        "lang": "en-HU",
+        "href": "https://stripe.com/en-hu"
+      },
+      {
+        "lang": "en-IE",
+        "href": "https://stripe.com/ie"
+      },
+      {
+        "lang": "en-IN",
+        "href": "https://stripe.com/in"
+      },
+      {
+        "lang": "it-IT",
+        "href": "https://stripe.com/it"
+      },
+      {
+        "lang": "en-IT",
+        "href": "https://stripe.com/en-it"
+      },
+      {
+        "lang": "ja-JP",
+        "href": "https://stripe.com/jp"
+      },
+      {
+        "lang": "en-JP",
+        "href": "https://stripe.com/en-jp"
+      },
+      {
+        "lang": "de-LI",
+        "href": "https://stripe.com/de-li"
+      },
+      {
+        "lang": "en-LI",
+        "href": "https://stripe.com/en-li"
+      },
+      {
+        "lang": "en-LT",
+        "href": "https://stripe.com/en-lt"
+      },
+      {
+        "lang": "fr-LU",
+        "href": "https://stripe.com/fr-lu"
+      },
+      {
+        "lang": "de-LU",
+        "href": "https://stripe.com/de-lu"
+      },
+      {
+        "lang": "en-LU",
+        "href": "https://stripe.com/en-lu"
+      },
+      {
+        "lang": "en-LV",
+        "href": "https://stripe.com/en-lv"
+      },
+      {
+        "lang": "en-MY",
+        "href": "https://stripe.com/en-my"
+      },
+      {
+        "lang": "zh-MY",
+        "href": "https://stripe.com/zh-my"
+      },
+      {
+        "lang": "en-MT",
+        "href": "https://stripe.com/en-mt"
+      },
+      {
+        "lang": "es-MX",
+        "href": "https://stripe.com/mx"
+      },
+      {
+        "lang": "en-MX",
+        "href": "https://stripe.com/en-mx"
+      },
+      {
+        "lang": "nl-NL",
+        "href": "https://stripe.com/nl"
+      },
+      {
+        "lang": "en-NL",
+        "href": "https://stripe.com/en-nl"
+      },
+      {
+        "lang": "en-NO",
+        "href": "https://stripe.com/en-no"
+      },
+      {
+        "lang": "en-NZ",
+        "href": "https://stripe.com/nz"
+      },
+      {
+        "lang": "en-PL",
+        "href": "https://stripe.com/en-pl"
+      },
+      {
+        "lang": "pt-PT",
+        "href": "https://stripe.com/pt-pt"
+      },
+      {
+        "lang": "en-PT",
+        "href": "https://stripe.com/en-pt"
+      },
+      {
+        "lang": "en-RO",
+        "href": "https://stripe.com/en-ro"
+      },
+      {
+        "lang": "sv-SE",
+        "href": "https://stripe.com/se"
+      },
+      {
+        "lang": "en-SE",
+        "href": "https://stripe.com/en-se"
+      },
+      {
+        "lang": "en-SG",
+        "href": "https://stripe.com/en-sg"
+      },
+      {
+        "lang": "zh-SG",
+        "href": "https://stripe.com/zh-sg"
+      },
+      {
+        "lang": "en-SI",
+        "href": "https://stripe.com/en-si"
+      },
+      {
+        "lang": "it-SI",
+        "href": "https://stripe.com/it-si"
+      },
+      {
+        "lang": "en-SK",
+        "href": "https://stripe.com/en-sk"
+      },
+      {
+        "lang": "th-TH",
+        "href": "https://stripe.com/th"
+      },
+      {
+        "lang": "en-TH",
+        "href": "https://stripe.com/en-th"
+      },
+      {
+        "lang": "pt",
+        "href": "https://stripe.com/br"
+      },
+      {
+        "lang": "nl",
+        "href": "https://stripe.com/nl"
+      },
+      {
+        "lang": "en",
+        "href": "https://stripe.com/"
+      },
+      {
+        "lang": "fr",
+        "href": "https://stripe.com/fr"
+      },
+      {
+        "lang": "de",
+        "href": "https://stripe.com/de"
+      },
+      {
+        "lang": "it",
+        "href": "https://stripe.com/it"
+      },
+      {
+        "lang": "ja",
+        "href": "https://stripe.com/jp"
+      },
+      {
+        "lang": "zh",
+        "href": "https://stripe.com/zh-sg"
+      },
+      {
+        "lang": "es",
+        "href": "https://stripe.com/es"
+      },
+      {
+        "lang": "sv",
+        "href": "https://stripe.com/se"
+      },
+      {
+        "lang": "th",
+        "href": "https://stripe.com/th"
+      }
+    ],
+    "images": {
+      "checked": 10,
+      "unchecked": 25,
+      "missing_dims": 1
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "54 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Meta description length is in range",
+      "detail": "149 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Multiple H1 headings",
+      "detail": "Found 2 H1 elements.",
+      "recommendation": "Use one H1; demote the rest to H2/H3.",
+      "evidence": "Financial infrastructure to grow your revenue. Accept payments, offer financial services, and implement custom revenue models—from your first transaction to your billionth. | Financial infrastructure to grow your revenue. Accept payments, offer financial services, and implement custom revenue models—from your first transaction to your billionth."
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://stripe.com/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "hreflang cluster present",
+      "detail": "87 locales",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "All images have alt attributes",
+      "detail": "35 images",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "29 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Generic anchor text",
+      "detail": "3 links use phrases like 'click here'.",
+      "recommendation": "Use keyword-relevant anchor text describing the destination.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://stripe.com/sitemap/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~1800 words (visible text)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 38.7 (difficult); ~grade 11.8.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Repetitive vocabulary",
+      "detail": "Lexical diversity 0.343 (unique/total words).",
+      "recommendation": "Vary wording and add substance; heavy repetition signals thin or spun content.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "stripe (62), payments (32), read (28), story (19), financial (13), products (11)  ·  phrases: stripe read, agentic commerce, financial infrastructure",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Date/freshness signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "Organization, WebSite",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Few question-based headings",
+      "detail": "2 of 54 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings. (Most useful on article/guide pages; lower priority here.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "31/33 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "18 stats, 4 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "llms.txt published",
+      "detail": "https://stripe.com/llms.txt",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Heavy images (2 over 200 KB)",
+      "detail": "Largest: 3777 KB. Checked 10 of 35 images (HEAD on the raw src).",
+      "recommendation": "Compress/resize and serve modern formats (AVIF/WebP); heavy images are a top LCP cause.",
+      "evidence": "wave-fallback-desktop.png (3777 KB), sessions-2026-on-demand-bg-mobile.png?w=368&q=90 (227 KB)"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Legacy image formats with real weight (3)",
+      "detail": "JPEG/PNG files over 100 KB that AVIF/WebP would shrink substantially.",
+      "recommendation": "Serve AVIF/WebP with <picture> or content negotiation.",
+      "evidence": "wave-fallback-desktop.png (3777 KB, png), ConnectBentoBackground.jpg?w=1242&q=90 (141 KB, jpeg), sessions-2026-on-demand-bg-mobile.png?w=368&q=90 (227 KB, png)"
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "og:image looks healthy",
+      "detail": "2048x1024px, reachable",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

@@ -1,0 +1,831 @@
+{
+  "url": "https://www.apple.com",
+  "final_url": "https://www.apple.com/",
+  "status": 200,
+  "rendered": false,
+  "score": 87,
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 13,
+    "good": 19
+  },
+  "meta": {
+    "elapsed_ms": 755,
+    "extraction": "visible text",
+    "hreflang": [
+      {
+        "lang": "en-US",
+        "href": "https://www.apple.com/"
+      },
+      {
+        "lang": "ar-AE",
+        "href": "https://www.apple.com/ae-ar/"
+      },
+      {
+        "lang": "en-AE",
+        "href": "https://www.apple.com/ae/"
+      },
+      {
+        "lang": "en-AM",
+        "href": "https://www.apple.com/am/"
+      },
+      {
+        "lang": "de-AT",
+        "href": "https://www.apple.com/at/"
+      },
+      {
+        "lang": "en-AU",
+        "href": "https://www.apple.com/au/"
+      },
+      {
+        "lang": "en-AZ",
+        "href": "https://www.apple.com/az/"
+      },
+      {
+        "lang": "fr-BE",
+        "href": "https://www.apple.com/befr/"
+      },
+      {
+        "lang": "nl-BE",
+        "href": "https://www.apple.com/benl/"
+      },
+      {
+        "lang": "bg-BG",
+        "href": "https://www.apple.com/bg/"
+      },
+      {
+        "lang": "ar-BH",
+        "href": "https://www.apple.com/bh-ar/"
+      },
+      {
+        "lang": "en-BH",
+        "href": "https://www.apple.com/bh/"
+      },
+      {
+        "lang": "pt-BR",
+        "href": "https://www.apple.com/br/"
+      },
+      {
+        "lang": "en-BW",
+        "href": "https://www.apple.com/bw/"
+      },
+      {
+        "lang": "en-CA",
+        "href": "https://www.apple.com/ca/"
+      },
+      {
+        "lang": "fr-CA",
+        "href": "https://www.apple.com/ca/fr/"
+      },
+      {
+        "lang": "fr-CF",
+        "href": "https://www.apple.com/cf/"
+      },
+      {
+        "lang": "de-CH",
+        "href": "https://www.apple.com/chde/"
+      },
+      {
+        "lang": "fr-CH",
+        "href": "https://www.apple.com/chfr/"
+      },
+      {
+        "lang": "fr-CI",
+        "href": "https://www.apple.com/ci/"
+      },
+      {
+        "lang": "es-CL",
+        "href": "https://www.apple.com/cl/"
+      },
+      {
+        "lang": "fr-CM",
+        "href": "https://www.apple.com/cm/"
+      },
+      {
+        "lang": "es-CO",
+        "href": "https://www.apple.com/co/"
+      },
+      {
+        "lang": "cs-CZ",
+        "href": "https://www.apple.com/cz/"
+      },
+      {
+        "lang": "de-DE",
+        "href": "https://www.apple.com/de/"
+      },
+      {
+        "lang": "da-DK",
+        "href": "https://www.apple.com/dk/"
+      },
+      {
+        "lang": "et-EE",
+        "href": "https://www.apple.com/ee/"
+      },
+      {
+        "lang": "ar-EG",
+        "href": "https://www.apple.com/eg-ar/"
+      },
+      {
+        "lang": "en-EG",
+        "href": "https://www.apple.com/eg/"
+      },
+      {
+        "lang": "es-ES",
+        "href": "https://www.apple.com/es/"
+      },
+      {
+        "lang": "fi-FI",
+        "href": "https://www.apple.com/fi/"
+      },
+      {
+        "lang": "fr-FR",
+        "href": "https://www.apple.com/fr/"
+      },
+      {
+        "lang": "en-GE",
+        "href": "https://www.apple.com/ge/"
+      },
+      {
+        "lang": "fr-GN",
+        "href": "https://www.apple.com/gn/"
+      },
+      {
+        "lang": "fr-GQ",
+        "href": "https://www.apple.com/gq/"
+      },
+      {
+        "lang": "el-GR",
+        "href": "https://www.apple.com/gr/"
+      },
+      {
+        "lang": "en-GW",
+        "href": "https://www.apple.com/gw/"
+      },
+      {
+        "lang": "zh-HK",
+        "href": "https://www.apple.com/hk/"
+      },
+      {
+        "lang": "en-HK",
+        "href": "https://www.apple.com/hk/en/"
+      },
+      {
+        "lang": "hr-HR",
+        "href": "https://www.apple.com/hr/"
+      },
+      {
+        "lang": "hu-HU",
+        "href": "https://www.apple.com/hu/"
+      },
+      {
+        "lang": "en-ID",
+        "href": "https://www.apple.com/id/"
+      },
+      {
+        "lang": "en-IE",
+        "href": "https://www.apple.com/ie/"
+      },
+      {
+        "lang": "en-IL",
+        "href": "https://www.apple.com/il/"
+      },
+      {
+        "lang": "en-IN",
+        "href": "https://www.apple.com/in/"
+      },
+      {
+        "lang": "it-IT",
+        "href": "https://www.apple.com/it/"
+      },
+      {
+        "lang": "ar-JO",
+        "href": "https://www.apple.com/jo-ar/"
+      },
+      {
+        "lang": "en-JO",
+        "href": "https://www.apple.com/jo/"
+      },
+      {
+        "lang": "ja-JP",
+        "href": "https://www.apple.com/jp/"
+      },
+      {
+        "lang": "en-KE",
+        "href": "https://www.apple.com/ke/"
+      },
+      {
+        "lang": "en-KG",
+        "href": "https://www.apple.com/kg/"
+      },
+      {
+        "lang": "ko-KR",
+        "href": "https://www.apple.com/kr/"
+      },
+      {
+        "lang": "ar-KW",
+        "href": "https://www.apple.com/kw-ar/"
+      },
+      {
+        "lang": "en-KW",
+        "href": "https://www.apple.com/kw/"
+      },
+      {
+        "lang": "en-KZ",
+        "href": "https://www.apple.com/kz/"
+      },
+      {
+        "lang": "es-HN",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-AR",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-SV",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-DO",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-EC",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-GT",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-PE",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-BO",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-NI",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-VE",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-PA",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-CR",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-UY",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "es-PY",
+        "href": "https://www.apple.com/la/"
+      },
+      {
+        "lang": "en-AG",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-BS",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-TC",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-TT",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-SR",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-BM",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-BB",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-BZ",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-GD",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-KY",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-LC",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-MS",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-KN",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-AI",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-VC",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-GY",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-VG",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-DM",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "en-JM",
+        "href": "https://www.apple.com/lae/"
+      },
+      {
+        "lang": "de-LI",
+        "href": "https://www.apple.com/li/"
+      },
+      {
+        "lang": "lt-LT",
+        "href": "https://www.apple.com/lt/"
+      },
+      {
+        "lang": "fr-LU",
+        "href": "https://www.apple.com/lu/"
+      },
+      {
+        "lang": "lv-LV",
+        "href": "https://www.apple.com/lv/"
+      },
+      {
+        "lang": "fr-MA",
+        "href": "https://www.apple.com/ma/"
+      },
+      {
+        "lang": "en-MD",
+        "href": "https://www.apple.com/md/"
+      },
+      {
+        "lang": "en-ME",
+        "href": "https://www.apple.com/me/"
+      },
+      {
+        "lang": "en-MG",
+        "href": "https://www.apple.com/mg/"
+      },
+      {
+        "lang": "en-MK",
+        "href": "https://www.apple.com/mk/"
+      },
+      {
+        "lang": "fr-ML",
+        "href": "https://www.apple.com/ml/"
+      },
+      {
+        "lang": "zh-MO",
+        "href": "https://www.apple.com/mo/"
+      },
+      {
+        "lang": "en-MT",
+        "href": "https://www.apple.com/mt/"
+      },
+      {
+        "lang": "fr-MU",
+        "href": "https://www.apple.com/mu/"
+      },
+      {
+        "lang": "es-MX",
+        "href": "https://www.apple.com/mx/"
+      },
+      {
+        "lang": "en-MY",
+        "href": "https://www.apple.com/my/"
+      },
+      {
+        "lang": "en-MZ",
+        "href": "https://www.apple.com/mz/"
+      },
+      {
+        "lang": "fr-NE",
+        "href": "https://www.apple.com/ne/"
+      },
+      {
+        "lang": "en-NG",
+        "href": "https://www.apple.com/ng/"
+      },
+      {
+        "lang": "nl-NL",
+        "href": "https://www.apple.com/nl/"
+      },
+      {
+        "lang": "no-NO",
+        "href": "https://www.apple.com/no/"
+      },
+      {
+        "lang": "en-NZ",
+        "href": "https://www.apple.com/nz/"
+      },
+      {
+        "lang": "ar-OM",
+        "href": "https://www.apple.com/om-ar/"
+      },
+      {
+        "lang": "en-OM",
+        "href": "https://www.apple.com/om/"
+      },
+      {
+        "lang": "en-PH",
+        "href": "https://www.apple.com/ph/"
+      },
+      {
+        "lang": "pl-PL",
+        "href": "https://www.apple.com/pl/"
+      },
+      {
+        "lang": "pt-PT",
+        "href": "https://www.apple.com/pt/"
+      },
+      {
+        "lang": "ar-QA",
+        "href": "https://www.apple.com/qa-ar/"
+      },
+      {
+        "lang": "en-QA",
+        "href": "https://www.apple.com/qa/"
+      },
+      {
+        "lang": "ro-RO",
+        "href": "https://www.apple.com/ro/"
+      },
+      {
+        "lang": "ar-SA",
+        "href": "https://www.apple.com/sa-ar/"
+      },
+      {
+        "lang": "en-SA",
+        "href": "https://www.apple.com/sa/"
+      },
+      {
+        "lang": "sv-SE",
+        "href": "https://www.apple.com/se/"
+      },
+      {
+        "lang": "en-SG",
+        "href": "https://www.apple.com/sg/"
+      },
+      {
+        "lang": "en-SI",
+        "href": "https://www.apple.com/si/"
+      },
+      {
+        "lang": "sk-SK",
+        "href": "https://www.apple.com/sk/"
+      },
+      {
+        "lang": "fr-SN",
+        "href": "https://www.apple.com/sn/"
+      },
+      {
+        "lang": "th-TH",
+        "href": "https://www.apple.com/th/"
+      },
+      {
+        "lang": "en-TJ",
+        "href": "https://www.apple.com/tj/"
+      },
+      {
+        "lang": "en-TM",
+        "href": "https://www.apple.com/tm/"
+      },
+      {
+        "lang": "fr-TN",
+        "href": "https://www.apple.com/tn/"
+      },
+      {
+        "lang": "tr-TR",
+        "href": "https://www.apple.com/tr/"
+      },
+      {
+        "lang": "zh-TW",
+        "href": "https://www.apple.com/tw/"
+      },
+      {
+        "lang": "uk-UA",
+        "href": "https://www.apple.com/ua/"
+      },
+      {
+        "lang": "en-UG",
+        "href": "https://www.apple.com/ug/"
+      },
+      {
+        "lang": "en-GB",
+        "href": "https://www.apple.com/uk/"
+      },
+      {
+        "lang": "en-UZ",
+        "href": "https://www.apple.com/uz/"
+      },
+      {
+        "lang": "vi-VN",
+        "href": "https://www.apple.com/vn/"
+      },
+      {
+        "lang": "en-ZA",
+        "href": "https://www.apple.com/za/"
+      },
+      {
+        "lang": "zh-CN",
+        "href": "https://www.apple.com.cn/"
+      }
+    ],
+    "images": {
+      "checked": 10,
+      "unchecked": 31,
+      "missing_dims": 97
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Homepage title is just the brand",
+      "detail": "Title is 5 characters.",
+      "recommendation": "Fine for a known brand; consider \"Brand — what you do\" (~50–60 chars) to also rank for the value proposition.",
+      "evidence": "Apple"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Meta description may be truncated",
+      "detail": "Description is 172 characters.",
+      "recommendation": "Trim to ~155 characters.",
+      "evidence": "Discover the innovative world of Apple and shop everything iPhone, iPad, Apple Watch, Mac, and Apple TV, plus explore accessories, entertainment, and expert device support."
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Exactly one H1",
+      "detail": "Apple",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://www.apple.com/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "No x-default hreflang",
+      "detail": "hreflang cluster has no x-default.",
+      "recommendation": "Add rel=alternate hreflang=\"x-default\" for the fallback URL.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "hreflang cluster present",
+      "detail": "137 locales",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "All images have alt attributes",
+      "detail": "97 images",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "No lazy-loaded images",
+      "detail": "97 images and none use loading=\"lazy\".",
+      "recommendation": "Add loading=\"lazy\" to below-the-fold images to improve LCP.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "10 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://www.apple.com/shop/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~893 words (visible text)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 49.4 (difficult); ~grade 10.4.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "apple (65), card (13), trade (12), store (11), learn (11), shop (10)  ·  phrases: apple card, item item, apple store",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Clean, specific writing",
+      "detail": "low filler, diverse vocabulary (0.414)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Authorship signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No Twitter/X card type",
+      "detail": "Missing <meta name=\"twitter:card\">.",
+      "recommendation": "Add twitter:card (e.g. summary_large_image) for X previews.",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "Organization, WebPage, WebSite",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Few question-based headings",
+      "detail": "0 of 22 subheadings are phrased as questions.",
+      "recommendation": "Rewrite key H2/H3s as the questions users actually ask — AI engines match answers to question-shaped headings. (Most useful on article/guide pages; lower priority here.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "12/14 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "1 stats, 0 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "No heavy images detected",
+      "detail": "10 checked, all under 200 KB",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Legacy image formats with real weight (1)",
+      "detail": "JPEG/PNG files over 100 KB that AVIF/WebP would shrink substantially.",
+      "recommendation": "Serve AVIF/WebP with <picture> or content negotiation.",
+      "evidence": "hero_ipad_air_m4__gc1zddfs5tiu_large.jpg (159 KB, jpeg)"
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Images without width/height attributes",
+      "detail": "97 of 97 <img> tags lack explicit dimensions.",
+      "recommendation": "Add width/height (or CSS aspect-ratio) so the browser reserves space — prevents layout shift (CLS).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "og:image looks healthy",
+      "detail": "1200x630px, reachable",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

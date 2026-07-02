@@ -1,0 +1,257 @@
+{
+  "url": "https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/",
+  "final_url": "https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/",
+  "status": 200,
+  "rendered": false,
+  "score": 82,
+  "counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 1,
+    "low": 9,
+    "good": 18
+  },
+  "meta": {
+    "elapsed_ms": 986,
+    "extraction": "visible text",
+    "images": {
+      "checked": 10,
+      "unchecked": 28,
+      "missing_dims": 0
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "40 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Meta description length is in range",
+      "detail": "148 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Exactly one H1",
+      "detail": "World's Best Lasagna",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Images missing alt text",
+      "detail": "14 of 88 <img> tags have no alt attribute.",
+      "recommendation": "Add descriptive alt text (empty alt=\"\" only for decorative images).",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "No lazy-loaded images",
+      "detail": "88 images and none use loading=\"lazy\".",
+      "recommendation": "Add loading=\"lazy\" to below-the-fold images to improve LCP.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "13 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://www.allrecipes.com/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Sufficient content depth",
+      "detail": "~2309 words (visible text)",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 47.8 (difficult); ~grade 11.0.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Repetitive vocabulary",
+      "detail": "Lexical diversity 0.324 (unique/total words).",
+      "recommendation": "Vary wording and add substance; heavy repetition signals thin or spun content.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "lasagna (60), recipe (27), ratings (26), allrecipes (20), recipes (17), sauce (16)  ·  phrases: lasagna ratings, dotdash meredith, meredith food",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Authorship signal present",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "NewsArticle, Recipe",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "low",
+      "title": "No Organization/WebSite entity",
+      "detail": "No site-level Organization or WebSite markup detected.",
+      "recommendation": "Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Question-based headings present",
+      "detail": "4/13 subheadings",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "32/35 passages in range",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "17 stats, 0 citation cues",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "high",
+      "title": "AI crawlers are blocked in robots.txt",
+      "detail": "Disallowed from the site root: ClaudeBot (Anthropic (Claude)), Claude-Web (Anthropic (Claude on-demand)), PerplexityBot (Perplexity), Google-Extended (Google (Gemini / AI Overviews training)), CCBot (Common Crawl (feeds many LLMs)).",
+      "recommendation": "If you want visibility in AI answers, allow these agents. If the block is intentional (content protection), ignore this.",
+      "evidence": "ClaudeBot (Anthropic (Claude)), Claude-Web (Anthropic (Claude on-demand)), PerplexityBot (Perplexity), Google-Extended (Google (Gemini / AI Overviews training)), CCBot (Common Crawl (feeds many LLMs))"
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "No heavy images detected",
+      "detail": "10 checked, all under 200 KB",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Legacy image formats with real weight (7)",
+      "detail": "JPEG/PNG files over 100 KB that AVIF/WebP would shrink substantially.",
+      "recommendation": "Serve AVIF/WebP with <picture> or content negotiation.",
+      "evidence": "23600-worlds-best-lasagna-armag-4x3-1-b24f9ad518d74090bf197828492c64a6.jpg (145 KB, jpeg), 23600-worlds-best-lasagna-DDMFS-step-01-1064-5dd7c3348e624ec2a266785d22dd52e3.jpg (140 KB, jpeg), 23600-worlds-best-lasagna-DDMFS-step-01-1-1066-a60ebdd7ec5a40ed8754b1f4df8ff1f4.jpg (119 KB, jpeg), 23600-worlds-best-lasagna-DDMFS-step-03-1065-3a965c2fd99344a7aee647cabc22f3a4.jpg (115 KB, jpeg)"
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "og:image looks healthy",
+      "detail": "1500x750px, reachable",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}
