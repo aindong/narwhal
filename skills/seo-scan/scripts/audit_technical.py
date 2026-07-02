@@ -34,8 +34,26 @@ def audit(doc, resp, report, ctx=None) -> None:
     _http_hygiene(resp, report)
     _robots_txt(ctx, report)
     _sitemap(ctx, report)
+    _noscript_only(doc, report)
     if ctx.get("jsdep"):   # only present when a --render scan measured it
         jsdiff.technical_findings(ctx["jsdep"], report)
+
+
+def _noscript_only(doc, report):
+    """JS-shell pages that serve their real content only inside <noscript>.
+
+    Non-rendering crawlers (and most AI fetchers) do read the fallback, so it's
+    not invisible — but it's a second-class, historically spam-adjacent signal,
+    and rendering crawlers see a *different* document than non-rendering ones."""
+    visible = len((doc.text or "").split())
+    fallback = len((doc.noscript_text or "").split())
+    if visible < 20 and fallback >= 50:
+        report.add(CAT, "medium", "Content served only as a <noscript> fallback",
+                   f"{visible} words of regular body text vs {fallback} words "
+                   "inside <noscript>.",
+                   "Server-render (SSR/SSG) the main content so JS and non-JS "
+                   "crawlers see the same document; verify the rendered page "
+                   "with --render matches the fallback.")
 
 
 def _title(doc, report, th=None):

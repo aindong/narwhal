@@ -48,3 +48,19 @@ a deliberately dead URL. Raw scan JSONs in [`before/`](before/) and
 - ❌ removed: **high** · og:image is broken
 - ✅ now: **low** · og:image could not be verified
 
+
+## Corpus addition: openskyelabs.xyz (JS-shell with `<noscript>` fallback) — 89 → 87
+
+Added mid-round at the owner's request — and it immediately earned its place:
+the site serves its entire content as `<body><noscript>…</noscript>` plus a JS
+shell. Both parser backends **stripped `<noscript>`entirely**, so the scan
+measured **"~0 words of main text"** with empty headings/links — while non-JS
+crawlers and AI fetchers actually read that fallback just fine.
+
+- ❌ removed: **false "~0 words"** measurement (and empty heading/link text)
+- ✅ now: content measured on the fallback, labeled `measured on noscript
+  fallback` — "Thin content (~131 words)" is a *true* positive
+- ✅ new architecture finding: **Content served only as a `<noscript>` fallback
+  (medium)** — rendering and non-rendering crawlers see different documents;
+  SSR recommended
+- Tiny noscript blocks (font loaders) verified not to change behavior

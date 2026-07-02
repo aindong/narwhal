@@ -45,19 +45,30 @@ class Doc:
     lang: str = ""
     text: str = ""                                     # all visible text
     main_text: str = ""                                # main content only (if isolable)
+    noscript_text: str = ""                            # <noscript> fallback content
     html: str = ""
 
     @property
     def extraction(self) -> str:
         """Which text the content checks are judging: strict main-content
-        isolation (trafilatura) or the all-visible-text fallback. Surfaced in
-        reports so depth/citability numbers are honest about their basis."""
-        return "main-content (trafilatura)" if self.main_text else "visible text"
+        isolation (trafilatura), the all-visible-text fallback, or — for JS-first
+        pages whose only served content is a <noscript> block — that fallback.
+        Surfaced in reports so depth/citability numbers are honest about basis."""
+        if self.main_text:
+            return "main-content (trafilatura)"
+        if self.text:
+            return "visible text"
+        if self.noscript_text:
+            return "noscript fallback"
+        return "visible text"
 
     @property
     def body_text(self) -> str:
-        """Main content when we could isolate it, else all visible text."""
-        return self.main_text or self.text
+        """Main content when we could isolate it, else all visible text — and
+        for JS-shell pages that serve content only inside <noscript>, that
+        fallback (it IS what non-rendering crawlers read; measuring 0 words on
+        such pages was a live false positive)."""
+        return self.main_text or self.text or self.noscript_text
 
     def meta_by_name(self, name: str) -> Optional[str]:
         name = name.lower()
@@ -178,8 +189,11 @@ def _parse_bs4(html: str, base_url: str) -> Doc:
         if s.string:
             doc.scripts_ld.append(s.string.strip())
 
-    # <title> is head metadata, not page copy — drop it from visible text so the
-    # bs4 backend agrees with the stdlib backend (doc.title already captured it).
+    # <noscript> is a separate channel (JS-shell pages serve their content
+    # there); <title> is head metadata. Both leave visible text — matching the
+    # stdlib backend exactly (the backends disagreeing was a past CI failure).
+    doc.noscript_text = collapse(" ".join(
+        ns.get_text(" ") for ns in soup.find_all("noscript")))
     for bad in soup(["script", "style", "noscript", "template", "title"]):
         bad.extract()
     doc.text = collapse(soup.get_text(" "))
@@ -207,7 +221,9 @@ class _StdlibParser(HTMLParser):
         self._captures = []        # stack of [kind, buffer, attrs]
         self._ld_buf = None
         self._skip_depth = 0
+        self._noscript_depth = 0   # separate channel, not silently skipped
         self._text = []
+        self._noscript = []
 
     def handle_starttag(self, tag, attrs):
         a = {k.lower(): (v or "") for k, v in attrs}
@@ -223,10 +239,18 @@ class _StdlibParser(HTMLParser):
             self._captures.append([tag, [], a])
         elif tag == "script" and a.get("type") == "application/ld+json":
             self._ld_buf = []
-        elif tag in ("script", "style", "noscript", "template"):
+        elif tag == "noscript":
+            # Not skipped: JS-first sites serve their real content as a
+            # <noscript> fallback, which non-rendering crawlers DO read. It
+            # goes to a separate buffer so visible text stays honest.
+            self._noscript_depth += 1
+        elif tag in ("script", "style", "template"):
             self._skip_depth += 1
 
     def handle_endtag(self, tag):
+        if tag == "noscript" and self._noscript_depth:
+            self._noscript_depth -= 1
+            return
         if self._captures and tag == self._captures[-1][0]:
             kind, buf, attrs = self._captures.pop()
             text = collapse("".join(buf))
@@ -239,7 +263,7 @@ class _StdlibParser(HTMLParser):
         elif tag == "script" and self._ld_buf is not None:
             self.doc.scripts_ld.append("".join(self._ld_buf).strip())
             self._ld_buf = None
-        elif tag in ("script", "style", "noscript", "template") and self._skip_depth:
+        elif tag in ("script", "style", "template") and self._skip_depth:
             self._skip_depth -= 1
 
     def handle_data(self, data):
@@ -248,10 +272,15 @@ class _StdlibParser(HTMLParser):
             return
         if self._skip_depth:
             return
+        # Captures (headings/links) keep their text even inside <noscript> —
+        # an <h1> in the fallback is still the page's H1 to a non-JS crawler.
         for cap in self._captures:
             cap[1].append(data)
-        # <title> is head metadata, not page copy — keep it out of visible text.
-        if not any(c[0] == "title" for c in self._captures):
+        if any(c[0] == "title" for c in self._captures):
+            return  # <title> is head metadata, not page copy
+        if self._noscript_depth:
+            self._noscript.append(data)
+        else:
             self._text.append(data)
 
 
@@ -260,4 +289,5 @@ def _parse_stdlib(html: str, base_url: str) -> Doc:
     p.feed(html)
     p.doc.html = html
     p.doc.text = collapse(" ".join(p._text))
+    p.doc.noscript_text = collapse(" ".join(p._noscript))
     return p.doc

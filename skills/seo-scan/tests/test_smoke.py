@@ -993,6 +993,50 @@ class TestRound2Tuning(unittest.TestCase):
         self.assertEqual(heavy[0].severity, "low")           # 900KB but srcset
         self.assertIn("fallback weight", heavy[0].detail)
 
+    NOSCRIPT_SHELL = ('<title>T</title><body><noscript><main>'
+                      '<h1>Real Headline</h1><a href="/x">Real link text</a>'
+                      "<p>" + "fallback content word " * 30 + "</p>"
+                      '</main></noscript><div id="root"></div></body>')
+
+    def test_noscript_fallback_content_is_measured(self):
+        # Live find: a JS-shell site served ALL content inside <noscript> and
+        # scanned as "~0 words" with empty headings/links. The fallback is what
+        # non-rendering crawlers read — measure it, labeled honestly.
+        d = htmlx.parse(self.NOSCRIPT_SHELL, base_url="https://x.com/")
+        self.assertEqual(d.text, "")                          # visible text honest
+        self.assertGreater(len(d.noscript_text.split()), 50)
+        # with trafilatura installed it isolates the same content itself
+        self.assertIn(d.extraction,
+                      ("noscript fallback", "main-content (trafilatura)"))
+        self.assertIn("fallback content", d.body_text)
+        self.assertIn((1, "Real Headline"), d.headings)       # not empty-text
+        self.assertIn("Real link text", [l.text for l in d.links])
+
+    def test_noscript_only_architecture_finding(self):
+        d = htmlx.parse(self.NOSCRIPT_SHELL, base_url="https://x.com/")
+        rep = Report("u")
+        resp = http.Response("u", "u", 200, {}, "", 1)
+        audit_technical.audit(d, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Content served only as a <noscript> fallback"),
+                         "medium")
+        # normal pages: no such finding
+        d2 = htmlx.parse("<p>" + "word " * 100 + "</p>", base_url="https://x.com/")
+        rep2 = Report("u")
+        audit_technical.audit(d2, resp, rep2, {})
+        self.assertNotIn("Content served only as a <noscript> fallback",
+                         {f.title for f in rep2.findings})
+
+    def test_font_loader_noscript_does_not_pollute_text(self):
+        # The common tiny-noscript case (font CSS fallback) must not change
+        # visible-text behavior or fire the architecture finding.
+        html = ('<noscript><link rel="stylesheet" href="f.css"></noscript>'
+                "<p>" + "regular visible word " * 40 + "</p>")
+        d = htmlx.parse(html, base_url="https://x.com/")
+        self.assertIn(d.extraction,
+                      ("visible text", "main-content (trafilatura)"))
+        self.assertNotIn("f.css", d.body_text)
+
     def test_no_jsonld_low_on_hub_pages(self):
         links_html = "".join(f'<a href="/{i}">interesting story number {i}</a> '
                              for i in range(30))

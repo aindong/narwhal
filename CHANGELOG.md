@@ -4,6 +4,25 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.25.1] — 2026-07-02
+
+### Fixed
+- **`<noscript>`-fallback content is now measured** (corpus addition:
+  openskyelabs.xyz). JS-shell sites that serve their entire content inside
+  `<body><noscript>…</noscript>` scanned as **"~0 words"** with empty
+  headings/links — while non-rendering crawlers and AI fetchers read that
+  fallback just fine. Both parser backends now capture noscript into a separate
+  channel: `body_text` falls back to it when the page has no regular body text
+  (labeled `measured on noscript fallback`), headings/links inside noscript keep
+  their text, and tiny noscript blocks (font loaders) change nothing.
+
+### Added
+- New technical finding: **"Content served only as a `<noscript>` fallback"**
+  (medium) — rendering and non-rendering crawlers see different documents;
+  SSR/SSG recommended. 3 new tests (179 total), green with and without extras
+  (with trafilatura installed the same content is isolated by trafilatura —
+  covered by the tests).
+
 ## [1.25.0] — 2026-07-02
 
 Tuning Round 2 (documented with raw snapshots in `docs/tuning/2026-07-round-2/`):

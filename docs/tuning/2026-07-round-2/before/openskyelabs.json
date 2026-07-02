@@ -1,0 +1,169 @@
+{
+  "url": "https://www.openskyelabs.xyz/",
+  "final_url": "https://www.openskyelabs.xyz/",
+  "status": 200,
+  "rendered": false,
+  "score": 89,
+  "counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 0,
+    "low": 5,
+    "good": 12
+  },
+  "meta": {
+    "elapsed_ms": 479,
+    "extraction": "visible text",
+    "images": {
+      "checked": 0,
+      "unchecked": 0,
+      "missing_dims": 0
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "52 characters",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Meta description may be truncated",
+      "detail": "Description is 169 characters.",
+      "recommendation": "Trim to ~155 characters.",
+      "evidence": "OpenSkye Labs is a software, AI, mobile, and infrastructure studio. Mission-control engineering for ambitious teams — agents, apps, platforms, and the runway under them."
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Exactly one H1",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://www.openskyelabs.xyz/",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "Links with no anchor text",
+      "detail": "3 <a> tags have empty visible text.",
+      "recommendation": "Give links descriptive anchor text for users and crawlers.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "https://www.openskyelabs.xyz/sitemap.xml",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "high",
+      "title": "Thin content",
+      "detail": "~0 words of main text (measured on visible text).",
+      "recommendation": "Expand to cover the topic fully; thin pages struggle to rank and are rarely cited by AI answers.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Open Graph preview tags complete",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "ItemList, Organization, ProfessionalService, WebSite",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No statistics or citations",
+      "detail": "No numbers, data points, or source references detected.",
+      "recommendation": "Add concrete stats and cite primary sources — AI answers favor and attribute evidence-backed content. (Weighs most on article/guide pages.)",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "llms.txt published",
+      "detail": "https://www.openskyelabs.xyz/llms.txt",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "Title and H1 don't share terms",
+      "detail": "The <title> and <h1> have no words in common.",
+      "recommendation": "Align them on the core entity so engines get one clear topic signal.",
+      "evidence": null
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "og:image looks healthy",
+      "detail": "1200x630px, reachable",
+      "recommendation": "",
+      "evidence": null
+    }
+  ]
+}

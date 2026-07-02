@@ -55,6 +55,15 @@ the sitelinks SearchAction is deprecated — with paste-ready fixes. The
 CDN's WebP negotiation with Accept headers, and *identified the srcset caveat in
 our own scanner* — which is now encoded in both the check and its prompt.
 
+**Corpus addition (v1.25.1): openskyelabs.xyz** — a JS-shell site whose entire
+content ships inside `<body><noscript>…</noscript>`. Both parser backends
+stripped `<noscript>`, so the scan read **"~0 words"** while non-JS crawlers
+happily read the fallback. Fixed: noscript is now a separate measured channel
+(`extraction: noscript fallback`), headings/links inside it keep their text, and
+a new **"Content served only as a `<noscript>` fallback"** finding flags the
+architecture. Sites that *break* the tool are the most valuable corpus members —
+send us more.
+
 ### [2026-07 · Round 1](2026-07-round-1/RESULTS.md) — shipped in v1.19.0
 
 **Corpus:** 8 public sites chosen for page-type diversity — SaaS (Stripe,
