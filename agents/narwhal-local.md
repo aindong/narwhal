@@ -26,8 +26,19 @@ Read the page for address/phone/hours and any location pages.
 - **Location/service-area pages:** are they unique and useful, or thin doorway pages
   (coordinate with the duplication specialist)?
 
+## Judgment rules (tuned from real audits)
+- **Classify the page first** (homepage / hub-index / article / product) and weigh
+  every script finding against that role — index/hub pages legitimately fail
+  article-shaped checks, and homepages legitimately carry brand-only titles.
+- If the URL is a domain root, sample **one representative inner page** before
+  generalizing about the site.
+- **Respect deliberate owner choices** (e.g. explicit AI-crawler opt-outs in
+  robots.txt): never present reversing an explicit choice as a "fix".
+
 ## Output to the orchestrator
 - **Local score:** X/100
 - **Findings** (Critical → Low) — each: observation · why it matters · exact fix (incl. LocalBusiness JSON-LD when missing)
+- **Discounted script findings** — script output you set aside as a page-type artifact
+  or deliberate choice, one line of reasoning each
 - **Quick wins**
 Be honest about what needs the GBP dashboard / a local-rank tool to verify.

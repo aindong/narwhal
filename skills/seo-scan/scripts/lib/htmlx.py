@@ -48,6 +48,13 @@ class Doc:
     html: str = ""
 
     @property
+    def extraction(self) -> str:
+        """Which text the content checks are judging: strict main-content
+        isolation (trafilatura) or the all-visible-text fallback. Surfaced in
+        reports so depth/citability numbers are honest about their basis."""
+        return "main-content (trafilatura)" if self.main_text else "visible text"
+
+    @property
     def body_text(self) -> str:
         """Main content when we could isolate it, else all visible text."""
         return self.main_text or self.text
@@ -74,6 +81,43 @@ class Doc:
         links = self.links_by_rel("canonical")
         href = links[0].get("href") if links else None
         return urljoin(self.base_url, href) if href else None
+
+
+def link_text_share(doc: "Doc") -> float:
+    """Fraction of the visible text that is anchor text (0..1).
+
+    High values (with many links) mean a hub/listing/navigation page — an index,
+    category, or front page — where prose-oriented checks (thin content,
+    readability, evidence density) misfire if applied naively."""
+    total = len(doc.body_text or "")
+    if not total:
+        return 0.0
+    linked = sum(len(l.text or "") for l in doc.links if l.text)
+    return min(1.0, linked / total)
+
+
+def is_hub_page(doc: "Doc") -> bool:
+    """A link-dominated listing/index page (vs a prose page)."""
+    return len(doc.links) >= 15 and link_text_share(doc) > 0.5
+
+
+def looks_article(doc: "Doc") -> bool:
+    """Does this page present itself as an article (vs home/hub/product/etc.)?
+
+    Used to scope article-specific checks (byline, question headings, evidence
+    density) so they don't fire as noise on every homepage and listing."""
+    og = (doc.meta_by_property("og:type") or "").lower()
+    if og.startswith("article"):
+        return True
+    if doc.meta_by_property("article:published_time"):
+        return True
+    # exactly one <article> element = an article page; many = a listing of cards
+    return (doc.html or "").lower().count("<article") == 1
+
+
+def is_homepage(doc: "Doc") -> bool:
+    from urllib.parse import urlparse as _up  # noqa: PLC0415
+    return _up(doc.base_url or "").path in ("", "/")
 
 
 def parse(html: str, base_url: str = "") -> Doc:
@@ -146,13 +190,22 @@ def _join(tag, key):  # normalize list-valued attrs from bs4
 
 
 class _StdlibParser(HTMLParser):
+    """Stdlib fallback parser.
+
+    Captures are a **stack**, so nested markup like ``<h1><a>Title</a></h1>``
+    records both the link and the heading (a single capture slot used to let the
+    inner ``<a>`` clobber the ``<h1>``, silently losing headings on most real
+    sites). Captured text also always flows into the visible text, matching the
+    bs4 backend — anchor/heading text is page content, and dropping it made
+    link-heavy pages (index/hub pages) look falsely thin."""
+
     def __init__(self, base_url: str):
         super().__init__(convert_charrefs=True)
         self.doc = Doc(base_url=base_url)
-        self._stack = []
-        self._capture = None       # (kind, buffer)
+        self._captures = []        # stack of [kind, buffer, attrs]
         self._ld_buf = None
         self._skip_depth = 0
+        self._text = []
 
     def handle_starttag(self, tag, attrs):
         a = {k.lower(): (v or "") for k, v in attrs}
@@ -164,51 +217,44 @@ class _StdlibParser(HTMLParser):
             self.doc.link_rels.append(Tag("link", a))
         elif tag == "img":
             self.doc.images.append(Tag("img", a))
-        elif tag == "title":
-            self._capture = ("title", [])
-        elif tag == "a":
-            self._capture = ("a", [], a)
-        elif tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
-            self._capture = (tag, [])
+        elif tag in ("title", "a", "h1", "h2", "h3", "h4", "h5", "h6"):
+            self._captures.append([tag, [], a])
         elif tag == "script" and a.get("type") == "application/ld+json":
             self._ld_buf = []
         elif tag in ("script", "style", "noscript", "template"):
             self._skip_depth += 1
-        if tag not in ("meta", "link", "img", "br", "hr", "input"):
-            self._stack.append(tag)
 
     def handle_endtag(self, tag):
-        if self._capture and tag == self._capture[0]:
-            text = collapse("".join(self._capture[1]))
-            if tag == "title":
+        if self._captures and tag == self._captures[-1][0]:
+            kind, buf, attrs = self._captures.pop()
+            text = collapse("".join(buf))
+            if kind == "title":
                 self.doc.title = text
-            elif tag == "a":
-                self.doc.links.append(Tag("a", self._capture[2], text))
+            elif kind == "a":
+                self.doc.links.append(Tag("a", attrs, text))
             else:
-                self.doc.headings.append((int(tag[1]), text))
-            self._capture = None
+                self.doc.headings.append((int(kind[1]), text))
         elif tag == "script" and self._ld_buf is not None:
             self.doc.scripts_ld.append("".join(self._ld_buf).strip())
             self._ld_buf = None
         elif tag in ("script", "style", "noscript", "template") and self._skip_depth:
             self._skip_depth -= 1
-        if self._stack and self._stack[-1] == tag:
-            self._stack.pop()
 
     def handle_data(self, data):
         if self._ld_buf is not None:
             self._ld_buf.append(data)
-        elif self._capture:
-            self._capture[1].append(data)
-        elif self._skip_depth == 0:
+            return
+        if self._skip_depth:
+            return
+        for cap in self._captures:
+            cap[1].append(data)
+        # <title> is head metadata, not page copy — keep it out of visible text.
+        if not any(c[0] == "title" for c in self._captures):
             self._text.append(data)
-
-    _text: list = []
 
 
 def _parse_stdlib(html: str, base_url: str) -> Doc:
     p = _StdlibParser(base_url)
-    p._text = []
     p.feed(html)
     p.doc.html = html
     p.doc.text = collapse(" ".join(p._text))

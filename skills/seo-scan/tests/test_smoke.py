@@ -795,6 +795,131 @@ class TestEnvLoader(unittest.TestCase):
             self.assertEqual(os.environ["CRUX_API_KEY"], "from_dotenv")
 
 
+class TestParserNestedCaptures(unittest.TestCase):
+    """Regression tests for the stdlib parser bugs found tuning on real sites
+    (#19): nested captures lost headings, and anchor text vanished from the
+    visible text — making link-heavy pages look falsely thin."""
+
+    def test_heading_wrapping_a_link_is_recorded(self):
+        # jvns.ca pattern: <h1><a href="/">Julia Evans</a></h1> lost the H1.
+        d = htmlx.parse('<h1><a href="/">Julia Evans</a></h1><p>hi</p>', base_url="x")
+        self.assertIn((1, "Julia Evans"), d.headings)
+        self.assertEqual([l.text for l in d.links], ["Julia Evans"])
+
+    def test_anchor_text_counts_as_visible_text(self):
+        # HN pattern: story titles are links; they are page content.
+        d = htmlx.parse('<p><a href="/s/1">A very newsworthy story</a> 264 points</p>',
+                        base_url="x")
+        self.assertIn("A very newsworthy story", d.text)
+        self.assertIn("264 points", d.text)
+
+    def test_title_text_stays_out_of_body_text(self):
+        d = htmlx.parse("<title>Head Title</title><p>body copy</p>", base_url="x")
+        self.assertEqual(d.title, "Head Title")
+        self.assertNotIn("Head Title", d.text)
+
+
+class TestPageTypeHelpers(unittest.TestCase):
+    def test_hub_page_detection(self):
+        links = "".join(f'<a href="/{i}">story number {i} headline</a> ' for i in range(20))
+        hub = htmlx.parse(f"<body>{links}</body>", base_url="https://x.com/")
+        self.assertTrue(htmlx.is_hub_page(hub))
+        prose = htmlx.parse("<p>" + "word " * 300 + '</p><a href="/">home</a>',
+                            base_url="https://x.com/a")
+        self.assertFalse(htmlx.is_hub_page(prose))
+
+    def test_looks_article(self):
+        art = htmlx.parse('<meta property="og:type" content="article"><p>x</p>',
+                          base_url="x")
+        self.assertTrue(htmlx.looks_article(art))
+        single = htmlx.parse("<article><p>x</p></article>", base_url="x")
+        self.assertTrue(htmlx.looks_article(single))
+        listing = htmlx.parse("<article>a</article><article>b</article>", base_url="x")
+        self.assertFalse(htmlx.looks_article(listing))
+        plain = htmlx.parse("<p>x</p>", base_url="x")
+        self.assertFalse(htmlx.looks_article(plain))
+
+    def test_is_homepage(self):
+        self.assertTrue(htmlx.is_homepage(htmlx.parse("", base_url="https://x.com/")))
+        self.assertFalse(htmlx.is_homepage(htmlx.parse("", base_url="https://x.com/blog/a")))
+
+
+class TestPageTypeAwareChecks(unittest.TestCase):
+    """The false-positive fixes from the 8-site real-world tuning sweep (#19)."""
+
+    def _scan_page(self, html, url="https://x.com/page"):
+        doc = htmlx.parse(html, base_url=url)
+        rep = Report(url)
+        resp = http.Response(url, url, 200, {}, html, 1)
+        return doc, resp, rep
+
+    def test_brand_homepage_title_is_low_not_high(self):
+        doc, resp, rep = self._scan_page("<title>The Verge</title>",
+                                         url="https://x.com/")
+        audit_technical.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Homepage title is just the brand"), "low")
+        self.assertNotIn("Title is very short", sev)
+
+    def test_short_title_on_inner_page_still_high(self):
+        doc, resp, rep = self._scan_page("<title>Hi</title>",
+                                         url="https://x.com/blog/post")
+        audit_technical.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Title is very short"), "high")
+
+    def test_hub_page_thin_content_is_low(self):
+        links = "".join(f'<a href="/{i}">interesting story {i}</a> ' for i in range(30))
+        doc, resp, rep = self._scan_page(f"<body>{links}</body>")
+        audit_content.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Link-hub page with little prose"), "low")
+        self.assertNotIn("Thin content", sev)
+
+    def test_prose_page_thin_content_still_high(self):
+        doc, resp, rep = self._scan_page("<p>just a few words here</p>")
+        audit_content.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Thin content"), "high")
+
+    def test_byline_only_flagged_on_articles(self):
+        # non-article: no byline finding at all
+        doc, resp, rep = self._scan_page("<p>" + "word " * 400 + "</p>")
+        audit_content.audit(doc, resp, rep, {})
+        self.assertNotIn("No visible author/byline", {f.title for f in rep.findings})
+        # article: still flagged medium
+        html = '<meta property="og:type" content="article"><p>' + "word " * 400 + "</p>"
+        doc, resp, rep = self._scan_page(html)
+        audit_content.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("No visible author/byline"), "medium")
+
+    def test_geo_question_headings_low_on_non_article(self):
+        html = "<h2>Pricing</h2><h2>Features</h2><h2>Customers</h2><h2>Docs</h2><h2>Blog</h2>"
+        doc, resp, rep = self._scan_page(html)
+        audit_geo.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Few question-based headings"), "low")
+
+    def test_month_tokens_are_not_dominant_topics(self):
+        # Archive pages full of dates reported "dec (78), jan (74)" as topics.
+        kws = textlib.top_keywords(
+            "dec jan nov dec jan nov debugging debugging networking "
+            "networking networking linux linux", 5)
+        names = [k for k, _ in kws]
+        self.assertNotIn("dec", names)
+        self.assertNotIn("jan", names)
+        self.assertIn("networking", names)
+
+    def test_geo_question_headings_medium_on_article(self):
+        html = ('<meta property="og:type" content="article">'
+                "<h2>Overview</h2><h2>Details</h2><h2>Setup</h2><h2>Usage</h2><h2>Notes</h2>")
+        doc, resp, rep = self._scan_page(html)
+        audit_geo.audit(doc, resp, rep, {})
+        sev = {f.title: f.severity for f in rep.findings}
+        self.assertEqual(sev.get("Few question-based headings"), "medium")
+
+
 class TestRenderReport(unittest.TestCase):
     def setUp(self):
         import render_report

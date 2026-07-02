@@ -5,6 +5,15 @@ Google's Search Quality Rater Guidelines reward content that demonstrates
 don't set rankings directly, but the systems are trained to approximate their
 judgments. The content auditor surfaces heuristic proxies for these signals.
 
+## How the text is measured (extraction basis)
+Depth/readability/citability checks run on the page's **main content when it can
+be isolated** — the optional `trafilatura` library strips nav, footers, and
+boilerplate, and is used automatically whenever installed (recommended:
+`pip install trafilatura`). Without it, checks fall back to **all visible text**,
+which over-counts page chrome on prose pages; each depth finding states which
+basis was used. Page-type detection (hub/listing vs article) further scopes the
+checks so link-dominated index pages aren't judged as thin articles.
+
 ## Content depth (not word count for its own sake)
 - < ~300 words of main text usually reads as thin — it rarely satisfies intent
   and is seldom cited by AI answers. The fix is *coverage*, not padding.

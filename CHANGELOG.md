@@ -4,6 +4,47 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.19.0] — 2026-07-02
+
+Real-world tuning round (#19, #20): scans of 8 diverse live sites (SaaS,
+e-commerce, news, docs, blog, wiki, link-hub) + 3 live specialist-agent runs,
+then every false positive fixed at the source. Average score change on well-run
+sites: jvns.ca 62→79, HN 52→66, docs.python.org 75→86, The Verge 71→80 — all
+from removing *wrong* findings, not loosening checks.
+
+### Fixed
+- **Stdlib parser lost headings that wrap links** (`<h1><a>…</a></h1>` recorded no
+  H1 — false "No H1" on most real blogs) and **dropped all anchor text from the
+  visible text** (link-heavy pages looked falsely thin). Captures are now a stack
+  and captured text flows into the page text; `<title>` stays out of body copy.
+- **Month names counted as "dominant topics"** on date-heavy archive pages
+  (`dec (78), jan (74)…`) — now stopworded.
+
+### Changed — page-type-aware checks
+New shared helpers (`htmlx.is_hub_page` / `looks_article` / `is_homepage` /
+`link_text_share`) scope checks to the page's role:
+- Brand-only **homepage titles** are a low note, not "Title very short (high)".
+- **Link-hub/index pages** get "hub with little prose (low)" instead of "Thin
+  content (high)"; readability isn't judged on nav fragments.
+- **Byline/author** is only expected on article pages.
+- GEO **question-headings** and **evidence-density** are medium on articles, low
+  elsewhere (they used to fire on ~90% of real sites).
+- The schema auditor's "article-like page" now uses the shared heuristic instead
+  of raw text length (no more Article-schema nags on text-heavy homepages).
+- Depth findings state their **extraction basis** (trafilatura main-content vs
+  visible text), and the trade-off is documented (#20).
+
+### Changed — specialist agents (tuned from graded live runs)
+All 10 `agents/narwhal-*` prompts gain **Judgment rules**: classify the page type
+first and discount type-mismatched script findings; sample a representative inner
+page when auditing a domain root; respect deliberate owner choices (e.g.
+intentional AI-crawler opt-outs — split advice by intent, never "fix" an opt-out).
+GEO adds the training-vs-answer-engine distinction (GPTBot ≠ AI-answer
+visibility); technical verifies surprising negatives in raw HTML. Specialists now
+return a **Discounted script findings** section, and the audit orchestrator
+honors it (discounts are never re-added to the action plan).
+`${CLAUDE_PLUGIN_ROOT}` confirmed to resolve for subagents in the field.
+
 ## [1.18.0] — 2026-07-02
 
 ### Added

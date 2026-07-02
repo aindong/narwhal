@@ -27,6 +27,19 @@ Heuristics can't judge quality — you can:
 - **AI-citation readiness:** direct answer up top, self-contained passages, concrete
   stats/sources an answer engine would quote.
 
+## Judgment rules (tuned from real audits)
+- **Classify the page first** (homepage / hub-index / article / product) and judge
+  content checks against that role. Word-count, readability, lexical-diversity, and
+  "dominant topics" heuristics all misfire on archive/index pages (title-list
+  fragments break sentence math; date tokens masquerade as topics). Discount those
+  — don't relay them.
+- **When given a domain root, read one or two real articles** (and /about if it
+  exists) before judging E-E-A-T. The homepage rarely carries the byline, dates,
+  and first-hand voice; the articles do.
+- **Judge the model, not the patient:** exemplary content with weak *packaging*
+  (meta description, OG tags, schema) should score high on content with packaging
+  called out separately — don't let metadata gaps drag a "quality" verdict.
+
 ## Reference
 - Google's helpful-content stance: reward original, experience-backed, useful content.
   AI assistance isn't penalized; low-quality unoriginal content is.
@@ -36,5 +49,7 @@ Heuristics can't judge quality — you can:
 ## Output to the orchestrator
 - **Content score:** X/100
 - **Findings** (Critical → Low) — each: observation (quote evidence) · why it matters · exact fix
+- **Discounted script findings** — page-type artifacts you set aside, one line of
+  reasoning each (so the orchestrator doesn't re-add them)
 - **Quick wins**
 Be specific and honest; cite text you actually read.

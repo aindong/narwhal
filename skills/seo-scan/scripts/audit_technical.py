@@ -45,10 +45,19 @@ def _title(doc, report, th=None):
         return
     n = len(t)
     if n < lo:
-        report.add(CAT, "high", "Title is very short",
-                   f"Title is {n} characters.",
-                   "Expand to ~50–60 characters with the primary query and brand.",
-                   evidence=t)
+        # A homepage title that is just the brand name is normal practice, not a
+        # ranking emergency — flagging it "high" was noise on most real sites.
+        if htmlx.is_homepage(doc):
+            report.add(CAT, "low", "Homepage title is just the brand",
+                       f"Title is {n} characters.",
+                       "Fine for a known brand; consider \"Brand — what you do\" "
+                       "(~50–60 chars) to also rank for the value proposition.",
+                       evidence=t)
+        else:
+            report.add(CAT, "high", "Title is very short",
+                       f"Title is {n} characters.",
+                       "Expand to ~50–60 characters with the primary query and brand.",
+                       evidence=t)
     elif n > hi:
         report.add(CAT, "medium", "Title may be truncated in SERPs",
                    f"Title is {n} characters (>{hi} often truncates).",

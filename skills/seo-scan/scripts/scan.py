@@ -97,6 +97,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         return report
 
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
+    report.meta["extraction"] = doc.extraction
     if collect_links:
         report.meta["links"] = links.extract_links(doc, resp.final_url or url)
     if collect_fingerprint:

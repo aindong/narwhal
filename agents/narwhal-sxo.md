@@ -26,8 +26,19 @@ Then **read the page as a real user would** — this specialist is reasoning-led
   Name 1–2 personas and score how well the page serves each.
 - **Scannability:** headings, lists, and structure that respect how people read.
 
+## Judgment rules (tuned from real audits)
+- **Classify the page first** (homepage / hub-index / article / product) and weigh
+  every script finding against that role — index/hub pages legitimately fail
+  article-shaped checks, and homepages legitimately carry brand-only titles.
+- If the URL is a domain root, sample **one representative inner page** before
+  generalizing about the site.
+- **Respect deliberate owner choices** (e.g. explicit AI-crawler opt-outs in
+  robots.txt): never present reversing an explicit choice as a "fix".
+
 ## Output to the orchestrator
 - **SXO score:** X/100
 - **Findings** (Critical → Low) — each: observation · why it matters (UX/conversion) · exact fix
+- **Discounted script findings** — script output you set aside as a page-type artifact
+  or deliberate choice, one line of reasoning each
 - **Quick wins**
 Ground every claim in something you actually saw on the page; avoid generic advice.

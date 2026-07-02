@@ -34,8 +34,19 @@ LCP good <2.5s / poor >4s · INP good <200ms / poor >500ms · CLS good <0.1 / po
 (INP replaced FID in 2024; the CrUX API is the field-data source — PageSpeed Insights
 is dropping CrUX field data in 2026.)
 
+## Judgment rules (tuned from real audits)
+- **Classify the page first** (homepage / hub-index / article / product) and weigh
+  every script finding against that role — index/hub pages legitimately fail
+  article-shaped checks, and homepages legitimately carry brand-only titles.
+- If the URL is a domain root, sample **one representative inner page** before
+  generalizing about the site.
+- **Respect deliberate owner choices** (e.g. explicit AI-crawler opt-outs in
+  robots.txt): never present reversing an explicit choice as a "fix".
+
 ## Output to the orchestrator
 - **Performance score:** X/100 (a hygiene score — label it as such)
 - **Findings** (Critical → Low) — each: observation · why it matters · exact fix
+- **Discounted script findings** — script output you set aside as a page-type artifact
+  or deliberate choice, one line of reasoning each
 - **Quick wins**
 - **Recommended follow-up:** `narwhal vitals <url> --crux-key KEY` for real CrUX field metrics.

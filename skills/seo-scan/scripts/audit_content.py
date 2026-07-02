@@ -13,9 +13,11 @@ import re
 try:
     from lib import text as textlib
     from lib import content_quality
+    from lib import htmlx
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
     from .lib import content_quality  # type: ignore
+    from .lib import htmlx  # type: ignore
 
 CAT = "content"
 
@@ -32,33 +34,50 @@ def audit(doc, resp, report, ctx=None) -> None:
     words = _WORD.findall(text)
     wc = len(words)
 
+    # Page-type awareness: prose checks misfire on link-hub pages (index,
+    # category, front pages), and byline checks misfire on non-articles.
+    hub = htmlx.is_hub_page(doc)
+    article = htmlx.looks_article(doc)
+
     th = (ctx or {}).get("thresholds", {})
-    _word_count(wc, report, th)
-    _readability(text, report)
+    _word_count(wc, report, th, hub=hub, basis=doc.extraction)
+    _readability(text, report, hub=hub)
     _keywords(doc, text, report)
     _quality(text, report)
-    _authorship(doc, text, report)
+    _authorship(doc, text, report, article=article)
     _freshness(doc, text, report)
     _og_social(doc, report)
 
 
-def _word_count(wc, report, th=None):
+def _word_count(wc, report, th=None, hub=False, basis="visible text"):
     th = th or {}
     thin, short = th.get("thin_content", 300), th.get("short_content", 600)
     if wc < thin:
-        report.add(CAT, "high", "Thin content",
-                   f"~{wc} words of main text.",
-                   "Expand to cover the topic fully; thin pages struggle to rank "
-                   "and are rarely cited by AI answers.")
+        if hub:
+            # An index/listing page is *supposed* to be mostly links — "thin
+            # content, high" on the HN front page or a docs index is a category
+            # error, not an insight.
+            report.add(CAT, "low", "Link-hub page with little prose",
+                       f"~{wc} words of prose; the page is mostly links "
+                       "(listing/index).",
+                       "Fine for a hub. If this page should rank on its own "
+                       "merits, add an intro paragraph that frames the list.")
+        else:
+            report.add(CAT, "high", "Thin content",
+                       f"~{wc} words of main text (measured on {basis}).",
+                       "Expand to cover the topic fully; thin pages struggle to rank "
+                       "and are rarely cited by AI answers.")
     elif wc < short:
         report.add(CAT, "low", "Content is on the short side",
-                   f"~{wc} words.",
+                   f"~{wc} words (measured on {basis}).",
                    "Consider deepening coverage if this is a primary landing page.")
     else:
-        report.ok(CAT, "Sufficient content depth", f"~{wc} words")
+        report.ok(CAT, "Sufficient content depth", f"~{wc} words ({basis})")
 
 
-def _readability(text, report):
+def _readability(text, report, hub=False):
+    if hub:
+        return  # Flesch over nav/link fragments measures nothing real
     fre = textlib.flesch_reading_ease(text)
     if fre is None:
         return
@@ -148,18 +167,20 @@ def _quality(text, report):
                   f"low filler, diverse vocabulary ({q['lexical_diversity']})")
 
 
-def _authorship(doc, text, report):
+def _authorship(doc, text, report, article=False):
     head = text[:1500]
     has_author = bool(_AUTHOR_HINT.search(head)) or bool(
         doc.meta_by_name("author") or doc.meta_by_property("article:author")
     )
-    if not has_author:
+    if has_author:
+        report.ok(CAT, "Authorship signal present")
+    elif article:
         report.add(CAT, "medium", "No visible author/byline",
                    "No author meta tag or byline detected near the top.",
                    "Add a named author with credentials — a core E-E-A-T "
                    "(experience/expertise) signal.")
-    else:
-        report.ok(CAT, "Authorship signal present")
+    # Homepages, hubs, and product pages don't carry bylines — flagging them
+    # there was noise, so non-article pages are simply not judged on this.
 
 
 def _freshness(doc, text, report):

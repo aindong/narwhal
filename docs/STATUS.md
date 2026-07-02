@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.18.0**_
+_Last updated: 2026-07-02 · version **1.19.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -53,7 +53,18 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   via `<picture>`. Derived deterministically from the light logo
   (`assets/make-dark-logo.py`).
 - **P2 backlog (#13–#18) fully cleared.**
-- **Tests:** 112, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Real-world tuning round (v1.19.0, closes #19 + #20):** scanned 8 diverse live
+  sites + graded 3 live specialist-agent runs. Fixed the stdlib parser (nested
+  `<h1><a>` lost headings; anchor text missing from visible text), stopworded
+  month tokens, added **page-type-aware checks** (`htmlx.is_hub_page/looks_article/
+  is_homepage`): homepage brand titles, hub thin-content, article-only byline,
+  article-scoped GEO severities. All 10 agent prompts gained **Judgment rules**
+  (classify page type, sample an inner page, respect owner opt-outs, report
+  *Discounted script findings*), and the orchestrator honors the discounts.
+  Depth findings state their extraction basis (trafilatura vs visible text).
+  `${CLAUDE_PLUGIN_ROOT}` confirmed resolving for subagents. Scores on well-run
+  sites corrected: jvns 62→79, HN 52→66, pydocs 75→86, Verge 71→80.
+- **Tests:** 143, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -92,20 +103,17 @@ narwhal/
 ```
 
 ## What's next (open issues)
-The P0–P2 roadmap is complete. Remaining tracked work:
-- **#19** Tune the multi-agent audit from real runs (ongoing quality work).
-- **#20** Make the optional `trafilatura` main-content path the default.
-- Plus the not-yet-ticketed ideas at the bottom of [ROADMAP.md](ROADMAP.md)
-  (microdata/RDFa, OG-image validation, image-weight checks, a11y lens, hreflang
-  bidirectionality, per-finding "learn more" deep links).
+The tracked roadmap (P0–P3, #1–#20) is **complete**. Remaining candidates are the
+not-yet-ticketed ideas at the bottom of [ROADMAP.md](ROADMAP.md) (microdata/RDFa,
+OG-image validation, image-weight checks, a11y lens, hreflang bidirectionality,
+per-finding "learn more" deep links) — promote to an issue when scoped.
 
-### Also worth doing (not yet ticketed)
-- **Tune the multi-agent audit from real runs** — the 10 agents were authored, then
-  validated once live (worked well; the only fix so far was report formatting).
-  Continue tuning each specialist's prompt against real audits.
-- Confirm `${CLAUDE_PLUGIN_ROOT}` resolves for subagents in the field (agents fall
-  back to `uvx` if not).
-- Make the optional `trafilatura` main-content path the default for content depth.
+### Ongoing quality practice
+Specialist tuning (#19) is a loop, not a one-shot: each real `/narwhal audit` run
+is tuning material. When a specialist misses, over-flags, or parrots the script,
+encode the correction in its `agents/narwhal-*.md` **Judgment rules** and, where
+the root cause is measurable, fix the deterministic check + add a regression test
+(see the v1.19.0 round for the pattern).
 
 ## Dev workflow
 ```bash

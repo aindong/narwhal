@@ -74,6 +74,13 @@ Fold its verdict into the performance section. Label it correctly — **field**
 - **Core Web Vitals** — the field/lab verdict from Step 2b.
 - **Per-area detail** — one concise section per specialist.
 
+**Honor the specialists' discounts.** Specialists return a *Discounted script
+findings* section (page-type artifacts, verified false positives, deliberate owner
+choices like intentional AI-crawler opt-outs). Do **not** re-add those to the
+action plan from the raw baseline JSON — the specialist's judgment overrides the
+script. If one specialist marks something a deliberate choice (e.g. "do not
+'fix'"), no other area's recommendation may contradict it.
+
 **Step 4 — Deliver the branded report file.** Write the synthesized report to
 `narwhal-audit-report.md`, then render it into a **self-contained, branded HTML
 report** (Narwhal logo + styling, containing *your* synthesis) — HTML needs no

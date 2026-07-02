@@ -12,8 +12,10 @@ import re
 
 try:
     from lib.robots import RobotsTxt
+    from lib import htmlx
 except ImportError:  # when imported as a package
     from .lib.robots import RobotsTxt  # type: ignore
+    from .lib import htmlx  # type: ignore
 
 CAT = "geo"
 
@@ -40,16 +42,20 @@ AI_BOTS = {
 
 def audit(doc, resp, report, ctx=None) -> None:
     ctx = ctx or {}
-    _question_headings(doc, report)
+    # Question-heading and evidence advice is *article* advice. On homepages,
+    # hubs, and product pages these checks fired on ~90% of real sites — a check
+    # that flags everyone ranks nothing. Article pages keep the stronger severity.
+    article = htmlx.looks_article(doc)
+    _question_headings(doc, report, article=article)
     _passage_citability(doc, report, ctx.get("thresholds", {}))
-    _evidence_density(doc, report)
+    _evidence_density(doc, report, article=article)
     _direct_answer(doc, report)
     _llms_txt(ctx, report)
     _ai_crawler_access(ctx, report)
     _entity_clarity(doc, report)
 
 
-def _question_headings(doc, report):
+def _question_headings(doc, report, article=False):
     subs = [t for lvl, t in doc.headings if lvl >= 2 and t]
     if not subs:
         return
@@ -57,10 +63,13 @@ def _question_headings(doc, report):
          t.lower().split()[0] in _QUESTION_WORDS or t.rstrip().endswith("?")]
     ratio = len(q) / len(subs)
     if ratio < 0.2:
-        report.add(CAT, "medium", "Few question-based headings",
+        report.add(CAT, "medium" if article else "low",
+                   "Few question-based headings",
                    f"{len(q)} of {len(subs)} subheadings are phrased as questions.",
                    "Rewrite key H2/H3s as the questions users actually ask — AI "
-                   "engines match answers to question-shaped headings.")
+                   "engines match answers to question-shaped headings."
+                   + ("" if article else " (Most useful on article/guide pages; "
+                      "lower priority here.)"))
     else:
         report.ok(CAT, "Question-based headings present",
                   f"{len(q)}/{len(subs)} subheadings")
@@ -103,15 +112,17 @@ def _passage_citability(doc, report, th=None):
                   f"{len(citable)}/{len(passages)} passages in range")
 
 
-def _evidence_density(doc, report):
+def _evidence_density(doc, report, article=False):
     text = doc.body_text or ""
     stats = len(_STAT.findall(text))
     cites = len(_CITE_HINT.findall(text))
     if stats + cites == 0:
-        report.add(CAT, "medium", "No statistics or citations",
+        report.add(CAT, "medium" if article else "low",
+                   "No statistics or citations",
                    "No numbers, data points, or source references detected.",
                    "Add concrete stats and cite primary sources — AI answers "
-                   "favor and attribute evidence-backed content.")
+                   "favor and attribute evidence-backed content."
+                   + ("" if article else " (Weighs most on article/guide pages.)"))
     else:
         report.ok(CAT, "Evidence signals present",
                   f"{stats} stats, {cites} citation cues")

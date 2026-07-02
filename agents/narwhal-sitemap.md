@@ -24,8 +24,19 @@ Reports: sitemaps fetched, index depth, total URLs, missing/invalid `lastmod`,
 - **Scale sanity:** a sitemap with millions of near-identical URLs signals a
   programmatic/doorway problem worth flagging to the duplication specialist.
 
+## Judgment rules (tuned from real audits)
+- **Classify the page first** (homepage / hub-index / article / product) and weigh
+  every script finding against that role — index/hub pages legitimately fail
+  article-shaped checks, and homepages legitimately carry brand-only titles.
+- If the URL is a domain root, sample **one representative inner page** before
+  generalizing about the site.
+- **Respect deliberate owner choices** (e.g. explicit AI-crawler opt-outs in
+  robots.txt): never present reversing an explicit choice as a "fix".
+
 ## Output to the orchestrator
 - **Sitemap score:** X/100
 - **Findings** (Critical → Low) — each: observation · why it matters · exact fix
+- **Discounted script findings** — script output you set aside as a page-type artifact
+  or deliberate choice, one line of reasoning each
 - **Quick wins**
 If no sitemap exists, that's the headline finding.

@@ -20,8 +20,16 @@ For site-level signals also run `crawl_site.py <url> --max-pages 15 --format jso
 ## Reason beyond the script
 The script measures; you interpret. Add value the heuristics can't:
 - Is a flagged issue actually a problem for **this** page's role (e.g. a noindex on
-  a thank-you page is correct)?
-- Redirect chains, mixed content, and canonical logic across the site.
+  a thank-you page is correct; a short brand-only title on a *homepage* is normal
+  practice, not a high-severity issue)?
+- **Verify surprising negatives in the raw HTML** before relaying them: if the
+  script says "No H1" or "missing X", grep the fetched source yourself — parser
+  edge cases (e.g. an H1 wrapping a link) have produced false negatives. A false
+  script finding you catch is worth reporting as such.
+- Check the site header template: a logo wrapped in `<h1>` on every page creates
+  duplicate H1s on articles — a template-level fix worth calling out once.
+- Redirect chains (test http/https × www/apex variants yourself), mixed content,
+  and canonical logic across the site.
 - Mobile-first: viewport, tap targets, responsive intent from the HTML/CSS.
 - **Core Web Vitals hygiene** from source (render-blocking resources, un-lazy-loaded
   hero, heavy DOM). Be explicit that real field data needs CrUX/PageSpeed — do not
@@ -35,5 +43,9 @@ The script measures; you interpret. Add value the heuristics can't:
 ## Output to the orchestrator
 - **Technical score:** X/100 (use the script's technical subscore; adjust only with a stated reason)
 - **Findings** (Critical → High → Medium → Low) — each: observation · why it matters · exact fix
+- **Discounted script findings** — anything you verified as a false positive or a
+  page-role non-issue, with one line of reasoning
+- **Deliberate choices — do not "fix"** — owner-intent configurations (e.g. explicit
+  AI-crawler opt-outs) other specialists should respect
 - **Quick wins** (low-effort, high-value)
 Keep it concise; the orchestrator merges many specialists. Never invent metrics.

@@ -25,6 +25,12 @@ STOPWORDS = {
     "have", "more", "some", "than", "them", "then", "into", "just", "over",
     "also", "such", "only", "very", "were", "been", "being", "these", "those",
     "here", "each", "other", "http", "https", "www", "com", "org",
+    # Month names/abbreviations: on date-heavy pages (archives, changelogs) they
+    # dominate raw frequency and get reported as "dominant topics" — they're
+    # dates, not topics (found while tuning on a real blog-archive page).
+    "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "sept",
+    "oct", "nov", "dec", "january", "february", "march", "april", "june",
+    "july", "august", "september", "october", "november", "december",
 }
 
 

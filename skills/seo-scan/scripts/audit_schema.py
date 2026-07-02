@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import json
 
+try:
+    from lib import htmlx
+except ImportError:  # when imported as a package
+    from .lib import htmlx  # type: ignore
+
 CAT = "schema"
 
 # Types Google has retired as rich results (still valid schema.org, but no longer
@@ -116,10 +121,10 @@ def _validate_node(node, found_types, report):
 
 
 def _cross_checks(doc, found_types, report):
-    text_len = len(doc.text or "")
     has_article = any(t in found_types for t in ("Article", "NewsArticle", "BlogPosting"))
-    looks_like_article = text_len > 2500 and len([h for h in doc.headings]) >= 3
-    if looks_like_article and not has_article:
+    # Shared page-type heuristic (og:type / published_time / single <article>) —
+    # raw text length alone misread text-heavy homepages as articles.
+    if htmlx.looks_article(doc) and not has_article:
         report.add(CAT, "low", "Article-like page without Article schema",
                    "Long-form content with no Article/BlogPosting markup.",
                    "Add Article JSON-LD (headline, author, datePublished) to aid "

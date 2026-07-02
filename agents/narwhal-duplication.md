@@ -27,7 +27,18 @@ similarity % and a `canonical_ok` flag (true = the cluster shares one canonical)
 Google: pick one canonical URL per set of duplicates and consolidate signals with
 `rel=canonical` (or 301). Thin, mass-produced near-duplicates risk being filtered.
 
+## Judgment rules (tuned from real audits)
+- **Classify the page first** (homepage / hub-index / article / product) and weigh
+  every script finding against that role — index/hub pages legitimately fail
+  article-shaped checks, and homepages legitimately carry brand-only titles.
+- If the URL is a domain root, sample **one representative inner page** before
+  generalizing about the site.
+- **Respect deliberate owner choices** (e.g. explicit AI-crawler opt-outs in
+  robots.txt): never present reversing an explicit choice as a "fix".
+
 ## Output to the orchestrator
 - **Duplication score:** X/100
 - **Findings** (Critical → Low) — each: the cluster (list URLs + similarity) · why it matters · exact fix (which canonical, applied where)
+- **Discounted script findings** — script output you set aside as a page-type artifact
+  or deliberate choice, one line of reasoning each
 - **Quick wins**
