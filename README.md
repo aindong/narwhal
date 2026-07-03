@@ -67,6 +67,7 @@ And yes, it works as a backronym too:
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only) |
+| **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
 ## Multi-agent deep audit
 
@@ -319,10 +320,12 @@ command:
 /narwhal llms example.com       # generate a starter llms.txt
 /narwhal vitals example.com     # real Core Web Vitals from CrUX (needs a key — see below)
 /narwhal compare you.com rival.com   # side-by-side competitor gap analysis
+/narwhal brief you.com/page rival.com/page   # data-driven content brief (GSC + gaps)
 ```
 
-`/narwhal <action> <site>` takes actions `scan`/`audit`, `crawl`, `sitemap`,
-`llms`, `schema`, `vitals`, and `diff`. You can also just ask Claude naturally:
+`/narwhal <action> <site>` takes actions `scan`/`audit`, `fix`, `brief`,
+`compare`, `crawl`, `sitemap`, `llms`, `schema`, `gsc`, `vitals`, `diff`, and
+`render`. You can also just ask Claude naturally:
 
 > Run an SEO and GEO audit on https://example.com
 

@@ -157,8 +157,9 @@ def gap_analysis(you: dict, rivals: list) -> dict:
 
     # Depth: a rival with substantially deeper prose (both non-hub pages).
     if you["page_kind"] != "hub":
-        deeper = [r for r in rivals if r["page_kind"] != "hub"
-                  and r["words"] >= max(300, int(you["words"] * 1.5))]
+        non_hub = [r for r in rivals if r["page_kind"] != "hub"]
+        deeper = [r for r in non_hub
+                  if r["words"] >= max(300, int(you["words"] * 1.5))]
         if deeper:
             gaps.append({
                 "what": "Content depth",
@@ -166,11 +167,11 @@ def gap_analysis(you: dict, rivals: list) -> dict:
                 "action": f"They run {max(r['words'] for r in deeper)} words to "
                           f"your {you['words']} — cover the missing subtopics, "
                           "don't pad."})
-        elif rivals and all(you["words"] >= max(300, int(r["words"] * 1.5))
-                            for r in rivals if r["page_kind"] != "hub"):
+        elif non_hub and all(you["words"] >= max(300, int(r["words"] * 1.5))
+                             for r in non_hub):
             leads.append({"what": "Content depth",
                           "detail": f"{you['words']} words vs at most "
-                                    f"{max((r['words'] for r in rivals), default=0)}"})
+                                    f"{max(r['words'] for r in non_hub)}"})
 
     # Question-shaped headings (AI-answer matching).
     ahead = [r for r in rivals if r["question_ratio"] >= 0.2]

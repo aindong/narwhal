@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|fix|gsc|compare|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
+argument-hint: <audit|fix|brief|gsc|compare|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -172,6 +172,64 @@ to run post-deploy.
 **Step 6 — Report.** Deliver: the score delta (or "pending deploy"), findings
 resolved (from the diff), files changed, the verify-after-deploy list, and the
 manual-action list. Never fabricate a score.
+
+---
+
+## If `$1` is `brief` → build a data-driven content brief
+
+Turn "what should we write?" into a plan grounded in real data: the page's own
+Search Console queries + the structure of the pages that currently win. Never
+invent search volumes or rankings.
+
+**Step 1 — Inputs.** `$2` is either the user's page URL (a rewrite/refresh) or
+a topic phrase (a page that doesn't exist yet). Competitor URLs may follow as
+`$3`–`$5`. If the user named no competitors, ask which 1–3 pages currently win
+for this topic (they know their SERP); with none provided, proceed — the brief
+degrades honestly to page + GSC data only.
+
+**Step 2 — Deterministic data pack.** Run:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/brief.py" $2 $3 $4 $5 --format json -o narwhal-brief.json
+```
+If `$2` is a topic (not a URL), use `--topic "$2"` with the competitor URLs as
+positionals, and add `--gsc-site <their-site>` when the user has GSC connected
+so the topic is grounded in real adjacent queries. The JSON contains: real
+striking-distance queries for the page (or a `found: false` GSC block), CTR
+laggard / decay / cannibalization status, competitor gaps, missing subtopics,
+questions to answer, schema suggestions, and structure targets.
+
+**Step 3 — Synthesize the editorial brief.** The script measures; you plan.
+Write a brief a writer can execute without further research:
+- **Goal & intent** — what the page must accomplish, and the search intent
+  behind the target queries (informational / commercial / transactional).
+- **Target queries** — from the JSON's `gsc` block only. If it's `found:
+  false`, state plainly that this is a **structure-only brief** and skip the
+  section — never estimate volumes.
+- **Recommended outline** — a concrete H1 + H2/H3 skeleton that covers the
+  missing subtopics and answers the questions list (question-shaped headings
+  where natural). Under each heading, one line on what to say — including a
+  direct first-sentence answer for citability.
+- **Evidence to include** — the kind of stats/sources that close the evidence
+  gap (name real, checkable source types; don't fabricate figures).
+- **Schema to add** — from the JSON, with the `narwhal schema <Type>` command
+  for each; only types matching the page's real entity.
+- **Metadata** — a draft title (≤60 chars) and meta description (140–160
+  chars) targeting the top query; if the page is a CTR laggard, say the
+  rewrite is the priority fix.
+- **What to keep** — the `leads` list, so the rewrite doesn't regress what
+  already works.
+
+**Step 4 — Deliver.** Write it to `narwhal-brief.md`, then render the branded
+HTML like the audit does:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/render_report.py" narwhal-brief.md --subtitle "$2" -o narwhal-brief.html
+```
+Tell the user both file paths. Same formatting rules as `audit` (GitHub
+Markdown, no box art, narrow tables).
+
+Guardrails: every query cited must exist in the JSON; competitor gaps are
+on-page differences, not ranking explanations; if the user's page couldn't be
+fetched, stop and say so.
 
 ---
 

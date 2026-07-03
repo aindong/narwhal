@@ -141,6 +141,27 @@ def _compare(your_url: str, competitor_urls: list, render: bool = False) -> dict
     return compare_mod.run(urls, render=render)
 
 
+def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
+           use_gsc: bool = True) -> dict:
+    """Build a data-driven content brief: your real GSC queries (if credentials
+    are set) + gaps vs the competitor pages that currently win.
+
+    Args:
+        your_url: The page you're rewriting (omit when planning a new page).
+        competitor_urls: 1–3 competitor page URLs to learn structure/gaps from.
+        topic: When ``your_url`` is empty — the topic of the page to plan.
+        use_gsc: Pull striking-distance queries from Search Console (needs GSC
+            credentials in the environment; degrades to a labeled
+            structure-only brief without them).
+
+    Returns target queries (real GSC data only — never invented), competitor
+    gaps, missing subtopics, questions to answer, schema and structure targets.
+    """
+    import brief as brief_mod
+    return brief_mod.run(your_url or None, list(competitor_urls or []),
+                         topic=topic or None, use_gsc=use_gsc)
+
+
 def _diff(old_json: str, new_json: str) -> dict:
     """Diff two JSON reports (from scan or audit) to track regressions over time.
 
@@ -159,6 +180,7 @@ def _diff(old_json: str, new_json: str) -> dict:
 _TOOLS = [
     (_scan, "scan_page"),
     (_compare, "compare_pages"),
+    (_brief, "content_brief"),
     (_crawl, "crawl_site"),
     (_audit, "audit_site"),
     (_sitemap, "validate_sitemap"),

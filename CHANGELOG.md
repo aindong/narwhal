@@ -4,6 +4,41 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.26.0] — 2026-07-03
+
+### Added
+- **`narwhal brief` — data-driven content briefs** (closes
+  [#26](https://github.com/aindong/narwhal/issues/26)). Turns "what should we
+  write?" into a plan grounded in data Narwhal already has — no keyword APIs,
+  no fabricated search volumes:
+  - **Target queries** from the page's own GSC **striking-distance** rows
+    (positions 8–20), plus its CTR-laggard / decay / cannibalization status —
+    real Search Console data only. Without credentials the brief degrades to a
+    clearly labeled **structure-only** brief (queries omitted, never invented).
+  - **Competitor gaps** via the `compare` engine (schema types, meta strategy,
+    OG/social packaging), deduplicated against the structure section.
+  - **Missing subtopics** — competitor H2/H3 sections whose topic words don't
+    appear in your page text (inflection-tolerant matching; nav/footer
+    boilerplate and one-word column labels filtered out).
+  - **Questions to answer** — competitors' question-shaped headings you don't
+    cover + your own question-shaped striking queries.
+  - **Schema suggestions** (`narwhal schema <Type>` for each) and **structure
+    targets** (depth/evidence benchmarks vs the compared pages; hub pages
+    excluded as benchmarks).
+  - **`--topic` mode** plans a page that doesn't exist yet from competitor
+    pages; `--gsc-site` folds in real adjacent queries site-wide.
+  - Wired everywhere: `narwhal brief` CLI, **`/narwhal brief`**
+    (agent-orchestrated editorial synthesis: outline, metadata drafts, branded
+    HTML via `narwhal render`), and MCP tool **`content_brief`**.
+
+### Fixed
+- **`compare`: false "Content depth" lead when every rival is a hub page**
+  (found live while building the brief). The lead check's `all()` over non-hub
+  rivals was vacuously true, so a 138-word page "led" a 521-word competitor.
+  Depth gap/lead now compares only non-hub rivals, with a regression test.
+
+12 new tests (191 total), green stdlib-only and with bs4/lxml/trafilatura.
+
 ## [1.25.1] — 2026-07-02
 
 ### Fixed

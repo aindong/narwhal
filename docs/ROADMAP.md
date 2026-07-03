@@ -138,8 +138,11 @@ without breaking local-first (nothing below needs a paid API).
   outside-sample targets are unverified, never broken. — [#25](https://github.com/aindong/narwhal/issues/25)
 
 ### P2 — the strategy loop, done our way
-- ⬜ **Content-brief flow** — briefs grounded in real GSC queries + the compare
-  gap, not fabricated volumes. — [#26](https://github.com/aindong/narwhal/issues/26)
+- ✅ **Content-brief flow** — `narwhal brief` / `/narwhal brief`: briefs
+  grounded in real GSC striking-distance queries + the compare gap, missing
+  subtopics, questions to answer, schema + structure targets; `--topic` mode
+  for new pages; MCP `content_brief`; honest structure-only degradation.
+  — [#26](https://github.com/aindong/narwhal/issues/26)
 - ⬜ **E-commerce checks** — Product/offers completeness, page-vs-schema
   mismatches, conditional store specialist.
   — [#27](https://github.com/aindong/narwhal/issues/27)

@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-02 · version **1.25.1**_
+_Last updated: 2026-07-03 · version **1.26.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -81,7 +81,17 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   noscript-fallback measurement + architecture finding. Two graded agent runs
   (schema, performance — the perf agent caught the srcset caveat in our own
   check). Full evidence in `docs/tuning/2026-07-round-2/`.
-- **Tests:** 179, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **#26 shipped (v1.26.0): `narwhal brief` — data-driven content briefs.**
+  GSC striking-distance queries for the page (+ laggard/decay/cannibalization
+  status) + compare gaps + missing subtopics (competitor H2/H3 vs your text,
+  inflection-tolerant) + questions to answer + schema/structure targets.
+  `--topic` mode for pages that don't exist yet (`--gsc-site` grounds it in
+  real adjacent queries). Honest degradation: structure-only brief without GSC
+  creds — queries omitted, never invented. Wired as `narwhal brief`,
+  agent-orchestrated `/narwhal brief` (editorial outline + branded HTML), and
+  MCP `content_brief`. Also fixed a live-found `compare` bug: vacuous depth
+  "lead" when all rivals are hub pages.
+- **Tests:** 191, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -98,7 +108,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.25.1 (26 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.26.0 (27 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -108,7 +118,7 @@ narwhal/
 ├── agents/                10 specialist subagents (narwhal-*.md)
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
-│   ├── scripts/           scan, compare, crawl_site, validate_sitemap,
+│   ├── scripts/           scan, compare, brief, crawl_site, validate_sitemap,
 │   │                      generate_schema, generate_llms, audit, diff_scan,
 │   │                      render_report, crux, psi, gsc, mcp_server, cli
 │   │                      + lib/ (http, htmlx, report, robots, links, sitemap,
@@ -131,7 +141,7 @@ local-first (see ROADMAP "Next wave" for detail):
 - ~~#23~~ JS-dependence check — **shipped v1.22.0** (lib/jsdiff.py, --render diffs raw vs rendered)
 - ~~#24~~ Image weight/format + og:image — **shipped v1.23.0** (lib/images.py, HEAD-budgeted + dimension probe)
 - ~~#25~~ Hreflang reciprocity — **shipped v1.24.0** (lib/hreflang.py, probe + exact pairs) — P1 tier complete
-- **#26** Content-brief flow (GSC + compare grounded) (P2)
+- ~~#26~~ Content-brief flow — **shipped v1.26.0** (brief.py, /narwhal brief, MCP content_brief)
 - **#27** E-commerce checks + conditional store specialist (P2)
 - **#28** Test-suite health: split monolith + golden-file tests (P3)
 

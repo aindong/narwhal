@@ -80,6 +80,25 @@ evidence, social packaging) and **"Where you lead"**. Honesty rule: it compares
 served HTML only — never claim a gap explains rankings, and no rank/keyword data
 is used or implied.
 
+**Build a data-driven content brief** (what to *write*, grounded in real data —
+no keyword APIs, no invented volumes):
+```
+python scripts/brief.py https://you.com/page https://rival.com/page
+python scripts/brief.py --topic "widget calibration" https://rival.com/guide
+```
+Combines the page's own **striking-distance GSC queries** (positions 8–20 —
+demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
+the **competitor gap analysis**, **missing subtopics** (competitor H2/H3
+sections whose topic words don't appear in your text), **questions to answer**
+(their question headings + your question-shaped queries), schema suggestions,
+and structure targets (depth/evidence benchmarks vs the compared pages, hub
+pages excluded). `--topic` mode plans a page that doesn't exist yet from
+competitor pages only (add `--gsc-site <your-site>` to fold in real adjacent
+queries). Without GSC credentials it produces a clearly labeled
+**structure-only** brief — target queries are omitted, never invented.
+`/narwhal brief` layers an editorial synthesis (outline, metadata drafts) on
+top of this data.
+
 **Audit a whole site** (discovers URLs via sitemap or internal links, rolls up
 the issues that recur most — the highest-leverage fixes):
 ```
