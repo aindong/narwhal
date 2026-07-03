@@ -64,6 +64,23 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   Depth findings state their extraction basis (trafilatura vs visible text).
   `${CLAUDE_PLUGIN_ROOT}` confirmed resolving for subagents. Scores on well-run
   sites corrected: jvns 62→79, HN 52→66, pydocs 75→86, Verge 71→80.
+- **Next wave P1 tier fully shipped (v1.20–v1.24, one release per feature):**
+  **#21** `narwhal compare` (competitor gap analysis, `compare.py`, MCP
+  `compare_pages`) · **#22** site-graph analysis (`lib/sitegraph.py`: click
+  depth, orphan candidates, link equity — always-on in crawl/audit) · **#23**
+  JS-dependence (`lib/jsdiff.py`: `--render` diffs served HTML vs rendered DOM)
+  · **#24** image checks (`lib/images.py`: HEAD-budgeted weights, formats,
+  og:image dimension probe) · **#25** hreflang reciprocity (`lib/hreflang.py`:
+  exact missing return pairs + capped alternate probe).
+- **Tuning Round 2 (v1.25.0) + corpus addition (v1.25.1):** corpus 8 → 15 pages
+  (product/article/recipe/French/hreflang/dead-URL page types +
+  openskyelabs.xyz, a `<noscript>`-shell site that exposed a parser gap). Six
+  fixes at source: hard-fail score 0 for unfetchable pages, og:image gated ≠
+  broken, non-English skips English-calibrated checks, article-scoped
+  readability, hub-aware no-JSON-LD, srcset-aware heavy images; plus
+  noscript-fallback measurement + architecture finding. Two graded agent runs
+  (schema, performance — the perf agent caught the srcset caveat in our own
+  check). Full evidence in `docs/tuning/2026-07-round-2/`.
 - **Tests:** 179, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
@@ -81,7 +98,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.16.1. Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.25.1 (26 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -91,13 +108,16 @@ narwhal/
 ├── agents/                10 specialist subagents (narwhal-*.md)
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
-│   ├── scripts/           scan, crawl_site, validate_sitemap, generate_schema,
-│   │                      generate_llms, audit, diff_scan, render_report, crux, psi, mcp_server, cli + lib/ (http, htmlx, report,
-│   │                      robots, links, sitemap, simhash, text, content_quality,
-│   │                      config, env, brand)
+│   ├── scripts/           scan, compare, crawl_site, validate_sitemap,
+│   │                      generate_schema, generate_llms, audit, diff_scan,
+│   │                      render_report, crux, psi, gsc, mcp_server, cli
+│   │                      + lib/ (http, htmlx, report, robots, links, sitemap,
+│   │                      simhash, text, content_quality, config, env, brand,
+│   │                      sitegraph, jsdiff, images, hreflang)
 │   ├── references/        deep-dive guidance per auditor
 │   └── tests/             offline unittest suite (no network, no deps)
-├── docs/                  ROADMAP, CONFIG, STATUS (this), index, samples/
+├── docs/                  ROADMAP, CONFIG, STATUS (this), index, samples/,
+│                          tuning/ (published tuning rounds + raw snapshots)
 ├── narwhal.example.toml   config template
 └── pyproject.toml         uvx/pip packaging (narwhal-seo)
 ```
@@ -128,7 +148,12 @@ python -m unittest discover -s skills/seo-scan/tests -v   # run tests (no deps)
 python skills/seo-scan/scripts/scan.py https://example.com  # try a scan
 claude plugin validate .                                  # validate plugin manifests
 ```
-CI runs on every push/PR (`.github/workflows/ci.yml`).
+CI runs on every push/PR (`.github/workflows/ci.yml`). Two hard-won practices:
+- **Verify parser/auditor changes in a bs4 venv too** (`pip install requests
+  beautifulsoup4 lxml trafilatura` then re-run the suite) — the backends
+  disagreeing has failed CI's `with-extras` job before while local stdlib runs
+  were green.
+- **No AI co-author trailers in commits/PRs** — repository owner's preference.
 
 ## Release process
 1. Bump the version in **5 places** (keep in sync):
