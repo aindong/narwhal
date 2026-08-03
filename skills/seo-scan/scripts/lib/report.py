@@ -8,8 +8,21 @@ sees what to fix and why, not a wall of raw data.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from typing import Optional
+
+REPORT_SCHEMA_VERSION = "2.0"
+
+try:
+    from importlib.metadata import version as _package_version
+except ImportError:  # Python 3.8
+    from importlib_metadata import version as _package_version  # type: ignore
+
+try:
+    TOOL_VERSION = _package_version("narwhal-seo")
+except Exception:  # loose-script/plugin execution
+    TOOL_VERSION = "1.26.0"
 
 # Ordered worst -> best. Weights feed the 0-100 health score.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -31,10 +44,19 @@ class Finding:
     detail: str = ""         # what was observed
     recommendation: str = "" # concrete fix
     evidence: Optional[str] = None  # snippet / value
+    rule_id: str = ""          # stable machine identity; title remains presentation
+    scope: str = "page"        # page | site | external
+    confidence: float = 1.0     # 0..1; heuristic rules may lower this
 
     def __post_init__(self):
         if self.severity not in SEVERITY:
             raise ValueError(f"bad severity: {self.severity}")
+        if not 0 <= self.confidence <= 1:
+            raise ValueError("confidence must be between 0 and 1")
+        if not self.rule_id:
+            base = self.title.split(" (")[0].strip().lower()
+            slug = re.sub(r"[^a-z0-9]+", ".", base).strip(".")
+            self.rule_id = f"{self.category}.{slug}"
 
 
 @dataclass
@@ -92,6 +114,8 @@ class Report:
     def to_json(self) -> str:
         return json.dumps(
             {
+                "schema_version": REPORT_SCHEMA_VERSION,
+                "tool_version": TOOL_VERSION,
                 "url": self.url,
                 "final_url": self.final_url,
                 "status": self.fetched_status,
