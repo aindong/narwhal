@@ -254,6 +254,8 @@ def render_html(data: dict) -> str:
 def render_json(data: dict) -> str:
     import json
     payload = {
+        "schema_version": report_lib.REPORT_SCHEMA_VERSION,
+        "tool_version": report_lib.TOOL_VERSION,
         "site": data["site"],
         "overall_score": overall_score(data),
         "homepage": json.loads(data["page"].to_json()),

@@ -37,7 +37,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # (e.g. for a friendly "mcp not installed" message) even in odd environments.
 
 
-def _scan(url: str, render: bool = False, only: str = "") -> dict:
+def _scan(url: str, render: bool = False, only: str = "", timeout: int = 20,
+          max_bytes: int = 5_000_000) -> dict:
     """Audit a single page for SEO + GEO/LLMO and return the full report as JSON.
 
     Args:
@@ -46,43 +47,63 @@ def _scan(url: str, render: bool = False, only: str = "") -> dict:
             optional playwright extra.
         only: Comma-separated subset of auditors to run: technical,content,schema,geo.
             Empty runs all four.
+        timeout: Per-request timeout in seconds (1–120).
+        max_bytes: Maximum HTML bytes retained (64KB–20MB).
 
     Returns a dict with score, per-severity counts, and every finding
     (category, severity, title, detail, recommendation, evidence).
     """
     import scan as scan_mod
     subset = [s.strip() for s in only.split(",") if s.strip()] or None
-    report = scan_mod.scan(url, render=render, only=subset)
+    timeout = max(1, min(int(timeout), 120))
+    max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
+    report = scan_mod.scan(url, render=render, only=subset, timeout=timeout,
+                           max_bytes=max_bytes)
     return json.loads(report.to_json())
 
 
-def _crawl(url: str, max_pages: int = 15, check_links: bool = True) -> dict:
+def _crawl(url: str, max_pages: int = 15, check_links: bool = False,
+           timeout: int = 20, concurrency: int = 4) -> dict:
     """Crawl a whole site and roll up the recurring, highest-leverage issues.
 
     Args:
         url: The site URL to start from.
         max_pages: Maximum pages to scan (polite crawler; honors robots.txt).
         check_links: Also HEAD-check outbound links for 4xx/5xx/dead.
+        timeout: Per-request timeout in seconds (1–120).
+        concurrency: Concurrent page requests (1–8).
 
     Returns weakest pages, most-common issues, broken links, and near-duplicate
     clusters, plus the average score.
     """
     import crawl_site as crawl_mod
-    result = crawl_mod.crawl(url, max_pages=max_pages, check_links=check_links)
+    max_pages = max(1, min(int(max_pages), 100))
+    timeout = max(1, min(int(timeout), 120))
+    concurrency = max(1, min(int(concurrency), 8))
+    result = crawl_mod.crawl(url, max_pages=max_pages, check_links=check_links,
+                             timeout=timeout, concurrency=concurrency)
     return json.loads(crawl_mod.render_json(result))
 
 
-def _audit(url: str, max_pages: int = 15) -> dict:
+def _audit(url: str, max_pages: int = 15, render: bool = False,
+           timeout: int = 20, concurrency: int = 4) -> dict:
     """Run the comprehensive audit: homepage + site crawl + sitemap in one report.
 
     Args:
         url: The site URL to audit.
         max_pages: Maximum pages for the crawl portion.
+        render: Render JavaScript with Playwright (expensive; use for SPAs).
+        timeout: Per-request timeout in seconds (1–120).
+        concurrency: Concurrent crawl requests (1–8).
 
     Returns the overall score plus the homepage, crawl, and sitemap sub-reports.
     """
     import audit as audit_mod
-    data = audit_mod.run(url, max_pages=max_pages)
+    max_pages = max(1, min(int(max_pages), 100))
+    timeout = max(1, min(int(timeout), 120))
+    concurrency = max(1, min(int(concurrency), 8))
+    data = audit_mod.run(url, max_pages=max_pages, render=render,
+                         timeout=timeout, concurrency=concurrency)
     return json.loads(audit_mod.render_json(data))
 
 

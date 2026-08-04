@@ -55,6 +55,8 @@ def _key(finding: dict):
     Titles can carry a dynamic suffix (e.g. "Thin content (210 words)"); we
     strip a trailing parenthetical so the same issue matches run-to-run even as
     the measured number changes."""
+    if finding.get("rule_id"):
+        return (finding.get("category", ""), finding["rule_id"])
     title = str(finding.get("title", ""))
     base = title.split(" (")[0].strip().lower()
     return (finding.get("category", ""), base)

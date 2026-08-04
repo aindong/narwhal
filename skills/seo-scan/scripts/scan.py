@@ -76,7 +76,7 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
 def scan(url: str, *, render=False, allow_private=False, timeout=20,
          only=None, ctx=None, collect_links=False, collect_fingerprint=False,
-         config=None, check_images=True) -> Report:
+         config=None, check_images=True, max_bytes=5_000_000) -> Report:
     """Audit a single page. Pass ``ctx`` (from :func:`gather_context`) to reuse
     site-level signals across many pages — the crawler does this so robots.txt,
     sitemap, and llms.txt are fetched once per site rather than once per page.
@@ -84,11 +84,22 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     (used by the crawler's broken-link checker). ``config`` (a Config) tunes
     scoring weights, ignore rules, and check thresholds."""
     config = config or configlib.Config()
-    resp = http.fetch(url, render=render, allow_private=allow_private, timeout=timeout)
+    selected = only or list(AUDITORS)
+    unknown = sorted(set(selected) - set(AUDITORS))
+    if unknown:
+        raise ValueError("Unknown auditor(s): " + ", ".join(unknown))
+    max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
+    resp = http.fetch(url, render=render, allow_private=allow_private, timeout=timeout,
+                      max_bytes=max_bytes)
     report = Report(url=url, final_url=resp.final_url, fetched_status=resp.status,
                     rendered=resp.rendered, weights=config.weights,
                     ignore=config.is_ignored)
     report.meta["elapsed_ms"] = resp.elapsed_ms
+    report.meta["redirects"] = resp.redirects
+    report.meta["coverage"] = {
+        "response_byte_limit": max_bytes,
+        "response_truncated": resp.headers.get("x-narwhal-truncated") == "true",
+    }
 
     if not resp.ok:
         report.hard_fail = True   # no measurable health; score is 0, not 88
@@ -96,6 +107,23 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                    f"Status {resp.status}" + (f": {resp.error}" if resp.error else ""),
                    "Verify the URL is public and returns 200 before auditing.")
         return report
+
+    content_type = resp.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type and content_type not in ("text/html", "application/xhtml+xml"):
+        report.hard_fail = True
+        report.add("technical", "critical", "URL did not return an HTML page",
+                   f"Content-Type was {content_type!r}.",
+                   "Scan a public HTML page URL, or use the dedicated sitemap/schema tool.",
+                   rule_id="technical.response.non_html")
+        return report
+
+    if resp.headers.get("x-narwhal-truncated") == "true":
+        report.meta["response_truncated"] = True
+        report.add("technical", "medium", "Response exceeded scan byte limit",
+                   f"Only the first {max_bytes / 1_000_000:g} MB of the response was analyzed.",
+                   "Reduce the HTML response size or raise the explicit scan budget; "
+                   "treat other findings as based on partial coverage.",
+                   rule_id="technical.response.truncated", scope="page")
 
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
     report._doc = doc   # non-serialized handle for tools that need the parse (compare)
@@ -126,7 +154,6 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
             report.meta["js_dependence"] = {
                 k: dep[k] for k in ("words_raw", "words_rendered", "js_only_pct")}
 
-    selected = only or list(AUDITORS)
     for name in selected:
         fn = AUDITORS.get(name)
         if fn:
@@ -158,6 +185,8 @@ def main(argv=None) -> int:
     ap.add_argument("--only", help="comma-separated subset: technical,content,schema,geo")
     ap.add_argument("-o", "--output", help="write report to a file")
     ap.add_argument("--timeout", type=int, default=cfg.default("timeout"))
+    ap.add_argument("--max-bytes", type=int, default=5_000_000, metavar="N",
+                    help="maximum HTML response bytes to analyze (64KB–20MB; default 5MB)")
     ap.add_argument("--allow-private", action="store_true",
                     help="permit private/localhost hosts (off by default for SSRF safety)")
     ap.add_argument("--no-image-checks", action="store_true",
@@ -177,7 +206,7 @@ def main(argv=None) -> int:
     only = [s.strip() for s in args.only.split(",")] if args.only else None
     report = scan(args.url, render=args.render, allow_private=args.allow_private,
                   timeout=args.timeout, only=only, config=cfg,
-                  check_images=not args.no_image_checks)
+                  check_images=not args.no_image_checks, max_bytes=args.max_bytes)
 
     renderers = {
         "json": report.to_json,

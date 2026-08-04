@@ -13,12 +13,14 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 from urllib.parse import urlparse, urlunparse
+from urllib.parse import urljoin
 
 DEFAULT_UA = (
     "Mozilla/5.0 (compatible; seo-scan/1.0; +local-audit) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
 DEFAULT_TIMEOUT = 20
+MAX_REDIRECTS = 10
 
 
 @dataclass
@@ -86,6 +88,86 @@ def assert_public_host(url: str, allow_private: bool = False) -> None:
             raise SSRFError(f"Host {host!r} resolves to blocked address {ip}")
 
 
+def _redirect_target(current_url: str, location: str, *, allow_private=False) -> str:
+    """Resolve and validate one redirect hop before any request is made to it."""
+    target = normalize_url(urljoin(current_url, location))
+    assert_public_host(target, allow_private=allow_private)
+    return target
+
+
+def _limited_content(response, max_bytes: int) -> tuple:
+    """Read at most ``max_bytes`` from a streaming requests response."""
+    chunks, size, truncated = [], 0, False
+    for chunk in response.iter_content(chunk_size=65536):
+        if not chunk:
+            continue
+        remaining = max_bytes - size
+        if remaining <= 0:
+            truncated = True
+            break
+        chunks.append(chunk[:remaining])
+        size += min(len(chunk), remaining)
+        if len(chunk) > remaining:
+            truncated = True
+            break
+        if size >= max_bytes:
+            length = response.headers.get("content-length")
+            if str(length or "").isdigit() and int(length) > max_bytes:
+                truncated = True
+                break
+            # With no trustworthy length, consume at most the next yielded chunk
+            # to distinguish an exactly-max-sized body from a larger one.
+            continue
+    return b"".join(chunks), truncated
+
+
+def _requests_safe(requests, method: str, url: str, *, timeout: int,
+                   headers: dict, allow_private: bool, stream=False):
+    """Make a requests call while validating every redirect target."""
+    current, redirects = url, []
+    for _ in range(MAX_REDIRECTS + 1):
+        response = requests.request(method, current, headers=headers, timeout=timeout,
+                                    allow_redirects=False, stream=stream)
+        if response.is_redirect or response.is_permanent_redirect:
+            location = response.headers.get("location")
+            response.close()
+            if not location:
+                return response, current, redirects
+            if len(redirects) >= MAX_REDIRECTS:
+                raise requests.TooManyRedirects(f"more than {MAX_REDIRECTS} redirects")
+            current = _redirect_target(current, location, allow_private=allow_private)
+            redirects.append(current)
+            continue
+        return response, current, redirects
+    raise requests.TooManyRedirects(f"more than {MAX_REDIRECTS} redirects")
+
+
+def _urllib_safe_open(url: str, *, timeout: int, headers: dict,
+                      allow_private: bool, method="GET"):
+    """Open with urllib while validating each redirect before following it."""
+    import urllib.error
+    import urllib.request
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, response_headers, newurl):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect)
+    current, redirects = url, []
+    while True:
+        req = urllib.request.Request(current, headers=headers, method=method)
+        try:
+            return opener.open(req, timeout=timeout), current, redirects
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (301, 302, 303, 307, 308) or not exc.headers.get("Location"):
+                raise
+            if len(redirects) >= MAX_REDIRECTS:
+                raise SSRFError(f"Too many redirects (>{MAX_REDIRECTS})")
+            current = _redirect_target(current, exc.headers["Location"],
+                                       allow_private=allow_private)
+            redirects.append(current)
+
+
 def fetch(
     url: str,
     *,
@@ -105,62 +187,71 @@ def fetch(
     assert_public_host(url, allow_private=allow_private)
 
     if render:
-        rendered = _try_render(url, timeout=timeout, user_agent=user_agent)
+        rendered = _try_render(url, timeout=timeout, user_agent=user_agent,
+                               allow_private=allow_private)
         if rendered is not None:
             return rendered
 
     start = time.time()
     try:
-        resp = _fetch_requests(url, timeout, user_agent, max_bytes)
+        resp = _fetch_requests(url, timeout, user_agent, max_bytes,
+                               allow_private=allow_private)
     except ImportError:
-        resp = _fetch_urllib(url, timeout, user_agent, max_bytes)
+        resp = _fetch_urllib(url, timeout, user_agent, max_bytes,
+                            allow_private=allow_private)
     resp.elapsed_ms = int((time.time() - start) * 1000)
     return resp
 
 
-def _fetch_requests(url, timeout, user_agent, max_bytes) -> Response:
+def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) -> Response:
     import requests  # noqa: PLC0415
 
-    r = requests.get(
-        url,
-        headers={"User-Agent": user_agent, "Accept": "text/html,*/*"},
-        timeout=timeout,
-        allow_redirects=True,
-    )
-    text = r.text
-    if len(r.content) > max_bytes:
-        text = r.content[:max_bytes].decode(r.encoding or "utf-8", "replace")
-    redirects = [h.url for h in r.history]
+    try:
+        r, current, redirects = _requests_safe(
+            requests, "GET", url, timeout=timeout,
+            headers={"User-Agent": user_agent, "Accept": "text/html,*/*"},
+            allow_private=allow_private, stream=True)
+    except (requests.TooManyRedirects, SSRFError, ValueError) as exc:
+        return Response(url, url, 0, {}, "", 0, error=str(exc))
+    raw, truncated = _limited_content(r, max_bytes)
+    encoding = r.encoding or "utf-8"
+    text = raw.decode(encoding, "replace")
+    headers = {k.lower(): v for k, v in r.headers.items()}
+    if truncated:
+        headers["x-narwhal-truncated"] = "true"
+    r.close()
     return Response(
         url=url,
-        final_url=r.url,
+        final_url=current,
         status=r.status_code,
-        headers={k.lower(): v for k, v in r.headers.items()},
+        headers=headers,
         text=text,
         elapsed_ms=0,
         redirects=redirects,
     )
 
 
-def _fetch_urllib(url, timeout, user_agent, max_bytes) -> Response:
+def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> Response:
     import urllib.error  # noqa: PLC0415
     import urllib.request  # noqa: PLC0415
 
-    req = urllib.request.Request(
-        url, headers={"User-Agent": user_agent, "Accept": "text/html,*/*"}
-    )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as fh:
-            raw = fh.read(max_bytes)
+        fh, current, redirects = _urllib_safe_open(
+            url, timeout=timeout,
+            headers={"User-Agent": user_agent, "Accept": "text/html,*/*"},
+            allow_private=allow_private)
+        with fh:
+            raw = fh.read(max_bytes + 1)
+            truncated = len(raw) > max_bytes
+            raw = raw[:max_bytes]
+            headers = {k.lower(): v for k, v in fh.headers.items()}
             charset = fh.headers.get_content_charset() or "utf-8"
-            return Response(
-                url=url,
-                final_url=fh.geturl(),
-                status=fh.status,
-                headers={k.lower(): v for k, v in fh.headers.items()},
-                text=raw.decode(charset, "replace"),
-                elapsed_ms=0,
-            )
+            status = fh.status
+            if truncated:
+                headers["x-narwhal-truncated"] = "true"
+        return Response(url=url, final_url=current, status=status, headers=headers,
+                        text=raw.decode(charset, "replace"), elapsed_ms=0,
+                        redirects=redirects)
     except urllib.error.HTTPError as exc:
         body = exc.read(max_bytes).decode("utf-8", "replace") if exc.fp else ""
         return Response(
@@ -188,7 +279,7 @@ def _browser_launch_hint(exc) -> str:
     return f"Playwright render failed: {msg}"
 
 
-def _try_render(url, timeout, user_agent) -> Optional[Response]:
+def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Response]:
     """Render ``url`` with headless Chromium and return the post-JS DOM.
 
     Returns ``None`` only when Playwright isn't installed at all, so the caller
@@ -220,6 +311,15 @@ def _try_render(url, timeout, user_agent) -> Optional[Response]:
             try:
                 page = browser.new_page(user_agent=user_agent)
                 page.set_default_timeout(nav_ms)
+                if not allow_private:
+                    def guard_request(route):
+                        try:
+                            assert_public_host(route.request.url)
+                        except (ValueError, SSRFError):
+                            route.abort("blockedbyclient")
+                            return
+                        route.continue_()
+                    page.route("**/*", guard_request)
                 resp = page.goto(url, wait_until="domcontentloaded", timeout=nav_ms)
                 # Best-effort settle for late XHR/hydration. networkidle can hang on
                 # sites with long-polling/analytics, so cap it and proceed with
@@ -233,6 +333,7 @@ def _try_render(url, timeout, user_agent) -> Optional[Response]:
                 headers = {k.lower(): v
                            for k, v in (resp.headers if resp else {}).items()}
                 final_url = page.url
+                assert_public_host(final_url, allow_private=allow_private)
             finally:
                 browser.close()
         return Response(
@@ -273,18 +374,25 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
     try:
         import requests  # noqa: PLC0415
         try:
-            r = requests.get(url, headers={"User-Agent": user_agent},
-                             timeout=timeout, allow_redirects=True)
-            return (r.content[:max_bytes], None if r.ok else f"HTTP {r.status_code}")
-        except requests.RequestException as exc:
+            r, _, _ = _requests_safe(
+                requests, "GET", url, timeout=timeout,
+                headers={"User-Agent": user_agent}, allow_private=allow_private,
+                stream=True)
+            raw, _ = _limited_content(r, max_bytes)
+            error = None if r.ok else f"HTTP {r.status_code}"
+            r.close()
+            return raw, error
+        except (requests.RequestException, SSRFError, ValueError) as exc:
             return None, type(exc).__name__
     except ImportError:
         pass
     import urllib.error  # noqa: PLC0415
     import urllib.request  # noqa: PLC0415
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": user_agent})
-        with urllib.request.urlopen(req, timeout=timeout) as fh:
+        fh, _, _ = _urllib_safe_open(
+            url, timeout=timeout, headers={"User-Agent": user_agent},
+            allow_private=allow_private)
+        with fh:
             return fh.read(max_bytes), None
     except urllib.error.HTTPError as exc:
         return None, f"HTTP {exc.code}"
@@ -305,19 +413,21 @@ def head_info(url: str, *, timeout: int = DEFAULT_TIMEOUT,
     try:
         import requests  # noqa: PLC0415
         try:
-            r = requests.head(url, headers={"User-Agent": user_agent},
-                              timeout=timeout, allow_redirects=True)
+            r, _, _ = _requests_safe(
+                requests, "HEAD", url, timeout=timeout,
+                headers={"User-Agent": user_agent}, allow_private=allow_private)
             return r.status_code, {k.lower(): v for k, v in r.headers.items()}, None
-        except requests.RequestException as exc:
+        except (requests.RequestException, SSRFError, ValueError) as exc:
             return 0, {}, type(exc).__name__
     except ImportError:
         pass
     import urllib.error  # noqa: PLC0415
     import urllib.request  # noqa: PLC0415
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": user_agent},
-                                     method="HEAD")
-        with urllib.request.urlopen(req, timeout=timeout) as fh:
+        fh, _, _ = _urllib_safe_open(
+            url, timeout=timeout, headers={"User-Agent": user_agent},
+            allow_private=allow_private, method="HEAD")
+        with fh:
             return fh.status, {k.lower(): v for k, v in fh.headers.items()}, None
     except urllib.error.HTTPError as exc:
         return exc.code, {k.lower(): v for k, v in (exc.headers or {}).items()}, None
@@ -339,8 +449,9 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
     try:
         import requests  # noqa: PLC0415
         try:
-            r = requests.get(url, headers=headers, timeout=timeout,
-                             allow_redirects=True, stream=True)
+            r, _, _ = _requests_safe(
+                requests, "GET", url, timeout=timeout, headers=headers,
+                allow_private=allow_private, stream=True)
             buf = b""
             for chunk in r.iter_content(chunk_size=8192):
                 buf += chunk
@@ -348,15 +459,16 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
                     break
             r.close()
             return buf[:n], None if r.status_code < 400 else f"HTTP {r.status_code}"
-        except requests.RequestException as exc:
+        except (requests.RequestException, SSRFError, ValueError) as exc:
             return None, type(exc).__name__
     except ImportError:
         pass
     import urllib.error  # noqa: PLC0415
     import urllib.request  # noqa: PLC0415
     try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=timeout) as fh:
+        fh, _, _ = _urllib_safe_open(
+            url, timeout=timeout, headers=headers, allow_private=allow_private)
+        with fh:
             return fh.read(n), None
     except urllib.error.HTTPError as exc:
         return None, f"HTTP {exc.code}"
@@ -381,34 +493,39 @@ def head(url: str, *, timeout: int = DEFAULT_TIMEOUT, user_agent: str = DEFAULT_
     except SSRFError as exc:
         return 0, str(exc)
     try:
-        return _head_requests(url, timeout, user_agent)
+        return _head_requests(url, timeout, user_agent,
+                              allow_private=allow_private)
     except ImportError:
-        return _head_urllib(url, timeout, user_agent)
+        return _head_urllib(url, timeout, user_agent,
+                            allow_private=allow_private)
 
 
-def _head_requests(url, timeout, user_agent):
+def _head_requests(url, timeout, user_agent, allow_private=False):
     import requests  # noqa: PLC0415
 
     headers = {"User-Agent": user_agent}
     try:
-        r = requests.head(url, headers=headers, timeout=timeout, allow_redirects=True)
+        r, _, _ = _requests_safe(requests, "HEAD", url, timeout=timeout,
+                                  headers=headers, allow_private=allow_private)
         if r.status_code in (403, 405, 501):  # some servers refuse HEAD
-            r = requests.get(url, headers=headers, timeout=timeout,
-                             allow_redirects=True, stream=True)
+            r, _, _ = _requests_safe(requests, "GET", url, timeout=timeout,
+                                      headers=headers, allow_private=allow_private,
+                                      stream=True)
             r.close()
         return r.status_code, None
-    except requests.RequestException as exc:
+    except (requests.RequestException, SSRFError, ValueError) as exc:
         return 0, type(exc).__name__
 
 
-def _head_urllib(url, timeout, user_agent):
+def _head_urllib(url, timeout, user_agent, allow_private=False):
     import urllib.error  # noqa: PLC0415
     import urllib.request  # noqa: PLC0415
 
     def _try(method):
-        req = urllib.request.Request(url, headers={"User-Agent": user_agent},
-                                     method=method)
-        with urllib.request.urlopen(req, timeout=timeout) as fh:
+        fh, _, _ = _urllib_safe_open(
+            url, timeout=timeout, headers={"User-Agent": user_agent},
+            allow_private=allow_private, method=method)
+        with fh:
             return fh.status, None
 
     try:
