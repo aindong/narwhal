@@ -103,6 +103,14 @@ labeled *verify after deploy*. If the source isn't in the workspace, it makes no
 edits and hands you a per-finding fix plan instead. A SaaS auditor emits a PDF —
 Narwhal emits a diff.
 
+Before editing, `narwhal plan before.json --repo .` produces a versioned,
+read-only remediation contract. It detects plain HTML, Next.js, Astro, Nuxt,
+Hugo, or Jekyll; maps stable finding IDs to likely route/layout/static owners;
+groups shared-template fixes; flags policy conflicts; and separates safe,
+review-required, external, and post-deploy work. Use `--format json` for agents
+or the concise Markdown default for humans. It proposes work but never edits.
+See the [remediation-plan contract](docs/REMEDIATION_PLAN.md).
+
 ## Real search data (Google Search Console, opt-in)
 
 Audits guess at priority from severity; **your own query data removes the
@@ -321,10 +329,11 @@ command:
 /narwhal vitals example.com     # real Core Web Vitals from CrUX (needs a key — see below)
 /narwhal compare you.com rival.com   # side-by-side competitor gap analysis
 /narwhal brief you.com/page rival.com/page   # data-driven content brief (GSC + gaps)
+/narwhal plan before.json        # read-only finding-to-source remediation plan
 ```
 
 `/narwhal <action> <site>` takes actions `scan`/`audit`, `fix`, `brief`,
-`compare`, `crawl`, `sitemap`, `llms`, `schema`, `gsc`, `vitals`, `diff`, and
+`compare`, `plan`, `crawl`, `sitemap`, `llms`, `schema`, `gsc`, `vitals`, `diff`, and
 `render`. You can also just ask Claude naturally:
 
 > Run an SEO and GEO audit on https://example.com
@@ -362,9 +371,10 @@ uvx --from git+https://github.com/aindong/narwhal narwhal crawl https://example.
 uvx --from git+https://github.com/aindong/narwhal narwhal schema Article --field headline="…"
 uvx --from git+https://github.com/aindong/narwhal narwhal sitemap https://example.com
 uvx --from git+https://github.com/aindong/narwhal narwhal llms https://example.com
+uvx --from git+https://github.com/aindong/narwhal narwhal plan before.json --repo .
 ```
 
-The unified `narwhal` command has subcommands `audit`, `scan`, `crawl`, `schema`,
+The unified `narwhal` command includes `audit`, `scan`, `plan`, `crawl`, `schema`,
 `sitemap`, `llms`, and `diff` (run any with `-h`). Prefer a stable command? Alias it:
 
 ```bash
@@ -394,7 +404,9 @@ tools in the format those agents read. Then ask for an audit.
 Narwhal can also run as a [Model Context Protocol](https://modelcontextprotocol.io)
 server, exposing every auditor as a native tool (`scan_page`, `crawl_site`,
 `audit_site`, `validate_sitemap`, `generate_llms`, `generate_schema`,
-`diff_reports`) over stdio. It's a thin, typed adapter over the same scripts — no
+`diff_reports`, `plan_remediation`) over stdio. The planner accepts a parsed report
+object and only relative repository paths beneath the server working directory;
+it is bounded and read-only. The server is a typed adapter over the same scripts — no
 new analysis, so results match the CLI exactly.
 
 ```bash
@@ -413,6 +425,8 @@ Register it with a client — e.g. Claude Desktop's `claude_desktop_config.json`
 ```
 
 MCP is optional; the core toolkit stays zero-dependency.
+Narwhal supports the MCP Python SDK 1.x and 2.x high-level server APIs; CI tests
+both current major lines.
 
 ## Design principles
 

@@ -4,6 +4,24 @@ All notable changes to Narwhal are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`narwhal plan REPORT.json --repo PATH`** — a deterministic, read-only
+  remediation planner for scan and comprehensive-audit JSON. It detects plain
+  HTML, Next.js, Astro, Nuxt, Hugo, and Jekyll; maps stable finding IDs to likely
+  route/layout/static owners; classifies automation safety and deploy-only
+  verification; groups shared-template work; and reports conflicts, coverage,
+  warnings, and provenance in Markdown or a versioned JSON contract.
+- MCP tool **`plan_remediation`**, bounded to relative repository descendants of
+  the server working directory and accepting report objects rather than file
+  paths.
+- MCP Python SDK 2.x compatibility (while retaining 1.x support) and a two-major
+  CI contract matrix; this prevents `mcp>=1.12` from resolving to an SDK whose
+  renamed high-level server cannot start.
+- Formal remediation-plan JSON Schema, six representative framework fixtures,
+  and golden Markdown coverage.
+
 ## [1.26.0] — 2026-07-03
 
 ### Added

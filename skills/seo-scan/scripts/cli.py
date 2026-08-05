@@ -30,6 +30,7 @@ Usage:
   narwhal sitemap <url> [options]   Validate a site's XML sitemap(s)
   narwhal llms <url> [options]      Generate a starter llms.txt
   narwhal diff <old.json> <new.json>  Compare two JSON reports (regression tracking)
+  narwhal plan <report.json> [--repo .]  Map findings to source owners and verification
   narwhal render <file.md> [options]  Render a Markdown report as branded HTML/PDF
   narwhal vitals <url> [options]    Real Core Web Vitals from CrUX (opt-in; needs an API key)
   narwhal gsc <url> [options]       Real Search Console query data — striking distance, CTR
@@ -63,6 +64,7 @@ def main(argv=None) -> int:
         "sitemap": "validate_sitemap",
         "llms": "generate_llms",
         "diff": "diff_scan",
+        "plan": "plan",
         "render": "render_report",
         "vitals": "crux",
         "crux": "crux",

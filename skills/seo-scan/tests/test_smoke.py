@@ -1635,7 +1635,7 @@ class TestMcpServer(unittest.TestCase):
             set(names),
             {"scan_page", "compare_pages", "content_brief", "crawl_site",
              "audit_site", "validate_sitemap", "generate_llms",
-             "generate_schema", "diff_reports"})
+             "generate_schema", "diff_reports", "plan_remediation"})
         self.assertEqual(len(names), len(set(names)))   # no dupes
 
     def test_every_tool_has_a_docstring(self):
@@ -1663,12 +1663,16 @@ class TestMcpServer(unittest.TestCase):
         import io
         try:
             import mcp.server.fastmcp  # noqa: F401
-            have_mcp = True
+            server_type = "FastMCP"
         except ImportError:
-            have_mcp = False
-        if have_mcp:
+            try:
+                import mcp.server.mcpserver  # noqa: F401
+                server_type = "MCPServer"
+            except ImportError:
+                server_type = None
+        if server_type:
             server = self.m.build_server()
-            self.assertEqual(type(server).__name__, "FastMCP")
+            self.assertEqual(type(server).__name__, server_type)
         else:
             # Graceful path: no `mcp` package -> friendly message, exit 1, no server.
             with contextlib.redirect_stderr(io.StringIO()):

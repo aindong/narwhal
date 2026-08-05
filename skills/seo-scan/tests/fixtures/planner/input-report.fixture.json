@@ -1,0 +1,17 @@
+{
+  "schema_version": "2.0",
+  "tool_version": "1.26.0",
+  "url": "https://example.test/guides/widget",
+  "score": 61,
+  "findings": [
+    {"category":"technical","severity":"high","title":"Missing <title>","rule_id":"technical.missing.title","recommendation":"Add a title."},
+    {"category":"technical","severity":"high","title":"Missing meta description","rule_id":"technical.missing.meta.description","recommendation":"Add a description."},
+    {"category":"technical","severity":"medium","title":"No canonical URL","rule_id":"technical.no.canonical.url","recommendation":"Add a canonical."},
+    {"category":"technical","severity":"medium","title":"Images missing alt text","rule_id":"technical.images.missing.alt.text","recommendation":"Add appropriate alt values."},
+    {"category":"schema","severity":"medium","title":"No structured data (JSON-LD)","rule_id":"schema.no.structured.data.json.ld","recommendation":"Add matching JSON-LD."},
+    {"category":"content","severity":"low","title":"Incomplete Open Graph tags","rule_id":"content.incomplete.open.graph.tags","recommendation":"Complete OG tags."},
+    {"category":"technical","severity":"medium","title":"No robots.txt found","rule_id":"technical.no.robots.txt.found","recommendation":"Publish robots.txt."},
+    {"category":"technical","severity":"medium","title":"No XML sitemap found","rule_id":"technical.no.xml.sitemap.found","recommendation":"Publish a sitemap."},
+    {"category":"geo","severity":"low","title":"No llms.txt","rule_id":"geo.no.llms.txt","recommendation":"Publish a curated starter."}
+  ]
+}

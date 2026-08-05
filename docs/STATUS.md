@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **Unreleased remediation planner:** `narwhal plan REPORT.json --repo .` emits
+  a versioned, read-only action contract with six framework adapters, stable
+  finding linkage, safety/deploy classifications, grouped fixes, conflicts,
+  coverage/provenance, CLI + bounded MCP surfaces, and golden fixtures.
 - **All P0 + P1 roadmap items** shipped (#1–#12, closed).
 - **Beyond the roadmap:** `/narwhal <action> <site>` command, plugin renamed to
   `narwhal`, audit-style report, comprehensive `audit`, **multi-agent deep audit**
@@ -91,7 +95,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   agent-orchestrated `/narwhal brief` (editorial outline + branded HTML), and
   MCP `content_brief`. Also fixed a live-found `compare` bug: vacuous depth
   "lead" when all rivals are hub pages.
-- **Tests:** 191, green in CI across Python 3.8–3.12 + Windows (+ render-smoke job).
+- **Tests:** 219 locally, with CI covering Python 3.8–3.12 + Windows
+  (+ render-smoke job); the planner adds separated fixture/golden tests.
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -118,7 +123,7 @@ narwhal/
 ├── agents/                10 specialist subagents (narwhal-*.md)
 ├── skills/seo-scan/
 │   ├── SKILL.md           auto-triggering skill
-│   ├── scripts/           scan, compare, brief, crawl_site, validate_sitemap,
+│   ├── scripts/           scan, plan, compare, brief, crawl_site, validate_sitemap,
 │   │                      generate_schema, generate_llms, audit, diff_scan,
 │   │                      render_report, crux, psi, gsc, mcp_server, cli
 │   │                      + lib/ (http, htmlx, report, robots, links, sitemap,

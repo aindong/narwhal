@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/aindong/narwhal/schemas/remediation-plan-1.0.json",
+  "title": "Narwhal remediation plan",
+  "type": "object",
+  "required": ["schema_version", "kind", "target", "repository", "framework", "actions", "groups", "conflicts", "coverage", "warnings", "provenance"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "kind": {"const": "narwhal_remediation_plan"},
+    "target": {"type": "string"},
+    "source_score": {"type": ["number", "null"]},
+    "repository": {"type": "string"},
+    "framework": {
+      "type": "object",
+      "required": ["name", "confidence", "evidence"],
+      "properties": {
+        "name": {"enum": ["plain_html", "nextjs", "astro", "nuxt", "hugo", "jekyll", "unknown"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "evidence": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action_id", "rule_id", "title", "category", "severity", "artifact", "safety", "requires_deploy", "manual_action", "proposed_change", "likely_files", "verification", "confidence", "scope", "occurrences", "provenance"],
+        "properties": {
+          "action_id": {"type": "string", "pattern": "^action:"},
+          "rule_id": {"type": "string", "minLength": 1},
+          "title": {"type": "string"},
+          "category": {"type": "string"},
+          "severity": {"enum": ["critical", "high", "medium", "low"]},
+          "artifact": {"type": "string"},
+          "safety": {"enum": ["safely_automatable", "review_required", "manual_external", "deploy_verification"]},
+          "requires_deploy": {"type": "boolean"},
+          "manual_action": {"type": "boolean"},
+          "proposed_change": {"type": "string"},
+          "likely_files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "exists", "confidence", "reason"],
+              "properties": {
+                "path": {"type": "string"},
+                "exists": {"type": "boolean"},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "reason": {"type": "string"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "verification": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "evidence": {"type": "string"},
+          "source_recommendation": {"type": "string"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "scope": {"enum": ["page", "site", "external"]},
+          "occurrences": {"type": "integer", "minimum": 1},
+          "provenance": {"type": "object"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "groups": {"type": "array", "items": {"type": "object"}},
+    "conflicts": {"type": "array", "items": {"type": "object"}},
+    "coverage": {
+      "type": "object",
+      "required": ["actionable_findings", "actions_emitted", "action_generation_capped", "named_mappings", "mapping_ratio", "files_scanned", "file_inventory_capped"],
+      "properties": {
+        "actionable_findings": {"type": "integer", "minimum": 0},
+        "actions_emitted": {"type": "integer", "minimum": 0},
+        "action_generation_capped": {"type": "boolean"},
+        "named_mappings": {"type": "integer", "minimum": 0},
+        "mapping_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "files_scanned": {"type": "integer", "minimum": 0},
+        "file_inventory_capped": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "provenance": {"type": "object"}
+  },
+  "additionalProperties": false
+}
