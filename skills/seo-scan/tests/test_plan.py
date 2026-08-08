@@ -21,7 +21,7 @@ FIXTURES = Path(__file__).parent / "fixtures" / "planner"
 
 
 def load_report():
-    return json.loads((FIXTURES / "input-report.fixture.json").read_text())
+    return json.loads((FIXTURES / "input-report.fixture.json").read_text(encoding="utf-8"))
 
 
 class TestFrameworkDetection(unittest.TestCase):
@@ -196,7 +196,8 @@ class TestPlanContract(unittest.TestCase):
     def test_markdown_matches_golden(self):
         built = plan.build_plan(load_report(), str(FIXTURES / "nextjs"))
         actual = plan.render_markdown(built)
-        expected = (FIXTURES / "golden-nextjs.md").read_text()
+        expected = (FIXTURES / "golden-nextjs.md").read_text(encoding="utf-8")
+        self.assertIn("Remediation Plan — https://example.test", actual)
         self.assertEqual(expected, actual)
 
 
@@ -209,7 +210,7 @@ class TestPathSafety(unittest.TestCase):
 
     def test_inventory_skips_symlink_outside_repo(self):
         with tempfile.TemporaryDirectory() as repo, tempfile.TemporaryDirectory() as outside:
-            Path(outside, "secret.txt").write_text("secret")
+            Path(outside, "secret.txt").write_text("secret", encoding="utf-8")
             try:
                 Path(repo, "escape").symlink_to(outside, target_is_directory=True)
             except OSError:
@@ -220,7 +221,7 @@ class TestPathSafety(unittest.TestCase):
     def test_inventory_cap_is_reported(self):
         with tempfile.TemporaryDirectory() as repo:
             for n in range(3):
-                Path(repo, f"{n}.html").write_text("x")
+                Path(repo, f"{n}.html").write_text("x", encoding="utf-8")
             inv = plan.inventory(Path(repo).resolve(), max_files=2)
             self.assertTrue(inv["capped"])
             self.assertEqual(2, len(inv["files"]))
