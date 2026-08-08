@@ -1,6 +1,6 @@
 ---
 description: Run a Narwhal SEO & GEO/LLMO audit, scan, crawl, or generator on a site
-argument-hint: <audit|fix|brief|gsc|compare|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
+argument-hint: <audit|fix|plan|brief|gsc|compare|scan|crawl|sitemap|llms|schema|vitals|diff|render> <site>
 ---
 
 # Narwhal — SEO & GEO/LLMO
@@ -131,6 +131,13 @@ search opportunity first**: pages appearing in `striking` and `laggards` get
 fixed before pages with no search data (a title rewrite on a page-2 query beats
 a meta fix on a page nobody searches for). For each finding, find the file that
 owns the artifact and decide the concrete edit. Typical mappings:
+First generate the deterministic, read-only ownership plan:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/plan.py" <baseline.json> --repo . --format json -o narwhal-remediation-plan.json
+```
+Review its framework evidence, likely files, safety classifications, conflicts,
+coverage, and warnings. It proposes candidates but does not authorize edits;
+confirm values and owner intent before applying them. Typical mappings:
 - **title / meta description / canonical / OG & Twitter tags / hreflang** → the
   head: layout or per-page front-matter/metadata (Next `metadata` export, Astro/
   Hugo/Jekyll layout partial, or the raw `<head>` in plain HTML).
@@ -246,6 +253,7 @@ fetched, stop and say so.
 | `vitals` | `crux.py $2` | **real** Core Web Vitals (LCP/INP/CLS) from CrUX — see key note below |
 | `gsc` | `gsc.py $2` | **real** Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — see the OAuth note below |
 | `diff` | `diff_scan.py $2 $3` | compare two saved JSON reports (`$2`=old, `$3`=new); add `--fail-on-regression` for a gate |
+| `plan` | `plan.py $2 --repo .` | `$2` is a scan/audit JSON report; map findings to likely source owners without editing |
 | `render` | `render_report.py $2 -o report.html` | here `$2` is a Markdown file → branded HTML (`--format pdf` for PDF) |
 
 Read the report back **in your own words, leading with the highest-severity fixes** —

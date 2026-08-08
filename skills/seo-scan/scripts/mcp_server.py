@@ -6,8 +6,9 @@ schema / diff) as MCP tools so any MCP client (Claude Desktop, IDEs, other agent
 can call them natively over stdio. It adds no new analysis — it's a thin, typed
 adapter over the existing functions, so results match the CLI exactly.
 
-MCP is an **optional** dependency (the core toolkit stays zero-dependency). Install
-it with the `mcp` extra:
+MCP is an **optional** dependency (the core toolkit stays zero-dependency). Both
+the MCP Python SDK 1.x and 2.x high-level server APIs are supported. Install it
+with the `mcp` extra:
 
     pip install "narwhal-seo[mcp]"     # or: pip install "mcp>=1.12"
 
@@ -197,6 +198,36 @@ def _diff(old_json: str, new_json: str) -> dict:
     return diff_mod.diff_reports(json.loads(old_json), json.loads(new_json))
 
 
+def _plan(report: dict, repo: str = ".", max_files: int = 5000) -> dict:
+    """Build a read-only remediation plan for a report and repository.
+
+    Args:
+        report: A parsed Narwhal scan/audit JSON object (not a filesystem path).
+        repo: Repository directory relative to the MCP server's working directory.
+            Absolute paths and parent traversal are rejected.
+        max_files: Repository inventory cap (1–5000).
+
+    Returns stable rule-linked actions, likely owning files, framework evidence,
+    safety classifications, grouped fixes, conflicts, coverage, and verification
+    commands. This tool never edits repository files.
+    """
+    from pathlib import Path
+    import plan as plan_mod
+
+    workspace = Path.cwd().resolve()
+    requested = Path(repo)
+    if requested.is_absolute():
+        raise ValueError("MCP repo must be relative to the server working directory")
+    candidate = (workspace / requested).resolve()
+    try:
+        candidate.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError("MCP repo cannot escape the server working directory") from exc
+    max_files = max(1, min(int(max_files), plan_mod.MAX_REPO_FILES))
+    return plan_mod.build_plan(report, str(candidate), report_source="<mcp-object>",
+                               max_files=max_files)
+
+
 # (function, public tool name) — names are what MCP clients see.
 _TOOLS = [
     (_scan, "scan_page"),
@@ -208,6 +239,7 @@ _TOOLS = [
     (_llms, "generate_llms"),
     (_schema, "generate_schema"),
     (_diff, "diff_reports"),
+    (_plan, "plan_remediation"),
 ]
 
 
@@ -217,9 +249,15 @@ def build_server():
     Imported here (not at module top) so the module still loads without the
     optional ``mcp`` package — ``main`` turns the ImportError into guidance.
     """
-    from mcp.server.fastmcp import FastMCP  # noqa: PLC0415
+    try:
+        # MCP Python SDK 1.x
+        from mcp.server.fastmcp import FastMCP as ServerClass  # noqa: PLC0415
+    except ImportError:
+        # MCP Python SDK 2.x renamed the high-level server while retaining the
+        # add_tool/list_tools/run surface used by this adapter.
+        from mcp.server.mcpserver import MCPServer as ServerClass  # noqa: PLC0415
 
-    mcp = FastMCP("narwhal")
+    mcp = ServerClass("narwhal")
     for fn, name in _TOOLS:
         mcp.add_tool(fn, name=name)
     return mcp

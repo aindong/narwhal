@@ -43,6 +43,25 @@ jobs:
       - name: Run tests (with extras)
         run: python -m unittest discover -s skills/seo-scan/tests -v
 
+  # The SDK renamed FastMCP in 2.0. Exercise both supported high-level APIs so
+  # optional MCP installs cannot drift into a server-startup failure unnoticed.
+  mcp-contract:
+    name: MCP SDK ${{ matrix.mcp-version }} contract
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mcp-version: ["1.29.0", "2.0.0"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install MCP SDK
+        run: pip install "mcp==${{ matrix.mcp-version }}"
+      - name: Run MCP and planner contract tests
+        run: python -m unittest discover -s skills/seo-scan/tests -v
+
   # Prove the --render (Playwright) path actually executes JavaScript end to end.
   render-smoke:
     name: render-smoke (playwright chromium, py3.12)

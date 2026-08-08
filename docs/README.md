@@ -20,6 +20,8 @@ Documentation index for the Narwhal SEO & GEO/LLMO scanning toolkit.
 ## Configuration
 - **[CONFIG.md](CONFIG.md)** — how to use `narwhal.toml` (weights, thresholds,
   CLI defaults, ignore rules). Template: [`narwhal.example.toml`](../narwhal.example.toml).
+- **[REMEDIATION_PLAN.md](REMEDIATION_PLAN.md)** — versioned `narwhal plan`
+  contract, safety classes, path boundaries, and compatibility policy.
 
 ## Using the tool
 - **[Project README](../README.md)** — what it is, install (Claude Code plugin or

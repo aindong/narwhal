@@ -23,12 +23,13 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --format pdf -o report.pdf` | PDF report (needs WeasyPrint; falls back to HTML) |
 | `python diff_scan.py old.json new.json` | Diff two JSON reports: score delta, new/resolved/worsened findings |
 | `python diff_scan.py old.json new.json --fail-on-regression` | CI gate: exit non-zero if score dropped or a new critical/high appeared |
+| `python plan.py report.json --repo .` | Read-only remediation plan: framework, likely owning files, safety, grouped fixes, verification |
 | `python render_report.py report.md -o report.html` | Render any Markdown report as branded HTML (`--format pdf` for PDF) |
 | `python crux.py <url> --crux-key KEY` | Real Core Web Vitals (LCP/INP/CLS) from the CrUX API — opt-in field data, needs a key |
 | `python crux.py <url> --lab` | PageSpeed Insights (Lighthouse) LAB metrics for any URL (use when CrUX has no data); key optional |
 | `python gsc.py <url>` | Real Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — opt-in OAuth (`GSC_ACCESS_TOKEN`, or one-time `gsc.py --auth`) |
 | `python audit.py <url> --gsc` | Fold the GSC data into the audit report/JSON (degrades to a note without credentials) |
-| `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server: exposes scan_page/crawl_site/audit_site/validate_sitemap/generate_llms/generate_schema/diff_reports over stdio |
+| `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server, including bounded `plan_remediation` over stdio |
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright; also diffs raw vs rendered → JS-dependence findings (% JS-only content, client-injected metadata) |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | (scan default) | Image weight/format checks + og:image validation (HEAD-only + one ranged GET); `--no-image-checks` to skip |
@@ -45,7 +46,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python generate_llms.py <url> -o llms.txt` | Generate a starter llms.txt (curate before publishing) |
 
 Auditor names: `technical`, `content`, `schema`, `geo`.
-Unified CLI subcommands: `narwhal audit|scan|crawl|schema|sitemap|llms`.
+Unified CLI subcommands include `narwhal audit|scan|plan|crawl|schema|sitemap|llms`.
 
 ## Setup
 Runs on a bare Python 3.8+ install (stdlib fallback). Optional extras improve
@@ -68,8 +69,8 @@ python -m playwright install chromium   # only for --render
 When the site's **source is in the current workspace**, close the loop instead of
 stopping at the report:
 1. Baseline: `python scan.py <url> --format json -o before.json`.
-2. Map each finding to the owning file (layout `<head>` for title/meta/canonical/
-   OG, page source for alt/headings, static dir for robots.txt) and apply minimal,
+2. Run `python plan.py before.json --repo . --format json -o plan.json`; inspect
+   its likely owners, safety class, conflicts, and coverage. Then apply minimal,
    framework-idiomatic edits. Use `generate_schema.py` / `generate_llms.py` for
    generated artifacts.
 3. Re-scan a local preview (`--allow-private`) as `after.json`, then

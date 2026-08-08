@@ -157,6 +157,17 @@ matched across runs). Add `--fail-on-regression` for a CI gate: it exits non-zer
 if the score dropped or a new critical/high finding appeared. Works on `audit`
 JSON too (uses the overall score + homepage findings).
 
+**Map findings to source before editing** (read-only, no changes applied):
+```
+python scripts/plan.py before.json --repo .
+python scripts/plan.py before.json --repo . --format json -o plan.json
+```
+The versioned plan detects plain HTML, Next.js, Astro, Nuxt, Hugo, or Jekyll;
+links stable finding IDs to likely owning files; groups shared-template fixes;
+and separates safe candidates, review-required work, external/manual work, and
+changes that require post-deploy verification. Treat file matches as evidence-
+backed candidates, not permission to edit blindly; inspect warnings and conflicts.
+
 **Real Core Web Vitals** (opt-in; the one tool that calls an external service).
 Everything else is local and must never fabricate field metrics — for the *real*
 LCP/INP/CLS (what Chrome users experience), query the CrUX API:
@@ -254,9 +265,9 @@ report — close the loop (`/narwhal fix <url>` in Claude Code):
 
 1. Save a baseline: `python scripts/scan.py <url> --format json -o before.json`
    (or reuse a fresh audit JSON).
-2. Map each finding to the file that owns the artifact (layout `<head>` for
-   title/meta/canonical/OG, page source for alt/headings, static dir for
-   robots.txt) and apply minimal, framework-idiomatic edits. Use
+2. Run `python scripts/plan.py before.json --repo . --format json -o plan.json`.
+   Review its likely owners, safety classes, conflicts, and coverage, then apply
+   minimal, framework-idiomatic edits. Use
    `generate_schema.py` for JSON-LD and `generate_llms.py` for llms.txt rather
    than hand-writing them.
 3. Re-scan a local preview (`--allow-private` for localhost) as `after.json`,
