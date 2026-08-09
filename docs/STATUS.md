@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-07-03 · version **1.26.0**_
+_Last updated: 2026-08-10 · version **1.27.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,7 +21,7 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
-- **Unreleased remediation planner:** `narwhal plan REPORT.json --repo .` emits
+- **v1.27.0 remediation planner:** `narwhal plan REPORT.json --repo .` emits
   a versioned, read-only action contract with six framework adapters, stable
   finding linkage, safety/deploy classifications, grouped fixes, conflicts,
   coverage/provenance, CLI + bounded MCP surfaces, and golden fixtures.
@@ -113,7 +113,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.26.0 (27 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.27.0 (28 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

@@ -6,6 +6,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.27.0] — 2026-08-10
+
 ### Added
 - **`narwhal plan REPORT.json --repo PATH`** — a deterministic, read-only
   remediation planner for scan and comprehensive-audit JSON. It detects plain
