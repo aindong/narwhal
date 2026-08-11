@@ -157,9 +157,9 @@ without breaking local-first (nothing below needs a paid API).
 
 Captured here so they aren't lost; promote to an issue when scoped.
 
-- 🟡 Structured remediation planner — versioned finding-to-source action plan,
+- ✅ **Structured remediation planner (v1.27.0)** — versioned finding-to-source action plan,
   six framework adapters, CLI/MCP, safety classes, and golden fixtures
-  (implemented on `agent/remediation-planner`, pending release).
+  (released 2026-08-10).
 
 - Microdata / RDFa parsing (not just JSON-LD) in the schema auditor.
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
