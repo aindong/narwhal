@@ -193,6 +193,17 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
             "broken": broken}
 
 
+def summarize_ecommerce(pages: list) -> dict:
+    """Bounded, serializable product/store scope for conditional specialists."""
+    product_pages = [p["url"] for p in pages if p.get("is_product")]
+    merchant_pages = [p["url"] for p in pages if p.get("is_merchant")]
+    return {"detected": bool(merchant_pages),
+            "product_pages": product_pages,
+            "product_pages_count": len(product_pages),
+            "merchant_pages": merchant_pages,
+            "merchant_pages_count": len(merchant_pages)}
+
+
 def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           timeout=20, delay=0.0, concurrency=4, obey_robots=True,
           check_links=False, max_links=200, detect_dupes=True,
@@ -232,7 +243,11 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     pages, issue_counter, pages_links, page_fps = [], Counter(), {}, []
     pages_hreflang: dict = {}
     for u, rep in results:
-        pages.append({"url": u, "score": rep.score(), "counts": rep.counts()})
+        ecommerce = rep.meta.get("ecommerce", {})
+        pages.append({"url": u, "score": rep.score(), "counts": rep.counts(),
+                      "is_product": bool(ecommerce.get("is_product")),
+                      "is_merchant": bool(ecommerce.get("is_merchant")),
+                      "product_confidence": ecommerce.get("confidence", 0.0)})
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
@@ -244,8 +259,10 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                              "canonical": rep.meta.get("canonical")})
     avg = round(sum(p["score"] for p in pages) / len(pages), 1) if pages else 0
 
+    ecommerce_scope = summarize_ecommerce(pages)
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
-              "skipped_robots": skipped, "pages": pages, "recurring": issue_counter}
+              "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
+              "ecommerce": ecommerce_scope}
     # Site structure (click depth, orphans, link equity) — pure computation on
     # data already in hand; orphan detection only makes sense sitemap-sourced.
     result["graph"] = sitegraph.analyze(

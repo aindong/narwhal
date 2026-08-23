@@ -84,6 +84,19 @@ class TestPlanContract(unittest.TestCase):
         built = plan.build_plan(load_report(), str(FIXTURES / "nextjs"))
         self.assertTrue(action_required.issubset(built["actions"][0]))
 
+    def test_ecommerce_findings_map_to_product_schema_owner_and_guidance(self):
+        report = {"schema_version": "2.0", "url": "https://example.test/guides/widget",
+                  "findings": [{"category": "schema", "severity": "high",
+                                "title": "Visible and schema price do not match",
+                                "rule_id": "schema.ecommerce.price.mismatch"}]}
+        built = plan.build_plan(report, str(FIXTURES / "nextjs"))
+        action = built["actions"][0]
+        self.assertEqual("product_schema", action["artifact"])
+        self.assertEqual("review_required", action["safety"])
+        self.assertIn("same current product data", action["proposed_change"])
+        self.assertIn("app/guides/widget/page.tsx",
+                      {f["path"] for f in action["likely_files"] if f["exists"]})
+
     def test_every_promised_finding_family_has_a_named_mapping(self):
         cases = {
             "technical.missing.title": "title",

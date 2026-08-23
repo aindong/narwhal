@@ -22,7 +22,7 @@ except ImportError:  # Python 3.8
 try:
     TOOL_VERSION = _package_version("narwhal-seo")
 except Exception:  # loose-script/plugin execution
-    TOOL_VERSION = "1.26.0"
+    TOOL_VERSION = "1.27.0"
 
 # Ordered worst -> best. Weights feed the 0-100 health score.
 SEVERITY = ("critical", "high", "medium", "low", "good")

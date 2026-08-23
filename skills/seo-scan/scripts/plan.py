@@ -249,6 +249,7 @@ ARTIFACT_RULES = (
     ("image_alt", ("images.missing.alt",)),
     ("headings", ("h1", "heading.levels", "question.based.headings", "title.and.h1")),
     ("open_graph", ("open.graph", "twitter.x.card", "og.image")),
+    ("product_schema", ("schema.ecommerce.", "product page has no product")),
     ("json_ld", ("json.ld", "structured.data", "schema", "rich.result", "organization.website.entity")),
     ("robots_txt", ("robots.txt", "ai.crawlers.are.blocked")),
     ("sitemap", ("xml.sitemap", "sitemap.directive", "sitemap.validation")),
@@ -314,7 +315,8 @@ FRAMEWORK_CANDIDATES = {
 
 
 HEAD_ARTIFACTS = {"title", "meta_description", "canonical", "robots_meta", "viewport",
-                  "language", "hreflang", "open_graph", "json_ld", "server_rendering"}
+                  "language", "hreflang", "open_graph", "json_ld", "product_schema",
+                  "server_rendering"}
 
 
 def _route_candidates(target: str, framework: str) -> list:
@@ -392,6 +394,7 @@ CHANGE_GUIDANCE = {
     "headings": "Edit the owning page/template to provide one descriptive H1 and a logical heading hierarchy.",
     "open_graph": "Complete Open Graph and Twitter metadata using real page title, description, URL, and image.",
     "json_ld": "Add or repair JSON-LD for the page's real entity; validate all values before publishing.",
+    "product_schema": "Update Product/Offer JSON-LD from the same current product data used by the rendered page; preserve variants and validate merchant values.",
     "robots_txt": "Create or revise robots.txt deliberately, preserving intentional crawler policies.",
     "sitemap": "Create/configure the sitemap and reference it from robots.txt using the canonical deployed URL.",
     "llms_txt": "Generate a starter llms.txt in the public/static root, then curate every entry and TODO.",
@@ -408,7 +411,7 @@ def safety_for(artifact: str) -> tuple:
     if artifact in ("robots_txt", "sitemap", "llms_txt"):
         return "deploy_verification", True
     if artifact in ("title", "meta_description", "canonical", "language", "open_graph",
-                    "content", "headings", "image_alt", "json_ld", "robots_meta", "hreflang",
+                    "content", "headings", "image_alt", "json_ld", "product_schema", "robots_meta", "hreflang",
                     "server_rendering"):
         return "review_required", False
     if artifact == "unknown":
@@ -429,7 +432,7 @@ def verification_for(artifact: str, target: str, report_source: str) -> list:
                         '--format json -o after.json')
     commands = [scan_command,
                 f"narwhal diff {before} after.json"]
-    if artifact == "json_ld":
+    if artifact in ("json_ld", "product_schema"):
         commands.insert(0, "Validate the rendered JSON-LD and replace every TODO placeholder.")
     return commands
 

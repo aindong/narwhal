@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 
 try:
-    from lib import htmlx
+    from lib import ecommerce, htmlx
 except ImportError:  # when imported as a package
-    from .lib import htmlx  # type: ignore
+    from .lib import ecommerce, htmlx  # type: ignore
 
 CAT = "schema"
 
@@ -30,7 +30,6 @@ REQUIRED = {
     "Article": ["headline"],
     "NewsArticle": ["headline"],
     "BlogPosting": ["headline"],
-    "Product": ["name"],
     "Organization": ["name"],
     "LocalBusiness": ["name", "address"],
     "Recipe": ["name", "recipeIngredient", "recipeInstructions"],
@@ -44,7 +43,6 @@ REQUIRED = {
 
 RECOMMENDED = {
     "Article": ["author", "datePublished", "image"],
-    "Product": ["offers", "image", "brand"],
     "Organization": ["url", "logo"],
     "LocalBusiness": ["telephone", "openingHours", "geo"],
     "Recipe": ["image", "author", "aggregateRating"],
@@ -66,6 +64,7 @@ def audit(doc, resp, report, ctx=None) -> None:
                    "Organization…) to unlock rich results and clarify meaning for "
                    "AI search."
                    + (" (Least critical on listing/index pages.)" if hub else ""))
+        report.meta["ecommerce"] = ecommerce.audit(doc, report)
         return
 
     found_types = []
@@ -85,6 +84,7 @@ def audit(doc, resp, report, ctx=None) -> None:
         report.ok(CAT, "Structured data present",
                   ", ".join(sorted(set(found_types))))
     _cross_checks(doc, found_types, report)
+    report.meta["ecommerce"] = ecommerce.audit(doc, report)
 
 
 def _iter_nodes(data):

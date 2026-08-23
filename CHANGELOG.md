@@ -6,6 +6,22 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Evidence-gated e-commerce checks within the schema auditor: Product and
+  ProductGroup detection, per-variant identity completeness, Offer and
+  AggregateOffer merchant properties, nested `priceSpecification`, expired
+  price validity, and explicit visible-vs-schema price, currency, availability,
+  SKU, brand, and name comparisons. Crawl/audit JSON exposes sampled merchant
+  pages for conditional orchestration.
+- Conditional `narwhal-ecommerce` deep-audit specialist plus dedicated
+  remediation-planner ownership and guidance for `schema.ecommerce.*` rules.
+- Product, non-product, malformed, AggregateOffer, variant, stale, missing, and
+  mismatch fixtures with parser-backend parity coverage.
+
+### Changed
+- Product schema generation now emits explicit TODOs for merchant currency,
+  availability, URL, condition, and seller instead of assuming USD/InStock.
+
 ## [1.27.0] — 2026-08-10
 
 ### Added

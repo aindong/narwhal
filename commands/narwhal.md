@@ -48,6 +48,8 @@ subagents with the Task tool (pass each the URL `$2` and the path `narwhal-audit
   `narwhal-sitemap`, `narwhal-sxo`
 - **Conditional:** `narwhal-local` — only when Step 1 indicates a local / service-area
   business.
+- **Conditional:** `narwhal-ecommerce` — only when
+  `homepage.meta.ecommerce.is_merchant` or `crawl.ecommerce.detected` is true.
 
 Each returns a domain score + prioritized findings with exact fixes.
 

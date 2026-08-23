@@ -143,8 +143,9 @@ without breaking local-first (nothing below needs a paid API).
   subtopics, questions to answer, schema + structure targets; `--topic` mode
   for new pages; MCP `content_brief`; honest structure-only degradation.
   — [#26](https://github.com/aindong/narwhal/issues/26)
-- ⬜ **E-commerce checks** — Product/offers completeness, page-vs-schema
-  mismatches, conditional store specialist.
+- ✅ **E-commerce checks** — evidence-gated Product/Offer completeness,
+  ProductGroup variants, page-vs-schema merchant mismatches, and a conditional
+  store specialist (implemented; pending release).
   — [#27](https://github.com/aindong/narwhal/issues/27)
 
 ### P3 — internal quality

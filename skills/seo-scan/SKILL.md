@@ -66,6 +66,10 @@ Useful flags:
   ranged GET): heavy images (>200 KB), legacy formats worth AVIF/WebP, missing
   width/height (CLS), and og:image validation (reachable? real dimensions?).
   Skip with `--no-image-checks`; crawls skip them automatically.
+- The schema auditor conditionally applies a merchant bar to evidenced product
+  pages: Product/Offer completeness, ProductGroup variants, expired prices, and
+  explicit visible-vs-schema price/currency/availability/SKU/brand consistency.
+  Ordinary pages and editorial Product reviews are not treated as stores.
 - `--fail-under N` — exit non-zero if the score is below `N` (CI quality gate;
   `crawl_site.py` gates on the average score).
 
@@ -254,7 +258,7 @@ flag pages worth a human look rather than issuing verdicts.
 For a comprehensive audit, `/narwhal audit <site>` runs the deterministic
 `audit.py` baseline and then fans out ~10 specialist subagents in parallel (in the
 plugin's `agents/` dir) — technical, content, schema, geo, performance, links,
-duplication, sitemap, sxo, and local — each using these scripts as tools and adding
+duplication, sitemap, sxo, local, and conditional e-commerce — each using these scripts as tools and adding
 reasoning + exact fixes, synthesized into one prioritized report. The individual
 scripts above remain the fast, deterministic path.
 
