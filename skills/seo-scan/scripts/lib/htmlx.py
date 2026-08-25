@@ -7,6 +7,7 @@ normalized :class:`Doc` view so they never depend on which backend parsed.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
@@ -124,6 +125,42 @@ def looks_article(doc: "Doc") -> bool:
         return True
     # exactly one <article> element = an article page; many = a listing of cards
     return (doc.html or "").lower().count("<article") == 1
+
+
+def looks_product(doc: "Doc") -> bool:
+    """Whether the page supplies strong, independently observable product cues.
+
+    Product JSON-LD is authoritative. Without it, require either Product
+    microdata or ``og:type=product`` plus a merchant signal; a stray price in
+    ordinary prose must never turn an article into a product page.
+    """
+    html = (doc.html or "").lower()
+    def has_product_type(value):
+        if isinstance(value, list):
+            return any(has_product_type(item) for item in value)
+        if not isinstance(value, dict):
+            return False
+        typ = value.get("@type")
+        types = typ if isinstance(typ, list) else [typ]
+        if any(str(item).lower() == "product" for item in types if item):
+            return True
+        return any(has_product_type(item) for item in value.values()
+                   if isinstance(item, (dict, list)))
+
+    for blob in doc.scripts_ld:
+        try:
+            if has_product_type(json.loads(blob)):
+                return True
+        except (json.JSONDecodeError, TypeError):
+            continue
+    microdata = bool(re.search(r'itemtype\s*=\s*["\'][^"\']*schema\.org/product', html))
+    og_product = (doc.meta_by_property("og:type") or "").lower() == "product"
+    merchant_signal = bool(
+        re.search(r'(?:product:|og:)price:(?:amount|currency)', html)
+        or re.search(r'itemprop\s*=\s*["\'](?:price|pricecurrency|availability|sku)["\']', html)
+        or re.search(r'(?:add to (?:cart|bag)|buy now)', doc.body_text or "", re.I)
+    )
+    return microdata or (og_product and merchant_signal)
 
 
 def is_homepage(doc: "Doc") -> bool:

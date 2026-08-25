@@ -1701,6 +1701,8 @@ class TestSchemaGenerator(unittest.TestCase):
         node = generate_schema.build("Product", {})
         self.assertEqual(node["@type"], "Product")
         self.assertIn("TODO", node["name"])
+        self.assertIn("TODO", node["offers"]["priceCurrency"])
+        self.assertIn("TODO", node["offers"]["availability"])
 
     def test_fields_applied(self):
         node = generate_schema.build("Article", {"headline": "Hi"})

@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **Unreleased e-commerce checks:** deterministic Product/store detection,
+  Product/Offer/AggregateOffer and variant validation, evidence-gated visible
+  merchant mismatches, crawl scope metadata, planner ownership, and a conditional
+  e-commerce specialist are implemented for #27 and pending release.
 - **v1.27.0 remediation planner:** `narwhal plan REPORT.json --repo .` emits
   a versioned, read-only action contract with six framework adapters, stable
   finding linkage, safety/deploy classifications, grouped fixes, conflicts,
@@ -95,7 +99,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   agent-orchestrated `/narwhal brief` (editorial outline + branded HTML), and
   MCP `content_brief`. Also fixed a live-found `compare` bug: vacuous depth
   "lead" when all rivals are hub pages.
-- **Tests:** 219 locally, with CI covering Python 3.8–3.12 + Windows
+- **Tests:** 241 locally, with CI covering Python 3.8–3.12 + Windows
   (+ render-smoke job); the planner adds separated fixture/golden tests.
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
@@ -147,7 +151,7 @@ local-first (see ROADMAP "Next wave" for detail):
 - ~~#24~~ Image weight/format + og:image — **shipped v1.23.0** (lib/images.py, HEAD-budgeted + dimension probe)
 - ~~#25~~ Hreflang reciprocity — **shipped v1.24.0** (lib/hreflang.py, probe + exact pairs) — P1 tier complete
 - ~~#26~~ Content-brief flow — **shipped v1.26.0** (brief.py, /narwhal brief, MCP content_brief)
-- **#27** E-commerce checks + conditional store specialist (P2)
+- ~~#27~~ E-commerce checks + conditional store specialist (P2) — **implemented, pending release**
 - **#28** Test-suite health: split monolith + golden-file tests (P3)
 
 ### Ongoing quality practice

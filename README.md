@@ -63,6 +63,7 @@ And yes, it works as a backronym too:
 | **Technical SEO** | title/meta, headings, canonical, robots directives, viewport/mobile, hreflang, images, links, HTTP hygiene, robots.txt, sitemap |
 | **Content & E-E-A-T** | thin-content detection, readability, author/date signals, Open Graph / Twitter cards |
 | **Structured data** | JSON-LD detection, required/recommended property validation, deprecated rich-result types, JSON-LD generation |
+| **E-commerce** | evidence-gated Product detection; Product/Offer/AggregateOffer completeness; variants; expired prices; visible-vs-schema price, currency, availability, SKU, and brand consistency |
 | **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and **AI-crawler access** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
@@ -77,7 +78,7 @@ And yes, it works as a backronym too:
 1. Runs the deterministic baseline (`audit.py`) for fast, reproducible hard data
    (homepage + site crawl + sitemap, per-area subscores, broken links, duplicates).
 2. **Fans out ~10 specialist subagents in parallel** — technical, content, schema,
-   geo, performance, links, duplication, sitemap, sxo (+ local when relevant). Each
+   geo, performance, links, duplication, sitemap, sxo (+ local or e-commerce when relevant). Each
    runs the deterministic scripts as its **tools**, then adds expert reasoning and
    exact fixes for its domain.
 3. **Synthesizes** one report: an SEO Health Score, executive summary, prioritized
@@ -408,6 +409,9 @@ server, exposing every auditor as a native tool (`scan_page`, `crawl_site`,
 object and only relative repository paths beneath the server working directory;
 it is bounded and read-only. The server is a typed adapter over the same scripts — no
 new analysis, so results match the CLI exactly.
+Product/store evidence and `schema.ecommerce.*` findings flow through the existing
+`scan_page`, `crawl_site`, and `audit_site` results; no separate network-capable
+commerce tool or external merchant account is required.
 
 ```bash
 pip install "narwhal-seo[mcp]"   # or: pip install "mcp>=1.12"
