@@ -99,8 +99,9 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   agent-orchestrated `/narwhal brief` (editorial outline + branded HTML), and
   MCP `content_brief`. Also fixed a live-found `compare` bug: vacuous depth
   "lead" when all rivals are hub pages.
-- **Tests:** 241 locally, with CI covering Python 3.8–3.12 + Windows
-  (+ render-smoke job); the planner adds separated fixture/golden tests.
+- **Tests:** 242 locally, split into focused area modules, with CI covering
+  Python 3.8–3.12 + Windows (+ render-smoke job); complete Markdown, JSON, and
+  HTML report shapes plus planner output are protected by committed goldens.
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -152,7 +153,7 @@ local-first (see ROADMAP "Next wave" for detail):
 - ~~#25~~ Hreflang reciprocity — **shipped v1.24.0** (lib/hreflang.py, probe + exact pairs) — P1 tier complete
 - ~~#26~~ Content-brief flow — **shipped v1.26.0** (brief.py, /narwhal brief, MCP content_brief)
 - ~~#27~~ E-commerce checks + conditional store specialist (P2) — **implemented, pending release**
-- **#28** Test-suite health: split monolith + golden-file tests (P3)
+- ~~#28~~ Test-suite health: split monolith + golden-file tests (P3) — **implemented, pending release**
 
 ### Ongoing quality practice
 Specialist tuning (#19) is a loop, not a one-shot: each real `/narwhal audit` run

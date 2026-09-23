@@ -7,6 +7,8 @@ All notable changes to Narwhal are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Full Markdown, JSON, and self-contained HTML report golden snapshots from a
+  fixed offline fixture, plus a one-command regeneration script.
 - Evidence-gated e-commerce checks within the schema auditor: Product and
   ProductGroup detection, per-variant identity completeness, Offer and
   AggregateOffer merchant properties, nested `priceSpecification`, expired
@@ -19,6 +21,8 @@ All notable changes to Narwhal are documented here. The format follows
   mismatch fixtures with parser-backend parity coverage.
 
 ### Changed
+- Split the 2,095-line smoke-test monolith into focused parser, auditor,
+  report, tool, and integration modules while preserving zero-config discovery.
 - Product schema generation now emits explicit TODOs for merchant currency,
   availability, URL, condition, and seller instead of assuming USD/InStock.
 
