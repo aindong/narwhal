@@ -14,9 +14,9 @@ from typing import Optional
 
 REPORT_SCHEMA_VERSION = "2.0"
 
-try:
+if __package__ and "." in __package__:
     from .._version import __version__ as TOOL_VERSION
-except ImportError:  # loose-script/plugin execution
+else:  # loose-script/plugin execution (``lib.report``)
     from _version import __version__ as TOOL_VERSION
 
 # Ordered worst -> best. Weights feed the 0-100 health score.
