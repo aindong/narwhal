@@ -234,7 +234,7 @@ class TestRenderHardening(unittest.TestCase):
 
     def test_pdf_from_html_survives_missing_native_libs(self):
         # Simulate WeasyPrint present but its native libs missing (OSError on
-        # import) — pdf_from_html must return False, not raise.
+        # import), with the Chromium fallback unavailable too.
         import builtins
         real_import = builtins.__import__
 
@@ -243,11 +243,9 @@ class TestRenderHardening(unittest.TestCase):
                 raise OSError("cannot load library 'libgobject-2.0-0'")
             return real_import(name, *a, **k)
 
-        builtins.__import__ = fake_import
-        try:
+        with unittest.mock.patch.object(builtins, "__import__", side_effect=fake_import), \
+                unittest.mock.patch.object(report_lib, "_pdf_via_chromium", return_value=False):
             self.assertFalse(report_lib.pdf_from_html("<html></html>", "x.pdf"))
-        finally:
-            builtins.__import__ = real_import
 
 class TestFailUnderGate(unittest.TestCase):
     def test_no_threshold_never_fails(self):
