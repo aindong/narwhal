@@ -1,4 +1,4 @@
-# Structured data (schema.org / JSON-LD) reference
+# Structured data (schema.org / JSON-LD and Microdata) reference
 
 Structured data tells search engines and AI systems *what* a page is about in a
 machine-readable way. It powers rich results (stars, FAQs, prices, breadcrumbs)
@@ -9,6 +9,25 @@ and helps AI answer engines identify and attribute entities.
   recommends it over Microdata/RDFa; it's easier to generate and maintain.
 - One `@graph` per page can hold multiple linked entities (WebSite +
   Organization + Article + Breadcrumb), connected via `@id` references.
+- Valid **Microdata** is also audited, not penalized for lacking JSON-LD. The
+  stdlib extractor follows nested `itemscope` / `itemtype` / `itemprop`, repeated
+  and multi-name properties, `itemid`, and local `itemref` targets. `meta.content`,
+  URL element attributes, `data`/`meter.value`, `time.datetime`, and text values
+  follow the [HTML Microdata model](https://html.spec.whatwg.org/multipage/microdata.html).
+  URL attributes resolve against the page URL (or the first HTML `base` URL).
+- JSON-LD and Microdata feed the same schema and merchant checks.
+  `meta.structured_data` reports source formats, types per format, unique typed
+  node count, and extraction warnings. Equal normalized objects are audited
+  once; different variants or conflicting copies are retained, not merged by ID.
+  This is not a complete cross-format conflict validator.
+- Extraction is capped at 50,000 HTML elements, 1,000 item scopes, 256 HTML
+  nesting levels, and 64 nested item references. Partial coverage and invalid
+  references produce a verification finding, not a claim of complete validation.
+  The source-tree parser is not a full HTML5 browser DOM: malformed HTML may
+  need external validation. Inert templates and SVG/MathML are excluded.
+- **RDFa is not parsed yet.** Reports state that coverage limit. Google supports
+  all three formats; JSON-LD is a maintenance recommendation, not a requirement.
+  See [Google's supported formats](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data#structured-data-format).
 
 ## The rule that matters most
 Structured data must **match visible content**. Marking up a price, rating, or
@@ -44,8 +63,8 @@ socials) is *not* deprecated and is increasingly useful for entity/AI grounding.
 
 ## Product and merchant-listing checks
 
-Narwhal classifies a Product JSON-LD node as product evidence. Without Product
-JSON-LD it requires stronger corroboration—Product microdata, or
+Narwhal classifies a parsed Product JSON-LD or Microdata node as product evidence.
+Without Product structured data it requires stronger corroboration—
 `og:type=product` plus an explicit merchant fact—so an article that merely
 mentions a price is not treated as a store page.
 
@@ -83,5 +102,5 @@ python scripts/generate_schema.py Product \
 
 ## Validation
 - The auditor checks presence of required/recommended properties and JSON
-  validity. For the authoritative check, use Google's **Rich Results Test** and
+  validity across supported formats. For the authoritative check, use Google's **Rich Results Test** and
   the **schema.org validator** — recommend these for anything you'll ship.

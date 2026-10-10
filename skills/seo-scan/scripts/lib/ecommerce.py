@@ -8,14 +8,13 @@ page facts; an incidental number or currency word is not treated as a product.
 
 from __future__ import annotations
 
-import json
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from html import unescape
 from urllib.parse import urlparse
 
-from . import htmlx
+from . import htmlx, structured_data
 
 CAT = "schema"
 IDENTIFIERS = ("sku", "gtin", "gtin8", "gtin12", "gtin13", "gtin14", "mpn")
@@ -36,28 +35,10 @@ def _types(node):
     return [str(x).lower() for x in typ] if isinstance(typ, list) else ([str(typ).lower()] if typ else [])
 
 
-def _nodes(data):
-    if isinstance(data, list):
-        for item in data:
-            yield from _nodes(item)
-    elif isinstance(data, dict):
-        yield data
-        # Product variants are frequently nested under ProductGroup.hasVariant;
-        # recurse through structured values so those Product nodes are audited.
-        for value in data.values():
-            if isinstance(value, (dict, list)):
-                yield from _nodes(value)
-
-
 def schema_nodes(doc):
-    """Return valid JSON-LD nodes; syntax failures belong to audit_schema."""
-    out = []
-    for blob in doc.scripts_ld:
-        try:
-            out.extend(_nodes(json.loads(blob)))
-        except (json.JSONDecodeError, TypeError):
-            continue
-    return out
+    """Return unique JSON-LD/Microdata nodes; syntax failures belong to audit_schema."""
+    records, _ = structured_data.collect(doc)
+    return [record["node"] for record in records]
 
 
 def _clean(value):
@@ -136,11 +117,15 @@ def detect(doc, nodes=None):
     product_nodes = [n for n in nodes if "product" in _types(n)]
     evidence = []
     if product_nodes:
-        evidence.append("Product JSON-LD")
+        records, _ = structured_data.collect(doc)
+        formats = {source for record in records if "product" in _types(record["node"])
+                   for source in record["formats"]}
+        if "jsonld" in formats:
+            evidence.append("Product JSON-LD")
+        if "microdata" in formats:
+            evidence.append("Product microdata")
     if (doc.meta_by_property("og:type") or "").lower() == "product":
         evidence.append("og:type=product")
-    if re.search(r'itemtype\s*=\s*["\'][^"\']*schema\.org/product', doc.html or "", re.I):
-        evidence.append("Product microdata")
     visible = visible_facts(doc)
     merchant = sorted(set(visible) & {"price", "currency", "availability", "sku"})
     if merchant:
@@ -283,8 +268,8 @@ def audit(doc, report, *, today=None):
         return meta
     products = detected["product_nodes"]
     if not products:
-        report.add(CAT, "high", "Product page has no Product JSON-LD",
-                   "Strong product-page signals were found, but no Product JSON-LD was detected.",
+        report.add(CAT, "high", "Product page has no Product structured data",
+                   "Strong product-page signals were found, but no Product JSON-LD or Microdata was detected.",
                    "Add Product JSON-LD using only visible, current merchant facts.",
                    evidence="; ".join(detected["evidence"]),
                    rule_id="schema.ecommerce.product.missing")
@@ -402,7 +387,7 @@ def audit(doc, report, *, today=None):
             severity = "high" if field in ("price", "currency") else ("medium" if field in ("availability", "sku") else "low")
             report.add(CAT, severity, f"Visible product {field} missing from schema",
                        f"{observed['source']} exposes {observed['value']!r}, but Product/Offer markup does not.",
-                       f"Add the same current {field} value to Product/Offer JSON-LD.",
+                       f"Add the same current {field} value to Product/Offer structured data.",
                        evidence=f"visible={observed['value']}",
                        rule_id=f"schema.ecommerce.visible.{field}.missing")
             continue
@@ -419,7 +404,7 @@ def audit(doc, report, *, today=None):
             severity = "high" if field in ("price", "currency", "availability") else "medium"
             report.add(CAT, severity, f"Visible and schema {field} do not match",
                        f"{observed['source']} says {observed['value']!r}; {schema_source} says {schema_value!r}.",
-                       "Make the rendered page and JSON-LD use the same current product data source.",
+                       "Make the rendered page and structured data use the same current product data source.",
                        evidence=f"visible={observed['value']}; schema={schema_value}",
                        rule_id=f"schema.ecommerce.{field}.mismatch")
     report.ok(CAT, "Product page merchant signals inspected",

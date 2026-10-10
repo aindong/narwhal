@@ -164,7 +164,9 @@ Captured here so they aren't lost; promote to an issue when scoped.
   six framework adapters, CLI/MCP, safety classes, and golden fixtures
   (released 2026-08-10).
 
-- Microdata / RDFa parsing (not just JSON-LD) in the schema auditor.
+- ✅ Microdata parsing (not just JSON-LD) in the schema auditor — shared merchant
+  checks, format provenance, mixed-format deduplication (implemented; pending release).
+- RDFa parsing in the schema auditor (next format; not implemented).
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
 - Per-finding "learn more" deep links into the `references/` guides.
 - ✅ Single-source the version — one runtime/build constant, synchronized plugin

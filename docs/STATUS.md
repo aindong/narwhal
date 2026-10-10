@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **Unreleased Microdata support:** bounded stdlib extraction, shared schema /
+  merchant checks, source-format provenance, comparison facts, and equal-node
+  deduplication. Valid Microdata no longer receives missing-JSON-LD penalties;
+  extraction warnings and the remaining RDFa coverage gap are explicit.
 - **v1.28.0 e-commerce checks:** deterministic Product/store detection,
   Product/Offer/AggregateOffer and variant validation, evidence-gated visible
   merchant mismatches, crawl scope metadata, planner ownership, and a conditional
@@ -99,7 +103,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   agent-orchestrated `/narwhal brief` (editorial outline + branded HTML), and
   MCP `content_brief`. Also fixed a live-found `compare` bug: vacuous depth
   "lead" when all rivals are hub pages.
-- **Tests:** 247 locally, split into focused area modules, with CI covering
+- **Tests:** 279 locally, split into focused area modules, with CI covering
   Python 3.8–3.12 + Windows (+ render-smoke job); complete Markdown, JSON, and
   HTML report shapes plus planner output are protected by committed goldens.
 - **v1.28.0 version consistency:** one `_version.py` constant supplies

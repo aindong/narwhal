@@ -24,7 +24,7 @@ _Read-only plan: inspect proposed owners and values before applying edits._
 
 - **Rule:** `schema.no.structured.data.json.ld`
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
-- **Change:** Add or repair JSON-LD for the page's real entity; validate all values before publishing.
+- **Change:** Add or repair structured data for the page's real entity; preserve valid Microdata or JSON-LD and validate all values before publishing.
 - **Verify:** `narwhal diff before.json after.json`
 
 ### MEDIUM — Images missing alt text

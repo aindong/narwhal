@@ -393,8 +393,8 @@ CHANGE_GUIDANCE = {
     "image_alt": "Add meaningful alt text to informative images; use empty alt for decorative images.",
     "headings": "Edit the owning page/template to provide one descriptive H1 and a logical heading hierarchy.",
     "open_graph": "Complete Open Graph and Twitter metadata using real page title, description, URL, and image.",
-    "json_ld": "Add or repair JSON-LD for the page's real entity; validate all values before publishing.",
-    "product_schema": "Update Product/Offer JSON-LD from the same current product data used by the rendered page; preserve variants and validate merchant values.",
+    "json_ld": "Add or repair structured data for the page's real entity; preserve valid Microdata or JSON-LD and validate all values before publishing.",
+    "product_schema": "Update Product/Offer structured data from the same current product data used by the rendered page; preserve valid Microdata or JSON-LD, variants, and merchant values.",
     "robots_txt": "Create or revise robots.txt deliberately, preserving intentional crawler policies.",
     "sitemap": "Create/configure the sitemap and reference it from robots.txt using the canonical deployed URL.",
     "llms_txt": "Generate a starter llms.txt in the public/static root, then curate every entry and TODO.",
@@ -433,7 +433,7 @@ def verification_for(artifact: str, target: str, report_source: str) -> list:
     commands = [scan_command,
                 f"narwhal diff {before} after.json"]
     if artifact in ("json_ld", "product_schema"):
-        commands.insert(0, "Validate the rendered JSON-LD and replace every TODO placeholder.")
+        commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
     return commands
 
 
