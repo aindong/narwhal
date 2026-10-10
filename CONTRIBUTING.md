@@ -86,6 +86,11 @@ Create `audit_<name>.py` exposing `audit(doc, resp, report, ctx)`, register it i
 
 ## Pull requests
 
+Release versions come from `skills/seo-scan/scripts/_version.py`. After changing
+it, run `python scripts/sync_version.py` and regenerate the report snapshots.
+Use `python scripts/sync_version.py --check` to validate plugin manifests without
+editing files; CI rejects any drift.
+
 - Keep PRs focused. Reference the issue (`Closes #NN`).
 - Run the test suite and scan a real URL before submitting.
 - Match the surrounding code style (stdlib-first, small functions, docstrings that

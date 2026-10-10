@@ -28,6 +28,27 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run tests (no optional dependencies)
         run: python -m unittest discover -s skills/seo-scan/tests -v
+      - name: Check release version consistency
+        run: python scripts/sync_version.py --check
+
+  # Prove dynamic version metadata survives sdist -> wheel -> installed runtime.
+  packaging:
+    name: installed package version contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          pip install build
+          python -m build
+      - name: Verify installed version surfaces
+        run: |
+          pip install --no-deps dist/*.whl
+          narwhal --version
+          python -c 'from importlib.metadata import version; import narwhal, narwhal.cli; from narwhal.lib.report import TOOL_VERSION; assert version("narwhal-seo") == narwhal.__version__ == narwhal.cli.__version__ == TOOL_VERSION'
 
   # Prove it also works with the optional parsing/rendering extras installed.
   with-extras:

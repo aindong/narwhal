@@ -99,9 +99,12 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   agent-orchestrated `/narwhal brief` (editorial outline + branded HTML), and
   MCP `content_brief`. Also fixed a live-found `compare` bug: vacuous depth
   "lead" when all rivals are hub pages.
-- **Tests:** 242 locally, split into focused area modules, with CI covering
+- **Tests:** 247 locally, split into focused area modules, with CI covering
   Python 3.8–3.12 + Windows (+ render-smoke job); complete Markdown, JSON, and
   HTML report shapes plus planner output are protected by committed goldens.
+- **Unreleased version consistency:** one `_version.py` constant supplies
+  package metadata, CLI, and report provenance; plugin manifests are synchronized
+  with a stdlib command. CI verifies manifest consistency and installed versions.
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
   `--crux-key` > `CRUX_API_KEY` env > `.env` file (`lib/env.py`, zero-dep).
 - **Plugin-native `vitals`/`diff` (v1.11.0):** both wired into `/narwhal <action>`
@@ -176,11 +179,13 @@ CI runs on every push/PR (`.github/workflows/ci.yml`). Two hard-won practices:
 - **No AI co-author trailers in commits/PRs** — repository owner's preference.
 
 ## Release process
-1. Bump the version in **5 places** (keep in sync):
-   `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`,
-   `pyproject.toml`, `skills/seo-scan/scripts/__init__.py`,
-   `skills/seo-scan/scripts/cli.py` (fallback).
+1. Bump the canonical version in `skills/seo-scan/scripts/_version.py`, then run
+   `python scripts/sync_version.py` to synchronize the plugin manifests.
+   Package metadata, CLI, and report provenance all read the same constant.
+   CI runs `python scripts/sync_version.py --check` to reject manifest drift.
 2. Update [CHANGELOG.md](../CHANGELOG.md) and this file's version line.
+   Regenerate the report snapshots with
+   `python skills/seo-scan/tests/update_golden_reports.py` after the version bump.
 3. Commit, push, confirm CI green.
 4. `gh release create vX.Y.Z --target main --title … --notes …`
 5. Users update: `/plugin marketplace update narwhal` → `/plugin update narwhal@narwhal` (restart).
