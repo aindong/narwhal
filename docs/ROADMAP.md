@@ -168,7 +168,7 @@ Captured here so they aren't lost; promote to an issue when scoped.
   checks, format provenance, mixed-format deduplication (v1.29.0).
 - ✅ Bounded schema.org RDFa parsing — shared checks, scoped vocabulary/prefixes,
   local references, provenance, partial-coverage warnings and three-format
-  deduplication (unreleased; not a full RDFa processor).
+  deduplication (v1.30.0; not a full RDFa processor).
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
 - Per-finding "learn more" deep links into the `references/` guides.
 - ✅ Single-source the version — one runtime/build constant, synchronized plugin

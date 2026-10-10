@@ -6,6 +6,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.0] — 2026-10-11
+
 ### Added
 - Bounded, stdlib-only schema.org RDFa extraction: scoped vocabularies/prefixes,
   nested entities, local subject references, resource URLs and scalar literals.
