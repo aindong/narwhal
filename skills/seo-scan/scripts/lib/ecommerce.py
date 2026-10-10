@@ -36,7 +36,7 @@ def _types(node):
 
 
 def schema_nodes(doc):
-    """Return unique JSON-LD/Microdata nodes; syntax failures belong to audit_schema."""
+    """Return unique structured-data nodes; syntax failures belong to audit_schema."""
     records, _ = structured_data.collect(doc)
     return [record["node"] for record in records]
 
@@ -124,6 +124,8 @@ def detect(doc, nodes=None):
             evidence.append("Product JSON-LD")
         if "microdata" in formats:
             evidence.append("Product microdata")
+        if "rdfa" in formats:
+            evidence.append("Product RDFa")
     if (doc.meta_by_property("og:type") or "").lower() == "product":
         evidence.append("og:type=product")
     visible = visible_facts(doc)
@@ -269,7 +271,7 @@ def audit(doc, report, *, today=None):
     products = detected["product_nodes"]
     if not products:
         report.add(CAT, "high", "Product page has no Product structured data",
-                   "Strong product-page signals were found, but no Product JSON-LD or Microdata was detected.",
+                   "Strong product-page signals were found, but no Product JSON-LD, Microdata or supported RDFa was detected.",
                    "Add Product JSON-LD using only visible, current merchant facts.",
                    evidence="; ".join(detected["evidence"]),
                    rule_id="schema.ecommerce.product.missing")

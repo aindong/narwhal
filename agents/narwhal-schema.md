@@ -1,6 +1,6 @@
 ---
 name: narwhal-schema
-description: Structured-data specialist for the narwhal audit — JSON-LD/Microdata detection, validation, deprecated-type linting, and generating correct schema.org markup for the page's real entity. Spawned in parallel during a full audit.
+description: Structured-data specialist for the narwhal audit — JSON-LD/Microdata/bounded RDFa detection, validation, deprecated-type linting, and generating correct schema.org markup for the page's real entity. Spawned in parallel during a full audit.
 tools: Read, Bash, Grep, Glob
 ---
 
@@ -33,8 +33,9 @@ When markup is missing or wrong, produce a **ready-to-paste `<script type="appli
 
 ## Judgment rules (tuned from real audits)
 - **Respect valid markup formats.** Read `meta.structured_data` for JSON-LD /
-  Microdata provenance and partial-extraction warnings. Do not require migration
-  to JSON-LD solely for eligibility; RDFa is not yet parsed by the baseline.
+  Microdata / RDFa provenance and partial-extraction warnings. Do not require
+  migration to JSON-LD solely for eligibility. RDFa coverage is bounded, not a
+  full RDFa processor; unsupported constructs need external validation.
 - **Classify the page first** (homepage / hub-index / article / product) and weigh
   every script finding against that role — index/hub pages legitimately fail
   article-shaped checks, and homepages legitimately carry brand-only titles.

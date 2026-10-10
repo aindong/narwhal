@@ -119,6 +119,7 @@ def collect(doc):
         except (ValueError, TypeError, RecursionError) as exc:
             errors.append((i + 1, str(exc)))
     add(doc.microdata, "microdata")
+    add(doc.rdfa, "rdfa")
     return records, errors
 
 
@@ -129,6 +130,7 @@ def types(node):
 
 def provenance(doc, records):
     """Small serializable coverage summary; raw markup is never copied here."""
+    from .rdfa import SCOPE
     by_format = {}
     for record in records:
         node_types = types(record["node"])
@@ -139,4 +141,6 @@ def provenance(doc, records):
             "types_by_format": {source: sorted(found) for source, found in sorted(by_format.items())},
             "nodes_count": sum(bool(types(r["node"])) for r in records),
             "microdata_warnings": doc.microdata_warnings,
-            "rdfa_supported": False}
+            "rdfa_supported": True,
+            "rdfa_scope": SCOPE,
+            "rdfa_warnings": doc.rdfa_warnings}
