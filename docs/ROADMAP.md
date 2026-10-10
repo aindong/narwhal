@@ -165,7 +165,7 @@ Captured here so they aren't lost; promote to an issue when scoped.
   (released 2026-08-10).
 
 - ✅ Microdata parsing (not just JSON-LD) in the schema auditor — shared merchant
-  checks, format provenance, mixed-format deduplication (implemented; pending release).
+  checks, format provenance, mixed-format deduplication (v1.29.0).
 - RDFa parsing in the schema auditor (next format; not implemented).
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
 - Per-finding "learn more" deep links into the `references/` guides.
