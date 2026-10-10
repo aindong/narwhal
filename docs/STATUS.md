@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-11 · version **1.28.0**_
+_Last updated: 2026-10-11 · version **1.29.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,7 +21,7 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
-- **Unreleased Microdata support:** bounded stdlib extraction, shared schema /
+- **v1.29.0 Microdata support:** bounded stdlib extraction, shared schema /
   merchant checks, source-format provenance, comparison facts, and equal-node
   deduplication. Valid Microdata no longer receives missing-JSON-LD penalties;
   extraction warnings and the remaining RDFa coverage gap are explicit.
@@ -125,7 +125,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.28.0 (33 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.29.0 (34 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

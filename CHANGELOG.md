@@ -6,6 +6,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.29.0] — 2026-10-11
+
 ### Added
 - Stdlib-only schema.org Microdata extraction: nested scopes, repeated and
   multi-name properties, typed values, relative URLs, item IDs, and bounded local
