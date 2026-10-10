@@ -49,6 +49,7 @@ class Doc:
     noscript_text: str = ""                            # <noscript> fallback content
     html: str = ""
     _microdata_cache: object = field(default=None, init=False, repr=False)
+    _rdfa_cache: object = field(default=None, init=False, repr=False)
 
     @property
     def microdata(self) -> list:
@@ -61,6 +62,18 @@ class Doc:
     def microdata_warnings(self) -> list:
         self.microdata  # populate the shared lazy extraction
         return self._microdata_cache[1]
+
+    @property
+    def rdfa(self) -> list:
+        if self._rdfa_cache is None:
+            from .rdfa import extract
+            self._rdfa_cache = extract(self.html, self.base_url)
+        return self._rdfa_cache[0]
+
+    @property
+    def rdfa_warnings(self) -> list:
+        self.rdfa  # populate the shared lazy extraction
+        return self._rdfa_cache[1]
 
     @property
     def extraction(self) -> str:
@@ -143,7 +156,7 @@ def looks_article(doc: "Doc") -> bool:
 def looks_product(doc: "Doc") -> bool:
     """Whether the page supplies strong, independently observable product cues.
 
-    Product JSON-LD or parsed Microdata is authoritative. Without it, require
+    Product JSON-LD, parsed Microdata or RDFa is authoritative. Without it, require
     ``og:type=product`` plus a merchant signal; a stray price in
     ordinary prose must never turn an article into a product page.
     """
@@ -167,16 +180,16 @@ def looks_product(doc: "Doc") -> bool:
                 return True
         except (json.JSONDecodeError, TypeError, RecursionError):
             continue
-    microdata = any(any(schema_name(t).lower() == "product" for t in
+    markup_product = any(any(schema_name(t).lower() == "product" for t in
                         (node.get("@type") if isinstance(node.get("@type"), list) else [node.get("@type")])
-                        if isinstance(t, str)) for node in doc.microdata)
+                        if isinstance(t, str)) for node in doc.microdata + doc.rdfa)
     og_product = (doc.meta_by_property("og:type") or "").lower() == "product"
     merchant_signal = bool(
         re.search(r'(?:product:|og:)price:(?:amount|currency)', html)
         or re.search(r'itemprop\s*=\s*["\'](?:price|pricecurrency|availability|sku)["\']', html)
         or re.search(r'(?:add to (?:cart|bag)|buy now)', doc.body_text or "", re.I)
     )
-    return microdata or (og_product and merchant_signal)
+    return markup_product or (og_product and merchant_signal)
 
 
 def is_homepage(doc: "Doc") -> bool:

@@ -6,6 +6,19 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Bounded, stdlib-only schema.org RDFa extraction: scoped vocabularies/prefixes,
+  nested entities, local subject references, resource URLs and scalar literals.
+  Unsupported relations/lists/copying/markup literals and resource limits are
+  explicit partial-coverage warnings; no referenced resources are fetched.
+- Shared JSON-LD/Microdata/RDFa schema and merchant checks, three-format
+  deduplication, RDFa provenance and coverage metadata, and comparison facts.
+
+### Fixed
+- Valid supported RDFa no longer receives missing-structured-data penalties.
+  Inert examples, foreign namespaces and vocabulary rebinding do not create
+  product false positives. Remediation guidance preserves valid RDFa.
+
 ## [1.29.0] — 2026-10-11
 
 ### Added

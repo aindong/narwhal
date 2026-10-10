@@ -1,4 +1,4 @@
-"""Structured-data (schema.org / JSON-LD and Microdata) auditor.
+"""Structured-data (schema.org / JSON-LD, Microdata and bounded RDFa) auditor.
 
 Parses every ``application/ld+json`` block, validates required properties for the
 common rich-result types, flags types Google has deprecated, and notes when a
@@ -58,13 +58,18 @@ def audit(doc, resp, report, ctx=None) -> None:
         report.add(CAT, "low", "Microdata extraction needs verification",
                    warning, "Check item scopes, URLs and itemref targets; validate the rendered markup with the schema.org validator.",
                    evidence=warning, rule_id="schema.microdata.extraction")
+    if doc.rdfa_warnings:
+        warning = "\n".join(doc.rdfa_warnings)
+        report.add(CAT, "low", "RDFa extraction needs verification",
+                   warning, "Check RDFa subjects, vocabulary and coverage limits; validate the rendered markup with the schema.org validator.",
+                   evidence=warning, rule_id="schema.rdfa.extraction")
     if not blobs and not any(structured_data.types(r["node"]) for r in records):
         # Hub/index pages have no single entity to mark up — absence there is a
         # note, not a real gap (articles/products/homepages keep medium).
         hub = htmlx.is_hub_page(doc)
         report.add(CAT, "low" if hub else "medium",
                    "No structured data",
-                   "No JSON-LD or typed Microdata was detected. RDFa is not yet parsed.",
+                   "No JSON-LD, typed Microdata or supported schema.org RDFa was detected.",
                    "Add JSON-LD for the page's entity (Article, Product, "
                    "Organization…) to unlock rich results and clarify meaning for "
                    "AI search."
@@ -79,7 +84,7 @@ def audit(doc, resp, report, ctx=None) -> None:
                    f"Block #{block} could not be parsed or processed as JSON-LD.",
                    "Fix the JSON syntax or excessive nesting; malformed blocks are ignored by search "
                    "engines.", evidence=error)
-    # Validate the shared unique objects, including nested Microdata entities.
+    # Validate shared unique objects, including nested Microdata/RDFa entities.
     # Distinct defective variants remain evidence, but score a given rule once.
     start = len(report.findings)
     for record in records:

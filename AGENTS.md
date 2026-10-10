@@ -33,7 +33,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --render` | Render JS (SPAs) via Playwright; also diffs raw vs rendered → JS-dependence findings (% JS-only content, client-injected metadata) |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | (scan default) | Image weight/format checks + og:image validation (HEAD-only + one ranged GET); `--no-image-checks` to skip |
-| (schema default) | Product/Offer merchant completeness, variants, stale validity, and evidence-gated visible price/currency/stock/SKU/brand mismatches |
+| (schema default) | JSON-LD, Microdata and bounded schema.org RDFa; Product/Offer completeness, variants, stale validity, and evidence-gated visible price/currency/stock/SKU/brand mismatches |
 | `python scan.py <url> --fail-under 80` | Exit non-zero below a score (CI quality gate) |
 | `python crawl_site.py <url> --max-pages 25` | Site-wide scan + recurring-issue rollup |
 | (crawl output) | Always includes a site-structure `graph`: click depth, orphan candidates, zero-inbound pages — sample-aware |

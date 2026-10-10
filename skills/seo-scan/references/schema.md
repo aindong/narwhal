@@ -1,4 +1,4 @@
-# Structured data (schema.org / JSON-LD and Microdata) reference
+# Structured data (schema.org / JSON-LD, Microdata and bounded RDFa) reference
 
 Structured data tells search engines and AI systems *what* a page is about in a
 machine-readable way. It powers rich results (stars, FAQs, prices, breadcrumbs)
@@ -15,18 +15,38 @@ and helps AI answer engines identify and attribute entities.
   URL element attributes, `data`/`meter.value`, `time.datetime`, and text values
   follow the [HTML Microdata model](https://html.spec.whatwg.org/multipage/microdata.html).
   URL attributes resolve against the page URL (or the first HTML `base` URL).
-- JSON-LD and Microdata feed the same schema and merchant checks.
+- **Schema.org RDFa** is also audited within a bounded subset. Scoped `vocab`,
+  `prefix` (including the initial `schema:` prefix), legacy `xmlns:` mappings,
+  `typeof`, `property`, `resource`, and `about` establish subjects and nested
+  entities. Local statements for the same subject are combined within RDFa;
+  forward references resolve only against nodes in the document. Resource,
+  `href` and `src` values resolve against the page / HTML `base` URL. Text,
+  `content` and `datetime` supply scalar values; scalar XSD datatypes retain
+  lexical strings, not RDF datatype/language semantics. See
+  [RDFa Core subject/property rules](https://www.w3.org/TR/rdfa-core/#sequence)
+  and [HTML+RDFa host rules](https://www.w3.org/TR/html-rdfa/).
+- JSON-LD, Microdata and supported RDFa feed the same schema and merchant checks.
   `meta.structured_data` reports source formats, types per format, unique typed
   node count, and extraction warnings. Equal normalized objects are audited
   once; different variants or conflicting copies are retained, not merged by ID.
   This is not a complete cross-format conflict validator.
+- `rdfa_supported` means bounded support, not full RDFa conformance: read
+  `rdfa_scope` and `rdfa_warnings`. RDFa relations (`rel`/`rev`), ordered lists,
+  property copying, markup literals and non-scalar datatypes are not processed.
+  Unsupported subtrees are skipped with a verification finding to avoid leaking
+  their properties into the wrong entity. Foreign vocabularies are not audited;
+  vocabulary expansion and referenced resources are never fetched. Language
+  tags are not modeled. Validate those cases externally.
 - Extraction is capped at 50,000 HTML elements, 1,000 item scopes, 256 HTML
   nesting levels, and 64 nested item references. Partial coverage and invalid
   references produce a verification finding, not a claim of complete validation.
   The source-tree parser is not a full HTML5 browser DOM: malformed HTML may
   need external validation. Inert templates and SVG/MathML are excluded.
-- **RDFa is not parsed yet.** Reports state that coverage limit. Google supports
-  all three formats; JSON-LD is a maintenance recommendation, not a requirement.
+- RDFa uses the same element/HTML-depth caps, with 1,000 graph nodes, 10,000
+  property statements and 64 nested resource references. Cycles are truncated
+  to references with explicit partial-coverage warnings.
+- Google supports all three formats; JSON-LD is a maintenance recommendation,
+  not a requirement.
   See [Google's supported formats](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data#structured-data-format).
 
 ## The rule that matters most
@@ -63,7 +83,7 @@ socials) is *not* deprecated and is increasingly useful for entity/AI grounding.
 
 ## Product and merchant-listing checks
 
-Narwhal classifies a parsed Product JSON-LD or Microdata node as product evidence.
+Narwhal classifies a parsed Product JSON-LD, Microdata or supported RDFa node as product evidence.
 Without Product structured data it requires stronger corroboration—
 `og:type=product` plus an explicit merchant fact—so an article that merely
 mentions a price is not treated as a store page.

@@ -36,7 +36,7 @@ _QUESTION_WORDS = audit_geo._QUESTION_WORDS
 
 
 def _schema_types(doc) -> list:
-    """Every normalized JSON-LD/Microdata type (deduped, sorted)."""
+    """Every supported structured-data type (deduped, sorted)."""
     records, _ = structured_data.collect(doc)
     return sorted({typ for record in records for typ in structured_data.types(record["node"])})
 

@@ -36,8 +36,12 @@ class Element:
 
 
 class _Tree(HTMLParser):
-    def __init__(self, base_url):
+    """Bounded source tree shared by the Microdata and RDFa extractors."""
+
+    def __init__(self, base_url, label="Microdata", element_limit=None):
         super().__init__(convert_charrefs=True)
+        self.label = label
+        self.element_limit = MAX_ELEMENTS if element_limit is None else element_limit
         self.root = Element("", {}, -1)
         self.stack = [self.root]
         self.elements = []
@@ -54,7 +58,7 @@ class _Tree(HTMLParser):
         try:
             return urljoin(self.base_url, raw)
         except ValueError:
-            self.warn("Microdata URL could not be resolved: " + raw)
+            self.warn(self.label + " URL could not be resolved: " + raw)
             return ""
 
     def close_optional(self, targets, boundaries=()):
@@ -81,10 +85,10 @@ class _Tree(HTMLParser):
                 self.close_optional({"tr"}, {"table", "tbody", "thead", "tfoot"})
             elif tag == "option":
                 self.close_optional({"option"}, {"select", "datalist"})
-        if len(self.elements) >= MAX_ELEMENTS:
-            raise _Limit("Microdata element limit reached; extraction is partial.")
+        if len(self.elements) >= self.element_limit:
+            raise _Limit(self.label + " element limit reached; extraction is partial.")
         if len(self.stack) >= 256:
-            raise _Limit("Microdata HTML nesting limit reached; extraction is partial.")
+            raise _Limit(self.label + " HTML nesting limit reached; extraction is partial.")
         attrs = dict(attrs)
         node = Element(tag, {k: v or "" for k, v in attrs.items()}, len(self.elements))
         self.elements.append(node)

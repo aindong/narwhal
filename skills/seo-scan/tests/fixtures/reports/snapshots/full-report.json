@@ -32,7 +32,9 @@
       },
       "nodes_count": 1,
       "microdata_warnings": [],
-      "rdfa_supported": false
+      "rdfa_supported": true,
+      "rdfa_scope": "bounded schema.org RDFa (not a full RDFa processor)",
+      "rdfa_warnings": []
     },
     "ecommerce": {
       "is_product": false,

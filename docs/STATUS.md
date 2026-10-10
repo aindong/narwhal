@@ -21,10 +21,14 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **Unreleased RDFa support:** bounded schema.org extraction with scoped
+  vocabularies/prefixes, nested entities, local references, shared schema/merchant
+  checks, comparison facts, and three-format deduplication. Coverage warnings are
+  explicit; this is not a full RDFa processor.
 - **v1.29.0 Microdata support:** bounded stdlib extraction, shared schema /
   merchant checks, source-format provenance, comparison facts, and equal-node
   deduplication. Valid Microdata no longer receives missing-JSON-LD penalties;
-  extraction warnings and the remaining RDFa coverage gap are explicit.
+  extraction warnings are explicit. Bounded RDFa support is now unreleased above.
 - **v1.28.0 e-commerce checks:** deterministic Product/store detection,
   Product/Offer/AggregateOffer and variant validation, evidence-gated visible
   merchant mismatches, crawl scope metadata, planner ownership, and a conditional
