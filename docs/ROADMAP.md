@@ -145,12 +145,13 @@ without breaking local-first (nothing below needs a paid API).
   — [#26](https://github.com/aindong/narwhal/issues/26)
 - ✅ **E-commerce checks** — evidence-gated Product/Offer completeness,
   ProductGroup variants, page-vs-schema merchant mismatches, and a conditional
-  store specialist (implemented; pending release).
+  store specialist (v1.28.0).
   — [#27](https://github.com/aindong/narwhal/issues/27)
 
 ### P3 — internal quality
 - ✅ **Test-suite health** — split the monolith into area-focused modules and
-  lock complete Markdown/JSON/HTML report output with regenerable golden files.
+  lock complete Markdown/JSON/HTML report output with regenerable golden files
+  (v1.28.0).
   — [#28](https://github.com/aindong/narwhal/issues/28)
 
 ---
@@ -167,7 +168,7 @@ Captured here so they aren't lost; promote to an issue when scoped.
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
 - Per-finding "learn more" deep links into the `references/` guides.
 - ✅ Single-source the version — one runtime/build constant, synchronized plugin
-  manifests, and a CI drift gate (implemented; pending release).
+  manifests, and a CI drift gate (v1.28.0).
 
 ---
 

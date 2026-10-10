@@ -6,6 +6,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.28.0] — 2026-10-11
+
 ### Added
 - Full Markdown, JSON, and self-contained HTML report golden snapshots from a
   fixed offline fixture, plus a one-command regeneration script.

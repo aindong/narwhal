@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-08-10 · version **1.27.0**_
+_Last updated: 2026-10-11 · version **1.28.0**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,10 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
-- **Unreleased e-commerce checks:** deterministic Product/store detection,
+- **v1.28.0 e-commerce checks:** deterministic Product/store detection,
   Product/Offer/AggregateOffer and variant validation, evidence-gated visible
   merchant mismatches, crawl scope metadata, planner ownership, and a conditional
-  e-commerce specialist are implemented for #27 and pending release.
+  e-commerce specialist shipped for #27.
 - **v1.27.0 remediation planner:** `narwhal plan REPORT.json --repo .` emits
   a versioned, read-only action contract with six framework adapters, stable
   finding linkage, safety/deploy classifications, grouped fixes, conflicts,
@@ -102,7 +102,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **Tests:** 247 locally, split into focused area modules, with CI covering
   Python 3.8–3.12 + Windows (+ render-smoke job); complete Markdown, JSON, and
   HTML report shapes plus planner output are protected by committed goldens.
-- **Unreleased version consistency:** one `_version.py` constant supplies
+- **v1.28.0 version consistency:** one `_version.py` constant supplies
   package metadata, CLI, and report provenance; plugin manifests are synchronized
   with a stdlib command. CI verifies manifest consistency and installed versions.
 - **CrUX key convenience (v1.10.0):** `narwhal vitals` resolves the key from
@@ -121,7 +121,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.27.0 (28 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.28.0 (33 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -155,8 +155,8 @@ local-first (see ROADMAP "Next wave" for detail):
 - ~~#24~~ Image weight/format + og:image — **shipped v1.23.0** (lib/images.py, HEAD-budgeted + dimension probe)
 - ~~#25~~ Hreflang reciprocity — **shipped v1.24.0** (lib/hreflang.py, probe + exact pairs) — P1 tier complete
 - ~~#26~~ Content-brief flow — **shipped v1.26.0** (brief.py, /narwhal brief, MCP content_brief)
-- ~~#27~~ E-commerce checks + conditional store specialist (P2) — **implemented, pending release**
-- ~~#28~~ Test-suite health: split monolith + golden-file tests (P3) — **implemented, pending release**
+- ~~#27~~ E-commerce checks + conditional store specialist (P2) — **shipped v1.28.0**
+- ~~#28~~ Test-suite health: split monolith + golden-file tests (P3) — **shipped v1.28.0**
 
 ### Ongoing quality practice
 Specialist tuning (#19) is a loop, not a one-shot: each real `/narwhal audit` run
