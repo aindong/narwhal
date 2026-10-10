@@ -149,7 +149,8 @@ without breaking local-first (nothing below needs a paid API).
   — [#27](https://github.com/aindong/narwhal/issues/27)
 
 ### P3 — internal quality
-- ⬜ **Test-suite health** — split the monolith, golden-file report tests.
+- ✅ **Test-suite health** — split the monolith into area-focused modules and
+  lock complete Markdown/JSON/HTML report output with regenerable golden files.
   — [#28](https://github.com/aindong/narwhal/issues/28)
 
 ---

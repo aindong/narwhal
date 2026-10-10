@@ -3,3 +3,6 @@
 *.sh text eol=lf
 *.py text eol=lf
 *.ps1 text eol=crlf
+
+# Exact renderer snapshot: Markdown hard breaks intentionally end in two spaces.
+skills/seo-scan/tests/fixtures/reports/snapshots/full-report.md whitespace=-blank-at-eol

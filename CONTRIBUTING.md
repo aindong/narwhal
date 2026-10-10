@@ -72,7 +72,10 @@ multi-agent orchestration) and the release process.
   severity, title, detail, recommendation, evidence=…)`.
 - Severities: `critical`, `high`, `medium`, `low`, `good`. Use `good` for passing
   checks so users see what's already right.
-- Add a passing-case and failing-case assertion in `tests/test_smoke.py`.
+- Add passing and failing assertions in the relevant area module under `tests/`.
+- When report structure changes intentionally, regenerate and review the full
+  Markdown/JSON/HTML snapshots with:
+  `python skills/seo-scan/tests/update_golden_reports.py`.
 - If the check encodes non-obvious reasoning/thresholds, document the *why* in the
   matching `references/*.md`.
 

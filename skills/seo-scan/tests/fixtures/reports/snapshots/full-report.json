@@ -1,0 +1,337 @@
+{
+  "schema_version": "2.0",
+  "tool_version": "1.27.0",
+  "url": "https://example.test/guides/answer-visibility",
+  "final_url": "https://example.test/guides/answer-visibility",
+  "status": 200,
+  "rendered": false,
+  "score": 79,
+  "counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 9,
+    "good": 15
+  },
+  "meta": {
+    "elapsed_ms": 17,
+    "redirects": [],
+    "coverage": {
+      "response_byte_limit": 5000000,
+      "response_truncated": false
+    },
+    "extraction": "visible text",
+    "ecommerce": {
+      "is_product": false,
+      "is_merchant": false,
+      "confidence": 0.0,
+      "evidence": [],
+      "visible_facts": {
+        "name": {
+          "value": "Practical guide to answer-engine visibility",
+          "source": "visible H1",
+          "confidence": 0.85
+        }
+      }
+    }
+  },
+  "findings": [
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Title length is in range",
+      "detail": "43 characters",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.title.length.is.in.range",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Meta description length is in range",
+      "detail": "92 characters",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.meta.description.length.is.in.range",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Exactly one H1",
+      "detail": "Practical guide to answer-engine visibility",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.exactly.one.h1",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Self-referencing canonical",
+      "detail": "https://example.test/guides/answer-visibility",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.self.referencing.canonical",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Page is indexable",
+      "detail": "no meta-robots noindex",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.page.is.indexable",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "Responsive viewport declared",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.responsive.viewport.declared",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "medium",
+      "title": "Images missing alt text",
+      "detail": "1 of 1 <img> tags have no alt attribute.",
+      "recommendation": "Add descriptive alt text (empty alt=\"\" only for decorative images).",
+      "evidence": null,
+      "rule_id": "technical.images.missing.alt.text",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "low",
+      "title": "No compression header",
+      "detail": "Response has no Content-Encoding (gzip/br).",
+      "recommendation": "Enable gzip or Brotli compression to cut transfer size.",
+      "evidence": null,
+      "rule_id": "technical.no.compression.header",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "robots.txt references a sitemap",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.robots.txt.references.a.sitemap",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "technical",
+      "severity": "good",
+      "title": "XML sitemap reachable",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "technical.xml.sitemap.reachable",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "high",
+      "title": "Thin content",
+      "detail": "~146 words of main text (measured on visible text).",
+      "recommendation": "Expand to cover the topic fully; thin pages struggle to rank and are rarely cited by AI answers.",
+      "evidence": null,
+      "rule_id": "content.thin.content",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Content is fairly hard to read",
+      "detail": "Flesch reading ease 38.0 (difficult); ~grade 11.1.",
+      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "evidence": null,
+      "rule_id": "content.content.is.fairly.hard.to.read",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Clean, specific writing",
+      "detail": "low filler, diverse vocabulary (0.815)",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "content.clean.specific.writing",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "good",
+      "title": "Dominant topics detected",
+      "detail": "page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "content.dominant.topics.detected",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "medium",
+      "title": "No visible author/byline",
+      "detail": "No author meta tag or byline detected near the top.",
+      "recommendation": "Add a named author with credentials — a core E-E-A-T (experience/expertise) signal.",
+      "evidence": null,
+      "rule_id": "content.no.visible.author.byline",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No visible date signal",
+      "detail": "No published/modified date in metadata or near the top.",
+      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "evidence": null,
+      "rule_id": "content.no.visible.date.signal",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "Incomplete Open Graph tags",
+      "detail": "Missing: og:description, og:image.",
+      "recommendation": "Add og:title, og:description and og:image for rich social and chat-app link previews.",
+      "evidence": null,
+      "rule_id": "content.incomplete.open.graph.tags",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "content",
+      "severity": "low",
+      "title": "No Twitter/X card type",
+      "detail": "Missing <meta name=\"twitter:card\">.",
+      "recommendation": "Add twitter:card (e.g. summary_large_image) for X previews.",
+      "evidence": null,
+      "rule_id": "content.no.twitter.x.card.type",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "schema",
+      "severity": "low",
+      "title": "Article missing recommended properties",
+      "detail": "Recommended fields absent: author, datePublished, image.",
+      "recommendation": "Add author, datePublished, image to strengthen the Article entity.",
+      "evidence": null,
+      "rule_id": "schema.article.missing.recommended.properties",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "schema",
+      "severity": "good",
+      "title": "Structured data present",
+      "detail": "Article",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "schema.structured.data.present",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "schema",
+      "severity": "low",
+      "title": "No Organization/WebSite entity",
+      "detail": "No site-level Organization or WebSite markup detected.",
+      "recommendation": "Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity.",
+      "evidence": null,
+      "rule_id": "schema.no.organization.website.entity",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Question-based headings present",
+      "detail": "2/2 subheadings",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "geo.question.based.headings.present",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Citable passage structure",
+      "detail": "3/4 passages in range",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "geo.citable.passage.structure",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "Evidence signals present",
+      "detail": "0 stats, 2 citation cues",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "geo.evidence.signals.present",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No direct answer up top",
+      "detail": "The opening doesn't state a concise answer/definition.",
+      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "evidence": null,
+      "rule_id": "geo.no.direct.answer.up.top",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "geo",
+      "severity": "low",
+      "title": "No llms.txt",
+      "detail": "No /llms.txt found.",
+      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "evidence": null,
+      "rule_id": "geo.no.llms.txt",
+      "scope": "page",
+      "confidence": 1.0
+    },
+    {
+      "category": "geo",
+      "severity": "good",
+      "title": "AI crawlers are not blocked",
+      "detail": "",
+      "recommendation": "",
+      "evidence": null,
+      "rule_id": "geo.ai.crawlers.are.not.blocked",
+      "scope": "page",
+      "confidence": 1.0
+    }
+  ]
+}
