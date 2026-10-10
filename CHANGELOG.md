@@ -6,6 +6,18 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Stdlib-only schema.org Microdata extraction: nested scopes, repeated and
+  multi-name properties, typed values, relative URLs, item IDs, and bounded local
+  `itemref` resolution. Extraction limits and invalid references remain visible.
+- Shared JSON-LD/Microdata schema and merchant validation, format provenance in
+  scan JSON, equivalent-node deduplication, and Microdata-aware comparison facts.
+
+### Fixed
+- Product/Offer Microdata no longer receives missing-JSON-LD penalties. Inert
+  templates, escaped examples, and lookalike namespaces do not classify articles
+  as product pages. Remediation guidance preserves existing valid markup.
+
 ## [1.28.0] — 2026-10-11
 
 ### Added

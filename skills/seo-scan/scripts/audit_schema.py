@@ -1,4 +1,4 @@
-"""Structured-data (schema.org / JSON-LD) auditor.
+"""Structured-data (schema.org / JSON-LD and Microdata) auditor.
 
 Parses every ``application/ld+json`` block, validates required properties for the
 common rich-result types, flags types Google has deprecated, and notes when a
@@ -7,12 +7,10 @@ page that clearly should carry markup (article, product, org) has none.
 
 from __future__ import annotations
 
-import json
-
 try:
-    from lib import ecommerce, htmlx
+    from lib import ecommerce, htmlx, structured_data
 except ImportError:  # when imported as a package
-    from .lib import ecommerce, htmlx  # type: ignore
+    from .lib import ecommerce, htmlx, structured_data  # type: ignore
 
 CAT = "schema"
 
@@ -53,50 +51,53 @@ RECOMMENDED = {
 
 def audit(doc, resp, report, ctx=None) -> None:
     blobs = doc.scripts_ld
-    if not blobs:
+    records, errors = structured_data.collect(doc)
+    report.meta["structured_data"] = structured_data.provenance(doc, records)
+    if doc.microdata_warnings:
+        warning = "\n".join(doc.microdata_warnings)
+        report.add(CAT, "low", "Microdata extraction needs verification",
+                   warning, "Check item scopes, URLs and itemref targets; validate the rendered markup with the schema.org validator.",
+                   evidence=warning, rule_id="schema.microdata.extraction")
+    if not blobs and not any(structured_data.types(r["node"]) for r in records):
         # Hub/index pages have no single entity to mark up — absence there is a
         # note, not a real gap (articles/products/homepages keep medium).
         hub = htmlx.is_hub_page(doc)
         report.add(CAT, "low" if hub else "medium",
-                   "No structured data (JSON-LD)",
-                   "The page has no application/ld+json markup.",
+                   "No structured data",
+                   "No JSON-LD or typed Microdata was detected. RDFa is not yet parsed.",
                    "Add JSON-LD for the page's entity (Article, Product, "
                    "Organization…) to unlock rich results and clarify meaning for "
                    "AI search."
-                   + (" (Least critical on listing/index pages.)" if hub else ""))
+                   + (" (Least critical on listing/index pages.)" if hub else ""),
+                   rule_id="schema.no.structured.data")
         report.meta["ecommerce"] = ecommerce.audit(doc, report)
         return
 
     found_types = []
-    for i, blob in enumerate(blobs):
-        try:
-            data = json.loads(blob)
-        except json.JSONDecodeError as exc:
-            report.add(CAT, "high", "Invalid JSON-LD",
-                       f"Block #{i + 1} does not parse as JSON.",
-                       "Fix the JSON syntax; malformed blocks are ignored by search "
-                       "engines.", evidence=str(exc))
-            continue
-        for node in _iter_nodes(data):
-            _validate_node(node, found_types, report)
+    for block, error in errors:
+        report.add(CAT, "high", "Invalid JSON-LD",
+                   f"Block #{block} could not be parsed or processed as JSON-LD.",
+                   "Fix the JSON syntax or excessive nesting; malformed blocks are ignored by search "
+                   "engines.", evidence=error)
+    # Validate the shared unique objects, including nested Microdata entities.
+    # Distinct defective variants remain evidence, but score a given rule once.
+    start = len(report.findings)
+    for record in records:
+        _validate_node(record["node"], found_types, report)
+    kept, seen = report.findings[:start], {}
+    for finding in report.findings[start:]:
+        if finding.rule_id not in seen:
+            kept.append(finding)
+            seen[finding.rule_id] = finding
+        elif finding.detail not in seen[finding.rule_id].detail:
+            seen[finding.rule_id].detail += " Additional node: " + finding.detail
+    report.findings = kept
 
     if found_types:
         report.ok(CAT, "Structured data present",
                   ", ".join(sorted(set(found_types))))
     _cross_checks(doc, found_types, report)
     report.meta["ecommerce"] = ecommerce.audit(doc, report)
-
-
-def _iter_nodes(data):
-    """Yield every schema object, unwrapping @graph and arrays."""
-    if isinstance(data, list):
-        for item in data:
-            yield from _iter_nodes(item)
-    elif isinstance(data, dict):
-        if "@graph" in data:
-            yield from _iter_nodes(data["@graph"])
-        else:
-            yield data
 
 
 def _types_of(node) -> list:

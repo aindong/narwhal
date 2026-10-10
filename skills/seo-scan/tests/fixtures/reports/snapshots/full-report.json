@@ -21,6 +21,19 @@
       "response_truncated": false
     },
     "extraction": "visible text",
+    "structured_data": {
+      "formats": [
+        "jsonld"
+      ],
+      "types_by_format": {
+        "jsonld": [
+          "Article"
+        ]
+      },
+      "nodes_count": 1,
+      "microdata_warnings": [],
+      "rdfa_supported": false
+    },
     "ecommerce": {
       "is_product": false,
       "is_merchant": false,

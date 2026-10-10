@@ -48,6 +48,19 @@ class Doc:
     main_text: str = ""                                # main content only (if isolable)
     noscript_text: str = ""                            # <noscript> fallback content
     html: str = ""
+    _microdata_cache: object = field(default=None, init=False, repr=False)
+
+    @property
+    def microdata(self) -> list:
+        if self._microdata_cache is None:
+            from .microdata import extract
+            self._microdata_cache = extract(self.html, self.base_url)
+        return self._microdata_cache[0]
+
+    @property
+    def microdata_warnings(self) -> list:
+        self.microdata  # populate the shared lazy extraction
+        return self._microdata_cache[1]
 
     @property
     def extraction(self) -> str:
@@ -130,10 +143,11 @@ def looks_article(doc: "Doc") -> bool:
 def looks_product(doc: "Doc") -> bool:
     """Whether the page supplies strong, independently observable product cues.
 
-    Product JSON-LD is authoritative. Without it, require either Product
-    microdata or ``og:type=product`` plus a merchant signal; a stray price in
+    Product JSON-LD or parsed Microdata is authoritative. Without it, require
+    ``og:type=product`` plus a merchant signal; a stray price in
     ordinary prose must never turn an article into a product page.
     """
+    from .microdata import schema_name
     html = (doc.html or "").lower()
     def has_product_type(value):
         if isinstance(value, list):
@@ -142,7 +156,7 @@ def looks_product(doc: "Doc") -> bool:
             return False
         typ = value.get("@type")
         types = typ if isinstance(typ, list) else [typ]
-        if any(str(item).lower() == "product" for item in types if item):
+        if any(schema_name(str(item)).lower() == "product" for item in types if item):
             return True
         return any(has_product_type(item) for item in value.values()
                    if isinstance(item, (dict, list)))
@@ -151,9 +165,11 @@ def looks_product(doc: "Doc") -> bool:
         try:
             if has_product_type(json.loads(blob)):
                 return True
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError, RecursionError):
             continue
-    microdata = bool(re.search(r'itemtype\s*=\s*["\'][^"\']*schema\.org/product', html))
+    microdata = any(any(schema_name(t).lower() == "product" for t in
+                        (node.get("@type") if isinstance(node.get("@type"), list) else [node.get("@type")])
+                        if isinstance(t, str)) for node in doc.microdata)
     og_product = (doc.meta_by_property("og:type") or "").lower() == "product"
     merchant_signal = bool(
         re.search(r'(?:product:|og:)price:(?:amount|currency)', html)

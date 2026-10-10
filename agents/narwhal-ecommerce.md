@@ -21,7 +21,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <product-url> --o
 ## What to analyze
 
 - Product identity: visible name, brand, SKU/MPN/GTIN and variant identity agree
-  with Product JSON-LD.
+  with Product structured data (JSON-LD or Microdata).
 - Offers: price and currency, availability, canonical offer URL, condition,
   seller, AggregateOffer ranges/count, and expired `priceValidUntil` values.
 - Merchant completeness: image, description, brand, identifiers, offers, and
@@ -33,6 +33,8 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <product-url> --o
 
 ## Judgment rules
 
+- Preserve valid Microdata or JSON-LD; missing JSON-LD alone is not a merchant
+  defect. Check `meta.structured_data` for formats and extraction warnings.
 - **Do not repeat deterministic findings.** Group them by root data source, add
   business impact and an exact implementation strategy, then list any additional
   reasoning-led concerns separately.

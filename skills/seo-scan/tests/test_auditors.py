@@ -425,13 +425,13 @@ class TestRound2Tuning(unittest.TestCase):
         resp = http.Response("u", "u", 200, {}, "", 1)
         audit_schema.audit(hub, resp, rep, {})
         sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("No structured data (JSON-LD)"), "low")
+        self.assertEqual(sev.get("No structured data"), "low")
         prose = htmlx.parse("<p>" + "word " * 400 + "</p>",
                             base_url="https://x.com/post")
         rep2 = Report("u")
         audit_schema.audit(prose, resp, rep2, {})
         sev2 = {f.title: f.severity for f in rep2.findings}
-        self.assertEqual(sev2.get("No structured data (JSON-LD)"), "medium")
+        self.assertEqual(sev2.get("No structured data"), "medium")
 
 class TestHreflang(unittest.TestCase):
     """Offline tests for cross-page hreflang validation (#25)."""

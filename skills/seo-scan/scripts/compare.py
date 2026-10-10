@@ -26,7 +26,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
-from lib import htmlx  # noqa: E402
+from lib import htmlx, structured_data  # noqa: E402
 import audit_geo  # noqa: E402
 import scan as scanner  # noqa: E402
 
@@ -36,28 +36,9 @@ _QUESTION_WORDS = audit_geo._QUESTION_WORDS
 
 
 def _schema_types(doc) -> list:
-    """Every @type present in the page's JSON-LD blocks (deduped, sorted)."""
-    types = set()
-
-    def walk(node):
-        if isinstance(node, dict):
-            t = node.get("@type")
-            if isinstance(t, str):
-                types.add(t)
-            elif isinstance(t, list):
-                types.update(x for x in t if isinstance(x, str))
-            for v in node.values():
-                walk(v)
-        elif isinstance(node, list):
-            for v in node:
-                walk(v)
-
-    for blob in doc.scripts_ld:
-        try:
-            walk(json.loads(blob))
-        except (ValueError, TypeError):
-            continue
-    return sorted(types)
+    """Every normalized JSON-LD/Microdata type (deduped, sorted)."""
+    records, _ = structured_data.collect(doc)
+    return sorted({typ for record in records for typ in structured_data.types(record["node"])})
 
 
 def _question_ratio(doc) -> float:

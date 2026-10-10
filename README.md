@@ -62,7 +62,7 @@ And yes, it works as a backronym too:
 |---|---|
 | **Technical SEO** | title/meta, headings, canonical, robots directives, viewport/mobile, hreflang, images, links, HTTP hygiene, robots.txt, sitemap |
 | **Content & E-E-A-T** | thin-content detection, readability, author/date signals, Open Graph / Twitter cards |
-| **Structured data** | JSON-LD detection, required/recommended property validation, deprecated rich-result types, JSON-LD generation |
+| **Structured data** | JSON-LD + Microdata detection, required/recommended property validation, merchant checks, deprecated rich-result types, JSON-LD generation |
 | **E-commerce** | evidence-gated Product detection; Product/Offer/AggregateOffer completeness; variants; expired prices; visible-vs-schema price, currency, availability, SKU, and brand consistency |
 | **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and **AI-crawler access** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
