@@ -166,7 +166,8 @@ Captured here so they aren't lost; promote to an issue when scoped.
 - Microdata / RDFa parsing (not just JSON-LD) in the schema auditor.
 - Accessibility overlaps with SEO (lang, alt, heading order) as an optional lens.
 - Per-finding "learn more" deep links into the `references/` guides.
-- Single-source the version (today it's synced across 5 files by hand).
+- ✅ Single-source the version — one runtime/build constant, synchronized plugin
+  manifests, and a CI drift gate (implemented; pending release).
 
 ---
 

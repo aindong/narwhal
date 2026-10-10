@@ -13,9 +13,9 @@ from __future__ import annotations
 import sys
 
 try:
-    from . import __version__
+    from ._version import __version__
 except ImportError:  # running as loose scripts
-    __version__ = "1.27.0"
+    from _version import __version__
 
 USAGE = """narwhal — SEO & GEO/LLMO scanner
 

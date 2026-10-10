@@ -15,14 +15,9 @@ from typing import Optional
 REPORT_SCHEMA_VERSION = "2.0"
 
 try:
-    from importlib.metadata import version as _package_version
-except ImportError:  # Python 3.8
-    from importlib_metadata import version as _package_version  # type: ignore
-
-try:
-    TOOL_VERSION = _package_version("narwhal-seo")
-except Exception:  # loose-script/plugin execution
-    TOOL_VERSION = "1.27.0"
+    from .._version import __version__ as TOOL_VERSION
+except ImportError:  # loose-script/plugin execution
+    from _version import __version__ as TOOL_VERSION
 
 # Ordered worst -> best. Weights feed the 0-100 health score.
 SEVERITY = ("critical", "high", "medium", "low", "good")

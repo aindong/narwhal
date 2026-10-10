@@ -21,6 +21,9 @@ All notable changes to Narwhal are documented here. The format follows
   mismatch fixtures with parser-backend parity coverage.
 
 ### Changed
+- Package metadata, CLI, and report provenance now share one canonical release
+  version. A stdlib synchronization command updates plugin manifests, and CI
+  rejects drift instead of relying on manual edits across six files.
 - Split the 2,095-line smoke-test monolith into focused parser, auditor,
   report, tool, and integration modules while preserving zero-config discovery.
 - Product schema generation now emits explicit TODOs for merchant currency,
