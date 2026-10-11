@@ -254,7 +254,7 @@ def _offers(product, by_id):
     values = raw if isinstance(raw, list) else ([raw] if raw else [])
     out = []
     for value in values:
-        if isinstance(value, dict) and set(value) == {"@id"}:
+        if isinstance(value, dict) and set(value) == {"@id"} and isinstance(value["@id"], str):
             value = by_id.get(value["@id"], value)
         if isinstance(value, dict):
             out.append(value)
@@ -288,6 +288,11 @@ def _select_product(products, visible):
     return None, "unmatched_identity"
 
 
+def _price_specs(node):
+    value = node.get("priceSpecification")
+    return [s for s in (value if isinstance(value, list) else [value]) if isinstance(s, dict)]
+
+
 def _schema_fact(product, offers, field):
     if field == "price":
         keys = ("price", "lowPrice", "highPrice")
@@ -299,8 +304,7 @@ def _schema_fact(product, offers, field):
         for key in keys:
             value = node.get(key)
             if value in (None, "", []) and key in ("price", "priceCurrency"):
-                spec = node.get("priceSpecification")
-                specs = spec if isinstance(spec, list) else ([spec] if isinstance(spec, dict) else [])
+                specs = _price_specs(node)
                 value = next((s.get(key) for s in specs if s.get(key) not in (None, "", [])), None)
             if value not in (None, "", []):
                 return _clean(value), f"{_clean(node.get('@type')) or 'schema'}.{key}"
@@ -382,6 +386,18 @@ def audit(doc, report, *, today=None):
 
     for offer_product, offer in all_product_offers:
         types = _types(offer)
+        if offer.get("@id") is not None and not isinstance(offer["@id"], str):
+            report.add(CAT, "medium", "Offer has invalid local reference",
+                       "The Offer @id is not a string; it cannot identify or resolve a local Offer node.",
+                       "Use a string node identifier and include the referenced Offer data in the page. No remote reference is fetched.",
+                       rule_id="schema.ecommerce.offer.invalid.reference")
+        spec = offer.get("priceSpecification")
+        if ((spec is not None and not isinstance(spec, (dict, list)))
+                or (isinstance(spec, list) and any(s is not None and not isinstance(s, dict) for s in spec))):
+            report.add(CAT, "low", "Price specification evidence needs verification",
+                       "priceSpecification contains a non-object value; this bounded parser reads only inline object members as price/currency evidence.",
+                       "Verify the PriceSpecification shape and JSON-LD context. Unsupported values are skipped; supported object members are still inspected.",
+                       rule_id="schema.ecommerce.offer.price_specification.extraction")
         aggregate = "aggregateoffer" in types
         owner = "AggregateOffer" if aggregate else "Offer"
         if not any(t in ("offer", "aggregateoffer") for t in types):
@@ -392,8 +408,7 @@ def audit(doc, report, *, today=None):
                 if not _clean(offer.get(field)):
                     _add_missing(report, field, severity, owner)
         else:
-            spec = offer.get("priceSpecification")
-            specs = spec if isinstance(spec, list) else ([spec] if isinstance(spec, dict) else [])
+            specs = _price_specs(offer)
             for field, severity in (("price", "high"), ("priceCurrency", "high")):
                 if not _clean(offer.get(field)) and not any(_clean(s.get(field)) for s in specs):
                     _add_missing(report, field, severity, owner)
