@@ -45,6 +45,14 @@ and helps AI answer engines identify and attribute entities.
 - RDFa uses the same element/HTML-depth caps, with 1,000 graph nodes, 10,000
   property statements and 64 nested resource references. Cycles are truncated
   to references with explicit partial-coverage warnings.
+- Each source extraction retains at most 64 warning details plus one explicit
+  omission notice. Details are capped at 512 characters with a visible
+  truncation marker; repeated retained details do not consume additional budget.
+  This bounds warning output, not supported data extraction: later valid
+  properties are still inspected. Warning arrays are representative details,
+  not a total count of errors or a claim that omitted cases are valid.
+  Omission/truncation summaries are also included in recommendations so HTML
+  quick-win summaries cannot hide them.
 - Google supports all three formats; JSON-LD is a maintenance recommendation,
   not a requirement.
   See [Google's supported formats](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data#structured-data-format).
@@ -120,8 +128,8 @@ follow element-specific content/text/value/URL rules, support multi-name
 properties and exact schema.org property URLs, and retain linked brands' visible
 names. Inactive OpenGraph examples are ignored; first active type wins.
 `meta.ecommerce.source_warnings` and `schema.ecommerce.source.extraction` expose
-partial coverage (50,000 elements / 256 nesting levels) and a 64-warning cap plus
-one omission notice. This is source evidence, not computed CSS visibility or a
+partial coverage (50,000 elements / 256 nesting levels) and the shared warning
+count/detail budgets. This is source evidence, not computed CSS visibility or a
 complete multi-product identity/conflict validator.
 
 Product and Offer URL checks validate local syntax only: absolute HTTP(S), a

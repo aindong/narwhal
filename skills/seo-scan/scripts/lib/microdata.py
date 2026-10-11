@@ -17,6 +17,8 @@ INERT = {"script", "style", "template", "svg", "math"}
 MAX_ELEMENTS = 50_000
 MAX_ITEMS = 1_000
 MAX_DEPTH = 64
+MAX_WARNINGS = 64
+MAX_WARNING_CHARS = 512
 P_BLOCKS = set("address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main nav ol p pre section table ul".split())
 
 
@@ -42,8 +44,9 @@ class _Tree(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.label = label
         self.element_limit = MAX_ELEMENTS if element_limit is None else element_limit
-        self.warning_limit = warning_limit
+        self.warning_limit = MAX_WARNINGS if warning_limit is None else warning_limit
         self.warnings_suppressed = False
+        self._warning_seen = set()
         self.root = Element("", {}, -1)
         self.stack = [self.root]
         self.elements = []
@@ -55,12 +58,19 @@ class _Tree(HTMLParser):
     def warn(self, message):
         if self.warnings_suppressed:
             return
-        if self.warning_limit is not None and len(self.warnings) >= self.warning_limit:
-            self.warnings.append(self.label + " warning limit reached; additional warnings omitted; extraction is partial.")
+        marker = " ... [warning detail truncated]"
+        if len(message) > MAX_WARNING_CHARS:
+            message = message[:MAX_WARNING_CHARS - len(marker)] + marker
+        # Deduplicate before checking the cap: repeated retained warnings do not
+        # mean any distinct detail was omitted. The set stays bounded too.
+        if message in self._warning_seen:
+            return
+        if len(self.warnings) >= self.warning_limit:
+            self.warnings.append(self.label + f" warning limit reached ({self.warning_limit}); additional warnings omitted; extraction is partial.")
             self.warnings_suppressed = True
             return
-        if message not in self.warnings:
-            self.warnings.append(message)
+        self._warning_seen.add(message)
+        self.warnings.append(message)
 
     def resolve(self, raw):
         try:
@@ -132,6 +142,14 @@ class _Tree(HTMLParser):
 
 class _Limit(Exception):
     pass
+
+
+def warning_summary(warnings):
+    """Keep omission/truncation visible where renderers show only the fix."""
+    notes = [w for w in warnings if " warning limit reached (" in w]
+    if any("[warning detail truncated]" in w for w in warnings):
+        notes.append(f"Some warning details were truncated at {MAX_WARNING_CHARS} characters; inspect the bounded JSON evidence.")
+    return " ".join(notes)
 
 
 def _text(node):

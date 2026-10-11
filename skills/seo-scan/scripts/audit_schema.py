@@ -8,9 +8,9 @@ page that clearly should carry markup (article, product, org) has none.
 from __future__ import annotations
 
 try:
-    from lib import ecommerce, htmlx, structured_data
+    from lib import ecommerce, htmlx, microdata, structured_data
 except ImportError:  # when imported as a package
-    from .lib import ecommerce, htmlx, structured_data  # type: ignore
+    from .lib import ecommerce, htmlx, microdata, structured_data  # type: ignore
 
 CAT = "schema"
 
@@ -56,12 +56,14 @@ def audit(doc, resp, report, ctx=None) -> None:
     if doc.microdata_warnings:
         warning = "\n".join(doc.microdata_warnings)
         report.add(CAT, "low", "Microdata extraction needs verification",
-                   warning, "Check item scopes, URLs and itemref targets; validate the rendered markup with the schema.org validator.",
+                   warning, ("Check item scopes, URLs and itemref targets; validate the rendered markup with the schema.org validator. "
+                             + microdata.warning_summary(doc.microdata_warnings)).strip(),
                    evidence=warning, rule_id="schema.microdata.extraction")
     if doc.rdfa_warnings:
         warning = "\n".join(doc.rdfa_warnings)
         report.add(CAT, "low", "RDFa extraction needs verification",
-                   warning, "Check RDFa subjects, vocabulary and coverage limits; validate the rendered markup with the schema.org validator.",
+                   warning, ("Check RDFa subjects, vocabulary and coverage limits; validate the rendered markup with the schema.org validator. "
+                             + microdata.warning_summary(doc.rdfa_warnings)).strip(),
                    evidence=warning, rule_id="schema.rdfa.extraction")
     if not blobs and not any(structured_data.types(r["node"]) for r in records):
         # Hub/index pages have no single entity to mark up — absence there is a
