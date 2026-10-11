@@ -14,7 +14,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
 
-from . import htmlx, merchant_source, structured_data
+from . import htmlx, merchant_source, microdata, structured_data
 
 CAT = "schema"
 IDENTIFIERS = ("sku", "gtin", "gtin8", "gtin12", "gtin13", "gtin14", "mpn")
@@ -323,7 +323,8 @@ def audit(doc, report, *, today=None):
     if meta["source_warnings"]:
         report.add(CAT, "low", "Merchant source evidence needs verification",
                    "\n".join(meta["source_warnings"]),
-                   "Verify the rendered page; source evidence is bounded and may be partial.",
+                   ("Verify the rendered page; source evidence is bounded and may be partial. "
+                    + microdata.warning_summary(meta["source_warnings"])).strip(),
                    rule_id="schema.ecommerce.source.extraction")
     if not detected["is_product"]:
         return meta

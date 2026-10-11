@@ -6,6 +6,16 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.6] — 2026-10-12
+
+### Fixed
+- Microdata, RDFa and merchant-source warning output is bounded: 64 retained
+  details per extraction plus one explicit omission notice, with 512-character
+  detail limits and visible truncation markers. Valid extraction continues.
+- Warning deduplication is bounded and constant-time; repeating a retained
+  warning at the cap does not incorrectly claim additional details were omitted.
+- Omission/truncation summaries remain visible in HTML quick-win recommendations.
+
 ## [1.30.5] — 2026-10-12
 
 ### Fixed
