@@ -6,6 +6,15 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.3] — 2026-10-12
+
+### Fixed
+- Malformed Product and Offer URLs produce field-specific findings instead of
+  crashing scans. Missing hosts, invalid ports, embedded whitespace/control
+  characters and backslashes are rejected by local syntax validation.
+- Valid IPv6, Unicode hosts, encoded paths and non-default ports remain accepted.
+  Validation does not resolve DNS, fetch offer URLs or claim reachability.
+
 ## [1.30.2] — 2026-10-12
 
 ### Fixed
