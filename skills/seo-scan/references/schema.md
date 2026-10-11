@@ -132,6 +132,19 @@ encoded paths and non-default ports remain allowed; no DNS or reachability
 test of these structured-data URLs is performed.
 Bracketed IPvFuture literals follow [RFC 3986 §3.2.2](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2).
 
+For multiple Product nodes, page-versus-schema comparisons require a unique
+visible identifier, exact name or unique containment-name match. A single
+Product remains comparison-eligible, including when its SKU disagrees with the
+page. Identifier matching preserves punctuation and Unicode. Duplicate matching
+identifiers, nonunique names or no matching identity do not fall back to schema
+source order or infer identity from a coincidentally matching price.
+`meta.ecommerce.comparison_status` is `ready` or `skipped_ambiguous`, with
+`selection_method` explaining the selection; `selected_product` is null when
+ambiguous. `schema.ecommerce.comparison.ambiguous` is a low-severity verification
+note, not proof of a price defect. Completeness and validity checks still cover
+every Product/Offer. This does not resolve multiple offers on one Product or
+prove that unrelated page observations belong to the selected variant.
+
 Google distinguishes non-purchasable product snippets from merchant listings:
 an editorial Product with an authentic review does not need an Offer, while a
 merchant listing needs an active positive price and currency. See Google's

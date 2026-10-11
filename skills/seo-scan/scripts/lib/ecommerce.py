@@ -151,6 +151,11 @@ def _norm_text(value):
     return re.sub(r"[^a-z0-9]+", "", _clean(value).lower())
 
 
+def _norm_identifier(value):
+    # Identity punctuation and non-ASCII characters are significant.
+    return _clean(value).casefold()
+
+
 def _norm_price(value):
     value = re.sub(r"[^0-9.,-]", "", _clean(value))
     if "," in value and "." not in value and re.search(r",\d{1,2}$", value):
@@ -257,19 +262,30 @@ def _offers(product, by_id):
 
 
 def _select_product(products, visible):
-    """Choose the schema variant supported by explicit visible identity."""
-    visible_sku = _norm_text(visible.get("sku", {}).get("value"))
+    """Choose only a uniquely identified variant, never the first of many."""
+    if len(products) == 1:
+        return products[0], "single_product"
+    visible_sku = _norm_identifier(visible.get("sku", {}).get("value"))
     if visible_sku:
-        for product in products:
-            if any(_norm_text(product.get(key)) == visible_sku for key in IDENTIFIERS):
-                return product
+        matches = [p for p in products if any(_norm_identifier(p.get(key)) == visible_sku for key in IDENTIFIERS)]
+        if len(matches) == 1:
+            return matches[0], "visible_identifier"
+        if matches:
+            return None, "ambiguous_identifier"
     visible_name = _norm_text(visible.get("name", {}).get("value"))
     if visible_name:
-        for product in products:
-            name = _norm_text(product.get("name"))
-            if name and (name in visible_name or visible_name in name):
-                return product
-    return products[0]
+        exact = [p for p in products if _norm_text(p.get("name")) == visible_name]
+        if len(exact) == 1:
+            return exact[0], "visible_name_exact"
+        if exact:
+            return None, "ambiguous_name"
+        matches = [p for p in products if _norm_text(p.get("name")) and
+                   (_norm_text(p.get("name")) in visible_name or visible_name in _norm_text(p.get("name")))]
+        if len(matches) == 1:
+            return matches[0], "visible_name_unique"
+        if matches:
+            return None, "ambiguous_name"
+    return None, "unmatched_identity"
 
 
 def _schema_fact(product, offers, field):
@@ -317,14 +333,22 @@ def audit(doc, report, *, today=None):
         return meta
 
     by_id = {n.get("@id"): n for n in nodes if isinstance(n.get("@id"), str)}
-    product = _select_product(products, detected["visible"])
-    offers = _offers(product, by_id)
+    product, selection = _select_product(products, detected["visible"])
+    offers = _offers(product, by_id) if product is not None else []
     all_product_offers = [(p, offer) for p in products for offer in _offers(p, by_id)]
     merchant = detected["is_merchant"]
     meta["is_merchant"] = merchant
     meta["product_nodes_count"] = len(products)
-    meta["selected_product"] = _clean(product.get("sku")) or _clean(product.get("name"))
+    meta["selected_product"] = (_clean(product.get("sku")) or _clean(product.get("name"))) if product is not None else None
+    meta["comparison_status"] = "ready" if product is not None else "skipped_ambiguous"
+    meta["selection_method"] = selection
     meta["schema_offer_types"] = sorted({t for _, offer in all_product_offers for t in _types(offer)})
+    if product is None:
+        report.add(CAT, "low", "Product comparison identity needs verification",
+                   f"No unique Product matches the visible identity among {len(products)} nodes ({selection}). "
+                   "Completeness and validity checks still cover all nodes; page-versus-schema comparisons are skipped.",
+                   "Expose the selected variant's stable identifier or unambiguous name. Verify which Product/Offer supplies page facts before editing prices.",
+                   rule_id="schema.ecommerce.comparison.ambiguous")
 
     required = (("name", "high"), ("image", "medium"), ("description", "low"),
                 ("brand", "medium"), ("url", "low"))
@@ -419,7 +443,8 @@ def audit(doc, report, *, today=None):
 
     schema_offers = offers
     visible = detected["visible"]
-    for field in ("price", "currency", "availability", "sku", "brand", "name"):
+    comparison_fields = ("price", "currency", "availability", "sku", "brand", "name") if product is not None else ()
+    for field in comparison_fields:
         if field not in visible:
             continue
         schema_value, schema_source = _schema_fact(product, schema_offers, field)
@@ -439,6 +464,8 @@ def audit(doc, report, *, today=None):
         elif field == "name":
             left, right = _norm_text(observed["value"]), _norm_text(schema_value)
             mismatch = bool(left and right and left not in right and right not in left)
+        elif field == "sku":
+            mismatch = _norm_identifier(observed["value"]) != _norm_identifier(schema_value)
         else:
             mismatch = _norm_text(observed["value"]) != _norm_text(schema_value)
         if mismatch:
@@ -448,7 +475,8 @@ def audit(doc, report, *, today=None):
                        "Make the rendered page and structured data use the same current product data source.",
                        evidence=f"visible={observed['value']}; schema={schema_value}",
                        rule_id=f"schema.ecommerce.{field}.mismatch")
+    comparison_note = "visible comparisons were evidence-gated." if product is not None else "visible comparisons were skipped because Product identity is ambiguous."
     report.ok(CAT, "Product page merchant signals inspected",
-              f"{len(products)} Product node(s), {len(all_product_offers)} offer object(s); visible comparisons were evidence-gated.")
+              f"{len(products)} Product node(s), {len(all_product_offers)} offer object(s); {comparison_note}")
     _coalesce_ecommerce_findings(report, finding_start)
     return meta
