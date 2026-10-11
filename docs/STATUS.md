@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-11 · version **1.30.1**_
+_Last updated: 2026-10-12 · version **1.30.1**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see

@@ -6,7 +6,7 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
-## [1.30.1] — 2026-10-11
+## [1.30.1] — 2026-10-12
 
 ### Fixed
 - Merchant classification now requires Product evidence and a selling signal;
