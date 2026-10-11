@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.1**_
+_Last updated: 2026-10-12 · version **1.30.2**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.2 source-evidence accuracy:** cached stdlib extraction excludes inert
+  and explicitly hidden markup from commerce facts, labels and controls. Active
+  itemprop values and OpenGraph preference order remain intact; partial coverage
+  and warning limits are visible. Verified against real mismatch controls.
 - **v1.30.1 merchant-scope correction:** requires Product plus selling evidence,
   excludes SKU-only editorial reviews, tightens prose-label matching, and rejects
   inconsistent merchant flags in crawl summaries. Dogfooded on schema.org docs.
@@ -132,7 +136,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.1 (36 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.2 (37 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

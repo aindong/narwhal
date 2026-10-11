@@ -113,6 +113,17 @@ it does not guess merchant facts from arbitrary prose. Expired
 `priceValidUntil`, invalid currency/availability values, and stale visible-vs-
 schema price or stock are called out separately.
 
+Commerce observations come from a shared, cached source tree, not regex matches
+inside inert markup. Comments, templates, escaped examples, SVG/MathML and
+explicitly hidden subtrees cannot supply merchant facts. Itemprop observations
+follow element-specific content/text/value/URL rules, support multi-name
+properties and exact schema.org property URLs, and retain linked brands' visible
+names. Inactive OpenGraph examples are ignored; first active type wins.
+`meta.ecommerce.source_warnings` and `schema.ecommerce.source.extraction` expose
+partial coverage (50,000 elements / 256 nesting levels) and a 64-warning cap plus
+one omission notice. This is source evidence, not computed CSS visibility or a
+complete multi-product identity/conflict validator.
+
 Google distinguishes non-purchasable product snippets from merchant listings:
 an editorial Product with an authentic review does not need an Offer, while a
 merchant listing needs an active positive price and currency. See Google's

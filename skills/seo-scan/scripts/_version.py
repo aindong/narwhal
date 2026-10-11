@@ -1,3 +1,3 @@
 """Canonical release version for packaging, CLI, reports, and plugin manifests."""
 
-__version__ = "1.30.1"
+__version__ = "1.30.2"

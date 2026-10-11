@@ -38,10 +38,12 @@ class Element:
 class _Tree(HTMLParser):
     """Bounded source tree shared by the Microdata and RDFa extractors."""
 
-    def __init__(self, base_url, label="Microdata", element_limit=None):
+    def __init__(self, base_url, label="Microdata", element_limit=None, warning_limit=None):
         super().__init__(convert_charrefs=True)
         self.label = label
         self.element_limit = MAX_ELEMENTS if element_limit is None else element_limit
+        self.warning_limit = warning_limit
+        self.warnings_suppressed = False
         self.root = Element("", {}, -1)
         self.stack = [self.root]
         self.elements = []
@@ -51,6 +53,12 @@ class _Tree(HTMLParser):
         self.warnings = []
 
     def warn(self, message):
+        if self.warnings_suppressed:
+            return
+        if self.warning_limit is not None and len(self.warnings) >= self.warning_limit:
+            self.warnings.append(self.label + " warning limit reached; additional warnings omitted; extraction is partial.")
+            self.warnings_suppressed = True
+            return
         if message not in self.warnings:
             self.warnings.append(message)
 

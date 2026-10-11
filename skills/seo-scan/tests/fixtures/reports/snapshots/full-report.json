@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "tool_version": "1.30.1",
+  "tool_version": "1.30.2",
   "url": "https://example.test/guides/answer-visibility",
   "final_url": "https://example.test/guides/answer-visibility",
   "status": 200,
@@ -47,7 +47,8 @@
           "source": "visible H1",
           "confidence": 0.85
         }
-      }
+      },
+      "source_warnings": []
     }
   },
   "findings": [
