@@ -6,6 +6,17 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.1] — 2026-10-11
+
+### Fixed
+- Merchant classification now requires Product evidence and a selling signal;
+  documentation and SKU-only editorial reviews no longer enable store checks.
+- Prose-label fallback requires an explicit separator rather than interpreting
+  schema vocabulary definitions as brand, SKU or availability facts.
+- Crawl merchant rollups reject contradictory legacy non-product flags.
+- Purchase-action fallback requires an enabled control or same-origin purchase
+  link; prose, inert/hidden controls and external affiliate links are excluded.
+
 ## [1.30.0] — 2026-10-11
 
 ### Added

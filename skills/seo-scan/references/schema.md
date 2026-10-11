@@ -88,6 +88,17 @@ Without Product structured data it requires stronger corroboration—
 `og:type=product` plus an explicit merchant fact—so an article that merely
 mentions a price is not treated as a store page.
 
+Merchant scope additionally requires that Product classification plus an Offer,
+explicit price/currency/availability evidence, or a visible purchase action.
+Purchase-action fallback requires an enabled button/input or same-origin purchase
+link; ordinary prose, inert/explicitly hidden controls and external affiliate
+links are not purchase evidence. This is source markup, not a checkout or CSS
+visibility test. SKU alone is identity evidence, not evidence that an editorial publisher sells
+the product. Prose-label fallback requires `:` or `#` after the label; vocabulary
+definitions such as "SKU Text ..." are not observed product values. Crawl
+rollups also reject contradictory non-product/merchant flags, so documentation
+cannot enable the conditional store specialist.
+
 For purchasable products, the scanner checks Product identity (`name`, `image`,
 `description`, `brand`, URL, and SKU/GTIN/MPN) and validates nested `Offer` or
 `AggregateOffer` data. `Offer.price` and `priceCurrency` may live under a
