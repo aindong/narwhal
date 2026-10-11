@@ -11,10 +11,9 @@ from __future__ import annotations
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from html import unescape
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
-from . import htmlx, structured_data
+from . import htmlx, merchant_source, structured_data
 
 CAT = "schema"
 IDENTIFIERS = ("sku", "gtin", "gtin8", "gtin12", "gtin13", "gtin14", "mpn")
@@ -52,27 +51,16 @@ def _clean(value):
 
 def _meta(doc, keys):
     for key in keys:
-        value = doc.meta_by_property(key) or doc.meta_by_name(key)
-        if value:
-            return _clean(value), f"meta[{key}]"
+        for attr in ("property", "name"):
+            for meta in doc.merchant_markup["meta"]:
+                if (meta.get(attr) or "").lower() == key.lower() and meta.get("content"):
+                    return _clean(meta["content"]), f"meta[{key}]"
     return "", ""
 
 
-def _attr_value(html, itemprop):
-    # Constrain matching to one tag; accept content/value/href or its text.
-    tag_re = re.compile(r"<([a-z0-9]+)\b([^>]*\bitemprop\s*=\s*([\"'])" +
-                        re.escape(itemprop) + r"\3[^>]*)>(.*?)</\1\s*>", re.I | re.S)
-    bare_re = re.compile(r"<[^>]*\bitemprop\s*=\s*([\"'])" + re.escape(itemprop) +
-                         r"\1[^>]*>", re.I | re.S)
-    match = tag_re.search(html or "")
-    raw = (match.group(2) if match else "")
-    text = re.sub(r"<[^>]+>", " ", match.group(4)) if match else ""
-    if not match:
-        bare = bare_re.search(html or "")
-        raw = bare.group(0) if bare else ""
-    attr = re.search(r"\b(?:content|value|href)\s*=\s*([\"'])(.*?)\1", raw, re.I | re.S)
-    value = unescape(attr.group(2) if attr else text)
-    return (htmlx.collapse(value), f"itemprop={itemprop}") if value else ("", "")
+def _attr_value(doc, itemprop):
+    value = doc.merchant_markup["itemprops"].get(itemprop, "")
+    return (value, f"itemprop={itemprop}") if value else ("", "")
 
 
 def _label(text, label):
@@ -99,18 +87,17 @@ def visible_facts(doc):
     for key, (meta_keys, itemprop) in mappings.items():
         value, source = _meta(doc, meta_keys)
         if not value:
-            value, source = _attr_value(doc.html, itemprop)
+            value, source = _attr_value(doc, itemprop)
         if value:
             facts[key] = {"value": value, "source": source, "confidence": 1.0}
     for key, label in (("brand", "brand"), ("sku", "sku"), ("availability", "availability")):
         if key not in facts:
-            value, source = _label(doc.body_text, label)
+            value, source = _label(doc.merchant_markup["text"], label)
             if value:
                 facts[key] = {"value": value, "source": source, "confidence": 0.9}
-    if doc.headings:
-        h1 = next((text for level, text in doc.headings if level == 1 and text), "")
-        if h1:
-            facts["name"] = {"value": h1, "source": "visible H1", "confidence": 0.85}
+    h1 = doc.merchant_markup["h1"]
+    if h1:
+        facts["name"] = {"value": h1, "source": "visible H1", "confidence": 0.85}
     return facts
 
 
@@ -120,44 +107,7 @@ def _purchase_action(doc):
     Explicit hidden/inert subtrees and external affiliate links are excluded.
     This is source evidence, not a computed CSS visibility or checkout test.
     """
-    from .microdata import INERT, _Limit, _Tree, _text
-    tree = _Tree(doc.base_url, label="Purchase controls")
-    try:
-        tree.feed(doc.html or "")
-        tree.close()
-    except _Limit:
-        return False  # absence of a bounded observation is not selling evidence
-    pending = list(tree.root.children)
-    while pending:
-        element = pending.pop()
-        attrs = element.attrs
-        style = attrs.get("style", "")
-        if (element.tag in INERT or "hidden" in attrs
-                or attrs.get("aria-hidden", "").lower() == "true"
-                or (element.tag == "fieldset" and "disabled" in attrs)
-                or re.search(r"(?:display\s*:\s*none|visibility\s*:\s*hidden)\b", style, re.I)):
-            continue
-        if ("disabled" not in attrs and attrs.get("aria-disabled", "").lower() != "true"
-                and element.tag in {"button", "input", "a"}):
-            text = attrs.get("value", "") if element.tag == "input" else _text(element)
-            action = re.match(r"(?:add to (?:cart|bag)|buy now)\b", text, re.I)
-            if action and element.tag == "input" and attrs.get("type", "text").lower() not in {"button", "submit"}:
-                action = False
-            if action and element.tag == "a":
-                try:
-                    target = urlparse(urljoin(tree.base_url, attrs.get("href", "")))
-                    source = urlparse(doc.base_url)
-                    def origin(parsed):
-                        port = parsed.port if parsed.port is not None else (443 if parsed.scheme == "https" else 80)
-                        return parsed.scheme, parsed.hostname, port
-                    action = ("href" in attrs and target.scheme in {"http", "https"}
-                              and origin(target) == origin(source))
-                except ValueError:
-                    action = False
-            if action:
-                return True
-        pending.extend(element.children)
-    return False
+    return bool(doc.merchant_markup["purchase_action"] and not doc.merchant_markup["warnings"])
 
 
 def detect(doc, nodes=None):
@@ -174,7 +124,7 @@ def detect(doc, nodes=None):
             evidence.append("Product microdata")
         if "rdfa" in formats:
             evidence.append("Product RDFa")
-    if (doc.meta_by_property("og:type") or "").lower() == "product":
+    if merchant_source.meta_property(doc.merchant_markup, "og:type").strip().lower() == "product":
         evidence.append("og:type=product")
     visible = visible_facts(doc)
     observed = sorted(set(visible) & {"price", "currency", "availability", "sku"})
@@ -320,7 +270,13 @@ def audit(doc, report, *, today=None):
     detected = detect(doc, nodes)
     meta = {"is_product": detected["is_product"], "is_merchant": detected["is_merchant"],
             "confidence": detected["confidence"],
-            "evidence": detected["evidence"], "visible_facts": detected["visible"]}
+            "evidence": detected["evidence"], "visible_facts": detected["visible"],
+            "source_warnings": doc.merchant_markup["warnings"]}
+    if meta["source_warnings"]:
+        report.add(CAT, "low", "Merchant source evidence needs verification",
+                   "\n".join(meta["source_warnings"]),
+                   "Verify the rendered page; source evidence is bounded and may be partial.",
+                   rule_id="schema.ecommerce.source.extraction")
     if not detected["is_product"]:
         return meta
     products = detected["product_nodes"]

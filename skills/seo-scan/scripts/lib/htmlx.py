@@ -50,6 +50,19 @@ class Doc:
     html: str = ""
     _microdata_cache: object = field(default=None, init=False, repr=False)
     _rdfa_cache: object = field(default=None, init=False, repr=False)
+    _merchant_cache: object = field(default=None, init=False, repr=False)
+
+    @property
+    def merchant_markup(self) -> dict:
+        if self._merchant_cache is None:
+            from .merchant_source import extract
+            self._merchant_cache = extract(self.html, self.base_url)
+            if not self.html:
+                # Preserve the normalized-Doc contract for programmatic callers.
+                self._merchant_cache["meta"] = [dict(tag.attrs) for tag in self.meta]
+                self._merchant_cache["text"] = self.body_text
+                self._merchant_cache["h1"] = next((text for level, text in self.headings if level == 1), "")
+        return self._merchant_cache
 
     @property
     def microdata(self) -> list:
@@ -161,7 +174,6 @@ def looks_product(doc: "Doc") -> bool:
     ordinary prose must never turn an article into a product page.
     """
     from .microdata import schema_name
-    html = (doc.html or "").lower()
     def has_product_type(value):
         if isinstance(value, list):
             return any(has_product_type(item) for item in value)
@@ -183,12 +195,14 @@ def looks_product(doc: "Doc") -> bool:
     markup_product = any(any(schema_name(t).lower() == "product" for t in
                         (node.get("@type") if isinstance(node.get("@type"), list) else [node.get("@type")])
                         if isinstance(t, str)) for node in doc.microdata + doc.rdfa)
-    og_product = (doc.meta_by_property("og:type") or "").lower() == "product"
-    merchant_signal = bool(
-        re.search(r'(?:product:|og:)price:(?:amount|currency)', html)
-        or re.search(r'itemprop\s*=\s*["\'](?:price|pricecurrency|availability|sku)["\']', html)
-        or re.search(r'(?:add to (?:cart|bag)|buy now)', doc.body_text or "", re.I)
-    )
+    markup = doc.merchant_markup
+    from .merchant_source import meta_property
+    og_product = meta_property(markup, "og:type").strip().lower() == "product"
+    merchant_signal = (any((meta.get("property") or meta.get("name") or "").lower() in
+                           {"product:price:amount", "og:price:amount", "product:price:currency", "og:price:currency"}
+                           and meta.get("content") for meta in markup["meta"])
+                       or bool(set(markup["itemprops"]) & {"price", "priceCurrency", "availability", "sku"})
+                       or (markup["purchase_action"] and not markup["warnings"]))
     return markup_product or (og_product and merchant_signal)
 
 

@@ -6,6 +6,20 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.2] — 2026-10-12
+
+### Fixed
+- Merchant evidence now uses one cached, bounded source parse instead of regex
+  matches over HTML. Templates, comments, escaped examples and explicitly hidden
+  subtrees cannot supply price, identity, labels or purchase controls.
+- Inactive OpenGraph examples cannot classify articles as Product pages; the
+  first active type declaration retains preference order.
+- Active itemprop values support multi-name properties, exact schema.org URLs
+  and element-specific values. Linked brand names use their visible label.
+- Partial merchant-source coverage and invalid URL warning limits are explicit
+  in JSON and a stable verification finding. No browser visibility is claimed.
+- RDFa tests support both root and skill-directory test discovery.
+
 ## [1.30.1] — 2026-10-12
 
 ### Fixed

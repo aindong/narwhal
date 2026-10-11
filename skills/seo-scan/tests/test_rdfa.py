@@ -12,7 +12,10 @@ sys.path.insert(0, str(SCRIPTS))
 import compare
 import scan
 from lib import ecommerce, htmlx, http, rdfa, structured_data
-from test_microdata import URL, audit, fixture, problems, with_jsonld
+try:
+    from .test_microdata import URL, audit, fixture, problems, with_jsonld
+except ImportError:
+    from test_microdata import URL, audit, fixture, problems, with_jsonld
 
 
 class TestRdfaExtraction(unittest.TestCase):
