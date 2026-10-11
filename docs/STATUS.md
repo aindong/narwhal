@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.4**_
+_Last updated: 2026-10-12 · version **1.30.5**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.5 Offer-value resilience:** non-string references and non-object
+  price-specification members cannot abort reports. Unsupported shapes have
+  verification notes; valid mixed-array object members, null semantics and
+  local string references are preserved. Real price defects still surface.
 - **v1.30.4 variant identity:** multi-Product comparisons require a unique
   visible identity rather than source order. Ambiguous comparisons are explicitly
   skipped with a verification note; all-node schema checks still run. Identifier
@@ -143,7 +147,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.4 (39 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.5 (40 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

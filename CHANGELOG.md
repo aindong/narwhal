@@ -6,6 +6,16 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.5] — 2026-10-12
+
+### Fixed
+- Non-string Offer references and non-object price-specification members no
+  longer crash merchant scans. Malformed IDs are field-specific findings;
+  unsupported price-specification shapes produce a bounded-coverage note.
+- Supported object members survive mixed arrays; null members remain ignored.
+  Local string Offer references, completeness checks and real price mismatches
+  remain intact. No remote reference or JSON-LD context is fetched.
+
 ## [1.30.4] — 2026-10-12
 
 ### Fixed

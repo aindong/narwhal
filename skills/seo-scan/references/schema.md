@@ -145,6 +145,17 @@ note, not proof of a price defect. Completeness and validity checks still cover
 every Product/Offer. This does not resolve multiple offers on one Product or
 prove that unrelated page observations belong to the selected variant.
 
+Offer references are resolved only for string `@id` values against nodes already
+present in the document. Non-string IDs produce
+`schema.ecommerce.offer.invalid.reference` instead of crashing a lookup.
+Price/currency fallback reads only inline object members of
+[`priceSpecification`](https://schema.org/priceSpecification); unsupported
+non-object values get `schema.ecommerce.offer.price_specification.extraction`,
+a low-severity coverage note, not a full JSON-LD validity verdict. Supported
+members in mixed arrays are still inspected, and null values are ignored.
+No referenced resource or context is fetched; context-coerced references and
+other unsupported forms require manual verification.
+
 Google distinguishes non-purchasable product snippets from merchant listings:
 an editorial Product with an authentic review does not need an Offer, while a
 merchant listing needs an active positive price and currency. See Google's
