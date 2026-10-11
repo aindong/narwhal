@@ -6,6 +6,17 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.4] — 2026-10-12
+
+### Fixed
+- Multi-Product page comparisons no longer choose the first schema variant.
+  A unique visible identifier, exact name or unambiguous name match is required;
+  ambiguous identity produces a low-severity verification note instead of a
+  guessed mismatch. All Product/Offer completeness and validity checks remain.
+- Comparison status and selection method are explicit in JSON; no selected
+  Product is reported when identity is ambiguous. SKU punctuation and Unicode
+  characters remain significant in selection and mismatch checks.
+
 ## [1.30.3] — 2026-10-12
 
 ### Fixed
