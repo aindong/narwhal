@@ -12,7 +12,7 @@ import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from html import unescape
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from . import htmlx, structured_data
 
@@ -76,12 +76,14 @@ def _attr_value(html, itemprop):
 
 
 def _label(text, label):
-    match = re.search(r"\b" + label + r"\s*[:#]?\s*([A-Za-z0-9][A-Za-z0-9 ._/-]{0,60})", text or "", re.I)
+    # A vocabulary definition ("SKU Text ...") is not a labelled page fact.
+    # Prefer under-reporting unmarked prose to inventing identity/stock values.
+    match = re.search(r"\b" + label + r"\s*[:#]\s*([A-Za-z0-9][A-Za-z0-9 ._/-]{0,60})", text or "", re.I)
     if not match:
         return "", ""
     value = match.group(1).strip()
     # Stop before common next-label boundaries in collapsed page text.
-    value = re.split(r"\s+(?:price|availability|brand|sku|mpn|gtin)\s*[:#]", value, 1, flags=re.I)[0]
+    value = re.split(r"\s+(?:price|availability|brand|sku|mpn|gtin)\s*[:#]", value, maxsplit=1, flags=re.I)[0]
     return value.strip(), f"visible label {label}"
 
 
@@ -112,6 +114,52 @@ def visible_facts(doc):
     return facts
 
 
+def _purchase_action(doc):
+    """A real, enabled purchase control, not a phrase in review prose.
+
+    Explicit hidden/inert subtrees and external affiliate links are excluded.
+    This is source evidence, not a computed CSS visibility or checkout test.
+    """
+    from .microdata import INERT, _Limit, _Tree, _text
+    tree = _Tree(doc.base_url, label="Purchase controls")
+    try:
+        tree.feed(doc.html or "")
+        tree.close()
+    except _Limit:
+        return False  # absence of a bounded observation is not selling evidence
+    pending = list(tree.root.children)
+    while pending:
+        element = pending.pop()
+        attrs = element.attrs
+        style = attrs.get("style", "")
+        if (element.tag in INERT or "hidden" in attrs
+                or attrs.get("aria-hidden", "").lower() == "true"
+                or (element.tag == "fieldset" and "disabled" in attrs)
+                or re.search(r"(?:display\s*:\s*none|visibility\s*:\s*hidden)\b", style, re.I)):
+            continue
+        if ("disabled" not in attrs and attrs.get("aria-disabled", "").lower() != "true"
+                and element.tag in {"button", "input", "a"}):
+            text = attrs.get("value", "") if element.tag == "input" else _text(element)
+            action = re.match(r"(?:add to (?:cart|bag)|buy now)\b", text, re.I)
+            if action and element.tag == "input" and attrs.get("type", "text").lower() not in {"button", "submit"}:
+                action = False
+            if action and element.tag == "a":
+                try:
+                    target = urlparse(urljoin(tree.base_url, attrs.get("href", "")))
+                    source = urlparse(doc.base_url)
+                    def origin(parsed):
+                        port = parsed.port if parsed.port is not None else (443 if parsed.scheme == "https" else 80)
+                        return parsed.scheme, parsed.hostname, port
+                    action = ("href" in attrs and target.scheme in {"http", "https"}
+                              and origin(target) == origin(source))
+                except ValueError:
+                    action = False
+            if action:
+                return True
+        pending.extend(element.children)
+    return False
+
+
 def detect(doc, nodes=None):
     nodes = nodes if nodes is not None else schema_nodes(doc)
     product_nodes = [n for n in nodes if "product" in _types(n)]
@@ -129,12 +177,19 @@ def detect(doc, nodes=None):
     if (doc.meta_by_property("og:type") or "").lower() == "product":
         evidence.append("og:type=product")
     visible = visible_facts(doc)
-    merchant = sorted(set(visible) & {"price", "currency", "availability", "sku"})
+    observed = sorted(set(visible) & {"price", "currency", "availability", "sku"})
+    # Identifiers describe a product, not whether this publisher sells it.
+    merchant = sorted(set(observed) - {"sku"})
     if merchant:
-        evidence.append("explicit merchant facts: " + ", ".join(merchant))
+        evidence.append("explicit merchant facts: " + ", ".join(observed))
+    elif "sku" in observed:
+        evidence.append("explicit product identity: sku")
     is_product = bool(product_nodes) or htmlx.looks_product(doc)
     has_offer = any(n.get("offers") for n in product_nodes)
-    is_merchant = bool(has_offer or merchant)
+    purchase_action = is_product and not (has_offer or merchant) and _purchase_action(doc)
+    is_merchant = bool(is_product and (has_offer or merchant or purchase_action))
+    if is_merchant and purchase_action and not (has_offer or merchant):
+        evidence.append("visible purchase action")
     confidence = 1.0 if product_nodes else (0.9 if "Product microdata" in evidence else (0.8 if is_product else 0.0))
     return {"is_product": is_product, "is_merchant": is_merchant,
             "confidence": confidence, "evidence": evidence,

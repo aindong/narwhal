@@ -48,7 +48,30 @@ class TestProductDetection(unittest.TestCase):
         doc, report, meta = inspect(fixture("article-with-price.html"))
         self.assertFalse(htmlx.looks_product(doc))
         self.assertFalse(meta["is_product"])
+        self.assertFalse(meta["is_merchant"])
         self.assertEqual(set(), rules(report))
+
+    def test_vocabulary_documentation_does_not_enable_merchant_checks(self):
+        doc, report, meta = inspect(fixture("schema-documentation.html"), "https://docs.test/Product")
+        self.assertFalse(meta["is_product"])
+        self.assertFalse(meta["is_merchant"])
+        self.assertNotIn("brand", meta["visible_facts"])
+        self.assertNotIn("availability", meta["visible_facts"])
+        self.assertEqual(set(), rules(report))
+        self.assertFalse(crawl_site.summarize_ecommerce([{"url": doc.base_url, **meta}])["detected"])
+
+    def test_unscoped_product_metadata_cannot_make_an_article_a_merchant(self):
+        html = '<meta property="product:price:amount" content="99"><meta property="product:price:currency" content="USD"><article><h1>Pricing guide</h1></article>'
+        _, report, meta = inspect(html)
+        self.assertFalse(meta["is_product"])
+        self.assertFalse(meta["is_merchant"])
+        self.assertEqual(set(), rules(report))
+
+    def test_plain_vocabulary_words_are_not_visible_label_values(self):
+        for label in ("sku", "brand", "availability"):
+            self.assertEqual(("", ""), ecommerce._label(label + " Text A definition", label))
+        self.assertEqual(("CAM-42", "visible label sku"), ecommerce._label("SKU: CAM-42", "sku"))
+        self.assertEqual(("CAM-42", "visible label sku"), ecommerce._label("SKU # CAM-42", "sku"))
 
     def test_article_showing_product_json_example_is_not_a_product(self):
         html = '<article><h1>Product schema tutorial</h1><pre>{"@type":"Product","name":"Example"}</pre></article>'
@@ -106,6 +129,35 @@ class TestProductDetection(unittest.TestCase):
             {"url": "https://review.test/camera", "is_product": True, "is_merchant": False}])
         self.assertFalse(editorial["detected"])
 
+    def test_crawl_scope_rejects_inconsistent_legacy_merchant_flags(self):
+        scope = crawl_site.summarize_ecommerce([
+            {"url": "https://docs.test/Product", "is_product": False, "is_merchant": True}])
+        self.assertFalse(scope["detected"])
+        self.assertEqual([], scope["merchant_pages"])
+
+    def test_scan_and_mcp_expose_nonmerchant_documentation(self):
+        url = "https://docs.test/Product"
+        response = http.Response(url, url, 200, {"content-type": "text/html"}, fixture("schema-documentation.html"), 1)
+        with mock.patch.object(scan_mod.http, "fetch", return_value=response):
+            scanned = json.loads(scan_mod.scan(url, only=["schema"], ctx={}, check_images=False).to_json())
+            mcp = mcp_server._scan(url, only="schema")
+        for payload in (scanned, mcp):
+            self.assertFalse(payload["meta"]["ecommerce"]["is_product"])
+            self.assertFalse(payload["meta"]["ecommerce"]["is_merchant"])
+
+    def test_merchant_flags_are_preserved_for_all_supported_schema_formats(self):
+        for name in ("complete-product.html", "microdata-product.html", "rdfa-product.html"):
+            with self.subTest(fixture=name):
+                _, _, meta = inspect(fixture(name))
+                self.assertTrue(meta["is_product"])
+                self.assertTrue(meta["is_merchant"])
+
+    def test_parser_backends_share_documentation_scope(self):
+        html = fixture("schema-documentation.html")
+        docs = [htmlx._parse_stdlib(html, "https://docs.test/Product"), htmlx.parse(html, "https://docs.test/Product")]
+        observed = [ecommerce.detect(doc) for doc in docs]
+        self.assertEqual(observed[0], observed[1])
+
 
 class TestMerchantSchema(unittest.TestCase):
     def test_complete_product_has_no_ecommerce_problem(self):
@@ -148,6 +200,48 @@ class TestMerchantSchema(unittest.TestCase):
         self.assertTrue(meta["is_product"])
         self.assertFalse(meta["is_merchant"])
         self.assertNotIn("schema.ecommerce.product.missing.offers", rules(report))
+
+    def test_editorial_product_identifier_does_not_require_offer(self):
+        data = {"@type": "Product", "name": "Camera", "sku": "CAM-42", "review": {"@type": "Review"}}
+        html = '<article><h1>Camera review</h1><p>SKU: CAM-42</p></article><script type="application/ld+json">' + json.dumps(data) + '</script>'
+        _, report, meta = inspect(html, "https://review.test/camera")
+        self.assertTrue(meta["is_product"])
+        self.assertFalse(meta["is_merchant"])
+        self.assertIn("explicit product identity: sku", meta["evidence"])
+        self.assertNotIn("schema.ecommerce.product.missing.offers", rules(report))
+
+    def test_visible_purchase_action_without_offer_still_requires_offer(self):
+        data = {"@type": "Product", "name": "Camera", "sku": "CAM-42"}
+        html = '<h1>Camera</h1><button>Add to cart</button><script type="application/ld+json">' + json.dumps(data) + '</script>'
+        _, report, meta = inspect(html)
+        self.assertTrue(meta["is_merchant"])
+        self.assertIn("visible purchase action", meta["evidence"])
+        self.assertIn("schema.ecommerce.product.missing.offers", rules(report))
+
+    def test_purchase_phrases_and_inactive_controls_do_not_make_a_review_a_store(self):
+        data = {"@type": "Product", "name": "Camera", "sku": "CAM-42", "review": {"@type": "Review"}}
+        for markup in ('<p>I would not buy now; the add to cart flow is confusing.</p>',
+                       '<template><button>Add to cart</button></template>',
+                       '<div hidden><button>Buy now</button></div>',
+                       '<button disabled>Add to cart</button>',
+                       '<button aria-disabled="true">Add to cart</button>',
+                       '<fieldset disabled><button>Buy now</button></fieldset>',
+                       '<div style="display: none"><button>Buy now</button></div>',
+                       '<a href="https://affiliate.test/camera">Buy now</a>',
+                       '<a href="http://shop.test/checkout">Buy now</a>',
+                       '<input type="text" value="Buy now">'):
+            with self.subTest(markup=markup):
+                html = '<h1>Camera review</h1>' + markup + '<script type="application/ld+json">' + json.dumps(data) + '</script>'
+                _, report, meta = inspect(html)
+                self.assertFalse(meta["is_merchant"])
+                self.assertNotIn("schema.ecommerce.product.missing.offers", rules(report))
+
+    def test_purchase_control_variants_are_bounded_source_evidence(self):
+        for markup in ('<button>Add to bag</button>', '<input type="submit" value="Buy now">',
+                       '<a href="/checkout">Buy now</a>', '<button><b>Add to cart</b></button>',
+                       '<a href="https://shop.test:443/checkout">Buy now</a>'):
+            self.assertTrue(ecommerce._purchase_action(htmlx.parse(markup, "https://shop.test/p")))
+        self.assertFalse(ecommerce._purchase_action(htmlx.parse('<a href="http://[bad">Buy now</a>', "https://shop.test/p")))
 
     def test_offer_price_specification_is_supported(self):
         html = fixture("complete-product.html").replace(

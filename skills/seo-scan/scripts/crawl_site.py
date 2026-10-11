@@ -196,7 +196,8 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
 def summarize_ecommerce(pages: list) -> dict:
     """Bounded, serializable product/store scope for conditional specialists."""
     product_pages = [p["url"] for p in pages if p.get("is_product")]
-    merchant_pages = [p["url"] for p in pages if p.get("is_merchant")]
+    # Fail closed for contradictory imported/older page metadata too.
+    merchant_pages = [p["url"] for p in pages if p.get("is_product") and p.get("is_merchant")]
     return {"detected": bool(merchant_pages),
             "product_pages": product_pages,
             "product_pages_count": len(product_pages),
