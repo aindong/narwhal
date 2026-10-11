@@ -8,6 +8,7 @@ page facts; an incidental number or currency word is not treated as a product.
 
 from __future__ import annotations
 
+import ipaddress
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -169,8 +170,35 @@ def _norm_availability(value):
 
 
 def _valid_url(value):
-    parsed = urlparse(_clean(value))
-    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    # This is local syntax validation, never DNS/reachability validation.
+    value = _clean(value)
+    if re.search(r"[\s\x00-\x1f\x7f\\]", value):
+        return False
+    try:
+        parsed = urlparse(value)
+        # Accessing port also validates numeric syntax and the 0..65535 range.
+        parsed.port
+        host = parsed.hostname
+        authority = parsed.netloc.rsplit("@", 1)[-1]
+        if "[" in authority or "]" in authority:
+            if not re.fullmatch(r"\[[^\[\]]+\](?::[0-9]*)?", authority) or not host:
+                return False
+            # Older supported Python versions do not validate bracketed hosts.
+            # Preserve RFC 3986 IPvFuture syntax; otherwise require
+            # IPv6 (not bracketed IPv4), allowing a nonempty zone identifier.
+            if host.startswith("v"):
+                if not re.fullmatch(r"v[a-f0-9]+\.[a-z0-9._~!$&'()*+,;=:-]+", host, re.I):
+                    return False
+            else:
+                address, separator, zone = host.partition("%")
+                if separator and not zone:
+                    return False
+                ipaddress.IPv6Address(address)
+        return parsed.scheme in ("http", "https") and bool(host)
+    except ValueError:
+        # Malformed brackets/IPv6, invalid ports and unsafe netloc normalization
+        # must become an invalid-URL finding, not terminate the entire scan.
+        return False
 
 
 def _valid_gtin(value, length=None):

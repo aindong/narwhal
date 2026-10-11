@@ -124,6 +124,14 @@ partial coverage (50,000 elements / 256 nesting levels) and a 64-warning cap plu
 one omission notice. This is source evidence, not computed CSS visibility or a
 complete multi-product identity/conflict validator.
 
+Product and Offer URL checks validate local syntax only: absolute HTTP(S), a
+nonempty hostname, a valid port when present, and no embedded whitespace,
+control characters or backslashes. Malformed bracket/IPv6 authorities become
+invalid-URL findings instead of aborting reports. Valid IPv6, Unicode hosts,
+encoded paths and non-default ports remain allowed; no DNS or reachability
+test of these structured-data URLs is performed.
+Bracketed IPvFuture literals follow [RFC 3986 §3.2.2](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2).
+
 Google distinguishes non-purchasable product snippets from merchant listings:
 an editorial Product with an authentic review does not need an Offer, while a
 merchant listing needs an active positive price and currency. See Google's
