@@ -6,6 +6,20 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.17] — 2026-10-12
+
+### Fixed
+- Point Offer prices and multi-Offer consensus use exact bounded decimal parsing:
+  scientific notation is not digit-stripped, and long unequal prices are not
+  rounded equal by the caller's Decimal context.
+- Point-price comparisons, like ranges, require explicit matching currency units
+  and parseable observed amounts. Supported localized display forms remain;
+  prose, malformed separators and conflicting units are not guessed. Other
+  currency/stock/identity and completeness checks remain active.
+- Unsupported declared price text produces a low extraction/verification note,
+  not a schema.org invalidity verdict. Known nonpositive merchant prices retain
+  their high finding. JSON exposes exact point-comparison evidence and limits.
+
 ## [1.30.16] — 2026-10-12
 
 ### Fixed
