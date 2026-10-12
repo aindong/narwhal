@@ -6,6 +6,19 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.16] — 2026-10-12
+
+### Fixed
+- Diffs no longer classify omitted auditor groups as resolved fixes. Known
+  mismatched or incomplete execution, truncated HTML and page/audit score-kind
+  mismatches produce an explicit incomparable diagnostic with no change verdict.
+- `--fail-on-regression` exits 2 for known incomparable coverage. JSON records
+  comparison status/reasons and null score delta/regression for unmeasured
+  comparisons; matching completed full/focused scopes retain normal diff gates.
+- Legacy/malformed execution scope remains unknown, not inferred from findings.
+  Compatible legacy comparisons now warn visibly; matching auditor scope alone
+  does not prove identical configuration, rendering, rules or site-wide samples.
+
 ## [1.30.15] — 2026-10-12
 
 ### Fixed

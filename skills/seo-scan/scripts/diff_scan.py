@@ -13,7 +13,9 @@ Usage:
     python diff_scan.py before.json after.json --fail-on-regression   # CI gate
 
 Accepts either `scan`/`audit --format json` output (the audit's homepage findings
-and overall score are used).
+and overall score are used). Known mismatched/incomplete auditor scope or
+truncated HTML does not yield improvement/resolution verdicts; CI gates exit 2.
+Legacy scope stays explicitly unknown, with compatible finding comparisons.
 """
 
 from __future__ import annotations
@@ -25,6 +27,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report import recorded_scan_scope  # noqa: E402
+
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
 _RANK = {s: i for i, s in enumerate(SEVERITY)}
@@ -34,19 +38,54 @@ _CATS = {"technical": "Technical SEO", "content": "Content & E-E-A-T",
 
 
 def _normalize(data: dict) -> dict:
-    """Reduce a scan or audit JSON payload to {url, score, findings}."""
+    """Keep score/findings and recorded execution provenance for comparisons."""
     if "findings" in data:  # single-page scan report
         return {"url": data.get("final_url") or data.get("url", ""),
                 "score": data.get("score", 0),
-                "findings": data.get("findings", [])}
+                "findings": data.get("findings", []),
+                "kind": "scan", "meta": data.get("meta", {})}
     if "homepage" in data:  # comprehensive audit report
         hp = data.get("homepage", {})
         return {"url": data.get("site") or hp.get("url", ""),
                 "score": data.get("overall_score", hp.get("score", 0)),
-                "findings": hp.get("findings", [])}
+                "findings": hp.get("findings", []),
+                "kind": "audit", "meta": hp.get("meta", {})}
     raise ValueError(
         "Unrecognized report JSON — expected `narwhal scan` or `narwhal audit` "
         "output produced with `--format json`.")
+
+
+def _comparison(o: dict, n: dict) -> dict:
+    """Compare recorded auditor execution, not exhaustive scan configuration."""
+    scopes = [recorded_scan_scope(item["meta"]) for item in (o, n)]
+    reasons = []
+    if o["kind"] != n["kind"]:
+        reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
+    for label, item, scope in zip(("Earlier", "Later"), (o, n), scopes):
+        if scope is not None and (not scope[1] or set(scope[0]) != set(scope[1])):
+            reasons.append(label + " report did not complete all requested auditor groups.")
+        meta = item["meta"] if isinstance(item["meta"], dict) else {}
+        coverage = meta.get("coverage")
+        if meta.get("response_truncated") is True or (
+                isinstance(coverage, dict) and coverage.get("response_truncated") is True):
+            reasons.append(label + " report used truncated HTML coverage.")
+    if all(scope is not None for scope in scopes):
+        if set(scopes[0][0]) != set(scopes[1][0]):
+            reasons.append("Requested auditor groups differ between reports.")
+        if set(scopes[0][1]) != set(scopes[1][1]):
+            reasons.append("Completed auditor groups differ between reports.")
+    status = "incomparable" if reasons else (
+        "comparable" if all(scope is not None for scope in scopes) else "unknown")
+    if status == "unknown":
+        reasons.append("Valid execution scope is missing; coverage cannot be inferred from findings.")
+    return {
+        "status": status,
+        "reasons": reasons,
+        "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
+        "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
+        "basis": "Recorded auditor execution and known response truncation only; not proof of "
+                 "identical URLs, configuration, rendering, tool rules or site-wide samples.",
+    }
 
 
 def _key(finding: dict):
@@ -69,6 +108,14 @@ def _worse(a: str, b: str) -> bool:
 
 def diff_reports(old: dict, new: dict) -> dict:
     o, n = _normalize(old), _normalize(new)
+    comparison = _comparison(o, n)
+    if comparison["status"] == "incomparable":
+        # Absence from a narrower/unmeasured run is not evidence of resolution.
+        return {"url": n["url"], "old_score": o["score"], "new_score": n["score"],
+                "score_delta": None, "added": [], "resolved": [], "worsened": [],
+                "improved": [], "unchanged": 0, "regression": None,
+                "new_critical_high": [], "comparison": comparison,
+                "not_compared": {"old_findings": len(o["findings"]), "new_findings": len(n["findings"])}}
     oi = {_key(f): f for f in o["findings"]}
     ni = {_key(f): f for f in n["findings"]}
     okeys, nkeys = set(oi), set(ni)
@@ -102,10 +149,14 @@ def diff_reports(old: dict, new: dict) -> dict:
         # a regression = score dropped, or a brand-new critical/high finding
         "regression": score_dropped or bool(new_bad),
         "new_critical_high": new_bad,
+        "comparison": comparison,
     }
 
 
 def _verdict(d: dict) -> str:
+    status = d.get("comparison", {}).get("status", "unknown")
+    if status == "incomparable":
+        return "**Not comparable** — no improvement, resolution or regression verdict was measured."
     delta = d["score_delta"]
     if d["regression"]:
         why = []
@@ -115,21 +166,41 @@ def _verdict(d: dict) -> str:
             why.append(f"{len(d['new_critical_high'])} new high-severity issue(s)")
         return "**Regressed** — " + ", ".join(why) + "."
     if delta > 0 or d["resolved"] or d["improved"]:
-        return "**Improved** — health is better than the previous run."
+        return "**Improved reported findings** — not proof of improved overall page health."
     return "**No material change** since the previous run."
 
 
 def render_markdown(d: dict) -> str:
     delta = d["score_delta"]
-    sign = f"+{delta}" if delta > 0 else (str(delta) if delta < 0 else "±0")
+    sign = "not compared" if delta is None else (
+        f"+{delta}" if delta > 0 else (str(delta) if delta < 0 else "±0"))
     lines = [
         f"# Narwhal Scan Diff — {d['url']}",
         "",
-        f"**Score: {d['old_score']} → {d['new_score']} ({sign})**",
+        f"**{'Recorded scores' if delta is None else 'Score'}: {d['old_score']} → {d['new_score']} ({sign})**",
         "",
         _verdict(d),
         "",
     ]
+    comparison = d.get("comparison", {})
+    status = comparison.get("status", "unknown")
+    lines.append("**Auditor coverage: " + {"comparable": "matching recorded scope",
+                 "incomparable": "not comparable", "unknown": "unverified"}.get(status, "unverified") + ".**")
+    for label, key in (("Earlier", "old_scope"), ("Later", "new_scope")):
+        scope = comparison.get(key)
+        if scope:
+            requested = ", ".join(scope['requested'])
+            completed = ", ".join(scope['completed']) or "none"
+            lines.append(f"- {label}: requested {requested}; completed {completed}.")
+        else:
+            lines.append(f"- {label}: valid auditor scope not recorded.")
+    lines.extend("- " + reason for reason in comparison.get("reasons", []))
+    lines.extend([comparison.get("basis", "Coverage was not recorded."), ""])
+    if status == "incomparable":
+        counts = d["not_compared"]
+        lines.append(f"_Not compared: {counts['old_findings']} earlier and {counts['new_findings']} later findings. "
+                     "Re-scan with matching, completed auditor selections and full HTML coverage._")
+        return "\n".join(lines).rstrip() + "\n"
 
     def _bullets(items):
         for f in items:
@@ -183,7 +254,8 @@ def main(argv=None) -> int:
     ap.add_argument("-o", "--output")
     ap.add_argument("--fail-on-regression", action="store_true",
                     help="exit non-zero if the score dropped or a new "
-                         "critical/high finding appeared (for CI gating)")
+                         "critical/high finding appeared; exit 2 for known "
+                         "incomparable coverage (for CI gating)")
     args = ap.parse_args(argv)
 
     try:
@@ -206,6 +278,14 @@ def main(argv=None) -> int:
     else:
         print(out)
 
+    status = d["comparison"]["status"]
+    if status == "unknown":
+        print("WARNING: auditor coverage is unverified; legacy finding/score comparison "
+              "does not prove matching checks.", file=sys.stderr)
+    if args.fail_on_regression and status == "incomparable":
+        print("FAIL: report coverage is not comparable; re-scan with matching completed "
+              "auditor selections and full HTML coverage.", file=sys.stderr)
+        return 2
     if args.fail_on_regression and d["regression"]:
         print("FAIL: regression detected (score dropped or new high-severity "
               "finding).", file=sys.stderr)

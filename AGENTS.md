@@ -22,7 +22,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python scan.py <url> --format html -o report.html` | Self-contained, styled HTML report (also on `audit.py`) |
 | `python scan.py <url> --format pdf -o report.pdf` | PDF report (needs WeasyPrint; falls back to HTML) |
 | `python diff_scan.py old.json new.json` | Diff two JSON reports: score delta, new/resolved/worsened findings |
-| `python diff_scan.py old.json new.json --fail-on-regression` | CI gate: exit non-zero if score dropped or a new critical/high appeared |
+| `python diff_scan.py old.json new.json --fail-on-regression` | CI gate: exit non-zero for measured regression or known incomparable execution/HTML coverage |
 | `python plan.py report.json --repo .` | Read-only remediation plan: framework, likely owning files, safety, grouped fixes, verification |
 | `python render_report.py report.md -o report.html` | Render any Markdown report as branded HTML (`--format pdf` for PDF) |
 | `python crux.py <url> --crux-key KEY` | Real Core Web Vitals (LCP/INP/CLS) from the CrUX API — opt-in field data, needs a key |
