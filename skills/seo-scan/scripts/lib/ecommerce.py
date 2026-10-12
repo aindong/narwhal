@@ -311,6 +311,36 @@ def _schema_fact(product, offers, field):
     return "", ""
 
 
+def _comparison_fact(product, offers, field, visible):
+    """Offer order is not evidence for selecting a seller's price or stock."""
+    if field not in {"price", "currency", "availability"} or len(offers) <= 1:
+        value, source = _schema_fact(product, offers, field)
+        return value, source, "ready"
+    values = [_schema_fact({}, [offer], field) for offer in offers]
+    if not any(value for value, _ in values):
+        value, source = _schema_fact(product, [], field)
+        return value, source, "ready"
+    if not all(value for value, _ in values):
+        return "", "", "skipped_ambiguous"
+    if field == "price":
+        # Equal numbers are not a monetary consensus across different/unknown
+        # currencies. Nor is an AggregateOffer's lower bound a selected price.
+        currencies = [_schema_fact({}, [offer], "currency")[0] for offer in offers]
+        observed_currency = _clean(visible.get("currency", {}).get("value"))
+        if (not all(currencies) or len({_clean(c).casefold() for c in currencies}) != 1
+                or not observed_currency or observed_currency.casefold() != _clean(currencies[0]).casefold()
+                or any("aggregateoffer" in _types(offer) for offer in offers)):
+            return "", "", "skipped_ambiguous"
+        normalized = {_norm_price(value) for value, _ in values}
+    elif field == "availability":
+        normalized = {_norm_availability(value) for value, _ in values}
+    else:
+        normalized = {_clean(value).casefold() for value, _ in values}
+    if None in normalized or len(normalized) != 1:
+        return "", "", "skipped_ambiguous"
+    return values[0][0], f"{values[0][1]} consensus ({len(offers)} Offer objects)", "ready"
+
+
 def audit(doc, report, *, today=None):
     """Add product-scoped merchant findings and return serializable evidence."""
     finding_start = len(report.findings)
@@ -457,13 +487,19 @@ def audit(doc, report, *, today=None):
                        "Use the accurate schema.org OfferItemCondition value.",
                        evidence=condition, rule_id="schema.ecommerce.offer.invalid.condition")
 
-    schema_offers = offers
     visible = detected["visible"]
+    skipped_offer_fields = []
+    meta["offer_comparison_status"] = {}
     comparison_fields = ("price", "currency", "availability", "sku", "brand", "name") if product is not None else ()
     for field in comparison_fields:
         if field not in visible:
             continue
-        schema_value, schema_source = _schema_fact(product, schema_offers, field)
+        schema_value, schema_source, comparison = _comparison_fact(product, offers, field, visible)
+        if field in {"price", "currency", "availability"}:
+            meta["offer_comparison_status"][field] = comparison
+        if comparison == "skipped_ambiguous":
+            skipped_offer_fields.append(field)
+            continue
         observed = visible[field]
         if not schema_value:
             severity = "high" if field in ("price", "currency") else ("medium" if field in ("availability", "sku") else "low")
@@ -491,7 +527,15 @@ def audit(doc, report, *, today=None):
                        "Make the rendered page and structured data use the same current product data source.",
                        evidence=f"visible={observed['value']}; schema={schema_value}",
                        rule_id=f"schema.ecommerce.{field}.mismatch")
+    if skipped_offer_fields:
+        fields = ", ".join(skipped_offer_fields)
+        report.add(CAT, "low", "Offer comparison scope needs verification",
+                   f"{len(offers)} Offer objects do not establish comparable {fields} evidence (non-unique, incomplete, range or unmatched currency units). No source-order Offer is selected for these comparisons.",
+                   f"Verify the source Offer for {fields}; these comparisons were skipped. Other agreed Offer values and Product identity are still checked.",
+                   rule_id="schema.ecommerce.offer.comparison.ambiguous")
     comparison_note = "visible comparisons were evidence-gated." if product is not None else "visible comparisons were skipped because Product identity is ambiguous."
+    if skipped_offer_fields:
+        comparison_note += " Ambiguous Offer fields skipped: " + ", ".join(skipped_offer_fields) + "."
     report.ok(CAT, "Product page merchant signals inspected",
               f"{len(products)} Product node(s), {len(all_product_offers)} offer object(s); {comparison_note}")
     _coalesce_ecommerce_findings(report, finding_start)

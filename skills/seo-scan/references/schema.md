@@ -150,8 +150,22 @@ source order or infer identity from a coincidentally matching price.
 `selection_method` explaining the selection; `selected_product` is null when
 ambiguous. `schema.ecommerce.comparison.ambiguous` is a low-severity verification
 note, not proof of a price defect. Completeness and validity checks still cover
-every Product/Offer. This does not resolve multiple offers on one Product or
-prove that unrelated page observations belong to the selected variant.
+every Product/Offer. This does not prove that unrelated page observations belong
+to the selected variant.
+
+For multiple Offers on the selected Product, price/currency/availability
+comparisons use per-field consensus instead of the first Offer. A price
+consensus also requires all declared currencies to agree with an explicit page
+currency; amounts in different or unknown units are not compared. Non-unique,
+incomplete or mixed AggregateOffer-range evidence gets
+`schema.ecommerce.offer.comparison.ambiguous`, a low verification note.
+`meta.ecommerce.offer_comparison_status` maps observed Offer fields to `ready`
+(eligible, not necessarily valid/present) or `skipped_ambiguous`. The parent
+`comparison_status` covers Product identity eligibility, not every Offer field.
+Agreed fields, Product identity checks and all-offer completeness/validity remain
+active. Existing single-Offer behavior is unchanged. No particular seller/Offer
+is selected from a coincidentally matching amount; this is not a full seller,
+price-component, single-AggregateOffer-range or observation-ownership resolver.
 
 Offer references are resolved only for string `@id` values against nodes already
 present in the document. Non-string IDs produce
