@@ -69,6 +69,9 @@ def _comparison(o: dict, n: dict) -> dict:
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("hard_fail") is True
                                            for page in pages):
             reasons.append(label + " audit contains a hard-failed crawl page; its overall score is not comparable.")
+        if isinstance(pages, list) and any(isinstance(page, dict) and page.get("response_truncated") is True
+                                           for page in pages):
+            reasons.append(label + " audit contains a truncated crawl page; its overall score is not comparable.")
         meta = item["meta"] if isinstance(item["meta"], dict) else {}
         coverage = meta.get("coverage")
         if meta.get("response_truncated") is True or (

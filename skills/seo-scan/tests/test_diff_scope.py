@@ -216,6 +216,36 @@ class TestDiffScope(unittest.TestCase):
         self.assertEqual([False, True], [page['hard_fail'] for page in data['pages']])
         self.assertEqual(50, data['avg_score'])
 
+    def test_known_crawl_truncation_blocks_audit_delta_even_if_homepage_completed(self):
+        good = {'site': 'https://example.test', 'overall_score': 90, 'homepage': report(ALL),
+                'crawl': {'pages': [{'score': 90, 'hard_fail': False, 'response_truncated': False}]}}
+        truncated = copy.deepcopy(good); truncated['overall_score'] = 85
+        truncated['crawl']['pages'].append({'score': 80, 'hard_fail': False, 'response_truncated': True})
+        for old, new in ((good, truncated), (truncated, good), (truncated, truncated)):
+            result = self.assert_incomparable(old, new)
+            self.assertTrue(any('truncated crawl page' in reason for reason in result['comparison']['reasons']))
+        rc, _, _ = invoke(good, truncated, '--fail-on-regression')
+        self.assertEqual(2, rc)
+
+    def test_crawl_serializes_nested_and_legacy_truncation_metadata(self):
+        import crawl_site
+        base, child = 'https://example.test/', 'https://example.test/large'
+        for meta in ({'coverage': {'response_truncated': True}}, {'response_truncated': True}):
+            good, truncated = Report(base), Report(child, meta=meta)
+            with mock.patch.object(crawl_site.scanner, 'gather_context', return_value={}), \
+                    mock.patch.object(crawl_site, 'discover', return_value=[base, child]), \
+                    mock.patch.object(crawl_site.scanner, 'scan', side_effect=[good, truncated]):
+                crawl = crawl_site.crawl(base, max_pages=2, concurrency=1, detect_dupes=False)
+            data = json.loads(crawl_site.render_json(crawl))
+            self.assertEqual([False, True], [page['response_truncated'] for page in data['pages']])
+            self.assertEqual([False, False], [page['hard_fail'] for page in data['pages']])
+
+    def test_unknown_crawl_truncation_is_not_inferred_from_scores_or_strings(self):
+        for page in ({'score': 80}, {'score': 80, 'response_truncated': 'true'}):
+            audit = {'site': 'https://example.test', 'overall_score': 80, 'homepage': report(ALL),
+                     'crawl': {'pages': [page]}}
+            self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
+
 
 if __name__ == '__main__':
     unittest.main()

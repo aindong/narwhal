@@ -247,7 +247,11 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     pages_hreflang: dict = {}
     for u, rep in results:
         ecommerce = rep.meta.get("ecommerce", {})
+        coverage = rep.meta.get("coverage")
+        truncated = rep.meta.get("response_truncated") is True or (
+            isinstance(coverage, dict) and coverage.get("response_truncated") is True)
         pages.append({"url": u, "score": rep.score(), "hard_fail": bool(rep.hard_fail),
+                      "response_truncated": truncated,
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
                       "is_merchant": bool(ecommerce.get("is_merchant")),
