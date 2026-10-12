@@ -194,7 +194,7 @@ def _diff(old_json: str, new_json: str) -> dict:
     Returns the score delta and new / resolved / worsened / improved findings,
     plus a ``regression`` flag (score dropped or a new critical/high finding).
     ``comparison.status`` records auditor-scope comparability. Known mismatched,
-    incomplete or truncated coverage yields null delta/regression and no change
+    incomplete/truncated coverage or explicit crawl hard failures yield null delta/regression and no change
     classifications; legacy scope remains explicitly unknown. Matching scope
     alone does not prove identical configuration, rendering or crawl samples.
     """

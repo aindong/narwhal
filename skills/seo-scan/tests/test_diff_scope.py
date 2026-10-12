@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import diff_scan
@@ -179,6 +180,41 @@ class TestDiffScope(unittest.TestCase):
         result = mcp_server._diff(json.dumps(report(ALL)), json.dumps(report(['schema'])))
         self.assertEqual('incomparable', result['comparison']['status'])
         self.assertIsNone(result['regression']); self.assertEqual([], result['resolved'])
+
+    def test_known_crawl_failure_blocks_audit_delta_in_both_directions(self):
+        good = {'site': 'https://example.test', 'overall_score': 90, 'homepage': report(ALL),
+                'crawl': {'pages': [{'score': 90, 'hard_fail': False}]}}
+        failed = copy.deepcopy(good); failed['overall_score'] = 45
+        failed['crawl']['pages'].append({'score': 0, 'hard_fail': True})
+        for old, new in ((good, failed), (failed, good), (failed, failed)):
+            result = self.assert_incomparable(old, new)
+            self.assertTrue(any('hard-failed crawl page' in reason for reason in result['comparison']['reasons']))
+        rc, _, _ = invoke(good, failed, '--fail-on-regression')
+        self.assertEqual(2, rc)
+
+    def test_zero_crawl_score_is_not_inferred_to_be_a_fetch_failure(self):
+        audit = {'site': 'https://example.test', 'overall_score': 0, 'homepage': report(ALL),
+                 'crawl': {'pages': [{'score': 0, 'hard_fail': False}]}}
+        self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
+        del audit['crawl']['pages'][0]['hard_fail']  # legacy score alone is not execution evidence
+        self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
+
+    def test_unknown_or_malformed_crawl_evidence_is_not_guessed(self):
+        for crawl in (None, [], {}, {'pages': None}, {'pages': {}}, {'pages': [None, 'bad', {'hard_fail': 'true'}]}):
+            audit = {'site': 'https://example.test', 'overall_score': 90, 'homepage': report(ALL), 'crawl': crawl}
+            self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
+
+    def test_crawl_serializes_explicit_hard_failure_without_changing_average(self):
+        import crawl_site
+        base, child = 'https://example.test/', 'https://example.test/fail'
+        good, failed = Report(base), Report(child, hard_fail=True)
+        with mock.patch.object(crawl_site.scanner, 'gather_context', return_value={}), \
+                mock.patch.object(crawl_site, 'discover', return_value=[base, child]), \
+                mock.patch.object(crawl_site.scanner, 'scan', side_effect=[good, failed]):
+            crawl = crawl_site.crawl(base, max_pages=2, concurrency=1, detect_dupes=False)
+        data = json.loads(crawl_site.render_json(crawl))
+        self.assertEqual([False, True], [page['hard_fail'] for page in data['pages']])
+        self.assertEqual(50, data['avg_score'])
 
 
 if __name__ == '__main__':

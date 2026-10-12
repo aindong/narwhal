@@ -247,7 +247,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     pages_hreflang: dict = {}
     for u, rep in results:
         ecommerce = rep.meta.get("ecommerce", {})
-        pages.append({"url": u, "score": rep.score(), "counts": rep.counts(),
+        pages.append({"url": u, "score": rep.score(), "hard_fail": bool(rep.hard_fail),
+                      "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
                       "is_merchant": bool(ecommerce.get("is_merchant")),
                       "product_confidence": ecommerce.get("confidence", 0.0)})

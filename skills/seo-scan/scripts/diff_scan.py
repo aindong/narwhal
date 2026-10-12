@@ -43,13 +43,13 @@ def _normalize(data: dict) -> dict:
         return {"url": data.get("final_url") or data.get("url", ""),
                 "score": data.get("score", 0),
                 "findings": data.get("findings", []),
-                "kind": "scan", "meta": data.get("meta", {})}
+                "kind": "scan", "meta": data.get("meta", {}), "crawl": None}
     if "homepage" in data:  # comprehensive audit report
         hp = data.get("homepage", {})
         return {"url": data.get("site") or hp.get("url", ""),
                 "score": data.get("overall_score", hp.get("score", 0)),
                 "findings": hp.get("findings", []),
-                "kind": "audit", "meta": hp.get("meta", {})}
+                "kind": "audit", "meta": hp.get("meta", {}), "crawl": data.get("crawl")}
     raise ValueError(
         "Unrecognized report JSON — expected `narwhal scan` or `narwhal audit` "
         "output produced with `--format json`.")
@@ -64,6 +64,11 @@ def _comparison(o: dict, n: dict) -> dict:
     for label, item, scope in zip(("Earlier", "Later"), (o, n), scopes):
         if scope is not None and (not scope[1] or set(scope[0]) != set(scope[1])):
             reasons.append(label + " report did not complete all requested auditor groups.")
+        crawl = item["crawl"]
+        pages = crawl.get("pages") if isinstance(crawl, dict) else None
+        if isinstance(pages, list) and any(isinstance(page, dict) and page.get("hard_fail") is True
+                                           for page in pages):
+            reasons.append(label + " audit contains a hard-failed crawl page; its overall score is not comparable.")
         meta = item["meta"] if isinstance(item["meta"], dict) else {}
         coverage = meta.get("coverage")
         if meta.get("response_truncated") is True or (
@@ -83,7 +88,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "reasons": reasons,
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
-        "basis": "Recorded auditor execution and known response truncation only; not proof of "
+        "basis": "Recorded auditor execution, known response truncation and explicit crawl hard failures only; not proof of "
                  "identical URLs, configuration, rendering, tool rules or site-wide samples.",
     }
 
@@ -199,7 +204,7 @@ def render_markdown(d: dict) -> str:
     if status == "incomparable":
         counts = d["not_compared"]
         lines.append(f"_Not compared: {counts['old_findings']} earlier and {counts['new_findings']} later findings. "
-                     "Re-scan with matching, completed auditor selections and full HTML coverage._")
+                     "Re-scan with successful page fetches, matching completed auditor selections and full HTML coverage._")
         return "\n".join(lines).rstrip() + "\n"
 
     def _bullets(items):
@@ -284,7 +289,7 @@ def main(argv=None) -> int:
               "does not prove matching checks.", file=sys.stderr)
     if args.fail_on_regression and status == "incomparable":
         print("FAIL: report coverage is not comparable; re-scan with matching completed "
-              "auditor selections and full HTML coverage.", file=sys.stderr)
+              "auditor selections, successful page fetches and full HTML coverage.", file=sys.stderr)
         return 2
     if args.fail_on_regression and d["regression"]:
         print("FAIL: regression detected (score dropped or new high-severity "
