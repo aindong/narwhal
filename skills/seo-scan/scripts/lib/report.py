@@ -31,6 +31,23 @@ CATEGORY_LABELS = {
 }
 
 
+def recorded_scan_scope(meta):
+    """Validate recorded execution without inferring coverage from findings."""
+    scope = meta.get("scan_scope") if isinstance(meta, dict) else None
+    if not isinstance(scope, dict):
+        return None
+    requested, completed = scope.get("requested"), scope.get("completed")
+    if not isinstance(requested, list) or not isinstance(completed, list) or not requested:
+        return None
+    if any(not isinstance(name, str) or name not in CATEGORY_LABELS for name in requested + completed):
+        return None
+    if len(set(requested)) != len(requested) or len(set(completed)) != len(completed):
+        return None
+    if not set(completed) <= set(requested):
+        return None
+    return requested, completed
+
+
 @dataclass
 class Finding:
     category: str            # technical | content | schema | geo
@@ -108,19 +125,7 @@ class Report:
 
     def _scope_info(self):
         """Use recorded execution, never infer auditor coverage from findings."""
-        scope = self.meta.get("scan_scope")
-        if not isinstance(scope, dict):
-            return None
-        requested, completed = scope.get("requested"), scope.get("completed")
-        if not isinstance(requested, list) or not isinstance(completed, list) or not requested:
-            return None
-        if any(not isinstance(name, str) or name not in CATEGORY_LABELS for name in requested + completed):
-            return None
-        if len(set(requested)) != len(requested) or len(set(completed)) != len(completed):
-            return None
-        if not set(completed) <= set(requested):
-            return None
-        return requested, completed
+        return recorded_scan_scope(self.meta)
 
     def score_label(self) -> str:
         """Name the numerical score's measured scope without changing its value."""

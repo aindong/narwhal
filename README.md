@@ -225,10 +225,27 @@ python skills/seo-scan/scripts/scan.py https://example.com --format json -o afte
 python skills/seo-scan/scripts/diff_scan.py before.json after.json
 ```
 
+Diffs validate recorded auditor execution before calling findings resolved.
+Use matching auditor selections that completed, and full HTML responses. Known
+scope mismatches, incomplete execution, truncated responses or comparing a page
+score with an audit overall score produce **Not comparable**, not a fabricated
+improvement. `--fail-on-regression` exits **2** in those cases (ordinary measured
+regressions exit **1**). Diagnostic diffs without the gate still exit 0.
+
+JSON includes `comparison.status` (`comparable`, `incomparable`, `unknown`) and
+reasons. Incomparable results have null `score_delta` and `regression`, empty
+change lists, and `not_compared` finding counts. Legacy/malformed scope is
+explicitly unverified: historical finding/score comparisons and gates remain
+compatible with a visible warning, not proof of matching checks. Even matching
+recorded auditor groups do not establish identical URLs, configuration,
+rendering, rule versions or site-wide crawl samples; keep those controlled when
+using a diff to verify a fix.
+
 The diff shows the **score delta** and which findings are **new**, **resolved**,
 **worsened**, or **improved** (dynamic titles like `Thin content (210 words)` are
 matched across runs). Add `--fail-on-regression` as a **CI gate** — it exits
-non-zero if the score dropped or a new critical/high finding appeared. Commit the
+non-zero for a measured score drop/new critical-high finding or known
+incomparable coverage. Commit the
 JSON snapshots alongside your repo to keep a lightweight history. Works on `audit`
 JSON too.
 
