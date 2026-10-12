@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "tool_version": "1.30.13",
+  "tool_version": "1.30.14",
   "url": "https://example.test/guides/answer-visibility",
   "final_url": "https://example.test/guides/answer-visibility",
   "status": 200,
@@ -19,6 +19,21 @@
     "coverage": {
       "response_byte_limit": 5000000,
       "response_truncated": false
+    },
+    "scan_scope": {
+      "requested": [
+        "technical",
+        "content",
+        "schema",
+        "geo"
+      ],
+      "completed": [
+        "technical",
+        "content",
+        "schema",
+        "geo"
+      ],
+      "not_selected": []
     },
     "extraction": "visible text",
     "structured_data": {

@@ -2,6 +2,8 @@
 
 **Health score: 79/100 (good)**  ·  status 200
 
+Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO / LLMO. All four groups ran for this page, not a site-wide or exhaustive validation.
+
 | Critical | High | Medium | Low | Passed |
 |:--:|:--:|:--:|:--:|:--:|
 | 0 | 1 | 2 | 9 | 15 |
