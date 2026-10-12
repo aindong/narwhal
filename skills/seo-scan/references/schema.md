@@ -91,6 +91,21 @@ socials) is *not* deprecated and is increasingly useful for entity/AI grounding.
 
 ## Product and merchant-listing checks
 
+All normalized document consumers use a cached stdlib source projection that
+excludes literal HTML [`template`](https://html.spec.whatwg.org/multipage/scripting.html#the-template-element)
+fragments. Inert examples cannot supply page JSON-LD, metadata/canonical links,
+headings, links, images or language, including before active declarations.
+Main-content extraction and lazy Microdata/RDFa/merchant extraction share the
+projected view. `Doc.html` keeps the original source; `Doc.document_html` is the
+cached non-template source view. Active JSON-LD in head, hidden elements or
+CSS-hidden containers is **not** suppressed: data-block eligibility is not a
+visibility test. An unescaped script in `pre` remains HTML, not automatically an
+example. Chromium smoke coverage checks inert versus JS-cloned active schema.
+This streaming source projection handles nested/unclosed templates and the
+non-void template slash syntax, but is not a complete HTML5, foreign-element
+integration, declarative-shadow-root or browser-DOM model. Rendered active
+document markup is scanned normally; no shadow-root traversal is claimed.
+
 Narwhal classifies a parsed Product JSON-LD, Microdata or supported RDFa node as product evidence.
 Without Product structured data it requires stronger corroboration—
 `og:type=product` plus an explicit merchant fact—so an article that merely

@@ -6,6 +6,21 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.9] — 2026-10-12
+
+### Fixed
+- Inert source templates no longer supply JSON-LD, metadata, canonical links,
+  headings, links, images or language to the normalized page view. A cached
+  stdlib projection is shared by HTML backends, main-content extraction and lazy
+  Microdata/RDFa/merchant consumers; original HTML remains available as evidence.
+- Nested/unclosed templates and non-void template slash syntax are consistent
+  across backends. Script/style text and textarea/title literals cannot open or
+  close templates; comments and entities are preserved. Ordinary hidden JSON-LD
+  remains readable. Malformed marked declarations do not abort projection.
+- Chromium smoke coverage checks inert Product examples are ignored and
+  JavaScript-cloned active Product schema is detected exactly once. This source
+  projection is not a complete HTML5, foreign-integration or shadow-root parser.
+
 ## [1.30.8] — 2026-10-12
 
 ### Fixed

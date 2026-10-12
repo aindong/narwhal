@@ -17,13 +17,20 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
 
-from lib import http  # noqa: E402
+from lib import htmlx, http  # noqa: E402
 
 MARKER = "RENDERED_BY_JS_OK"
 PAGE = f"""<!DOCTYPE html><html><head><title>Render smoke</title></head>
 <body><div id="app">loading…</div>
+<template id="example"><h1>Template product</h1>
+<script type="application/ld+json">{{"@type":"Product","name":"Template product"}}</script>
+</template>
 <script>document.getElementById('app').textContent = '{MARKER}';</script>
 </body></html>""".encode("utf-8")
+ACTIVATED_PAGE = PAGE.replace(
+    b"</body>",
+    b"<script>document.body.append(document.getElementById('example').content.cloneNode(true));</script></body>",
+)
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -31,7 +38,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write(PAGE)
+        self.wfile.write(ACTIVATED_PAGE if self.path == "/activated" else PAGE)
 
     def log_message(self, *args):
         pass  # keep CI output clean
@@ -45,8 +52,12 @@ def main() -> int:
 
     # allow_private=True: the smoke server is localhost, which the SSRF guard
     # blocks by default.
-    resp = http.fetch(url, render=True, allow_private=True, timeout=30)
-    server.shutdown()
+    try:
+        resp = http.fetch(url, render=True, allow_private=True, timeout=30)
+        activated = http.fetch(url + "activated", render=True, allow_private=True, timeout=30)
+    finally:
+        server.shutdown()
+        server.server_close()
 
     if resp.error:
         print(f"FAIL: render returned an error: {resp.error}", file=sys.stderr)
@@ -58,8 +69,20 @@ def main() -> int:
         print("FAIL: JS-injected marker missing — DOM was not executed.\n"
               f"Got: {resp.text[:200]!r}", file=sys.stderr)
         return 1
+    inert_doc = htmlx.parse(resp.text, url)
+    if htmlx.looks_product(inert_doc) or inert_doc.scripts_ld:
+        print("FAIL: an inert template supplied Product schema to the document.", file=sys.stderr)
+        return 1
+    if activated.error or not activated.rendered:
+        print(f"FAIL: template activation render failed: {activated.error}", file=sys.stderr)
+        return 1
+    active_doc = htmlx.parse(activated.text, url)
+    if not htmlx.looks_product(active_doc) or len(active_doc.scripts_ld) != 1:
+        print("FAIL: activated template Product schema was not detected exactly once.", file=sys.stderr)
+        return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
     print(f"OK: rendered DOM captured the JS-injected marker ({MARKER}).")
+    print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
     return 0
 
 
