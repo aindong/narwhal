@@ -6,6 +6,15 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.19] — 2026-10-12
+
+### Fixed
+- Native numeric zero is present merchant evidence, not a missing price. Zero
+  Offer prices retain the high nonpositive-price finding and can be compared
+  against explicit matching-currency page amounts; they are not replaced by
+  a positive priceSpecification fallback. Missing/positive prices and boolean
+  handling retain their existing behavior.
+
 ## [1.30.18] — 2026-10-12
 
 ### Fixed
