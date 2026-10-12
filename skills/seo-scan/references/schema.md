@@ -168,6 +168,14 @@ note, not proof of a price defect. Completeness and validity checks still cover
 every Product/Offer. This does not prove that unrelated page observations belong
 to the selected variant.
 
+The H1/name comparison reads only the selected Product's
+[`name`](https://schema.org/name). An Offer's own label describes that Offer;
+it must not override or fill the Product name, nor hide a Product/H1
+disagreement. Offer names remain in the parsed nodes. Existing variant identity
+selection, name normalization and non-name source precedence (including
+retailer Offer SKU handling) are unchanged; this is not a general fact-owner
+or localized-name resolver.
+
 For multiple Offers on the selected Product, price/currency/availability
 comparisons use per-field consensus instead of the first Offer. A price
 consensus also requires all declared currencies to agree with an explicit page

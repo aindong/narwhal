@@ -300,7 +300,10 @@ def _schema_fact(product, offers, field):
         keys = ("priceCurrency",)
     else:
         keys = (field,)
-    for node in offers + [product]:
+    # The page H1 names the selected Product, not a sale/seller Offer label.
+    # Do not let Offer.name mask a missing or conflicting Product.name.
+    owners = [product] if field == "name" else offers + [product]
+    for node in owners:
         for key in keys:
             value = node.get(key)
             if value in (None, "", []) and key in ("price", "priceCurrency"):

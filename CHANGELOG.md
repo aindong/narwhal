@@ -6,6 +6,16 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.10] — 2026-10-12
+
+### Fixed
+- Product H1/name comparisons now use the selected Product name, never an
+  Offer's sale/seller label. Offer names cannot create false Product mismatches,
+  mask genuine name disagreements or fill a missing Product name.
+- Existing variant selection, range/price/currency/stock comparisons and
+  non-name field source precedence are unchanged. Local references and all
+  supported structured-data formats retain their original node names.
+
 ## [1.30.9] — 2026-10-12
 
 ### Fixed
