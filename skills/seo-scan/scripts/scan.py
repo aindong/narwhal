@@ -84,7 +84,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     (used by the crawler's broken-link checker). ``config`` (a Config) tunes
     scoring weights, ignore rules, and check thresholds."""
     config = config or configlib.Config()
-    selected = only or list(AUDITORS)
+    selected = list(dict.fromkeys(only or list(AUDITORS)))
     unknown = sorted(set(selected) - set(AUDITORS))
     if unknown:
         raise ValueError("Unknown auditor(s): " + ", ".join(unknown))
@@ -99,6 +99,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     report.meta["coverage"] = {
         "response_byte_limit": max_bytes,
         "response_truncated": resp.headers.get("x-narwhal-truncated") == "true",
+    }
+    report.meta["scan_scope"] = {
+        "requested": list(selected), "completed": [],
+        "not_selected": [name for name in AUDITORS if name not in selected],
     }
 
     if not resp.ok:
@@ -158,6 +162,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         fn = AUDITORS.get(name)
         if fn:
             fn(doc, resp, report, ctx)
+            report.meta["scan_scope"]["completed"].append(name)
 
     # Image weight/format + og:image checks: a few HEADs and one ranged GET per
     # page, so they're on for single-page scans but skipped during crawls
@@ -220,7 +225,7 @@ def main(argv=None) -> int:
         return rc
 
     if below_threshold(report.score(), args.fail_under):
-        print(f"FAIL: health score {report.score()}/100 is below the "
+        print(f"FAIL: {report.score_label().lower()} {report.score()}/100 is below the "
               f"--fail-under threshold of {args.fail_under}.", file=sys.stderr)
         return 1
     return 0

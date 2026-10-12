@@ -6,6 +6,19 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.14] — 2026-10-12
+
+### Fixed
+- Focused scans identify requested, completed and unselected auditor groups in
+  JSON, Markdown and HTML/PDF. Selected-check scores are no longer presented as
+  overall page health; full selections remain page-level, not exhaustive audits.
+- Failed/non-HTML responses record no completed auditors and show a fail-safe
+  zero as not measured, without fabricated area grades. Truncated response
+  coverage stays explicit; legacy reports do not infer scope from finding counts.
+- Duplicate auditor selections run only once. Custom report titles remain;
+  accessible gauges and threshold failures use the correct scope label. Normal
+  unique-selection score weights and findings are unchanged.
+
 ## [1.30.13] — 2026-10-12
 
 ### Fixed

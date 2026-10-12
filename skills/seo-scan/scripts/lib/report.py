@@ -92,7 +92,8 @@ class Report:
         return sum(weights.get(f.severity, _WEIGHT[f.severity]) for f in findings)
 
     def score(self) -> int:
-        if self.hard_fail:
+        scope = self._scope_info()
+        if self.hard_fail or (scope is not None and not scope[1]):
             # A page we couldn't fetch has no measurable health — reporting
             # "88/100" (100 minus one critical) was found misleading in tuning.
             return 0
@@ -104,6 +105,69 @@ class Report:
     def counts(self) -> dict:
         b = self.by_severity()
         return {s: len(b[s]) for s in SEVERITY}
+
+    def _scope_info(self):
+        """Use recorded execution, never infer auditor coverage from findings."""
+        scope = self.meta.get("scan_scope")
+        if not isinstance(scope, dict):
+            return None
+        requested, completed = scope.get("requested"), scope.get("completed")
+        if not isinstance(requested, list) or not isinstance(completed, list) or not requested:
+            return None
+        if any(not isinstance(name, str) or name not in CATEGORY_LABELS for name in requested + completed):
+            return None
+        if len(set(requested)) != len(requested) or len(set(completed)) != len(completed):
+            return None
+        if not set(completed) <= set(requested):
+            return None
+        return requested, completed
+
+    def score_label(self) -> str:
+        """Name the numerical score's measured scope without changing its value."""
+        if self.hard_fail:
+            return "Score unavailable"
+        scope = self._scope_info()
+        if scope is None:
+            return "Reported-findings score"
+        requested, completed = scope
+        if not completed:
+            return "Score unavailable"
+        if set(completed) != set(requested) or set(requested) != set(CATEGORY_LABELS):
+            return "Selected-check score"
+        return "Health score"
+
+    def _scope_note(self) -> str:
+        scope = self._scope_info()
+        if scope is None:
+            if self.hard_fail:
+                return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded."
+            return "Auditor selection was not recorded; do not infer overall page health from this score."
+        requested, completed = scope
+        labels = lambda names: "; ".join(CATEGORY_LABELS[name] for name in names)
+        if not completed:
+            return f"No auditor groups completed. Requested: {labels(requested)}. The zero score is a fail-safe, not measured page health."
+        note = f"Checked auditor groups: {labels(completed)}."
+        pending = [name for name in requested if name not in completed]
+        skipped = [name for name in CATEGORY_LABELS if name not in requested]
+        if pending:
+            note += f" Not completed: {labels(pending)}."
+        if skipped:
+            note += f" Not selected: {labels(skipped)}."
+        if pending or skipped:
+            note += " Score reflects completed selected checks and response-level findings, not overall page health."
+        else:
+            note += " All four groups ran for this page, not a site-wide or exhaustive validation."
+        coverage = self.meta.get("coverage")
+        if isinstance(coverage, dict) and coverage.get("response_truncated"):
+            note += " Response was truncated; findings use partial HTML coverage."
+        return note
+
+    def _report_title(self, title):
+        if title != "SEO & GEO Audit":
+            return title
+        label = self.score_label()
+        return {"Health score": title, "Selected-check score": "Focused page scan",
+                "Score unavailable": "Page scan not completed"}.get(label, "Page findings report")
 
     # ---- renderers -------------------------------------------------------
     def to_json(self) -> str:
@@ -126,15 +190,17 @@ class Report:
 
     def to_markdown(self, title: str = "SEO & GEO Audit") -> str:
         score = self.score()
-        grade = _grade(score)
+        grade = "not measured" if self.score_label() == "Score unavailable" else _grade(score)
         counts = self.counts()
         buckets = self.by_severity()
         lines = [
-            f"# {title} — {self.final_url or self.url}",
+            f"# {self._report_title(title)} — {self.final_url or self.url}",
             "",
-            f"**Health score: {score}/100 ({grade})**  ·  "
+            f"**{self.score_label()}: {score}/100 ({grade})**  ·  "
             f"status {self.fetched_status}"
             + ("  ·  JS-rendered" if self.rendered else ""),
+            "",
+            self._scope_note(),
             "",
             "| Critical | High | Medium | Low | Passed |",
             "|:--:|:--:|:--:|:--:|:--:|",
@@ -157,7 +223,7 @@ class Report:
             lines.append("")
 
         # --- Breakdown by area ---------------------------------------------
-        cats = self.by_category()
+        cats = {} if self.score_label() == "Score unavailable" else self.by_category()
         if cats:
             lines.append("## Breakdown by area")
             lines.append("")
@@ -215,10 +281,14 @@ class Report:
         crit, high = counts["critical"], counts["high"]
         med, low = counts["medium"], counts["low"]
         prio = crit + high
-        target = self.final_url or self.url
+        label = self.score_label()
+        if label == "Score unavailable":
+            return "The scan did not complete; no page health was measured. Check execution scope and any response failure below."
+        subject = "This page scores" if label == "Health score" else ("Selected checks score" if label == "Selected-check score" else "Reported findings score")
+        score_text = f"{subject} **{score}/100 ({grade})**"
+        checked = "in the reported findings" if label == "Reported-findings score" else "in the completed checks"
         if prio == 0 and med == 0:
-            lead = (f"This page is in **{grade}** shape ({score}/100) — no critical, "
-                    f"high, or medium issues found.")
+            lead = (f"{score_text} — no critical, high, or medium issues found {checked}.")
         else:
             bits = []
             if crit:
@@ -227,7 +297,7 @@ class Report:
                 bits.append(f"{high} high")
             if med:
                 bits.append(f"{med} medium")
-            lead = (f"This page scores **{score}/100 ({grade})**. "
+            lead = (f"{score_text}. "
                     f"{', '.join(bits)} issue(s) need attention"
                     + (f", plus {low} quick win(s)." if low else "."))
         return lead
@@ -239,11 +309,12 @@ class Report:
         severity-coloured finding cards). Reuses the same findings model as the
         Markdown/JSON renderers — no logic is duplicated, only presentation."""
         score = self.score()
-        grade = _grade(score)
+        grade = "not measured" if self.score_label() == "Score unavailable" else _grade(score)
         counts = self.counts()
         target = self.final_url or self.url
-        header = _score_header(score, grade, counts, self.fetched_status, self.rendered)
-        return html_document(title, target, header + "\n".join(self._html_sections()))
+        header = _score_header(score, grade, counts, self.fetched_status, self.rendered,
+                               score_label=self.score_label())
+        return html_document(self._report_title(title), target, header + "\n".join(self._html_sections()))
 
     def _html_sections(self) -> list:
         """Findings rendered as HTML section cards (no document shell / hero).
@@ -256,6 +327,7 @@ class Report:
 
         # Summary + top priorities
         body.append('<section class="card"><h2>Summary</h2>')
+        body.append(f"<p>{_esc(self._scope_note())}</p>")
         body.append(f"<p>{_inline_md(self._summary_text(score, grade, counts))}</p>")
         priorities = buckets["critical"] + buckets["high"]
         if priorities:
@@ -268,7 +340,7 @@ class Report:
         body.append("</section>")
 
         # Breakdown by area
-        cats = self.by_category()
+        cats = {} if self.score_label() == "Score unavailable" else self.by_category()
         if cats:
             rows = []
             for key in ("technical", "content", "schema", "geo"):
@@ -354,7 +426,7 @@ def _bar(score: int) -> str:
             f'background:{_grade_color(score)}"></span></span>')
 
 
-def score_gauge(score: int) -> str:
+def score_gauge(score: int, label: str = "Health score") -> str:
     """An SVG donut gauge coloured by grade, score centred."""
     r, cx = 54, 64
     import math
@@ -363,7 +435,7 @@ def score_gauge(score: int) -> str:
     color = _grade_color(score)
     return (
         f'<svg viewBox="0 0 128 128" width="128" height="128" class="gauge" '
-        f'role="img" aria-label="Health score {score} of 100">'
+        f'role="img" aria-label="{_esc(label)} {score} of 100">'
         f'<circle cx="{cx}" cy="{cx}" r="{r}" fill="none" stroke="#e5e7eb" stroke-width="12"/>'
         f'<circle cx="{cx}" cy="{cx}" r="{r}" fill="none" stroke="{color}" stroke-width="12" '
         f'stroke-linecap="round" stroke-dasharray="{dash:.1f} {circ:.1f}" '
@@ -373,15 +445,16 @@ def score_gauge(score: int) -> str:
         f'</svg>')
 
 
-def _score_header(score, grade, counts, status, rendered) -> str:
+def _score_header(score, grade, counts, status, rendered, score_label="Health score") -> str:
     chips = "".join(
         f'<span class="chip s-{s}">{counts[s]} {_SEV_LABEL[s]}</span>'
         for s in SEVERITY if counts[s])
     meta = f"status {status}" + ("  ·  JS-rendered" if rendered else "")
     return (
         '<header class="hero">'
-        f'{score_gauge(score)}'
+        f'{score_gauge(score, label=score_label)}'
         '<div class="hero-txt">'
+        f'<div class="muted">{_esc(score_label)}</div>'
         f'<div class="grade" style="color:{_grade_color(score)}">{_esc(grade).title()}</div>'
         f'<div class="chips">{chips}</div>'
         f'<div class="muted">{_esc(meta)}</div>'

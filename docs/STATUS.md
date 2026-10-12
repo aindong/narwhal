@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.13**_
+_Last updated: 2026-10-12 · version **1.30.14**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.14 honest scan scope:** JSON execution provenance and visible
+  requested/completed/unselected group labels distinguish focused scores from
+  overall health. Failed responses are not measured and do not fabricate area
+  grades; partial HTML and unknown legacy scope remain explicit. Duplicate
+  selections run once; normal scoring, threshold values and findings remain.
 - **v1.30.13 Recipe base-field expectations:** name/image required, with absent
   and blank values detected; ingredients/instructions remain recommended.
   Source/date and unverified conditional/nested/image validation scope are
@@ -184,7 +189,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.13 (48 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.14 (49 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

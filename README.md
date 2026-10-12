@@ -162,8 +162,13 @@ python skills/seo-scan/scripts/generate_schema.py Article \
   --field headline="How GEO works" --field author="Jane Doe"
 ```
 
-Every report includes a 0–100 health score and findings grouped by severity, each
-with what was observed and a concrete fix.
+Every report includes a 0–100 findings score and severity-grouped observations
+with concrete fixes. Page scans record `meta.scan_scope` (`requested`, `completed`,
+`not_selected` auditor groups). Focused scans label their **selected-check score**
+and unchecked groups; it is not overall page health. All four groups running
+does not mean site-wide or exhaustive validation. Fetch/non-HTML failures show
+zero as a fail-safe, not measured health; old reports without scope do not infer
+coverage from finding counts. Truncated HTML coverage stays explicit.
 
 ### Useful flags (`scan.py`)
 - `--render` — render JavaScript via Playwright (for SPAs), and **measure JS
@@ -186,7 +191,8 @@ with what was observed and a concrete fix.
   ```bash
   python skills/seo-scan/scripts/audit.py https://example.com --vitals --format pdf -o audit.pdf
   ```
-- `--only technical,content,schema,geo` — run a subset of auditors.
+- `--only technical,content,schema,geo` — choose auditor groups; duplicates run
+  once. For example, `--only schema` produces a focused structured-data report.
 - `--fail-under N` — exit non-zero if the score is below `N`. Use it as a **CI
   quality gate** (also on `crawl_site.py`, where it checks the average score):
   ```bash
