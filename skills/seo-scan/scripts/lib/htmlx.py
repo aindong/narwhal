@@ -14,6 +14,8 @@ from html.parser import HTMLParser
 from typing import Optional
 from urllib.parse import urljoin
 
+from .template_source import document_source
+
 WS = re.compile(r"\s+")
 
 
@@ -48,15 +50,23 @@ class Doc:
     main_text: str = ""                                # main content only (if isolable)
     noscript_text: str = ""                            # <noscript> fallback content
     html: str = ""
+    _document_cache: object = field(default=None, init=False, repr=False)
     _microdata_cache: object = field(default=None, init=False, repr=False)
     _rdfa_cache: object = field(default=None, init=False, repr=False)
     _merchant_cache: object = field(default=None, init=False, repr=False)
 
     @property
+    def document_html(self) -> str:
+        """Cached non-template source view; ``html`` keeps the original bytes."""
+        if self._document_cache is None:
+            self._document_cache = document_source(self.html)
+        return self._document_cache
+
+    @property
     def merchant_markup(self) -> dict:
         if self._merchant_cache is None:
             from .merchant_source import extract
-            self._merchant_cache = extract(self.html, self.base_url)
+            self._merchant_cache = extract(self.document_html, self.base_url)
             if not self.html:
                 # Preserve the normalized-Doc contract for programmatic callers.
                 self._merchant_cache["meta"] = [dict(tag.attrs) for tag in self.meta]
@@ -68,7 +78,7 @@ class Doc:
     def microdata(self) -> list:
         if self._microdata_cache is None:
             from .microdata import extract
-            self._microdata_cache = extract(self.html, self.base_url)
+            self._microdata_cache = extract(self.document_html, self.base_url)
         return self._microdata_cache[0]
 
     @property
@@ -80,7 +90,7 @@ class Doc:
     def rdfa(self) -> list:
         if self._rdfa_cache is None:
             from .rdfa import extract
-            self._rdfa_cache = extract(self.html, self.base_url)
+            self._rdfa_cache = extract(self.document_html, self.base_url)
         return self._rdfa_cache[0]
 
     @property
@@ -163,7 +173,7 @@ def looks_article(doc: "Doc") -> bool:
     if doc.meta_by_property("article:published_time"):
         return True
     # exactly one <article> element = an article page; many = a listing of cards
-    return (doc.html or "").lower().count("<article") == 1
+    return doc.document_html.lower().count("<article") == 1
 
 
 def looks_product(doc: "Doc") -> bool:
@@ -216,7 +226,7 @@ def parse(html: str, base_url: str = "") -> Doc:
         doc = _parse_bs4(html, base_url)
     except ImportError:
         doc = _parse_stdlib(html, base_url)
-    doc.main_text = _main_content(html)
+    doc.main_text = _main_content(doc.document_html)
     return doc
 
 
@@ -241,12 +251,13 @@ def _main_content(html: str) -> str:
 def _parse_bs4(html: str, base_url: str) -> Doc:
     from bs4 import BeautifulSoup  # noqa: PLC0415
 
-    try:
-        soup = BeautifulSoup(html, "lxml")
-    except Exception:  # noqa: BLE001 - lxml not installed
-        soup = BeautifulSoup(html, "html.parser")
-
     doc = Doc(base_url=base_url, html=html)
+    source = doc.document_html
+    try:
+        soup = BeautifulSoup(source, "lxml")
+    except Exception:  # noqa: BLE001 - lxml not installed
+        soup = BeautifulSoup(source, "html.parser")
+
     if soup.title and soup.title.string:
         doc.title = collapse(soup.title.string)
     html_tag = soup.find("html")
@@ -366,8 +377,8 @@ class _StdlibParser(HTMLParser):
 
 def _parse_stdlib(html: str, base_url: str) -> Doc:
     p = _StdlibParser(base_url)
-    p.feed(html)
     p.doc.html = html
+    p.feed(p.doc.document_html)
     p.doc.text = collapse(" ".join(p._text))
     p.doc.noscript_text = collapse(" ".join(p._noscript))
     return p.doc
