@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.16**_
+_Last updated: 2026-10-12 · version **1.30.17**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.17 exact point-price comparisons:** scientific notation and long
+  decimals retain their true amounts, including multi-Offer consensus, without
+  Decimal context rounding. Matching explicit units and supported displayed
+  amounts are required; unsupported Text receives verification notes, not an
+  invented numeric comparison or schema.org invalidity verdict. JSON records
+  exact evidence; existing localized display parsing and other checks remain.
 - **v1.30.16 diff execution-scope guard:** omitted auditor groups cannot become
   resolved fixes. Known mismatched/incomplete scopes, truncated responses and
   page/audit score-kind differences yield incomparable diagnostics and gate
@@ -201,7 +207,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.16 (51 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.17 (52 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

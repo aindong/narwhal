@@ -289,10 +289,12 @@ class TestMerchantSchema(unittest.TestCase):
         self.assertNotIn("schema.ecommerce.price.mismatch", rules(report))
 
     def test_visible_schema_mismatches_are_field_specific(self):
-        _, report, _ = inspect(fixture("mismatch-product.html"))
+        _, report, meta = inspect(fixture("mismatch-product.html"))
         got = rules(report)
-        for field in ("price", "currency", "availability", "sku", "brand"):
+        for field in ("currency", "availability", "sku", "brand"):
             self.assertIn(f"schema.ecommerce.{field}.mismatch", got)
+        self.assertNotIn("schema.ecommerce.price.mismatch", got)  # amounts in different units
+        self.assertEqual("skipped_ambiguous", meta["offer_comparison_status"]["price"])
 
     def test_visible_fact_missing_from_schema_is_not_called_a_mismatch(self):
         data = {"@type": "Product", "name": "Cap", "image": "cap.jpg",

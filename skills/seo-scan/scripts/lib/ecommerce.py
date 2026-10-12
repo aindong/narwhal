@@ -157,15 +157,9 @@ def _norm_identifier(value):
 
 
 def _norm_price(value):
-    value = re.sub(r"[^0-9.,-]", "", _clean(value))
-    if "," in value and "." not in value and re.search(r",\d{1,2}$", value):
-        value = value.replace(",", ".")
-    else:
-        value = value.replace(",", "")
-    try:
-        return Decimal(value).normalize()
-    except (InvalidOperation, ValueError):
-        return None
+    # Schema amounts are not localized display strings. Keep exact decimals;
+    # normalize() rounds to the caller's Decimal context before removing zeros.
+    return _range_number(_clean(value))
 
 
 def _norm_availability(value):
@@ -531,7 +525,13 @@ def audit(doc, report, *, today=None):
                            "Update the offer price and validity date, or remove a stale validity date.",
                            evidence=valid_until, rule_id="schema.ecommerce.offer.price.expired")
         price, _ = _schema_fact(offer_product, [offer], "price")
-        if price and (_norm_price(price) is None or (merchant and _norm_price(price) <= 0)):
+        number = _norm_price(price) if price else None
+        if price and number is None:
+            report.add(CAT, "low", f"{owner} price evidence needs verification",
+                       f"The active price {price!r} is outside the bounded numeric parser; no amount is inferred by stripping text or separators.",
+                       "Verify the current numeric Offer price and priceCurrency at source. Unsupported Text or shapes are not a full schema.org invalidity verdict; numeric comparison is skipped.",
+                       evidence=price, rule_id="schema.ecommerce.offer.price.extraction")
+        elif price and (number < 0 or (merchant and number <= 0)):
             report.add(CAT, "high", f"{owner} has invalid price",
                        f"The active price is {price!r}.",
                        "Provide a non-negative numeric price; merchant listings require a price greater than zero.",
@@ -598,7 +598,22 @@ def audit(doc, report, *, today=None):
                        rule_id=f"schema.ecommerce.visible.{field}.missing")
             continue
         if field == "price":
-            mismatch = _norm_price(observed["value"]) is not None and _norm_price(schema_value) is not None and _norm_price(observed["value"]) != _norm_price(schema_value)
+            schema_currency = _schema_fact(product, offers, "currency")[0]
+            observed_currency = _clean(visible.get("currency", {}).get("value"))
+            declared_price = _norm_price(schema_value)
+            observed_price = _range_observed_price(observed["value"], schema_currency)
+            if (declared_price is None or observed_price is None
+                    or not re.fullmatch(r"[A-Za-z]{3}", schema_currency)
+                    or schema_currency.casefold() != observed_currency.casefold()):
+                meta["offer_comparison_status"][field] = "skipped_ambiguous"
+                skipped_offer_fields.append(field)
+                continue
+            meta["point_price_comparison"] = {
+                "method": "exact_decimal", "schema_price": str(declared_price),
+                "observed_price": str(observed_price), "currency": schema_currency,
+                "scope": "amount comparison, not selected seller or full price-component validation",
+            }
+            mismatch = observed_price != declared_price
         elif field == "availability":
             mismatch = _norm_availability(observed["value"]) != _norm_availability(schema_value)
         elif field == "name":
@@ -618,7 +633,7 @@ def audit(doc, report, *, today=None):
     if skipped_offer_fields:
         fields = ", ".join(skipped_offer_fields)
         report.add(CAT, "low", "Offer comparison scope needs verification",
-                   f"{len(offers)} Offer objects do not establish comparable {fields} evidence (non-unique, incomplete, range or unmatched currency units). No source-order Offer is selected for these comparisons.",
+                   f"{len(offers)} Offer objects do not establish comparable {fields} evidence (non-unique, incomplete, unsupported numeric text, range or unmatched currency units). No source-order Offer is selected for these comparisons.",
                    f"Verify the source Offer for {fields}; these comparisons were skipped. Other agreed Offer values and Product identity are still checked.",
                    rule_id="schema.ecommerce.offer.comparison.ambiguous")
     comparison_note = "visible comparisons were evidence-gated." if product is not None else "visible comparisons were skipped because Product identity is ambiguous."

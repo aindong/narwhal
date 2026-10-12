@@ -255,9 +255,26 @@ blocks multi-Offer price comparisons, including homogeneous AggregateOffer sets.
 (eligible, not necessarily valid/present) or `skipped_ambiguous`. The parent
 `comparison_status` covers Product identity eligibility, not every Offer field.
 Agreed fields, Product identity checks and all-offer completeness/validity remain
-active. Ordinary single-Offer behavior is unchanged. No particular seller/Offer
+active. No particular seller/Offer
 is selected from a coincidentally matching amount; this is not a full seller,
 price-component or observation-ownership resolver.
+
+Point Offer amounts now use the same bounded exact decimal grammar as range
+bounds (including scientific notation), without context rounding or stripping
+arbitrary characters. JSON decimal number tokens retain exact lexical strings
+rather than rounding through binary floats. Display amounts use the localized display parser, but
+explicit page/schema currency codes must match even for a single Offer. Unknown
+units, unsupported display prose/ranges or unsupported schema numeric text skip
+amount comparison with a low verification note; other field checks still run.
+The [schema.org price property](https://schema.org/price) accepts Text and Number,
+so this parser's coverage limits are not a general schema.org invalidity verdict.
+Known nonpositive merchant prices retain the existing high finding; Google's
+[merchant listing guide](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing)
+requires a price greater than zero (sources checked 2026-10-12).
+`meta.ecommerce.point_price_comparison` records `method: exact_decimal`, parsed
+amount strings, currency and the limited amount-comparison scope. It does not
+prove a selected seller, full price-component interpretation or rich-result
+eligibility. No source or currency service is fetched during a scan.
 
 A single selected [`AggregateOffer`](https://schema.org/AggregateOffer) uses
 inclusive [`lowPrice`](https://schema.org/lowPrice) and

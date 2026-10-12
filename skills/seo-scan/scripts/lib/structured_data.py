@@ -115,7 +115,9 @@ def collect(doc):
 
     for i, blob in enumerate(doc.scripts_ld):
         try:
-            add(json.loads(blob), "jsonld")
+            # Binary floats would round exact JSON decimal price tokens before
+            # the bounded Decimal parser can compare them to page evidence.
+            add(json.loads(blob, parse_float=str), "jsonld")
         except (ValueError, TypeError, RecursionError) as exc:
             errors.append((i + 1, str(exc)))
     add(doc.microdata, "microdata")
