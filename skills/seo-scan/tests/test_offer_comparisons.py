@@ -169,6 +169,16 @@ class TestOfferComparisons(unittest.TestCase):
         self.assertIn("schema.ecommerce.offer.missing.price", rules(report))
         self.assertIn("schema.ecommerce.visible.price.missing", rules(report))
 
+    def test_homogeneous_aggregate_set_also_skips_price_consensus(self):
+        values = offers()
+        for offer in values:
+            offer.update({"@type": "AggregateOffer", "price": "129.00", "lowPrice": "129.00",
+                          "highPrice": "149.00", "offerCount": "2"})
+        _, report, meta = inspect(page(values, "129.00"), URL)
+        self.assertIn(NOTE, rules(report))
+        self.assertNotIn("schema.ecommerce.price.mismatch", rules(report))
+        self.assertEqual("skipped_ambiguous", meta["offer_comparison_status"]["price"])
+
     def test_parser_backends_and_scan_json_share_field_scope(self):
         html = page(offers())
         results = []

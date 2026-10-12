@@ -13,7 +13,8 @@ All notable changes to Narwhal are documented here. The format follows
   comparisons. Non-unique or incomplete fields get a low verification note;
   agreed fields and Product identity checks remain active.
 - Numeric price consensus requires matching declared and observed currencies;
-  mixed AggregateOffer ranges are not treated as selected prices. Per-field
+  any AggregateOffer in a multi-Offer comparison blocks Offer-based price
+  consensus, including homogeneous sets. Per-field
   `offer_comparison_status` is explicit in JSON. All-offer validity/completeness
   checks and existing single-Offer behavior are preserved.
 

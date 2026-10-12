@@ -157,8 +157,10 @@ For multiple Offers on the selected Product, price/currency/availability
 comparisons use per-field consensus instead of the first Offer. A price
 consensus also requires all declared currencies to agree with an explicit page
 currency; amounts in different or unknown units are not compared. Non-unique,
-incomplete or mixed AggregateOffer-range evidence gets
+incomplete evidence gets
 `schema.ecommerce.offer.comparison.ambiguous`, a low verification note.
+When Offer price evidence is used, the presence of any AggregateOffer also
+blocks multi-Offer price comparisons, including homogeneous AggregateOffer sets.
 `meta.ecommerce.offer_comparison_status` maps observed Offer fields to `ready`
 (eligible, not necessarily valid/present) or `skipped_ambiguous`. The parent
 `comparison_status` covers Product identity eligibility, not every Offer field.
