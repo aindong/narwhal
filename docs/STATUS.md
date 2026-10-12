@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.19**_
+_Last updated: 2026-10-12 · version **1.30.20**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.20 severity-first presentation:** high/critical findings lead the
+  HTML/PDF hero and report summary; score bands are explicitly labelled instead
+  of being an unqualified urgency verdict. Scores, JSON finding data, unknown/
+  focused scope caveats and unmeasured failures are preserved. Heuristic
+  findings still require verification, not automatic source edits.
 - **v1.30.19 zero-price evidence:** native numeric zero remains present, rather
   than being mistaken for a missing amount or replaced by a positive fallback.
   Merchant nonpositive-price validity and exact unit-gated comparisons stay
@@ -217,7 +222,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.19 (54 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.20 (55 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
