@@ -89,11 +89,11 @@ class TestArticleFields(unittest.TestCase):
         data = node(); data.update(headline={'@value': 'Article', '@language': 'en'}, author={'@id': '#writer'})
         result = inspect(page(data))
         self.assertEqual(100, result.score())  # not a full reference/type validator
-        self.assertTrue(audit_schema._article_value_present(0))
-        self.assertTrue(audit_schema._article_value_present(False))
+        self.assertTrue(audit_schema._field_value_present(0))
+        self.assertTrue(audit_schema._field_value_present(False))
         value = 'unknown'
         for _ in range(20): value = [value]
-        self.assertTrue(audit_schema._article_value_present(value))
+        self.assertTrue(audit_schema._field_value_present(value))
 
     def test_legacy_headline_optout_does_not_hide_unrelated_recommendations(self):
         cfg = config.Config({'ignore': {'titles': ["Article missing required 'headline'"]}})

@@ -32,7 +32,7 @@ TEMPLATES = {
     "WebSite": (["name", "url"], ["potentialAction"]),
     "BreadcrumbList": (["itemListElement"], []),
     "FAQPage": (["mainEntity"], []),
-    "Recipe": (["name", "recipeIngredient", "recipeInstructions"], ["image", "author", "aggregateRating", "cookTime"]),
+    "Recipe": (["name", "image"], ["recipeIngredient", "recipeInstructions", "author", "aggregateRating", "cookTime"]),
     "Event": (["name", "startDate", "location"], ["endDate", "offers", "description", "image"]),
     "JobPosting": (["title", "hiringOrganization", "datePosted"], ["employmentType", "jobLocation", "baseSalary"]),
     "VideoObject": (["name", "thumbnailUrl", "uploadDate"], ["description", "duration", "contentUrl"]),

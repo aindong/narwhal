@@ -72,7 +72,7 @@ The auditor and `generate_schema.py` validate these:
 | Merchant Product + Offer | Product identity + active `price` and `priceCurrency` | `availability`, `url`, `itemCondition`, `seller`, valid identifiers |
 | Organization | `name` | `url`, `logo`, `sameAs` |
 | LocalBusiness | `name`, `address` | `telephone`, `openingHours`, `geo` |
-| Recipe | `name`, `recipeIngredient`, `recipeInstructions` | `image`, `author`, `aggregateRating` |
+| Recipe (Google base fields) | `name`, `image` | `recipeIngredient`, `recipeInstructions`, `author`, `aggregateRating` |
 | Event | `name`, `startDate`, `location` | `endDate`, `offers` |
 | JobPosting | `title`, `hiringOrganization`, `datePosted` | `jobLocation`, `baseSalary` |
 | VideoObject | `name`, `thumbnailUrl`, `uploadDate` | `description`, `duration` |
@@ -102,6 +102,29 @@ datatype, language, reference or Google eligibility validator. Article-family
 generators label headline as recommended and `--no-recommended` does not inject
 mandatory placeholders. Defaults still offer useful scaffolds; explicit fields
 remain respected. Curate/remove unknown placeholders before publishing.
+
+### Recipe base-field expectations
+
+[Google's Recipe guide](https://developers.google.com/search/docs/appearance/structured-data/recipe)
+requires `name` and a completed-dish `image`; ingredients and instructions are
+recommended. Narwhal flags absent/blank name/image as high and groups applicable
+missing recommendations into one low finding. Add only real content, authors
+and ratings. Generator minimal mode includes name/image; defaults retain useful
+ingredient/step scaffolds. Explicit fields remain respected.
+
+`meta.structured_data.recipe_field_policy` exposes the required fields, checked
+recommendations, primary source, snapshot date and `not_checked` scope. This is
+a bounded presence check, **not full eligibility or schema.org validation**.
+Conditional nutrition/yield and time relationships, nested steps/sections,
+image crawlability, dish/content suitability and datatype/language/reference
+semantics require external verification. The Article presence bounds also apply
+here; normalized singleton arrays reduce to their scalar values. No source or
+image is fetched by these schema checks.
+
+Existing required-name and recommended-properties IDs remain. Former mandatory
+ingredient/step findings are no longer emitted; their legacy title ignores
+exclude only the corresponding recommendation. An old grouped recommendation
+ignore does not hide the newly required-image finding.
 
 ## Retired Google Search rich-result features
 

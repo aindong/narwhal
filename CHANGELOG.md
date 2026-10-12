@@ -6,6 +6,19 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.13] — 2026-10-12
+
+### Fixed
+- Recipe base-field checks now follow Google's name/image requirements.
+  Ingredients and instructions are recommended, not mandatory; absent/blank
+  required name/image values are high findings instead of passing as complete.
+- Recipe reports expose dated primary-source policy and unverified conditional,
+  nested, image and datatype/reference scope. Recommendations never ask for
+  invented authors or ratings, and are not full rich-result eligibility verdicts.
+- Recipe generators align required/recommended fields while preserving useful
+  scaffolds and explicit fields. Legacy ingredient/instruction-only ignores stay
+  field-scoped; other schema types and existing name/recommendation IDs remain.
+
 ## [1.30.12] — 2026-10-12
 
 ### Fixed
