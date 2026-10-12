@@ -6,6 +6,20 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.11] — 2026-10-12
+
+### Fixed
+- Google rich-result retirement notices now use source-checked current status:
+  FAQ appearances ended in May 2026; ClaimReview and SpecialAnnouncement support
+  ended in 2025. ClaimReview's Fact Check Explorer use is explicitly preserved.
+- Notices distinguish Google visual appearances from schema.org validity or
+  ranking, with dated primary-source provenance in JSON and recommendations.
+  Historical finding IDs, low severity and legacy title-substring ignores remain
+  stable. Sources are not fetched during scans; valid FAQ generation remains.
+- Schema reference and specialist guidance no longer describe retired FAQ and
+  ClaimReview appearances as merely restricted. Feature-specific Course Info
+  retirement is not generalized to all Course markup or Course list support.
+
 ## [1.30.10] — 2026-10-12
 
 ### Fixed

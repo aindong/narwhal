@@ -14,13 +14,23 @@ except ImportError:  # when imported as a package
 
 CAT = "schema"
 
-# Types Google has retired as rich results (still valid schema.org, but no longer
-# surface features — flag so authors don't invest in them).
+# Google Search appearance status, not schema.org validity or a ranking verdict.
+# A dated offline snapshot: never fetch these sources during a scan.
+FEATURE_STATUS_CHECKED = "2026-10-12"
 DEPRECATED = {
-    "HowTo": "HowTo rich results were retired in 2023.",
-    "FAQPage": "FAQ rich results are limited to authoritative gov/health sites since 2023.",
-    "SpecialAnnouncement": "COVID-era rich result, no longer surfaced.",
-    "ClaimReview": "Fact-check rich results restricted to approved publishers.",
+    "HowTo": "HowTo rich results were retired from Google Search in September 2023.",
+    "FAQPage": "FAQ rich results stopped appearing in Google Search on May 7, 2026; the former government/health restriction is no longer current.",
+    "SpecialAnnouncement": "SpecialAnnouncement rich-result support was retired from Google Search in 2025.",
+    "ClaimReview": "ClaimReview rich-result support was retired from Google Search in 2025. The markup remains supported by Google's Fact Check Explorer tool.",
+}
+DEPRECATED_SOURCES = {
+    "HowTo": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+    "FAQPage": "https://developers.google.com/search/updates",
+    "SpecialAnnouncement": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
+    "ClaimReview": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
+}
+DEPRECATED_ADDITIONAL_SOURCES = {
+    "ClaimReview": ["https://developers.google.com/search/docs/appearance/structured-data/factcheck"],
 }
 
 # Minimal required-property expectations per common type.
@@ -114,13 +124,35 @@ def _types_of(node) -> list:
     return [str(t)] if t else []
 
 
+def _feature_notice(typ, report):
+    source = DEPRECATED_SOURCES[typ]
+    additional = DEPRECATED_ADDITIONAL_SOURCES.get(typ, [])
+    notices = report.meta.setdefault("structured_data", {}).setdefault("google_rich_result_notices", [])
+    if not any(notice["type"] == typ for notice in notices):
+        notices.append({"type": typ, "status": "retired",
+                        "scope": "Google Search rich-result appearance, not schema.org validity or ranking",
+                        "checked_on": FEATURE_STATUS_CHECKED, "source": source,
+                        "additional_sources": list(additional)})
+    # Config ignores use title substrings, not rule IDs. Honor the old title
+    # as well as the new presentation; factual provenance remains available.
+    if report.ignore and report.ignore(CAT, f"Deprecated rich-result type: {typ}"):
+        return
+    sources = "; ".join([source] + additional)
+    other_use = "ClaimReview remains supported by Fact Check Explorer. " if typ == "ClaimReview" else ""
+    report.add(CAT, "low", f"Retired Google rich-result feature: {typ}",
+               DEPRECATED[typ],
+               "Retain accurate markup if useful for semantic meaning or other consumers; do not expect this Google Search rich-result feature. "
+               "Retirement alone does not invalidate schema.org markup or establish a ranking penalty. "
+               + other_use + f"Google sources (checked {FEATURE_STATUS_CHECKED}): {sources}",
+               # Keep the historical identity despite clearer wording.
+               rule_id=f"schema.deprecated.rich.result.type.{typ.lower()}")
+
+
 def _validate_node(node, found_types, report):
     for typ in _types_of(node):
         found_types.append(typ)
         if typ in DEPRECATED:
-            report.add(CAT, "low", f"Deprecated rich-result type: {typ}",
-                       DEPRECATED[typ],
-                       "Keep only if used for meaning; do not expect a rich result.")
+            _feature_notice(typ, report)
         for req in REQUIRED.get(typ, []):
             if req not in node:
                 report.add(CAT, "high", f"{typ} missing required '{req}'",
