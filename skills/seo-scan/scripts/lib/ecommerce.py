@@ -49,6 +49,8 @@ def _clean(value):
     if isinstance(value, list):
         value = next((x for x in value if x not in (None, "")), "")
         return _clean(value)
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return htmlx.collapse(str(value))
     return htmlx.collapse(str(value or ""))
 
 
