@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "tool_version": "1.30.11",
+  "tool_version": "1.30.12",
   "url": "https://example.test/guides/answer-visibility",
   "final_url": "https://example.test/guides/answer-visibility",
   "status": 200,
@@ -34,7 +34,22 @@
       "microdata_warnings": [],
       "rdfa_supported": true,
       "rdfa_scope": "bounded schema.org RDFa (not a full RDFa processor)",
-      "rdfa_warnings": []
+      "rdfa_warnings": [],
+      "article_field_policy": {
+        "scope": "Google Article-family field recommendations, not full eligibility or schema.org validity",
+        "required_properties": [],
+        "checked_recommendations": [
+          "headline",
+          "author",
+          "datePublished",
+          "image"
+        ],
+        "checked_on": "2026-10-12",
+        "source": "https://developers.google.com/search/docs/appearance/structured-data/article",
+        "observed_types": [
+          "Article"
+        ]
+      }
     },
     "ecommerce": {
       "is_product": false,
@@ -254,8 +269,8 @@
       "category": "schema",
       "severity": "low",
       "title": "Article missing recommended properties",
-      "detail": "Recommended fields absent: author, datePublished, image.",
-      "recommendation": "Add author, datePublished, image to strengthen the Article entity.",
+      "detail": "Recommended fields absent or blank: author, datePublished, image.",
+      "recommendation": "Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article",
       "evidence": null,
       "rule_id": "schema.article.missing.recommended.properties",
       "scope": "page",

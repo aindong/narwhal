@@ -6,6 +6,20 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.12] — 2026-10-12
+
+### Fixed
+- Article, NewsArticle and BlogPosting no longer treat headline as a mandatory
+  rich-result property. Missing applicable headline/author/datePublished/image
+  values are grouped low recommendations, with Google's no-required-properties
+  scope and dated source metadata, not invalidity or eligibility verdicts.
+- Absent/blank Article values are detected without inventing authors/dates or
+  claiming full datatype/reference validation. Other types retain their existing
+  checks; legacy headline-only ignores do not suppress unrelated recommendations.
+- Article-family generators label headline recommended, not required; the
+  no-recommended mode does not inject mandatory placeholders. Explicit fields
+  and useful default scaffolds remain. Reference and specialist guidance align.
+
 ## [1.30.11] — 2026-10-12
 
 ### Fixed

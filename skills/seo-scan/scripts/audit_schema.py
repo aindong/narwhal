@@ -35,9 +35,6 @@ DEPRECATED_ADDITIONAL_SOURCES = {
 
 # Minimal required-property expectations per common type.
 REQUIRED = {
-    "Article": ["headline"],
-    "NewsArticle": ["headline"],
-    "BlogPosting": ["headline"],
     "Organization": ["name"],
     "LocalBusiness": ["name", "address"],
     "Recipe": ["name", "recipeIngredient", "recipeInstructions"],
@@ -49,14 +46,48 @@ REQUIRED = {
     "Course": ["name", "provider"],
 }
 
+ARTICLE_TYPES = {"Article", "NewsArticle", "BlogPosting"}
+ARTICLE_SOURCE = "https://developers.google.com/search/docs/appearance/structured-data/article"
+ARTICLE_STATUS_CHECKED = "2026-10-12"
+ARTICLE_FIELDS = ["headline", "author", "datePublished", "image"]
+
 RECOMMENDED = {
-    "Article": ["author", "datePublished", "image"],
+    **{typ: list(ARTICLE_FIELDS) for typ in sorted(ARTICLE_TYPES)},
     "Organization": ["url", "logo"],
     "LocalBusiness": ["telephone", "openingHours", "geo"],
     "Recipe": ["image", "author", "aggregateRating"],
     "Event": ["endDate", "offers"],
     "VideoObject": ["description", "duration"],
 }
+
+
+def _article_value_present(value, depth=0):
+    """Absence/blank evidence only, not datatype or reference validation."""
+    if depth >= 16:
+        return True  # unknown deeply nested shape, not proven absent
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, list):
+        return any(_article_value_present(child, depth + 1) for child in value)
+    if isinstance(value, dict):
+        if not value:
+            return False
+        if "@value" in value and set(value) <= {"@value", "@language", "@type", "@direction", "@index"}:
+            return _article_value_present(value["@value"], depth + 1)
+    return True  # preserve non-empty references/unknown shapes, not validity
+
+
+def _article_policy(typ, report):
+    policy = report.meta.setdefault("structured_data", {}).setdefault("article_field_policy", {
+        "scope": "Google Article-family field recommendations, not full eligibility or schema.org validity",
+        "required_properties": [], "checked_recommendations": list(ARTICLE_FIELDS),
+        "checked_on": ARTICLE_STATUS_CHECKED, "source": ARTICLE_SOURCE, "observed_types": [],
+    })
+    if typ not in policy["observed_types"]:
+        policy["observed_types"].append(typ)
+        policy["observed_types"].sort()
 
 
 def audit(doc, resp, report, ctx=None) -> None:
@@ -153,16 +184,26 @@ def _validate_node(node, found_types, report):
         found_types.append(typ)
         if typ in DEPRECATED:
             _feature_notice(typ, report)
+        if typ in ARTICLE_TYPES:
+            _article_policy(typ, report)
         for req in REQUIRED.get(typ, []):
             if req not in node:
                 report.add(CAT, "high", f"{typ} missing required '{req}'",
                            f"Schema {typ} lacks the required '{req}' property.",
                            f"Add '{req}' — without it the rich result is invalid.")
-        missing_rec = [p for p in RECOMMENDED.get(typ, []) if p not in node]
+        if typ in ARTICLE_TYPES:
+            missing_rec = [p for p in RECOMMENDED[typ] if not _article_value_present(node.get(p))]
+        else:
+            missing_rec = [p for p in RECOMMENDED.get(typ, []) if p not in node]
+        if typ in ARTICLE_TYPES and "headline" in missing_rec and report.ignore and report.ignore(CAT, f"{typ} missing required 'headline'"):
+            missing_rec.remove("headline")  # preserve the old headline-only opt-out
         if missing_rec:
+            article = typ in ARTICLE_TYPES
             report.add(CAT, "low", f"{typ} missing recommended properties",
-                       f"Recommended fields absent: {', '.join(missing_rec)}.",
-                       f"Add {', '.join(missing_rec)} to strengthen the {typ} entity.")
+                       f"Recommended fields absent{' or blank' if article else ''}: {', '.join(missing_rec)}.",
+                       (f"Consider applicable, known {', '.join(missing_rec)} values; do not invent authors or dates. "
+                        f"Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: {ARTICLE_SOURCE}")
+                       if article else f"Add {', '.join(missing_rec)} to strengthen the {typ} entity.")
 
 
 def _cross_checks(doc, found_types, report):

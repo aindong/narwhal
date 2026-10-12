@@ -67,7 +67,7 @@ The auditor and `generate_schema.py` validate these:
 
 | Type | Required | Key recommended |
 |---|---|---|
-| Article / BlogPosting / NewsArticle | `headline` | `author`, `datePublished`, `image`, `publisher` |
+| Article / BlogPosting / NewsArticle | No required properties in Google's Article guide | Applicable `headline`, `author`, `datePublished`, `image`; optional dateModified/publisher scaffolds |
 | Product snippet | `name` + one of `review`, `aggregateRating`, `offers` | `image`, `description`, `brand`, SKU/GTIN/MPN |
 | Merchant Product + Offer | Product identity + active `price` and `priceCurrency` | `availability`, `url`, `itemCondition`, `seller`, valid identifiers |
 | Organization | `name` | `url`, `logo`, `sameAs` |
@@ -77,6 +77,31 @@ The auditor and `generate_schema.py` validate these:
 | JobPosting | `title`, `hiringOrganization`, `datePosted` | `jobLocation`, `baseSalary` |
 | VideoObject | `name`, `thumbnailUrl`, `uploadDate` | `description`, `duration` |
 | BreadcrumbList | `itemListElement` | — |
+
+### Article-family recommendations
+
+[Google's Article guide](https://developers.google.com/search/docs/appearance/structured-data/article)
+states that Article, NewsArticle and BlogPosting have no required properties;
+add recommendations that apply to the actual content. Narwhal checks absent or
+blank `headline`, `author`, `datePublished` and `image` as one low recommendation
+per type, not an invalidity or guaranteed-eligibility verdict. Only add applicable,
+known facts; do not invent authors or dates to clear a note. `dateModified` is
+conditional and is not a blanket missing-field penalty.
+
+`meta.structured_data.article_field_policy` records the Google scope, empty
+`required_properties`, checked recommendations, observed Article-family types,
+primary source and `checked_on` snapshot date. No source is fetched during scans.
+The former mandatory-headline finding is no longer emitted. Existing recommended
+finding IDs remain; headline-only legacy title ignores remove only that advice,
+not unrelated author/image/date suggestions.
+
+Presence checks handle null, whitespace, empty objects/arrays and inline value
+objects; array/literal inspection is bounded at 16 levels. Nonempty references,
+unknown shapes and over-depth values are not asserted absent. This is not a full
+datatype, language, reference or Google eligibility validator. Article-family
+generators label headline as recommended and `--no-recommended` does not inject
+mandatory placeholders. Defaults still offer useful scaffolds; explicit fields
+remain respected. Curate/remove unknown placeholders before publishing.
 
 ## Retired Google Search rich-result features
 

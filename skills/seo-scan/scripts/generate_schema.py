@@ -23,9 +23,9 @@ CONTEXT = "https://schema.org"
 
 # type -> (required, recommended). Kept in sync with audit_schema.py.
 TEMPLATES = {
-    "Article": (["headline"], ["author", "datePublished", "dateModified", "image", "publisher"]),
-    "BlogPosting": (["headline"], ["author", "datePublished", "image"]),
-    "NewsArticle": (["headline"], ["author", "datePublished", "image", "publisher"]),
+    "Article": ([], ["headline", "author", "datePublished", "dateModified", "image", "publisher"]),
+    "BlogPosting": ([], ["headline", "author", "datePublished", "image"]),
+    "NewsArticle": ([], ["headline", "author", "datePublished", "image", "publisher"]),
     "Product": (["name"], ["image", "description", "brand", "url", "offers", "aggregateRating", "sku"]),
     "Organization": (["name"], ["url", "logo", "sameAs", "contactPoint"]),
     "LocalBusiness": (["name", "address"], ["telephone", "openingHours", "geo", "priceRange", "url"]),

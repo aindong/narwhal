@@ -23,6 +23,11 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/generate_schema.py" <Type>
   page marked as Product, or Organization where LocalBusiness is warranted).
 - **Match visible content:** never recommend markup for data not on the page — that's
   a spam violation. Call it out if existing markup describes invisible content.
+- **Article-family scope:** Google Article/NewsArticle/BlogPosting properties are
+  recommended, not mandatory (see the reference's primary Article guide).
+  Read `meta.structured_data.article_field_policy`; missing/blank applicable
+  fields are suggestions, not invalidity or eligibility verdicts. Never invent
+  authors or dates; curate generator placeholders before publishing.
 - **Retired Google appearances:** HowTo, FAQPage, ClaimReview and
   SpecialAnnouncement no longer supply their former Google rich-result features
   (status checked 2026-10-12; see the schema reference's primary sources).
