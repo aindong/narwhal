@@ -6,6 +6,22 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.15] — 2026-10-12
+
+### Fixed
+- Scan, audit, crawl, llms and sitemap CLI boundaries report expected URL syntax,
+  DNS/host-policy rejections as bounded single-line diagnostics with exit 2,
+  rather than tracebacks or successful-looking scan reports. Programming errors,
+  interrupts and argparse behavior remain visible; core APIs still raise.
+- URL normalization validates lazy host/port syntax and classifies expected
+  failures without weakening SSRF checks. Explicit private previews remain
+  opt-in; no output is written or overwritten on rejection. Syntax diagnostics
+  do not echo parser errors containing URL credentials or query values.
+- Initial sitemap targets are validated before discovery/walking, so a blocked
+  direct XML target does not emit an error report with exit 0. Crawl/llms entry
+  URLs normalize before parsing site context; supported bare hosts and valid
+  ports remain usable.
+
 ## [1.30.14] — 2026-10-12
 
 ### Fixed

@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, htmlx  # noqa: E402
 from lib import config as configlib  # noqa: E402
+from lib.cli_errors import url_errors  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import crawl_site  # noqa: E402
 
@@ -91,6 +92,7 @@ def _page_meta(url, allow_private, timeout):
 
 def build(base: str, *, allow_private=False, timeout=20, max_pages=40,
           concurrency=4, obey_robots=True) -> dict:
+    base = http.normalize_url(base)
     root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
     home = http.fetch(base, allow_private=allow_private, timeout=timeout)
     host = urlparse(home.final_url or base).netloc
@@ -130,6 +132,7 @@ def build(base: str, *, allow_private=False, timeout=20, max_pages=40,
             "sections": group_sections(metas), "pages": len(metas)}
 
 
+@url_errors
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     d = cfg.defaults

@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
+from lib.cli_errors import url_errors  # noqa: E402
 from lib import report as report_lib  # noqa: E402
 from lib.report import below_threshold, deliver  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -269,6 +270,7 @@ def render_json(data: dict) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
+@url_errors
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     d = cfg.defaults

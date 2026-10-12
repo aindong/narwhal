@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import hreflang, http, htmlx, links, simhash, sitegraph  # noqa: E402
 from lib import config as configlib  # noqa: E402
+from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -209,6 +210,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           timeout=20, delay=0.0, concurrency=4, obey_robots=True,
           check_links=False, max_links=200, detect_dupes=True,
           dup_threshold=90.0, config=None) -> dict:
+    base = http.normalize_url(base)
     config = config or configlib.Config()
     # Fetch site-level signals (robots/sitemap/llms) ONCE and reuse for every
     # page — polite and much faster than re-fetching per page.
@@ -373,6 +375,7 @@ def render_json(result: dict) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
+@url_errors
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     d = cfg.defaults
