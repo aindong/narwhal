@@ -189,12 +189,14 @@ def looks_product(doc: "Doc") -> bool:
             return any(has_product_type(item) for item in value)
         if not isinstance(value, dict):
             return False
+        if "@value" in value:
+            return False
         typ = value.get("@type")
         types = typ if isinstance(typ, list) else [typ]
         if any(schema_name(str(item)).lower() == "product" for item in types if item):
             return True
-        return any(has_product_type(item) for item in value.values()
-                   if isinstance(item, (dict, list)))
+        return any(has_product_type(item) for key, item in value.items()
+                   if key != "@context" and isinstance(item, (dict, list)))
 
     for blob in doc.scripts_ld:
         try:

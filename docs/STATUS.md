@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.17**_
+_Last updated: 2026-10-12 · version **1.30.18**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.18 JSON-LD literal boundaries:** value objects and opaque JSON
+  examples are not entities or merchant evidence. Datatypes are not entity
+  coverage types. Normalization and deduplication preserve literal content,
+  while real graph/list nodes and independent merchant signals remain active.
+  Context definitions do not classify a page as Product. No full context
+  expansion, remote fetch or general datatype/value validation is claimed.
 - **v1.30.17 exact point-price comparisons:** scientific notation and long
   decimals retain their true amounts, including multi-Offer consensus, without
   Decimal context rounding. Matching explicit units and supported displayed
@@ -207,7 +213,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.17 (52 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.18 (53 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```

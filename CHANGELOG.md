@@ -6,6 +6,19 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.18] — 2026-10-12
+
+### Fixed
+- JSON-LD value objects and their opaque JSON literal payloads are not entity
+  nodes. Tutorial examples no longer create Product/Offer merchant evidence, and
+  value datatypes no longer appear in the entity-type coverage summary.
+- Literal payloads preserve arrays, datatype IRIs, context data and exact JSON
+  content through normalization and deduplication. Real graph/list entities and
+  independent merchant cues remain active. This is not full JSON-LD expansion
+  or datatype/value validation; scalar value interpretation remains bounded.
+- Product classification also excludes context definitions and value objects.
+  Literal-valued offers are not counted as purchase/Offer evidence.
+
 ## [1.30.17] — 2026-10-12
 
 ### Fixed

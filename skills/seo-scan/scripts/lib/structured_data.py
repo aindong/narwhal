@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 
@@ -11,11 +12,41 @@ from .microdata import schema_name
 NUMERIC_PROPERTIES = {"price", "lowPrice", "highPrice", "offerCount", "ratingValue", "reviewCount", "ratingCount"}
 
 
+class _JSONFloat(str):
+    """Exact JSON number token, distinguishable from a JSON string literal."""
+
+
+def _literal_fingerprint(value, memo):
+    """Hash opaque JSON without schema coercion or binary float rounding."""
+    if not isinstance(value, (dict, list)):
+        encoded = (b"json-number:" + value.encode("utf-8") if isinstance(value, _JSONFloat)
+                   else json.dumps(value, ensure_ascii=False).encode("utf-8"))
+        return sha256(b"literal-scalar:" + encoded).digest()
+    if id(value) in memo:
+        return memo[id(value)]
+    digest = sha256(b"literal-dict" if isinstance(value, dict) else b"literal-list")
+    if isinstance(value, dict):
+        for key in sorted(value):
+            digest.update(sha256(key.encode("utf-8")).digest())
+            digest.update(_literal_fingerprint(value[key], memo))
+    else:
+        for child in value:
+            digest.update(_literal_fingerprint(child, memo))
+    memo[id(value)] = digest.digest()
+    return memo[id(value)]
+
+
 def _normalize(value, memo=None):
     memo = {} if memo is None else memo
     if isinstance(value, (dict, list)) and id(value) in memo:
         return memo[id(value)]
     if isinstance(value, dict):
+        if "@value" in value:
+            # Value objects are literals, not entities. Preserve their datatype
+            # and opaque JSON payload (including arrays and @context) verbatim.
+            out = deepcopy(value)
+            memo[id(value)] = out
+            return out
         out = {}
         for key, child in value.items():
             if key == "@context":
@@ -49,6 +80,8 @@ def _walk(data, seen=None):
         for child in data:
             yield from _walk(child, seen)
     elif isinstance(data, dict):
+        if "@value" in data:
+            return
         yield data
         for child in data.values():
             if isinstance(child, (dict, list)):
@@ -57,6 +90,9 @@ def _walk(data, seen=None):
 
 def _fingerprint(value, memo, prop=""):
     """Hash shared itemref subtrees once, avoiding exponential JSON expansion."""
+    if isinstance(value, dict) and "@value" in value:
+        # JSON literal properties are data, not schema amounts or enum URLs.
+        return _literal_fingerprint(value, memo)
     if not isinstance(value, (dict, list)):
         if prop in NUMERIC_PROPERTIES and isinstance(value, (str, int, float)) and not isinstance(value, bool):
             try:
@@ -77,6 +113,8 @@ def _fingerprint(value, memo, prop=""):
                 pass
         if prop in {"availability", "itemCondition"} and isinstance(value, str):
             value = schema_name(value)
+        if isinstance(value, _JSONFloat):
+            return sha256(b"json-number:" + value.encode("utf-8")).digest()
         return sha256(json.dumps(value, ensure_ascii=False).encode("utf-8")).digest()
     if id(value) in memo:
         return memo[id(value)]
@@ -117,7 +155,7 @@ def collect(doc):
         try:
             # Binary floats would round exact JSON decimal price tokens before
             # the bounded Decimal parser can compare them to page evidence.
-            add(json.loads(blob, parse_float=str), "jsonld")
+            add(json.loads(blob, parse_float=_JSONFloat), "jsonld")
         except (ValueError, TypeError, RecursionError) as exc:
             errors.append((i + 1, str(exc)))
     add(doc.microdata, "microdata")
@@ -126,6 +164,8 @@ def collect(doc):
 
 
 def types(node):
+    if "@value" in node:
+        return []
     raw = node.get("@type")
     return [t for t in (raw if isinstance(raw, list) else [raw]) if isinstance(t, str)]
 
