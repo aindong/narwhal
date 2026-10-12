@@ -1,7 +1,7 @@
 # Structured data (schema.org / JSON-LD, Microdata and bounded RDFa) reference
 
 Structured data tells search engines and AI systems *what* a page is about in a
-machine-readable way. It powers rich results (stars, FAQs, prices, breadcrumbs)
+machine-readable way. It can support eligible rich results (stars, prices, breadcrumbs)
 and helps AI answer engines identify and attribute entities.
 
 ## Format
@@ -78,16 +78,35 @@ The auditor and `generate_schema.py` validate these:
 | VideoObject | `name`, `thumbnailUrl`, `uploadDate` | `description`, `duration` |
 | BreadcrumbList | `itemListElement` | — |
 
-## Deprecated / restricted rich results
-Still valid schema.org, but no longer produce rich results — don't invest in them
-expecting a SERP feature:
-- **HowTo** — rich result retired (2023).
-- **FAQPage** — rich result limited to authoritative government/health sites.
-- **SpecialAnnouncement** — COVID-era, no longer surfaced.
-- **ClaimReview** — restricted to approved fact-checkers.
+## Retired Google Search rich-result features
+
+This is a dated, offline status snapshot, checked **2026-10-12** against primary
+Google notices. A retired visual appearance does not retire the schema.org type,
+invalidate otherwise valid markup, or by itself establish a ranking penalty.
+Retain accurate markup when useful for semantic meaning or other consumers;
+do not expect the retired Google feature:
+
+- **HowTo** — [Google rich results retired in September 2023](https://developers.google.com/search/blog/2023/08/howto-faq-changes).
+- **FAQPage** — [Google FAQ rich results removed from May 7, 2026](https://developers.google.com/search/updates).
+  The former government/health exception is no longer current. FAQPage generation
+  and question-content suggestions remain available for semantic use, not a
+  promise of a Google FAQ appearance or AI citation.
+- **SpecialAnnouncement** — [Google support retired in 2025](https://developers.google.com/search/blog/2025/06/simplifying-search-results).
+- **ClaimReview** — [Google Search appearance retired in 2025](https://developers.google.com/search/blog/2025/06/simplifying-search-results);
+  [Fact Check Explorer still supports the markup](https://developers.google.com/search/docs/appearance/structured-data/factcheck).
+
+`meta.structured_data.google_rich_result_notices` records only observed affected
+types, with `status`, narrow `scope`, `checked_on`, primary `source` URL and
+`additional_sources` where a separate notice supports another consumer.
+Notes retain the historical `schema.deprecated.rich.result.type.*` finding IDs
+and low severity so existing JSON diffs remain stable. Legacy title-substring
+ignore rules are honored alongside the new wording. Sources
+are not fetched during scans. This is not an exhaustive Google feature registry:
+the retirement of **Course Info**, for example, does not retire all Course
+markup or the separately [supported Course list feature](https://developers.google.com/search/docs/appearance/structured-data/course).
 
 `sameAs` on Organization/Person (linking to Wikipedia, LinkedIn, official
-socials) is *not* deprecated and is increasingly useful for entity/AI grounding.
+socials) is *not* deprecated; accurate identity links can clarify the entity.
 
 ## Product and merchant-listing checks
 

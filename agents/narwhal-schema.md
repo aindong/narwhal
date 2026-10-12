@@ -23,8 +23,14 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/generate_schema.py" <Type>
   page marked as Product, or Organization where LocalBusiness is warranted).
 - **Match visible content:** never recommend markup for data not on the page — that's
   a spam violation. Call it out if existing markup describes invisible content.
-- **Deprecated rich results:** HowTo and FAQPage no longer produce rich results for
-  most sites — keep only if semantically useful; don't expect SERP features.
+- **Retired Google appearances:** HowTo, FAQPage, ClaimReview and
+  SpecialAnnouncement no longer supply their former Google rich-result features
+  (status checked 2026-10-12; see the schema reference's primary sources).
+  Retain accurate markup if semantically useful or used by other consumers;
+  feature retirement is not schema.org invalidity or a ranking penalty. ClaimReview
+  remains supported by Fact Check Explorer. Do not apply feature-specific Course
+  Info retirement to all Course markup; Course list is a different feature.
+  Read `meta.structured_data.google_rich_result_notices` for scope/date/source.
 - **AI grounding:** `sameAs` (Wikipedia/LinkedIn/socials) and a clean Organization +
   WebSite graph help AI engines identify the entity.
 
