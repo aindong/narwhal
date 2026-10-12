@@ -261,7 +261,8 @@ price-component or observation-ownership resolver.
 
 Point Offer amounts now use the same bounded exact decimal grammar as range
 bounds (including scientific notation), without context rounding or stripping
-arbitrary characters. Display amounts use the localized display parser, but
+arbitrary characters. JSON decimal number tokens retain exact lexical strings
+rather than rounding through binary floats. Display amounts use the localized display parser, but
 explicit page/schema currency codes must match even for a single Offer. Unknown
 units, unsupported display prose/ranges or unsupported schema numeric text skip
 amount comparison with a low verification note; other field checks still run.

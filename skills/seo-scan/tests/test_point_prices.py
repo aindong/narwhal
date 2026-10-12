@@ -44,6 +44,34 @@ class TestExactPointPrices(unittest.TestCase):
         self.assertEqual(left, meta['point_price_comparison']['schema_price'])
         self.assertEqual(right, meta['point_price_comparison']['observed_price'])
 
+    def test_unquoted_json_decimal_tokens_keep_exact_lexemes(self):
+        for value in ('0.100000000000000005', '123456789012345678901234567890.01', '1e3'):
+            observed = '1000' if value == '1e3' else value
+            html = point(value, observed).replace('"price": "' + value + '"', '"price": ' + value)
+            _, report, meta = inspect(html, URL)
+            self.assertNotIn(MISMATCH, rules(report))
+            self.assertEqual(Decimal(value), Decimal(meta['point_price_comparison']['schema_price']))
+
+    def test_unquoted_distinct_json_decimal_tokens_do_not_create_consensus(self):
+        left, right = '0.100000000000000005', '0.100000000000000006'
+        offers = [dict(product()['offers'], price=left), dict(product()['offers'], price=right)]
+        html = page(offers, right)
+        for value in (left, right):
+            html = html.replace('"price": "' + value + '"', '"price": ' + value)
+        _, report, meta = inspect(html, URL)
+        self.assertIn(NOTE, rules(report))
+        self.assertEqual('skipped_ambiguous', meta['offer_comparison_status']['price'])
+
+    def test_unquoted_json_price_mismatch_remains_json_serializable(self):
+        value = '0.100000000000000005'
+        html = point(value, '0.1').replace('"price": "' + value + '"', '"price": ' + value)
+        response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, html, 1)
+        with mock.patch.object(scan.http, 'fetch', return_value=response):
+            report = scan.scan(URL, only=['schema'], ctx={}, check_images=False)
+        payload = json.loads(report.to_json())
+        self.assertIn(MISMATCH, {f['rule_id'] for f in payload['findings']})
+        self.assertEqual(value, payload['meta']['ecommerce']['point_price_comparison']['schema_price'])
+
     def test_exact_comparison_does_not_depend_on_decimal_context(self):
         with localcontext() as ctx:
             ctx.prec = 2; ctx.traps[Inexact] = True; ctx.traps[Rounded] = True

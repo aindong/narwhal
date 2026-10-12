@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
 - Point Offer prices and multi-Offer consensus use exact bounded decimal parsing:
   scientific notation is not digit-stripped, and long unequal prices are not
   rounded equal by the caller's Decimal context.
+  JSON decimal number tokens retain their lexemes rather than rounding through
+  binary floats before comparison.
 - Point-price comparisons, like ranges, require explicit matching currency units
   and parseable observed amounts. Supported localized display forms remain;
   prose, malformed separators and conflicting units are not guessed. Other
