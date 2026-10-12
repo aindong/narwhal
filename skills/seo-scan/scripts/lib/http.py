@@ -507,7 +507,7 @@ def head(url: str, *, timeout: int = DEFAULT_TIMEOUT, user_agent: str = DEFAULT_
         return 0, str(exc)
     try:
         assert_public_host(url, allow_private=allow_private)
-    except SSRFError as exc:
+    except URLInputError as exc:
         return 0, str(exc)
     try:
         return _head_requests(url, timeout, user_agent,

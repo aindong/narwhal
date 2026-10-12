@@ -88,6 +88,15 @@ class TestCLIURLRejections(unittest.TestCase):
         self.assertIn('Cannot resolve host', err)
         self.assertNotIn('Traceback', err)
 
+    def test_head_host_encoding_failures_keep_the_result_contract(self):
+        with mock.patch.object(http.socket, 'getaddrinfo', side_effect=UnicodeError('IDNA label too long')), \
+                mock.patch.object(http, '_requests_safe') as requests, \
+                mock.patch.object(http, '_urllib_safe_open') as urllib:
+            status, error = http.head('https://example.test')
+        self.assertEqual(0, status)
+        self.assertIn('Invalid host encoding', error)
+        requests.assert_not_called(); urllib.assert_not_called()
+
     def test_all_five_main_boundaries_reject_private_targets_without_transport_or_output(self):
         with tempfile.TemporaryDirectory() as tmp:
             for main in MAINS:
