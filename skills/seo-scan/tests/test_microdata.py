@@ -233,15 +233,16 @@ class TestMicrodataAuditing(unittest.TestCase):
         self.assertIn(("schema.invalid.json.ld", "high"), problems(report))
         self.assertNotIn(("schema.no.structured.data", "medium"), problems(report))
 
-    def test_article_required_field_validation_applies_to_microdata(self):
+    def test_article_recommendations_apply_to_microdata_without_false_required_error(self):
         _, report = audit('<article itemscope itemtype="https://schema.org/Article"><h1>Example</h1></article>')
-        self.assertIn(("schema.article.missing.required.headline", "high"), problems(report))
+        self.assertNotIn(("schema.article.missing.required.headline", "high"), problems(report))
+        self.assertIn(("schema.article.missing.recommended.properties", "low"), problems(report))
 
     def test_duplicate_defect_scores_once_across_formats(self):
         html = '''<div itemscope itemtype="https://schema.org/Article"></div>
         <script type="application/ld+json">{"@type":"Article"}</script>'''
         _, report = audit(html)
-        self.assertEqual(1, sum(f.rule_id == "schema.article.missing.required.headline" for f in report.findings))
+        self.assertEqual(1, sum(f.rule_id == "schema.article.missing.recommended.properties" for f in report.findings))
         # Coalescing a rule must not hide different missing-property evidence.
         html = '<script type="application/ld+json">' + json.dumps([
             {"@type": "Article", "headline": "First", "author": "Jane", "image": "/a.jpg"},

@@ -49,7 +49,7 @@ This page scores **79/100 (good)**. 1 high, 2 medium issue(s) need attention, pl
 - 🔵 **No visible date signal** — Expose a publish or last-updated date to signal freshness.
 - 🔵 **Incomplete Open Graph tags** — Add og:title, og:description and og:image for rich social and chat-app link previews.
 - 🔵 **No Twitter/X card type** — Add twitter:card (e.g. summary_large_image) for X previews.
-- 🔵 **Article missing recommended properties** — Add author, datePublished, image to strengthen the Article entity.
+- 🔵 **Article missing recommended properties** — Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article
 - 🔵 **No Organization/WebSite entity** — Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity.
 - 🔵 **No direct answer up top** — Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.
 - 🔵 **No llms.txt** — Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.

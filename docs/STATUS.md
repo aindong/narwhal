@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.11**_
+_Last updated: 2026-10-12 · version **1.30.12**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Current state (done)
+- **v1.30.12 Article-family expectations:** missing applicable fields are low
+  recommendations, not mandatory headline errors. Dated Google policy/source
+  metadata is explicit. Blank values are handled without author/date invention;
+  generator labels, all three formats and legacy headline opt-outs align.
+  This does not claim full datatype/reference or eligibility validation.
 - **v1.30.11 source-backed Google feature notices:** current retirement status
   for existing four notices, dated primary-source metadata and visible guidance.
   Appearance retirement is not schema.org invalidity or ranking proof. Stable
@@ -174,7 +179,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.11 (46 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.12 (47 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
