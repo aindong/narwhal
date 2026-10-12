@@ -28,6 +28,11 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/generate_schema.py" <Type>
   Read `meta.structured_data.article_field_policy`; missing/blank applicable
   fields are suggestions, not invalidity or eligibility verdicts. Never invent
   authors or dates; curate generator placeholders before publishing.
+- **Recipe scope:** Google requires base name/image fields, not mandatory
+  ingredients/instructions. Read `meta.structured_data.recipe_field_policy`
+  for the dated source and unverified conditional/nested/image scope. A full
+  presence score is not an eligibility verdict. Verify those requirements
+  externally; never invent authors or ratings to clear recommendations.
 - **Retired Google appearances:** HowTo, FAQPage, ClaimReview and
   SpecialAnnouncement no longer supply their former Google rich-result features
   (status checked 2026-10-12; see the schema reference's primary sources).

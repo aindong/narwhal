@@ -37,7 +37,7 @@ DEPRECATED_ADDITIONAL_SOURCES = {
 REQUIRED = {
     "Organization": ["name"],
     "LocalBusiness": ["name", "address"],
-    "Recipe": ["name", "recipeIngredient", "recipeInstructions"],
+    "Recipe": ["name", "image"],
     "Event": ["name", "startDate", "location"],
     "JobPosting": ["title", "hiringOrganization", "datePosted"],
     "BreadcrumbList": ["itemListElement"],
@@ -50,18 +50,21 @@ ARTICLE_TYPES = {"Article", "NewsArticle", "BlogPosting"}
 ARTICLE_SOURCE = "https://developers.google.com/search/docs/appearance/structured-data/article"
 ARTICLE_STATUS_CHECKED = "2026-10-12"
 ARTICLE_FIELDS = ["headline", "author", "datePublished", "image"]
+RECIPE_SOURCE = "https://developers.google.com/search/docs/appearance/structured-data/recipe"
+RECIPE_STATUS_CHECKED = "2026-10-12"
+RECIPE_FIELDS = ["recipeIngredient", "recipeInstructions", "author", "aggregateRating"]
 
 RECOMMENDED = {
     **{typ: list(ARTICLE_FIELDS) for typ in sorted(ARTICLE_TYPES)},
     "Organization": ["url", "logo"],
     "LocalBusiness": ["telephone", "openingHours", "geo"],
-    "Recipe": ["image", "author", "aggregateRating"],
+    "Recipe": list(RECIPE_FIELDS),
     "Event": ["endDate", "offers"],
     "VideoObject": ["description", "duration"],
 }
 
 
-def _article_value_present(value, depth=0):
+def _field_value_present(value, depth=0):
     """Absence/blank evidence only, not datatype or reference validation."""
     if depth >= 16:
         return True  # unknown deeply nested shape, not proven absent
@@ -70,12 +73,12 @@ def _article_value_present(value, depth=0):
     if isinstance(value, str):
         return bool(value.strip())
     if isinstance(value, list):
-        return any(_article_value_present(child, depth + 1) for child in value)
+        return any(_field_value_present(child, depth + 1) for child in value)
     if isinstance(value, dict):
         if not value:
             return False
         if "@value" in value and set(value) <= {"@value", "@language", "@type", "@direction", "@index"}:
-            return _article_value_present(value["@value"], depth + 1)
+            return _field_value_present(value["@value"], depth + 1)
     return True  # preserve non-empty references/unknown shapes, not validity
 
 
@@ -88,6 +91,18 @@ def _article_policy(typ, report):
     if typ not in policy["observed_types"]:
         policy["observed_types"].append(typ)
         policy["observed_types"].sort()
+
+
+def _recipe_policy(report):
+    """Record offline base-field expectations without claiming full eligibility."""
+    report.meta.setdefault("structured_data", {}).setdefault("recipe_field_policy", {
+        "scope": "Google Recipe base-field presence, not full eligibility or schema.org validity",
+        "required_properties": list(REQUIRED["Recipe"]),
+        "checked_recommendations": list(RECIPE_FIELDS),
+        "checked_on": RECIPE_STATUS_CHECKED, "source": RECIPE_SOURCE,
+        "not_checked": ["conditional nutrition/yield and time relationships", "nested steps/sections",
+                        "image crawlability and dish/content suitability", "datatype/language/reference validation"],
+    })
 
 
 def audit(doc, resp, report, ctx=None) -> None:
@@ -186,24 +201,42 @@ def _validate_node(node, found_types, report):
             _feature_notice(typ, report)
         if typ in ARTICLE_TYPES:
             _article_policy(typ, report)
+        if typ == "Recipe":
+            _recipe_policy(report)
         for req in REQUIRED.get(typ, []):
-            if req not in node:
+            absent = not _field_value_present(node.get(req)) if typ == "Recipe" else req not in node
+            if absent:
+                recipe = typ == "Recipe"
                 report.add(CAT, "high", f"{typ} missing required '{req}'",
-                           f"Schema {typ} lacks the required '{req}' property.",
-                           f"Add '{req}' — without it the rich result is invalid.")
-        if typ in ARTICLE_TYPES:
-            missing_rec = [p for p in RECOMMENDED[typ] if not _article_value_present(node.get(p))]
+                           f"Recipe '{req}' is absent or blank; Google requires it for Recipe rich results."
+                           if recipe else f"Schema {typ} lacks the required '{req}' property.",
+                           (f"Add an accurate {'completed-dish image' if req == 'image' else 'dish name'} matching the page. "
+                            f"This is a base-field check, not full eligibility or schema.org validity; verify conditional, nested and image requirements separately. Source: {RECIPE_SOURCE}")
+                           if recipe else f"Add '{req}' — without it the rich result is invalid.")
+        if typ in ARTICLE_TYPES or typ == "Recipe":
+            missing_rec = [p for p in RECOMMENDED[typ] if not _field_value_present(node.get(p))]
         else:
             missing_rec = [p for p in RECOMMENDED.get(typ, []) if p not in node]
         if typ in ARTICLE_TYPES and "headline" in missing_rec and report.ignore and report.ignore(CAT, f"{typ} missing required 'headline'"):
             missing_rec.remove("headline")  # preserve the old headline-only opt-out
+        if typ == "Recipe" and report.ignore:
+            missing_rec = [p for p in missing_rec if p not in ("recipeIngredient", "recipeInstructions")
+                           or not report.ignore(CAT, f"Recipe missing required '{p}'")]
         if missing_rec:
             article = typ in ARTICLE_TYPES
+            recipe = typ == "Recipe"
+            if article:
+                recommendation = (f"Consider applicable, known {', '.join(missing_rec)} values; do not invent authors or dates. "
+                                  f"Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: {ARTICLE_SOURCE}")
+            elif recipe:
+                recommendation = (f"Add applicable, real {', '.join(missing_rec)} values matching the recipe; do not invent authors or ratings. "
+                                  f"Google requires Recipe name and image; ingredients and instructions are recommended. "
+                                  f"This is not full eligibility or schema.org validity; verify conditional, nested and image requirements separately. Source: {RECIPE_SOURCE}")
+            else:
+                recommendation = f"Add {', '.join(missing_rec)} to strengthen the {typ} entity."
             report.add(CAT, "low", f"{typ} missing recommended properties",
-                       f"Recommended fields absent{' or blank' if article else ''}: {', '.join(missing_rec)}.",
-                       (f"Consider applicable, known {', '.join(missing_rec)} values; do not invent authors or dates. "
-                        f"Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: {ARTICLE_SOURCE}")
-                       if article else f"Add {', '.join(missing_rec)} to strengthen the {typ} entity.")
+                       f"Recommended fields absent{' or blank' if article or recipe else ''}: {', '.join(missing_rec)}.",
+                       recommendation)
 
 
 def _cross_checks(doc, found_types, report):
