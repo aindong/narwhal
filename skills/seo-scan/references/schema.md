@@ -30,6 +30,17 @@ and helps AI answer engines identify and attribute entities.
   node count, and extraction warnings. Equal normalized objects are audited
   once; different variants or conflicting copies are retained, not merged by ID.
   This is not a complete cross-format conflict validator.
+- JSON-LD dictionaries with explicit `@value` are value objects, not entity
+  nodes. Their datatype is not reported as an entity type, and JSON literal
+  contents are opaque even if they contain Product/Offer-looking examples.
+  Normalization and deduplication preserve literal arrays, datatype IRIs and
+  JSON content rather than applying schema numeric/URL equivalence inside it.
+  Context definitions likewise do not classify a page as Product. Real
+  graph/list entities and independent page facts still count. This follows the
+  [W3C value-object boundary](https://www.w3.org/TR/json-ld11/#value-objects)
+  (checked 2026-10-12), not a full JSON-LD processor: aliases, context expansion,
+  implicit context-coerced JSON literals and datatype/value validation are not
+  claimed, and scalar value-object properties are not generally unwrapped.
 - `rdfa_supported` means bounded support, not full RDFa conformance: read
   `rdfa_scope` and `rdfa_warnings`. RDFa relations (`rel`/`rev`), ordered lists,
   property copying, markup literals and non-scalar datatypes are not processed.

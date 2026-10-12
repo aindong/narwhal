@@ -31,6 +31,8 @@ ITEM_CONDITIONS = {"newcondition", "usedcondition", "refurbishedcondition", "dam
 
 
 def _types(node):
+    if isinstance(node, dict) and "@value" in node:
+        return []
     typ = node.get("@type") if isinstance(node, dict) else None
     return [str(x).lower() for x in typ] if isinstance(typ, list) else ([str(typ).lower()] if typ else [])
 
@@ -136,7 +138,8 @@ def detect(doc, nodes=None):
     elif "sku" in observed:
         evidence.append("explicit product identity: sku")
     is_product = bool(product_nodes) or htmlx.looks_product(doc)
-    has_offer = any(n.get("offers") for n in product_nodes)
+    has_offer = any(value and not (isinstance(value, dict) and "@value" in value)
+                    for n in product_nodes for value in _offer_values(n))
     purchase_action = is_product and not (has_offer or merchant) and _purchase_action(doc)
     is_merchant = bool(is_product and (has_offer or merchant or purchase_action))
     if is_merchant and purchase_action and not (has_offer or merchant):
@@ -243,14 +246,18 @@ def _add_variant_missing(report, field, severity, products):
                rule_id=f"schema.ecommerce.product.missing.{field_id}")
 
 
-def _offers(product, by_id):
+def _offer_values(product):
     raw = product.get("offers")
-    values = raw if isinstance(raw, list) else ([raw] if raw else [])
+    return raw if isinstance(raw, list) else ([raw] if raw else [])
+
+
+def _offers(product, by_id):
+    values = _offer_values(product)
     out = []
     for value in values:
         if isinstance(value, dict) and set(value) == {"@id"} and isinstance(value["@id"], str):
             value = by_id.get(value["@id"], value)
-        if isinstance(value, dict):
+        if isinstance(value, dict) and "@value" not in value:
             out.append(value)
     return out
 
