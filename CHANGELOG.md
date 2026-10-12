@@ -6,6 +6,19 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.30.8] — 2026-10-12
+
+### Fixed
+- A single AggregateOffer compares the displayed amount against its inclusive
+  lowPrice/highPrice range, not the lower bound as an exact seller price. Valid
+  numeric bounds and matching explicit currencies are required; outside-range
+  amounts remain high mismatches. JSON records range-compatibility evidence,
+  not proof of a selected seller or an Offer at every interior amount.
+- Missing, unsupported or incomparable range evidence gets a verification note
+  while completeness/currency findings remain. Known negative or inverted
+  numeric bounds get a high range finding. Decimal comparisons do not round
+  quoted amounts; ordinary Offer and multi-Offer consensus behavior is preserved.
+
 ## [1.30.7] — 2026-10-12
 
 ### Fixed

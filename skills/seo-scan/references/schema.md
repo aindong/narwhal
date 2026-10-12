@@ -165,9 +165,34 @@ blocks multi-Offer price comparisons, including homogeneous AggregateOffer sets.
 (eligible, not necessarily valid/present) or `skipped_ambiguous`. The parent
 `comparison_status` covers Product identity eligibility, not every Offer field.
 Agreed fields, Product identity checks and all-offer completeness/validity remain
-active. Existing single-Offer behavior is unchanged. No particular seller/Offer
+active. Ordinary single-Offer behavior is unchanged. No particular seller/Offer
 is selected from a coincidentally matching amount; this is not a full seller,
-price-component, single-AggregateOffer-range or observation-ownership resolver.
+price-component or observation-ownership resolver.
+
+A single selected [`AggregateOffer`](https://schema.org/AggregateOffer) uses
+inclusive [`lowPrice`](https://schema.org/lowPrice) and
+[`highPrice`](https://schema.org/highPrice) compatibility instead of treating
+the lower bound as an exact price. Both bounds must be finite scalar decimal
+numbers/text (scientific notation is supported), non-negative and ordered.
+Bound parsing is limited to 512 characters and does not strip units or separators;
+unsupported Text/shapes cause a verification note, not a full schema validity
+verdict. Existing singleton-array normalization is preserved. Explicit page and
+Offer currencies must agree as three-letter codes. No conversion or currency
+inference is performed. Observed decimal amounts can use existing comma-decimal
+or grouping conventions and a currency label/symbol, but ambiguous prose/ranges
+are not guessed. Decimal comparison does not round quoted amounts.
+
+`meta.ecommerce.aggregate_price_comparison` records `method: inclusive_range`,
+string bounds, currency and `within_range`. Eligibility is still represented by
+`offer_comparison_status.price`; unknown/incomplete evidence is skipped with the
+existing low verification note. Inside-range amounts are compatible, **not**
+proof that an Offer exists at every interior amount or that a specific seller is
+selected. Outside-range amounts retain `schema.ecommerce.price.mismatch` at high
+severity. Known negative/inverted numeric bounds get
+`schema.ecommerce.offer.invalid.range` even without a page comparison. Other
+completeness/validity checks remain active, and multiple AggregateOffers still
+cannot establish price consensus. Missing bounds are not replaced by `price`
+or Product fallback values.
 
 Offer references are resolved only for string `@id` values against nodes already
 present in the document. Non-string IDs produce

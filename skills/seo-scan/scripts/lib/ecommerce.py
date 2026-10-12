@@ -311,6 +311,64 @@ def _schema_fact(product, offers, field):
     return "", ""
 
 
+def _range_number(value):
+    """Read a scalar decimal bound without stripping units or rounding it.
+
+    schema.org permits Text as well as Number. Unsupported text is not a
+    numeric proof; callers report partial comparison coverage rather than
+    claiming all such text is invalid schema.
+    """
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+        return None
+    text = str(value).strip()
+    if len(text) > 512 or not re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", text):
+        return None
+    try:
+        number = Decimal(text)
+        return number if number.is_finite() else None
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _range_observed_price(value, currency):
+    text = _clean(value)
+    if len(text) > 512:
+        return None
+    match = re.fullmatch(r"([A-Za-z]{3}|[$€£¥])?\s*([+-]?[0-9][0-9.,]*)\s*([A-Za-z]{3}|[$€£¥])?", text)
+    if not match:
+        return None
+    # A written unit must not contradict explicit currency metadata. Symbols
+    # shared by several currencies remain compatible, not unit inference.
+    symbols = {"$": {"USD", "CAD", "AUD", "NZD", "SGD", "HKD", "MXN", "ARS", "CLP", "COP", "BBD", "BMD", "BND", "BSD", "BZD", "FJD", "GYD", "JMD", "KYD", "LRD", "NAD", "SBD", "SRD", "TTD", "TWD", "XCD"},
+               "€": {"EUR"}, "£": {"GBP", "GIP", "FKP", "SHP"}, "¥": {"JPY", "CNY"}}
+    for unit in (match.group(1), match.group(3)):
+        if unit and currency.upper() not in symbols.get(unit, {unit.upper()}):
+            return None
+    text = match.group(2)
+    if "," in text and "." not in text and re.search(r",\d{1,2}$", text):
+        if not re.fullmatch(r"[+-]?[0-9]+,[0-9]{1,2}", text):
+            return None
+        text = text.replace(",", ".")
+    elif "," in text:
+        if not re.fullmatch(r"[+-]?[0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]+)?", text):
+            return None
+        text = text.replace(",", "")
+    return _range_number(text)
+
+
+def _aggregate_range(offer, visible):
+    low, high = (_range_number(offer.get(key)) for key in ("lowPrice", "highPrice"))
+    raw_currency = offer.get("priceCurrency")
+    currency = raw_currency.strip() if isinstance(raw_currency, str) else ""
+    observed_currency = _clean(visible.get("currency", {}).get("value"))
+    observed = _range_observed_price(visible.get("price", {}).get("value"), currency)
+    if (low is None or high is None or low < 0 or high < low or observed is None
+            or not re.fullmatch(r"[A-Za-z]{3}", currency)
+            or currency.casefold() != observed_currency.casefold()):
+        return None
+    return low, high, observed, currency
+
+
 def _comparison_fact(product, offers, field, visible):
     """Offer order is not evidence for selecting a seller's price or stock."""
     if field not in {"price", "currency", "availability"} or len(offers) <= 1:
@@ -438,6 +496,13 @@ def audit(doc, report, *, today=None):
                                     ("priceCurrency", "high"), ("offerCount", "low")):
                 if not _clean(offer.get(field)):
                     _add_missing(report, field, severity, owner)
+            low, high = (_range_number(offer.get(key)) for key in ("lowPrice", "highPrice"))
+            if ((low is not None and low < 0) or (high is not None and high < 0)
+                    or (low is not None and high is not None and high < low)):
+                report.add(CAT, "high", "AggregateOffer has contradictory price bounds",
+                           f"lowPrice={offer.get('lowPrice')!r}; highPrice={offer.get('highPrice')!r}.",
+                           "Use non-negative bounds with lowPrice no greater than highPrice, from the current offers.",
+                           rule_id="schema.ecommerce.offer.invalid.range")
         else:
             specs = _price_specs(offer)
             for field, severity in (("price", "high"), ("priceCurrency", "high")):
@@ -493,6 +558,26 @@ def audit(doc, report, *, today=None):
     comparison_fields = ("price", "currency", "availability", "sku", "brand", "name") if product is not None else ()
     for field in comparison_fields:
         if field not in visible:
+            continue
+        if field == "price" and len(offers) == 1 and "aggregateoffer" in _types(offers[0]):
+            price_range = _aggregate_range(offers[0], visible)
+            meta["offer_comparison_status"][field] = "ready" if price_range else "skipped_ambiguous"
+            if price_range is None:
+                skipped_offer_fields.append(field)
+                continue
+            low, high, observed_price, currency = price_range
+            meta["aggregate_price_comparison"] = {
+                "method": "inclusive_range", "lowPrice": str(low), "highPrice": str(high),
+                "currency": currency, "within_range": low <= observed_price <= high,
+                "scope": "range compatibility, not selected seller or exact Offer existence",
+            }
+            if not low <= observed_price <= high:
+                observed = visible[field]
+                report.add(CAT, "high", "Visible price is outside the schema offer range",
+                           f"{observed['source']} says {observed['value']!r}; AggregateOffer declares {low}–{high} {currency}.",
+                           "Verify the current offers and displayed price; update the range or page from the same current product data source.",
+                           evidence=f"visible={observed['value']}; lowPrice={low}; highPrice={high}; currency={currency}",
+                           rule_id="schema.ecommerce.price.mismatch")
             continue
         schema_value, schema_source, comparison = _comparison_fact(product, offers, field, visible)
         if field in {"price", "currency", "availability"}:
