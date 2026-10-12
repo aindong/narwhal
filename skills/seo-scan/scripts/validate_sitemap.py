@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import http, links, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
+from lib.cli_errors import url_errors  # noqa: E402
 
 COMMON = ("/sitemap.xml", "/sitemap_index.xml", "/sitemap-index.xml")
 
@@ -50,6 +51,8 @@ def discover(base: str, *, allow_private, timeout) -> list:
 
 def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
             max_sitemaps=50) -> dict:
+    start = http.normalize_url(start)
+    http.assert_public_host(start, allow_private=allow_private)
     host = urlparse(start).netloc
     seeds = [start] if _looks_like_sitemap(start) else discover(
         start, allow_private=allow_private, timeout=timeout)
@@ -160,6 +163,7 @@ def render_json(r: dict) -> str:
     return json.dumps(r, indent=2, ensure_ascii=False)
 
 
+@url_errors
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     d = cfg.defaults

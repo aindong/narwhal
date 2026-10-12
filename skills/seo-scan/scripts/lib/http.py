@@ -40,17 +40,32 @@ class Response:
         return self.error is None and 200 <= self.status < 400
 
 
-class SSRFError(ValueError):
+class URLInputError(ValueError):
+    """Expected URL syntax or host-policy rejection, not a programming failure."""
+
+
+class SSRFError(URLInputError):
     """Raised when a URL resolves to a blocked (private/loopback) address."""
 
 
 def normalize_url(url: str) -> str:
     if "://" not in url:
         url = "https://" + url
-    parts = urlparse(url)
+    try:
+        parts = urlparse(url)
+    except ValueError as exc:
+        # Parser errors can echo the entire authority, including credentials.
+        raise URLInputError("Invalid URL syntax (check host and IPv6 brackets).") from exc
     scheme = parts.scheme.lower()
     if scheme not in ("http", "https"):
-        raise ValueError(f"Unsupported URL scheme: {scheme!r}")
+        raise URLInputError(f"Unsupported URL scheme: {scheme!r}")
+    try:
+        host = parts.hostname
+        parts.port  # validate lazy port parsing before selecting a transport
+    except ValueError as exc:
+        raise URLInputError("Invalid URL host or port (port must be numeric and 0–65535).") from exc
+    if not host:
+        raise SSRFError("URL has no host")
     netloc = parts.netloc or parts.path
     path = parts.path if parts.netloc else ""
     return urlunparse((scheme, netloc, path or "/", parts.params, parts.query, ""))
@@ -82,6 +97,8 @@ def assert_public_host(url: str, allow_private: bool = False) -> None:
         infos = socket.getaddrinfo(host, None)
     except socket.gaierror as exc:
         raise SSRFError(f"Cannot resolve host {host!r}: {exc}") from exc
+    except UnicodeError as exc:
+        raise URLInputError(f"Invalid host encoding: {exc}") from exc
     for info in infos:
         ip = info[4][0]
         if _is_blocked_ip(ip):

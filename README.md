@@ -200,6 +200,19 @@ coverage from finding counts. Truncated HTML coverage stays explicit.
   ```
 - `--allow-private` — permit localhost/staging targets (off by default; see below).
 
+Expected URL syntax, DNS and host-policy failures in `scan`, `audit`, `crawl`,
+`llms` and `sitemap` produce a bounded, single-line `ERROR: URL rejected: …`
+diagnostic with exit code **2**; no report is created or overwritten. Python
+page/site entry APIs raise `ValueError`-compatible `URLInputError` / `SSRFError`
+instead. Invalid ports and malformed IPv6 are checked before transport; syntax
+diagnostics do not echo parser errors containing credentials or query values.
+Initial sitemap target
+rejections do not produce error reports with exit 0, including direct XML inputs.
+Private access remains an explicit choice for intentional local/staging scans,
+never an automatic retry. This is
+basic URL/host-policy validation, not a complete URL conformance validator;
+unexpected programming errors are not suppressed.
+
 ### Track health over time (regression tracking, no database)
 
 Narwhal stays stateless: instead of a database, save a scan as JSON and diff two

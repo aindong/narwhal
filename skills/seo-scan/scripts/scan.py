@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import hreflang, http, htmlx, images, jsdiff, links, simhash  # noqa: E402
 from lib import config as configlib  # noqa: E402
+from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
 
 import audit_content  # noqa: E402
@@ -177,6 +178,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     return report
 
 
+@url_errors
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     ap = argparse.ArgumentParser(description="SEO + GEO/LLMO single-page auditor",
