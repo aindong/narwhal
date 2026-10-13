@@ -34,6 +34,20 @@ Parsing uses stdlib `tomllib` (Python 3.11+). On 3.8–3.10 install `tomli`
 
 ## Sections
 
+### Per-scan ownership (Python API)
+
+Each scan owns a copy of built-in scoring weights, thresholds and ignore rules.
+Caller-provided `ctx["thresholds"]` is copied at entry; thresholds returned by
+context gathering are copied before later rendering I/O or auditors run. Updating
+the original Config affects the next scan, not a scan already using its snapshot.
+Completed reports keep their original scoring and ignore policy.
+
+Do not mutate inputs concurrently while the snapshot itself is being captured;
+capture is not a multi-field atomic transaction. Custom policies, custom values
+and unsupported deep shapes are not rewritten or copied through user hooks, and
+do not claim verified rule-configuration provenance. Fingerprints are consistency
+diagnostics, not authenticated attestations of report contents.
+
 ### `[weights]` — scoring
 Penalty subtracted from the 0–100 health score per finding of each severity.
 Raise a value to make that severity hurt more.

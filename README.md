@@ -241,6 +241,12 @@ An existing explicit boolean `rendered` field also records known actual mode.
 thresholds and normalized ignore categories/title patterns. A known fingerprint
 change also blocks the comparison: suppressing findings or changing penalties
 is not a page fix. Raw configuration values and source paths are not serialized.
+Built-in rules are copied for each scan before page I/O; supplied threshold
+overrides are copied on entry, and gathered overrides are copied when received.
+Later caller mutations cannot change the current scan's checks or ignore policy.
+This is ownership isolation, not an atomic transaction across concurrent writes:
+keep inputs stable while the entry snapshot is being captured. Unsupported/custom
+policies retain their behavior without a certified rule fingerprint.
 Audits retain these settings for crawled pages and check common exact URLs too;
 different or unknown samples are not inferred to match.
 
