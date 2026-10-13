@@ -6,6 +6,14 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+### Improved
+- Reports lead with high/critical findings rather than an unqualified numeric
+  grade. HTML/PDF heroes distinguish urgency from the explicitly labelled score
+  band, and Markdown/HTML summaries put findings needing attention first.
+- Numeric scoring, JSON finding data, execution-scope caveats and unavailable
+  scores are unchanged. A high score does not hide a high-priority finding;
+  heuristic findings still need source verification.
+
 ## [1.30.19] — 2026-10-12
 
 ### Fixed

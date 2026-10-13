@@ -86,6 +86,10 @@ Create `audit_<name>.py` exposing `audit(doc, resp, report, ctx)`, register it i
 
 ## Pull requests
 
+Keep normal improvements under `Unreleased` in the changelog. Passing tests,
+green CI and a merged PR do not trigger a release: batch related changes until
+the owner explicitly requests publishing. Do not bump versions per improvement.
+
 Release versions come from `skills/seo-scan/scripts/_version.py`. After changing
 it, run `python scripts/sync_version.py` and regenerate the report snapshots.
 Use `python scripts/sync_version.py --check` to validate plugin manifests without

@@ -196,12 +196,13 @@ class Report:
     def to_markdown(self, title: str = "SEO & GEO Audit") -> str:
         score = self.score()
         grade = "not measured" if self.score_label() == "Score unavailable" else _grade(score)
+        band = grade if self.score_label() == "Score unavailable" else f"score band: {grade}"
         counts = self.counts()
         buckets = self.by_severity()
         lines = [
             f"# {self._report_title(title)} — {self.final_url or self.url}",
             "",
-            f"**{self.score_label()}: {score}/100 ({grade})**  ·  "
+            f"**{self.score_label()}: {score}/100 ({band})**  ·  "
             f"status {self.fetched_status}"
             + ("  ·  JS-rendered" if self.rendered else ""),
             "",
@@ -290,7 +291,7 @@ class Report:
         if label == "Score unavailable":
             return "The scan did not complete; no page health was measured. Check execution scope and any response failure below."
         subject = "This page scores" if label == "Health score" else ("Selected checks score" if label == "Selected-check score" else "Reported findings score")
-        score_text = f"{subject} **{score}/100 ({grade})**"
+        score_text = f"{subject} **{score}/100 (score band: {grade})**"
         checked = "in the reported findings" if label == "Reported-findings score" else "in the completed checks"
         if prio == 0 and med == 0:
             lead = (f"{score_text} — no critical, high, or medium issues found {checked}.")
@@ -302,9 +303,9 @@ class Report:
                 bits.append(f"{high} high")
             if med:
                 bits.append(f"{med} medium")
-            lead = (f"{score_text}. "
-                    f"{', '.join(bits)} issue(s) need attention"
-                    + (f", plus {low} quick win(s)." if low else "."))
+            lead = (f"**{', '.join(bits)} issue(s) need attention {checked}"
+                    + (f", plus {low} quick win(s).** " if low else ".** ")
+                    + score_text + ".")
         return lead
 
 
@@ -455,12 +456,23 @@ def _score_header(score, grade, counts, status, rendered, score_label="Health sc
         f'<span class="chip s-{s}">{counts[s]} {_SEV_LABEL[s]}</span>'
         for s in SEVERITY if counts[s])
     meta = f"status {status}" + ("  ·  JS-rendered" if rendered else "")
+    if score_label == "Score unavailable":
+        headline, color = "Not Measured", _grade_color(score)
+    elif counts["critical"]:
+        headline, color = "Critical findings first", _SEV_COLOR["critical"]
+    elif counts["high"]:
+        headline, color = "High-priority findings", _SEV_COLOR["high"]
+    else:
+        headline, color = grade.title(), _grade_color(score)
+    band = ("" if score_label == "Score unavailable" else
+            f'<div class="muted">Score band: {_esc(grade)}</div>')
     return (
         '<header class="hero">'
         f'{score_gauge(score, label=score_label)}'
         '<div class="hero-txt">'
         f'<div class="muted">{_esc(score_label)}</div>'
-        f'<div class="grade" style="color:{_grade_color(score)}">{_esc(grade).title()}</div>'
+        f'<div class="grade" style="color:{color}">{_esc(headline)}</div>'
+        f'{band}'
         f'<div class="chips">{chips}</div>'
         f'<div class="muted">{_esc(meta)}</div>'
         '</div></header>')
