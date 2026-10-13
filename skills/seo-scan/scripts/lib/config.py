@@ -64,14 +64,21 @@ class Config:
         return fallback if val is None else val
 
 
+_BUILTIN_IGNORE_POLICY = Config.is_ignored
+_BUILTIN_IGNORE_CODE = Config.is_ignored.__code__
+_BUILTIN_RULE_PROTOCOL = Config._comparison_protocol
+
+
 def _builtin_policy(config):
     """Recognize the built-in policy across source/package import aliases."""
-    if type(config).__dict__.get("_comparison_protocol") != Config._comparison_protocol:
+    if type(config).__dict__.get("_comparison_protocol") != _BUILTIN_RULE_PROTOCOL:
         return False
     if "is_ignored" in config.__dict__:
-        return False
+        method = config.__dict__["is_ignored"]
+        return (getattr(method, "__self__", None) is config
+                and getattr(getattr(method, "__func__", None), "__code__", None) == _BUILTIN_IGNORE_CODE)
     method = type(config).__dict__.get("is_ignored")
-    return getattr(method, "__code__", None) == Config.is_ignored.__code__
+    return getattr(method, "__code__", None) == _BUILTIN_IGNORE_CODE
 
 
 def owned_value(value):
@@ -112,6 +119,7 @@ def snapshot_rules(config):
     snapshot = Config()
     snapshot.weights, snapshot.thresholds = data["weights"], data["thresholds"]
     snapshot._ignore_categories, snapshot._ignore_titles = data["categories"], data["titles"]
+    snapshot.is_ignored = _BUILTIN_IGNORE_POLICY.__get__(snapshot, type(snapshot))
     # Scan budgets/defaults are resolved by the caller, not part of the rules.
     snapshot.defaults = config.defaults
     return snapshot, True

@@ -144,6 +144,40 @@ class TestRuleOwnership(unittest.TestCase):
         self.assertEqual(['sentinel'], [f.title for f in rep.findings])
         self.assertNotIn('rule_config', rep.meta['scan_settings'])
 
+    def test_replaced_builtin_class_callback_is_never_certified(self):
+        for callback in (lambda self, category, title: True,
+                         lambda self, category, title: False):
+            cfg = config.Config()
+            with mock.patch.object(config.Config, 'is_ignored', callback):
+                same, owned = config.snapshot_rules(cfg)
+                self.assertIs(cfg, same); self.assertFalse(owned)
+                self.assertIsNone(config.comparison_fingerprint(cfg, cfg.thresholds))
+                with mock.patch.object(http, 'fetch', return_value=response()), \
+                        mock.patch.dict(scan.AUDITORS, {'content': sentinel}):
+                    rep = scan.scan(URL, only=['content'], config=cfg, ctx={}, check_images=False)
+                self.assertNotIn('rule_config', rep.meta['scan_settings'])
+                self.assertEqual(bool(rep.findings), not callback(cfg, 'content', 'sentinel'))
+
+    def test_later_class_callback_replacement_cannot_change_captured_scan(self):
+        cfg = config.Config()
+        original = config.Config.is_ignored
+        def fetch(*args, **kwargs):
+            config.Config.is_ignored = lambda self, category, title: True
+            return response()
+        try:
+            with mock.patch.object(http, 'fetch', side_effect=fetch), \
+                    mock.patch.dict(scan.AUDITORS, {'content': sentinel}):
+                rep = scan.scan(URL, only=['content'], config=cfg, ctx={}, check_images=False)
+            self.assertEqual(['sentinel'], [f.title for f in rep.findings])
+            self.assertIn('rule_config', rep.meta['scan_settings'])
+        finally:
+            config.Config.is_ignored = original
+
+    def test_bound_policy_for_a_different_config_is_not_certified(self):
+        first, second = config.Config(), config.Config({'ignore': {'categories': ['content']}})
+        first.is_ignored = second.is_ignored
+        self.assertIsNone(config.comparison_fingerprint(first, first.thresholds))
+
     def test_custom_values_are_not_copied_or_certified(self):
         class NoCopy:
             def __deepcopy__(self, memo):
