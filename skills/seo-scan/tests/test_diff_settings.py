@@ -90,7 +90,7 @@ class TestDiffSettings(unittest.TestCase):
         old['score'] = 94; old['findings'] = [FINDING]
         rc, text, _ = invoke(old, new, '--fail-on-regression')
         self.assertEqual(2, rc); self.assertIn('Image-check setting differs', text)
-        self.assertIn('image checks: enabled', text); self.assertIn('image checks: disabled', text)
+        self.assertIn('image resource checks: enabled', text); self.assertIn('image resource checks: disabled', text)
         self.assertNotIn('## ✅ Resolved', text)
         self.assertIn('rendering/image settings', text)
         self.assertEqual(0, invoke(old, new)[0])
@@ -107,14 +107,17 @@ class TestDiffSettings(unittest.TestCase):
         with mock.patch.object(http, 'fetch', return_value=response):
             for groups, check in ((['schema'], True), (['technical'], False)):
                 rep = scan.scan(URL, only=groups, ctx={}, check_images=check)
-                self.assertEqual(dict(SETTINGS, image_checks=False), rep.meta['scan_settings'])
+                self.assertEqual(dict(SETTINGS, image_checks=False),
+                                 {key: rep.meta['scan_settings'][key] for key in SETTINGS})
+                self.assertEqual(64, len(rep.meta['scan_settings']['rule_config']))
                 self.assertEqual(rep.meta['scan_settings'], json.loads(rep.to_json())['meta']['scan_settings'])
 
     def test_requested_rendering_and_actual_fallback_are_distinct(self):
         response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, HTML, 1, rendered=False)
         with mock.patch.object(http, 'fetch', return_value=response):
             rep = scan.scan(URL, only=['schema'], ctx={}, check_images=False, render=True)
-        self.assertEqual({'render_requested': True, 'rendered': False, 'image_checks': False}, rep.meta['scan_settings'])
+        self.assertEqual({'render_requested': True, 'rendered': False, 'image_checks': False},
+                         {key: rep.meta['scan_settings'][key] for key in SETTINGS})
         for text in (rep.to_markdown(), rep.to_html()):
             self.assertIn('Rendering was requested but no rendered DOM was measured', text)
 
@@ -130,10 +133,17 @@ class TestDiffSettings(unittest.TestCase):
         with mock.patch.object(http, 'fetch', return_value=response):
             rep = scan.scan(URL, only=['technical'], ctx={}, check_images=False)
         for text in (rep.to_html(), rep.to_markdown()):
-            self.assertIn('Image checks were disabled.', text)
+            self.assertIn('Image resource checks were disabled.', text)
             self.assertIn('Findings use served HTML.', text)
         del rep.meta['scan_settings']
-        self.assertNotIn('Image checks were disabled.', rep.to_html())
+        self.assertNotIn('Image resource checks were disabled.', rep.to_html())
+
+    def test_disabling_resource_checks_does_not_disable_alt_text_findings(self):
+        response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, HTML, 1)
+        with mock.patch.object(http, 'fetch', return_value=response):
+            rep = scan.scan(URL, only=['technical'], ctx={}, check_images=False)
+        self.assertTrue(any('alt' in finding.title.lower() for finding in rep.findings))
+        self.assertIn('Image resource checks were disabled.', rep.to_html())
 
     def test_skipping_image_checks_on_unchanged_page_is_not_a_fix(self):
         response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, HTML, 1)
@@ -175,6 +185,17 @@ class TestDiffSettings(unittest.TestCase):
             {'url': URL, 'scan_settings': SETTINGS},
             {'url': URL, 'scan_settings': dict(SETTINGS, rendered=True)}]}}
         self.assert_not_comparable(data, data)
+
+    def test_known_crawl_contradictions_block_with_unknown_or_outside_sample_other(self):
+        data = {'site': URL, 'homepage': configured(), 'crawl': {'pages': [
+            {'url': URL, 'scan_settings': SETTINGS},
+            {'url': URL, 'scan_settings': dict(SETTINGS, rendered=True)}]}}
+        for crawl in (None, {'pages': [{'url': URL}]},
+                      {'pages': [{'url': URL + '/other', 'scan_settings': SETTINGS}]}):
+            unknown = {'site': URL, 'homepage': configured(), 'crawl': crawl}
+            self.assert_not_comparable(data, unknown)
+            self.assert_not_comparable(unknown, data)
+            self.assertEqual(2, invoke(data, unknown, '--fail-on-regression')[0])
 
 
 if __name__ == '__main__':

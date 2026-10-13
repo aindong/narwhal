@@ -237,6 +237,10 @@ mode and whether image checks apply to the selected technical auditor. Known
 differences block the comparison, so `--no-image-checks` cannot become a resolved
 image fix and raw/rendered HTML cannot be treated as identical fix evidence.
 An existing explicit boolean `rendered` field also records known actual mode.
+`rule_config` is an opaque fingerprint of scoring weights, effective check
+thresholds and normalized ignore categories/title patterns. A known fingerprint
+change also blocks the comparison: suppressing findings or changing penalties
+is not a page fix. Raw configuration values and source paths are not serialized.
 Audits retain these settings for crawled pages and check common exact URLs too;
 different or unknown samples are not inferred to match.
 

@@ -23,6 +23,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 ## Unreleased improvements
 - **Diff input coverage:** explicit requested/actual rendering and effective
   image-check settings prevent skipped subchecks from appearing resolved.
+  Opaque rule fingerprints cover weights, effective thresholds and ignore rules,
+  so changed scoring or suppression cannot become page-fix evidence.
   Audit comparisons also check recorded settings for common crawled URLs, without
   guessing legacy or outside-sample modes. Other configuration, rule versions
   and site-wide sampling still need to be controlled separately.

@@ -168,7 +168,7 @@ class Report:
         settings = self.meta.get("scan_settings")
         if isinstance(settings, dict):
             if settings.get("image_checks") is False and "technical" in requested:
-                note += " Image checks were disabled."
+                note += " Image resource checks were disabled."
             if settings.get("rendered") is True:
                 note += " Findings use rendered HTML."
             elif settings.get("rendered") is False:

@@ -150,6 +150,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                              allow_private=allow_private, timeout=timeout)
     # expose tunable thresholds to auditors without mutating a shared ctx
     ctx = {**ctx, "thresholds": ctx.get("thresholds", config.thresholds)}
+    fingerprint = configlib.comparison_fingerprint(config, ctx["thresholds"])
+    if fingerprint is not None:
+        report.meta["scan_settings"]["rule_config"] = fingerprint
 
     # JS-dependence: when we actually rendered, fetch the served HTML too and
     # diff — content that only exists post-JS is invisible to non-rendering

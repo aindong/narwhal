@@ -23,6 +23,11 @@ All notable changes to Narwhal are documented here. The format follows
   inferred, and matching flags do not prove identical configuration or samples.
   Visible scope notes identify disabled images and served/rendered HTML, including
   render requests that produced no measured rendered DOM.
+- Recorded fingerprints of scoring weights, effective thresholds and normalized
+  ignore rules block fake fixes caused by suppressing findings or changing their
+  penalties. Fingerprints expose no raw configuration values or paths; unknown
+  custom/unserializable shapes remain unverified. Ignore ordering/case/duplicates
+  and equivalent integral numeric weights do not cause spurious mismatches.
 
 ## [1.30.19] — 2026-10-12
 

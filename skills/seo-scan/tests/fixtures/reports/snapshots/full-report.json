@@ -38,7 +38,8 @@
     "scan_settings": {
       "render_requested": false,
       "rendered": false,
-      "image_checks": false
+      "image_checks": false,
+      "rule_config": "73dd3ab00a8fb78cc6bd9fdde9742750180283543f2b1df87fe6b6a69a495887"
     },
     "extraction": "visible text",
     "structured_data": {

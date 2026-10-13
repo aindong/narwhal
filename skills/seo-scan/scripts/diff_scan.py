@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -58,7 +59,7 @@ def _normalize(data: dict) -> dict:
 
 
 def _comparison(o: dict, n: dict) -> dict:
-    """Compare recorded auditor execution, not exhaustive scan configuration."""
+    """Compare known execution/settings, not exhaustive environmental equality."""
     scopes = [recorded_scan_scope(item["meta"]) for item in (o, n)]
     settings = [_recorded_settings(item["meta"], item["rendered"]) for item in (o, n)]
     reasons = []
@@ -87,15 +88,21 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append("Completed auditor groups differ between reports.")
     for key, label in (("render_requested", "Requested rendering"),
                        ("rendered", "Actual rendered/raw mode"),
-                       ("image_checks", "Image-check setting")):
+                       ("image_checks", "Image-check setting"),
+                       ("rule_config", "Rule/scoring configuration")):
         if all(key in item for item in settings) and settings[0][key] != settings[1][key]:
             reasons.append(label + " differs between reports; changed checks or page representations are not fix evidence.")
     crawls = [_crawl_settings(item["crawl"]) for item in (o, n)]
+    for label, crawl in zip(("Earlier", "Later"), crawls):
+        for url, modes in crawl.items():
+            for key, values in modes.items():
+                if len(values) > 1:
+                    reasons.append(f"{label} crawl contains contradictory {key} settings for {url}; its overall score is not comparable.")
     for url in sorted(crawls[0].keys() & crawls[1].keys()):
-        for key in ("render_requested", "rendered", "image_checks"):
+        for key in ("render_requested", "rendered", "image_checks", "rule_config"):
             values = [item[url].get(key, set()) for item in crawls]
-            if all(values) and (values[0] != values[1] or any(len(v) > 1 for v in values)):
-                reasons.append(f"Crawl setting {key} differs or is contradictory for {url}; its contribution to the overall score is not comparable.")
+            if all(values) and values[0] != values[1]:
+                reasons.append(f"Crawl setting {key} differs for {url}; its contribution to the overall score is not comparable.")
     status = "incomparable" if reasons else (
         "comparable" if all(scope is not None for scope in scopes) else "unknown")
     if status == "unknown":
@@ -106,7 +113,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check settings, response truncation and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check settings and rule-configuration fingerprints, response truncation and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 
@@ -119,6 +126,9 @@ def _recorded_settings(meta, rendered=None):
             if type(raw.get(key)) is bool}
     if "rendered" not in result and type(rendered) is bool:
         result["rendered"] = rendered
+    fingerprint = raw.get("rule_config")
+    if isinstance(fingerprint, str) and re.fullmatch(r"[0-9a-fA-F]{64}", fingerprint):
+        result["rule_config"] = fingerprint.lower()
     return result
 
 
@@ -244,9 +254,11 @@ def render_markdown(d: dict) -> str:
         settings = comparison.get(key, {})
         facts = []
         for name, description in (("render_requested", "render requested"),
-                                  ("rendered", "actual rendering"), ("image_checks", "image checks")):
+                                  ("rendered", "actual rendering"), ("image_checks", "image resource checks")):
             if name in settings:
                 facts.append(description + ": " + ("enabled" if settings[name] else "disabled"))
+        if settings:
+            facts.append("rule configuration: " + ("fingerprint recorded" if "rule_config" in settings else "unverified"))
         lines.append(f"- {label} settings: " + ("; ".join(facts) if facts else "not recorded") + ".")
     lines.extend("- " + reason for reason in comparison.get("reasons", []))
     lines.extend([comparison.get("basis", "Coverage was not recorded."), ""])

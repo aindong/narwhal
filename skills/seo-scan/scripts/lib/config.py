@@ -18,6 +18,8 @@ shared pyproject-style config); its contents are treated as the root.
 from __future__ import annotations
 
 import os
+import json
+from hashlib import sha256
 
 DEFAULT_WEIGHTS = {"critical": 12, "high": 6, "medium": 3, "low": 1, "good": 0}
 
@@ -54,6 +56,36 @@ class Config:
     def default(self, name, fallback=None):
         val = self.defaults.get(name, fallback)
         return fallback if val is None else val
+
+
+def comparison_fingerprint(config, thresholds):
+    """Opaque provenance for scoring/check rules, not secrets or source paths.
+
+    Unknown custom configuration shapes remain unverified instead of breaking
+    a scan. CLI defaults are excluded: resolved rendering/image inputs have
+    their own provenance, and crawl/time budgets are not rule definitions.
+    """
+    if type(config) is not Config:
+        return None
+
+    def canonical(value):
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+        if isinstance(value, dict):
+            return {key: canonical(child) for key, child in value.items()}
+        if isinstance(value, list):
+            return [canonical(child) for child in value]
+        return value
+
+    data = {"version": 1, "weights": config.weights, "thresholds": thresholds,
+            "ignore_categories": sorted(config._ignore_categories),
+            "ignore_titles": sorted(set(config._ignore_titles))}
+    try:
+        encoded = json.dumps(canonical(data), sort_keys=True, separators=(",", ":"),
+                             allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, RecursionError):
+        return None
+    return sha256(encoded).hexdigest()
 
 
 def find_config(path: str = None, start: str = None):
