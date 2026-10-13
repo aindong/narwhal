@@ -232,14 +232,28 @@ score with an audit overall score produce **Not comparable**, not a fabricated
 improvement. `--fail-on-regression` exits **2** in those cases (ordinary measured
 regressions exit **1**). Diagnostic diffs without the gate still exit 0.
 
+Page scans also record `meta.scan_settings`: requested rendering, actual rendered
+mode and whether image checks apply to the selected technical auditor. Known
+differences block the comparison, so `--no-image-checks` cannot become a resolved
+image fix and raw/rendered HTML cannot be treated as identical fix evidence.
+An existing explicit boolean `rendered` field also records known actual mode.
+`rule_config` is an opaque fingerprint of scoring weights, effective check
+thresholds and normalized ignore categories/title patterns. A known fingerprint
+change also blocks the comparison: suppressing findings or changing penalties
+is not a page fix. Raw configuration values and source paths are not serialized.
+Audits retain these settings for crawled pages and check common exact URLs too;
+different or unknown samples are not inferred to match.
+
 JSON includes `comparison.status` (`comparable`, `incomparable`, `unknown`) and
 reasons. Incomparable results have null `score_delta` and `regression`, empty
 change lists, and `not_compared` finding counts. Legacy/malformed scope is
 explicitly unverified: historical finding/score comparisons and gates remain
 compatible with a visible warning, not proof of matching checks. Even matching
-recorded auditor groups do not establish identical URLs, configuration,
-rendering, rule versions or site-wide crawl samples; keep those controlled when
+recorded auditor groups and known settings do not establish identical URLs,
+other configuration, rule versions or site-wide crawl samples; keep those controlled when
 using a diff to verify a fix.
+Missing/malformed legacy settings are not guessed from findings or score changes;
+the older scope-based diff behavior remains, with those settings unverified.
 
 The diff shows the **score delta** and which findings are **new**, **resolved**,
 **worsened**, or **improved** (dynamic titles like `Thin content (210 words)` are

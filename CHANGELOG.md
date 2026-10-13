@@ -14,6 +14,23 @@ All notable changes to Narwhal are documented here. The format follows
   scores are unchanged. A high score does not hide a high-priority finding;
   heuristic findings still need source verification.
 
+### Fixed
+- Diffs no longer count skipped image checks or changed raw/rendered page modes
+  as verified fixes when those settings are recorded. Scans serialize requested
+  and actual rendering plus effective image-check selection; audits preserve
+  crawl-page settings and compare shared exact URLs. Known differences block
+  score/finding verdicts and return gate exit 2. Missing legacy settings are not
+  inferred, and matching flags do not prove identical configuration or samples.
+  Visible scope notes identify disabled images and served/rendered HTML, including
+  render requests that produced no measured rendered DOM.
+- Recorded fingerprints of scoring weights, effective thresholds and normalized
+  ignore rules block fake fixes caused by suppressing findings or changing their
+  penalties. Fingerprints expose no raw configuration values or paths; unknown
+  custom/unserializable shapes remain unverified. Ignore ordering/case/duplicates
+  and equivalent integral numeric weights do not cause spurious mismatches.
+  Reports retain their scoring-weight snapshot, so later Config mutations cannot
+  silently change a saved report's score while leaving its provenance unchanged.
+
 ## [1.30.19] — 2026-10-12
 
 ### Fixed

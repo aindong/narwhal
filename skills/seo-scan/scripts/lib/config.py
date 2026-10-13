@@ -18,6 +18,8 @@ shared pyproject-style config); its contents are treated as the root.
 from __future__ import annotations
 
 import os
+import json
+from hashlib import sha256
 
 DEFAULT_WEIGHTS = {"critical": 12, "high": 6, "medium": 3, "low": 1, "good": 0}
 
@@ -36,6 +38,11 @@ DEFAULT_DEFAULTS = {
 
 
 class Config:
+    # The source is importable as both lib.config and narwhal.lib.config.
+    # A locally declared protocol marker recognizes either built-in class;
+    # subclasses do not implicitly declare this layout.
+    _comparison_protocol = "narwhal-rule-config-v1"
+
     def __init__(self, data: dict = None):
         data = data or {}
         self.weights = {**DEFAULT_WEIGHTS, **(data.get("weights") or {})}
@@ -54,6 +61,38 @@ class Config:
     def default(self, name, fallback=None):
         val = self.defaults.get(name, fallback)
         return fallback if val is None else val
+
+
+def comparison_fingerprint(config, thresholds, *, weights=None):
+    """Opaque provenance for scoring/check rules, not secrets or source paths.
+
+    Unknown custom configuration shapes remain unverified instead of breaking
+    a scan. CLI defaults are excluded: resolved rendering/image inputs have
+    their own provenance, and crawl/time budgets are not rule definitions.
+    """
+    if type(config).__dict__.get("_comparison_protocol") != Config._comparison_protocol:
+        return None
+    if "is_ignored" in config.__dict__:
+        return None  # an instance-level callback is not the built-in ignore policy
+
+    def canonical(value):
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+        if isinstance(value, dict):
+            return {key: canonical(child) for key, child in value.items()}
+        if isinstance(value, list):
+            return [canonical(child) for child in value]
+        return value
+
+    data = {"version": 1, "weights": config.weights if weights is None else weights, "thresholds": thresholds,
+            "ignore_categories": sorted(config._ignore_categories),
+            "ignore_titles": sorted(set(config._ignore_titles))}
+    try:
+        encoded = json.dumps(canonical(data), sort_keys=True, separators=(",", ":"),
+                             allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, RecursionError):
+        return None
+    return sha256(encoded).hexdigest()
 
 
 def find_config(path: str = None, start: str = None):

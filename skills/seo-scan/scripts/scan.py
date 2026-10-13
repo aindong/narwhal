@@ -93,7 +93,8 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     resp = http.fetch(url, render=render, allow_private=allow_private, timeout=timeout,
                       max_bytes=max_bytes)
     report = Report(url=url, final_url=resp.final_url, fetched_status=resp.status,
-                    rendered=resp.rendered, weights=config.weights,
+                    rendered=resp.rendered,
+                    weights=dict(config.weights) if isinstance(config.weights, dict) else config.weights,
                     ignore=config.is_ignored)
     report.meta["elapsed_ms"] = resp.elapsed_ms
     report.meta["redirects"] = resp.redirects
@@ -104,6 +105,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     report.meta["scan_scope"] = {
         "requested": list(selected), "completed": [],
         "not_selected": [name for name in AUDITORS if name not in selected],
+    }
+    report.meta["scan_settings"] = {
+        "render_requested": bool(render), "rendered": bool(resp.rendered),
+        "image_checks": bool(check_images and "technical" in selected),
     }
 
     if not resp.ok:
@@ -146,6 +151,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                              allow_private=allow_private, timeout=timeout)
     # expose tunable thresholds to auditors without mutating a shared ctx
     ctx = {**ctx, "thresholds": ctx.get("thresholds", config.thresholds)}
+    fingerprint = configlib.comparison_fingerprint(config, ctx["thresholds"], weights=report.weights)
+    if fingerprint is not None:
+        report.meta["scan_settings"]["rule_config"] = fingerprint
 
     # JS-dependence: when we actually rendered, fetch the served HTML too and
     # diff — content that only exists post-JS is invisible to non-rendering

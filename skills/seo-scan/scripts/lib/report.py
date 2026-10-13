@@ -165,6 +165,15 @@ class Report:
         coverage = self.meta.get("coverage")
         if isinstance(coverage, dict) and coverage.get("response_truncated"):
             note += " Response was truncated; findings use partial HTML coverage."
+        settings = self.meta.get("scan_settings")
+        if isinstance(settings, dict):
+            if settings.get("image_checks") is False and "technical" in requested:
+                note += " Image resource checks were disabled."
+            if settings.get("rendered") is True:
+                note += " Findings use rendered HTML."
+            elif settings.get("rendered") is False:
+                note += (" Rendering was requested but no rendered DOM was measured; findings use served HTML."
+                         if settings.get("render_requested") is True else " Findings use served HTML.")
         return note
 
     def _report_title(self, title):

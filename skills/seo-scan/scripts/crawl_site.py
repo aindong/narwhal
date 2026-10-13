@@ -252,6 +252,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             isinstance(coverage, dict) and coverage.get("response_truncated") is True)
         pages.append({"url": u, "score": rep.score(), "hard_fail": bool(rep.hard_fail),
                       "response_truncated": truncated,
+                      "scan_settings": rep.meta.get("scan_settings", {}),
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
                       "is_merchant": bool(ecommerce.get("is_merchant")),
