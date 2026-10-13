@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-12 · version **1.30.20**_
+_Last updated: 2026-10-14 · latest release **1.30.19**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -20,12 +20,17 @@ A local-first SEO + GEO/LLMO scanning toolkit shipped as a Claude Code plugin
 Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## Current state (done)
-- **v1.30.20 severity-first presentation:** high/critical findings lead the
+## Unreleased improvements
+- **Severity-first presentation:** high/critical findings lead the
   HTML/PDF hero and report summary; score bands are explicitly labelled instead
   of being an unqualified urgency verdict. Scores, JSON finding data, unknown/
   focused scope caveats and unmeasured failures are preserved. Heuristic
   findings still require verification, not automatic source edits.
+
+These verified improvements are accumulated on main, not automatically released.
+Keep version/manifests at the latest release until an explicit release request.
+
+## Current state (released)
 - **v1.30.19 zero-price evidence:** native numeric zero remains present, rather
   than being mistaken for a missing amount or replaced by a positive fallback.
   Merchant nonpositive-price validity and exact unit-gated comparisons stay
@@ -222,7 +227,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   headless Chromium (Playwright `page.pdf`, pixel-perfect, verified). `/narwhal
   audit` delivers **HTML by default** (v1.16.1 — needs no tools); PDF is opt-in
   (`--format pdf`).
-- **Released:** v1.0.0 → v1.30.20 (55 releases). Plugin installs as `narwhal@narwhal`.
+- **Released:** v1.0.0 → v1.30.19 (54 releases). Plugin installs as `narwhal@narwhal`.
 
 ## Layout
 ```
@@ -280,6 +285,11 @@ CI runs on every push/PR (`.github/workflows/ci.yml`). Two hard-won practices:
 - **No AI co-author trailers in commits/PRs** — repository owner's preference.
 
 ## Release process
+Development and publishing are separate workflows. Work → verify/dogfood → fix
+→ PR → green CI/review → merge, then accumulate related changes under Unreleased.
+Do not bump versions, create tags or publish a release for each improvement.
+Only begin the steps below when the owner explicitly requests a release.
+
 1. Bump the canonical version in `skills/seo-scan/scripts/_version.py`, then run
    `python scripts/sync_version.py` to synchronize the plugin manifests.
    Package metadata, CLI, and report provenance all read the same constant.
@@ -288,7 +298,9 @@ CI runs on every push/PR (`.github/workflows/ci.yml`). Two hard-won practices:
    Regenerate the report snapshots with
    `python skills/seo-scan/tests/update_golden_reports.py` after the version bump.
 3. Commit, push, confirm CI green.
-4. `gh release create vX.Y.Z --target main --title … --notes …`
+4. After merging and verifying CI for the exact main commit, publish with
+   `gh release create vX.Y.Z --target <verified-commit-sha> --title … --notes …`.
+   Verify the tag points to that commit. Publishing is not implied by green CI.
 5. Users update: `/plugin marketplace update narwhal` → `/plugin update narwhal@narwhal` (restart).
 
 Versioning is additive-minor / patch-fix; the plugin rename in 1.2.0 only changed

@@ -102,6 +102,10 @@ The reasoning and thresholds behind each check are in
 `schema.md`, `geo-llmo.md`). Read the relevant file when the user wants detail.
 
 ## Guardrails
+- **Development is not publishing:** continue work → verify/dogfood → fix → PR
+  → green CI/review → merge, accumulating related improvements under Unreleased.
+  Do not bump versions, create tags or publish a release per change. Begin the
+  release workflow only when the owner explicitly requests a release.
 - **SSRF-safe by default:** URLs resolving to private/loopback IPs are rejected.
   Only pass `--allow-private` for intentional local/staging scans.
 - **Local-only:** no external accounts or APIs are called by default.

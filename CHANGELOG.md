@@ -6,8 +6,6 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
-## [1.30.20] — 2026-10-12
-
 ### Improved
 - Reports lead with high/critical findings rather than an unqualified numeric
   grade. HTML/PDF heroes distinguish urgency from the explicitly labelled score
