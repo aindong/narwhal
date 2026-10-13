@@ -15,6 +15,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Crawls and audits retain one built-in rule policy across their component/page
+  scans instead of mixing configurations after mid-run caller updates. Gathered
+  crawl threshold overrides are owned before discovery/worker I/O; audit sitemap
+  sampling is resolved at entry. Future operations still see caller changes;
+  custom policies stay compatible and unverified.
 - Built-in rule inputs and context threshold overrides are owned per scan, so
   caller mutations during page/render I/O or between auditors cannot invalidate
   recorded rule provenance or silently change suppression. Completed reports keep

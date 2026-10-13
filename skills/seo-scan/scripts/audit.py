@@ -48,6 +48,8 @@ def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=Fal
     standalone tools' — an audit is an overview, so it favors speed over an
     exhaustive link/sitemap sweep (the dedicated commands go deeper)."""
     config = config or configlib.Config()
+    sample = config.default("sample")
+    config, _ = configlib.snapshot_rules(config)
     page = scanner.scan(site, timeout=timeout, allow_private=allow_private,
                         render=render, config=config)
     site_result = crawl_site.crawl(
@@ -56,7 +58,7 @@ def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=Fal
         check_links=True, max_links=max_links, detect_dupes=True, config=config)
     sitemap = validate_sitemap.analyze(
         site, allow_private=allow_private, timeout=timeout,
-        sample=config.default("sample"), max_sitemaps=max_sitemaps)
+        sample=sample, max_sitemaps=max_sitemaps)
     data = {"site": site, "page": page, "site_result": site_result, "sitemap": sitemap}
     if vitals:
         data["vitals"] = gather_vitals(site, timeout=timeout, strategy=strategy)

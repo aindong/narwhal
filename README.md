@@ -247,6 +247,11 @@ Later caller mutations cannot change the current scan's checks or ignore policy.
 This is ownership isolation, not an atomic transaction across concurrent writes:
 keep inputs stable while the entry snapshot is being captured. Unsupported/custom
 policies retain their behavior without a certified rule fingerprint.
+Built-in rules are captured once for a crawl/audit too, so later page scans
+cannot silently switch scoring or suppression when caller Config changes.
+Gathered crawl threshold overrides are detached before discovery and workers;
+the audit resolves its sitemap sample budget at entry. This does not freeze
+remote site content or guarantee identical crawl samples between runs.
 Audits retain these settings for crawled pages and check common exact URLs too;
 different or unknown samples are not inferred to match.
 

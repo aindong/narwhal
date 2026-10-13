@@ -212,9 +212,13 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           dup_threshold=90.0, config=None) -> dict:
     base = http.normalize_url(base)
     config = config or configlib.Config()
+    config, _ = configlib.snapshot_rules(config)
     # Fetch site-level signals (robots/sitemap/llms) ONCE and reuse for every
     # page — polite and much faster than re-fetching per page.
     ctx = scanner.gather_context(base, allow_private=allow_private, timeout=timeout)
+    ctx = dict(ctx)
+    if "thresholds" in ctx:
+        ctx["thresholds"], _ = configlib.owned_value(ctx["thresholds"])
     robots_txt = ctx.get("robots_txt") or ""
     rt = RobotsTxt.parse(robots_txt)
 
