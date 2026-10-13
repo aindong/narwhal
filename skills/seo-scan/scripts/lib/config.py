@@ -38,6 +38,11 @@ DEFAULT_DEFAULTS = {
 
 
 class Config:
+    # The source is importable as both lib.config and narwhal.lib.config.
+    # A locally declared protocol marker recognizes either built-in class;
+    # subclasses do not implicitly declare this layout.
+    _comparison_protocol = "narwhal-rule-config-v1"
+
     def __init__(self, data: dict = None):
         data = data or {}
         self.weights = {**DEFAULT_WEIGHTS, **(data.get("weights") or {})}
@@ -65,8 +70,10 @@ def comparison_fingerprint(config, thresholds, *, weights=None):
     a scan. CLI defaults are excluded: resolved rendering/image inputs have
     their own provenance, and crawl/time budgets are not rule definitions.
     """
-    if type(config) is not Config:
+    if type(config).__dict__.get("_comparison_protocol") != Config._comparison_protocol:
         return None
+    if "is_ignored" in config.__dict__:
+        return None  # an instance-level callback is not the built-in ignore policy
 
     def canonical(value):
         if isinstance(value, float) and value.is_integer():

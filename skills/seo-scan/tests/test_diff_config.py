@@ -1,6 +1,7 @@
 """Changed suppression/scoring/check rules are not page fixes."""
 
 import json
+import importlib.util
 import sys
 import unittest
 from pathlib import Path
@@ -31,6 +32,17 @@ class TestRuleConfigCoverage(unittest.TestCase):
         encoded = config.comparison_fingerprint(cfg, cfg.thresholds)
         self.assertNotIn('PRIVATE_CONFIG_TOKEN', encoded)
         self.assertNotEqual(value, encoded)
+
+    def test_source_and_package_import_aliases_share_builtin_config_protocol(self):
+        spec = importlib.util.spec_from_file_location('config_package_alias', config.__file__)
+        alias = importlib.util.module_from_spec(spec); spec.loader.exec_module(alias)
+        cfg = alias.Config()
+        self.assertIsNot(type(cfg), config.Config)
+        self.assertEqual(fingerprint(), config.comparison_fingerprint(cfg, cfg.thresholds))
+        response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, HTML, 1)
+        with mock.patch.object(http, 'fetch', return_value=response):
+            rep = scan.scan(URL, only=['schema'], ctx={}, config=cfg, check_images=False)
+        self.assertEqual(fingerprint(), rep.meta['scan_settings']['rule_config'])
 
     def test_dictionary_order_and_integral_float_weights_do_not_change_fingerprint(self):
         weights = {k: float(v) for k, v in reversed(list(config.DEFAULT_WEIGHTS.items()))}
@@ -75,6 +87,8 @@ class TestRuleConfigCoverage(unittest.TestCase):
         class Custom(config.Config):
             pass
         self.assertIsNone(config.comparison_fingerprint(Custom(), cfg.thresholds))
+        custom_callback = config.Config(); custom_callback.is_ignored = lambda category, title: True
+        self.assertIsNone(config.comparison_fingerprint(custom_callback, cfg.thresholds))
         response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, HTML, 1)
         with mock.patch.object(http, 'fetch', return_value=response):
             rep = scan.scan(URL, only=['schema'], ctx={'thresholds': {'unused': object()}})
