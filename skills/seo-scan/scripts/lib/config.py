@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import json
+from copy import deepcopy
 from hashlib import sha256
 
 DEFAULT_WEIGHTS = {"critical": 12, "high": 6, "medium": 3, "low": 1, "good": 0}
@@ -63,6 +64,67 @@ class Config:
         return fallback if val is None else val
 
 
+_BUILTIN_IGNORE_POLICY = Config.is_ignored
+_BUILTIN_IGNORE_CODE = Config.is_ignored.__code__
+_BUILTIN_RULE_PROTOCOL = Config._comparison_protocol
+
+
+def _builtin_policy(config):
+    """Recognize the built-in policy across source/package import aliases."""
+    if type(config).__dict__.get("_comparison_protocol") != _BUILTIN_RULE_PROTOCOL:
+        return False
+    if "is_ignored" in config.__dict__:
+        method = config.__dict__["is_ignored"]
+        return (getattr(method, "__self__", None) is config
+                and getattr(getattr(method, "__func__", None), "__code__", None) == _BUILTIN_IGNORE_CODE)
+    method = type(config).__dict__.get("is_ignored")
+    return getattr(method, "__code__", None) == _BUILTIN_IGNORE_CODE
+
+
+def owned_value(value):
+    """Detach plain rule containers without invoking arbitrary copy callbacks.
+
+    Unsupported/deep shapes keep their original behavior and remain unverified.
+    The bound is a snapshot limit, not a limit on what an auditor may accept.
+    """
+    seen = set()
+
+    def plain(item, depth=0):
+        if type(item) in (str, int, float, bool, type(None)):
+            return True
+        if depth > 64 or type(item) not in (dict, list, tuple, set, frozenset):
+            return False
+        if id(item) in seen:
+            return True
+        seen.add(id(item))
+        children = list(item.keys()) + list(item.values()) if type(item) is dict else item
+        return all(plain(child, depth + 1) for child in children)
+
+    if not plain(value):
+        return value, False
+    try:
+        return deepcopy(value), True
+    except RecursionError:
+        return value, False
+
+
+def snapshot_rules(config):
+    """Own built-in rule inputs for one scan; do not rewrite custom policies."""
+    if not _builtin_policy(config):
+        return config, False
+    data, owned = owned_value({"weights": config.weights, "thresholds": config.thresholds,
+                               "categories": config._ignore_categories, "titles": config._ignore_titles})
+    if not owned:
+        return config, False
+    snapshot = Config()
+    snapshot.weights, snapshot.thresholds = data["weights"], data["thresholds"]
+    snapshot._ignore_categories, snapshot._ignore_titles = data["categories"], data["titles"]
+    snapshot.is_ignored = _BUILTIN_IGNORE_POLICY.__get__(snapshot, type(snapshot))
+    # Scan budgets/defaults are resolved by the caller, not part of the rules.
+    snapshot.defaults = config.defaults
+    return snapshot, True
+
+
 def comparison_fingerprint(config, thresholds, *, weights=None):
     """Opaque provenance for scoring/check rules, not secrets or source paths.
 
@@ -70,10 +132,8 @@ def comparison_fingerprint(config, thresholds, *, weights=None):
     a scan. CLI defaults are excluded: resolved rendering/image inputs have
     their own provenance, and crawl/time budgets are not rule definitions.
     """
-    if type(config).__dict__.get("_comparison_protocol") != Config._comparison_protocol:
+    if not _builtin_policy(config):
         return None
-    if "is_ignored" in config.__dict__:
-        return None  # an instance-level callback is not the built-in ignore policy
 
     def canonical(value):
         if isinstance(value, float) and value.is_integer():

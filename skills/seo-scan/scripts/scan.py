@@ -85,6 +85,12 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     (used by the crawler's broken-link checker). ``config`` (a Config) tunes
     scoring weights, ignore rules, and check thresholds."""
     config = config or configlib.Config()
+    config, owned_rules = configlib.snapshot_rules(config)
+    owned_context_rules = True
+    if ctx is not None:
+        ctx = dict(ctx)
+        if "thresholds" in ctx:
+            ctx["thresholds"], owned_context_rules = configlib.owned_value(ctx["thresholds"])
     selected = list(dict.fromkeys(only or list(AUDITORS)))
     unknown = sorted(set(selected) - set(AUDITORS))
     if unknown:
@@ -150,8 +156,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         ctx = gather_context(resp.final_url or url,
                              allow_private=allow_private, timeout=timeout)
     # expose tunable thresholds to auditors without mutating a shared ctx
-    ctx = {**ctx, "thresholds": ctx.get("thresholds", config.thresholds)}
-    fingerprint = configlib.comparison_fingerprint(config, ctx["thresholds"], weights=report.weights)
+    effective_thresholds, owned_effective_rules = configlib.owned_value(ctx.get("thresholds", config.thresholds))
+    ctx = {**ctx, "thresholds": effective_thresholds}
+    fingerprint = (configlib.comparison_fingerprint(config, ctx["thresholds"], weights=report.weights)
+                   if owned_rules and owned_context_rules and owned_effective_rules else None)
     if fingerprint is not None:
         report.meta["scan_settings"]["rule_config"] = fingerprint
 

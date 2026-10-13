@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Per-scan rule ownership:** built-in weights, thresholds and suppression are
+  captured before page I/O, with supplied/gathered threshold overrides owned at
+  their receipt boundary. Caller changes no longer leak into later auditors or
+  completed reports. Custom policies/shapes stay compatible and unverified;
+  snapshot capture is not a multi-field atomic transaction.
 - **Diff input coverage:** explicit requested/actual rendering and effective
   image-check settings prevent skipped subchecks from appearing resolved.
   Opaque rule fingerprints cover weights, effective thresholds and ignore rules,

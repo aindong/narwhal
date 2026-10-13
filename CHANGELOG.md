@@ -15,6 +15,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Built-in rule inputs and context threshold overrides are owned per scan, so
+  caller mutations during page/render I/O or between auditors cannot invalidate
+  recorded rule provenance or silently change suppression. Completed reports keep
+  their ignore policy; future scans see updated inputs. Custom policies/shapes
+  preserve their behavior and remain unverified without invoking copy hooks.
 - Diffs no longer count skipped image checks or changed raw/rendered page modes
   as verified fixes when those settings are recorded. Scans serialize requested
   and actual rendering plus effective image-check selection; audits preserve
