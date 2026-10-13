@@ -46,8 +46,9 @@ Crawls and comprehensive audits capture the built-in rule policy for the whole
 operation, before context/page I/O. Crawl-level gathered threshold overrides are
 owned before discovery and worker scans. An audit captures its sitemap sample
 budget at entry (calling any custom default resolver once). Caller updates affect
-future operations rather than later pages within an active operation. This is
-rule-input consistency, not a claim that remote content or sampling is frozen.
+future operations rather than later pages within an active operation. The sample
+budget stays fixed; remote content and sitemap data do not. This is rule-input
+consistency, not a snapshot of the remote site or a guarantee of identical samples.
 
 Do not mutate inputs concurrently while the snapshot itself is being captured;
 capture is not a multi-field atomic transaction. Custom policies, custom values
