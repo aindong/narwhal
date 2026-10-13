@@ -55,6 +55,19 @@ class TestRuleConfigCoverage(unittest.TestCase):
         self.assertEqual(config.comparison_fingerprint(cfg, {'title_min': 50}), rep.meta['scan_settings']['rule_config'])
         self.assertNotEqual(config.comparison_fingerprint(cfg, cfg.thresholds), rep.meta['scan_settings']['rule_config'])
 
+    def test_report_scoring_and_provenance_do_not_drift_when_original_config_mutates(self):
+        cfg = config.Config()
+        html = '<script type="application/ld+json">{"@type":"Product","name":""}</script>'
+        response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, html, 1)
+        with mock.patch.object(http, 'fetch', return_value=response):
+            rep = scan.scan(URL, only=['schema'], ctx={}, config=cfg, check_images=False)
+        before = json.loads(rep.to_json())
+        cfg.weights['high'] = 0
+        self.assertEqual(before, json.loads(rep.to_json()))
+        self.assertIsNot(cfg.weights, rep.weights)
+        self.assertEqual(config.comparison_fingerprint(cfg, cfg.thresholds, weights=rep.weights),
+                         rep.meta['scan_settings']['rule_config'])
+
     def test_unserializable_nonfinite_and_custom_shapes_remain_unverified(self):
         cfg = config.Config()
         for thresholds in ({'unused': object()}, {'title_min': float('nan')}, {'title_min': float('inf')}):

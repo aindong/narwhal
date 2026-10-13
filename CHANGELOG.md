@@ -28,6 +28,8 @@ All notable changes to Narwhal are documented here. The format follows
   penalties. Fingerprints expose no raw configuration values or paths; unknown
   custom/unserializable shapes remain unverified. Ignore ordering/case/duplicates
   and equivalent integral numeric weights do not cause spurious mismatches.
+  Reports retain their scoring-weight snapshot, so later Config mutations cannot
+  silently change a saved report's score while leaving its provenance unchanged.
 
 ## [1.30.19] — 2026-10-12
 

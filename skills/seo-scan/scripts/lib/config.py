@@ -58,7 +58,7 @@ class Config:
         return fallback if val is None else val
 
 
-def comparison_fingerprint(config, thresholds):
+def comparison_fingerprint(config, thresholds, *, weights=None):
     """Opaque provenance for scoring/check rules, not secrets or source paths.
 
     Unknown custom configuration shapes remain unverified instead of breaking
@@ -77,7 +77,7 @@ def comparison_fingerprint(config, thresholds):
             return [canonical(child) for child in value]
         return value
 
-    data = {"version": 1, "weights": config.weights, "thresholds": thresholds,
+    data = {"version": 1, "weights": config.weights if weights is None else weights, "thresholds": thresholds,
             "ignore_categories": sorted(config._ignore_categories),
             "ignore_titles": sorted(set(config._ignore_titles))}
     try:
