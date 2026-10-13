@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Diff input coverage:** explicit requested/actual rendering and effective
+  image-check settings prevent skipped subchecks from appearing resolved.
+  Audit comparisons also check recorded settings for common crawled URLs, without
+  guessing legacy or outside-sample modes. Other configuration, rule versions
+  and site-wide sampling still need to be controlled separately.
 - **Severity-first presentation:** high/critical findings lead the
   HTML/PDF hero and report summary; score bands are explicitly labelled instead
   of being an unqualified urgency verdict. Scores, JSON finding data, unknown/

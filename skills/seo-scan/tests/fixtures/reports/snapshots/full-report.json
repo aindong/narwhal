@@ -35,6 +35,11 @@
       ],
       "not_selected": []
     },
+    "scan_settings": {
+      "render_requested": false,
+      "rendered": false,
+      "image_checks": false
+    },
     "extraction": "visible text",
     "structured_data": {
       "formats": [

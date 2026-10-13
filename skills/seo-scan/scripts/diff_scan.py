@@ -43,13 +43,15 @@ def _normalize(data: dict) -> dict:
         return {"url": data.get("final_url") or data.get("url", ""),
                 "score": data.get("score", 0),
                 "findings": data.get("findings", []),
-                "kind": "scan", "meta": data.get("meta", {}), "crawl": None}
+                "kind": "scan", "meta": data.get("meta", {}), "crawl": None,
+                "rendered": data.get("rendered")}
     if "homepage" in data:  # comprehensive audit report
         hp = data.get("homepage", {})
         return {"url": data.get("site") or hp.get("url", ""),
                 "score": data.get("overall_score", hp.get("score", 0)),
                 "findings": hp.get("findings", []),
-                "kind": "audit", "meta": hp.get("meta", {}), "crawl": data.get("crawl")}
+                "kind": "audit", "meta": hp.get("meta", {}), "crawl": data.get("crawl"),
+                "rendered": hp.get("rendered")}
     raise ValueError(
         "Unrecognized report JSON — expected `narwhal scan` or `narwhal audit` "
         "output produced with `--format json`.")
@@ -58,6 +60,7 @@ def _normalize(data: dict) -> dict:
 def _comparison(o: dict, n: dict) -> dict:
     """Compare recorded auditor execution, not exhaustive scan configuration."""
     scopes = [recorded_scan_scope(item["meta"]) for item in (o, n)]
+    settings = [_recorded_settings(item["meta"], item["rendered"]) for item in (o, n)]
     reasons = []
     if o["kind"] != n["kind"]:
         reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
@@ -82,6 +85,17 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append("Requested auditor groups differ between reports.")
         if set(scopes[0][1]) != set(scopes[1][1]):
             reasons.append("Completed auditor groups differ between reports.")
+    for key, label in (("render_requested", "Requested rendering"),
+                       ("rendered", "Actual rendered/raw mode"),
+                       ("image_checks", "Image-check setting")):
+        if all(key in item for item in settings) and settings[0][key] != settings[1][key]:
+            reasons.append(label + " differs between reports; changed checks or page representations are not fix evidence.")
+    crawls = [_crawl_settings(item["crawl"]) for item in (o, n)]
+    for url in sorted(crawls[0].keys() & crawls[1].keys()):
+        for key in ("render_requested", "rendered", "image_checks"):
+            values = [item[url].get(key, set()) for item in crawls]
+            if all(values) and (values[0] != values[1] or any(len(v) > 1 for v in values)):
+                reasons.append(f"Crawl setting {key} differs or is contradictory for {url}; its contribution to the overall score is not comparable.")
     status = "incomparable" if reasons else (
         "comparable" if all(scope is not None for scope in scopes) else "unknown")
     if status == "unknown":
@@ -91,9 +105,33 @@ def _comparison(o: dict, n: dict) -> dict:
         "reasons": reasons,
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
-        "basis": "Recorded auditor execution, known response truncation and explicit crawl hard failures only; not proof of "
-                 "identical URLs, configuration, rendering, tool rules or site-wide samples.",
+        "old_settings": settings[0], "new_settings": settings[1],
+        "basis": "Recorded auditor execution, known rendering/image-check settings, response truncation and explicit crawl failures only; not proof of "
+                 "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
+
+
+def _recorded_settings(meta, rendered=None):
+    """Only explicit booleans prove a known setting; legacy data stays unknown."""
+    raw = meta.get("scan_settings") if isinstance(meta, dict) else None
+    raw = raw if isinstance(raw, dict) else {}
+    result = {key: raw[key] for key in ("render_requested", "rendered", "image_checks")
+            if type(raw.get(key)) is bool}
+    if "rendered" not in result and type(rendered) is bool:
+        result["rendered"] = rendered
+    return result
+
+
+def _crawl_settings(crawl):
+    """Join explicit page settings by URL, retaining contradictory duplicates."""
+    pages = crawl.get("pages") if isinstance(crawl, dict) else None
+    result = {}
+    for page in pages if isinstance(pages, list) else []:
+        if not isinstance(page, dict) or not isinstance(page.get("url"), str) or not page["url"]:
+            continue
+        for key, value in _recorded_settings(page, page.get("rendered")).items():
+            result.setdefault(page["url"], {}).setdefault(key, set()).add(value)
+    return result
 
 
 def _key(finding: dict):
@@ -202,12 +240,20 @@ def render_markdown(d: dict) -> str:
             lines.append(f"- {label}: requested {requested}; completed {completed}.")
         else:
             lines.append(f"- {label}: valid auditor scope not recorded.")
+    for label, key in (("Earlier", "old_settings"), ("Later", "new_settings")):
+        settings = comparison.get(key, {})
+        facts = []
+        for name, description in (("render_requested", "render requested"),
+                                  ("rendered", "actual rendering"), ("image_checks", "image checks")):
+            if name in settings:
+                facts.append(description + ": " + ("enabled" if settings[name] else "disabled"))
+        lines.append(f"- {label} settings: " + ("; ".join(facts) if facts else "not recorded") + ".")
     lines.extend("- " + reason for reason in comparison.get("reasons", []))
     lines.extend([comparison.get("basis", "Coverage was not recorded."), ""])
     if status == "incomparable":
         counts = d["not_compared"]
         lines.append(f"_Not compared: {counts['old_findings']} earlier and {counts['new_findings']} later findings. "
-                     "Re-scan with successful page fetches, matching completed auditor selections and full HTML coverage._")
+                     "Re-scan with successful page fetches, matching completed auditor selections, rendering/image settings and full HTML coverage._")
         return "\n".join(lines).rstrip() + "\n"
 
     def _bullets(items):

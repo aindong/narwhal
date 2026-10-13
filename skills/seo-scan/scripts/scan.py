@@ -105,6 +105,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         "requested": list(selected), "completed": [],
         "not_selected": [name for name in AUDITORS if name not in selected],
     }
+    report.meta["scan_settings"] = {
+        "render_requested": bool(render), "rendered": bool(resp.rendered),
+        "image_checks": bool(check_images and "technical" in selected),
+    }
 
     if not resp.ok:
         report.hard_fail = True   # no measurable health; score is 0, not 88
