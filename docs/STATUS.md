@@ -27,7 +27,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   focused scope caveats and unmeasured failures are preserved. Heuristic
   findings still require verification, not automatic source edits.
 
-These verified improvements are accumulated on main, not automatically released.
+Verified improvements accumulate on main after review and merge, not automatically released.
 Keep version/manifests at the latest release until an explicit release request.
 
 ## Current state (released)
