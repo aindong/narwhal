@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Site-wide rule consistency:** crawls/audits capture one built-in policy at
+  entry; later pages retain the same weights, thresholds and suppression under
+  caller mutation. Gathered crawl overrides are owned before discovery and audit
+  sitemap sample budgets are resolved before component I/O. This does not freeze
+  external page content or promise identical samples between runs.
 - **Per-scan rule ownership:** built-in weights, thresholds and suppression are
   captured before page I/O, with supplied/gathered threshold overrides owned at
   their receipt boundary. Caller changes no longer leak into later auditors or
