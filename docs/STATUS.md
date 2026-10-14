@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Comparison rule consistency:** one competitor comparison captures built-in
+  weights, thresholds and suppression before its first scan, so caller changes
+  cannot switch the rules for later competitors. Future runs pick up updates;
+  custom policies remain live. Remote content and per-site context are not frozen.
 - **Priority-first site rollups:** crawl/audit output ranks recurring issue types
   by severity, then frequency, with stable ties and explicit capped-list omissions.
   Rare urgent findings remain visible; full JSON counts and scoring are unchanged.

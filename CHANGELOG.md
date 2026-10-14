@@ -15,6 +15,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Competitor comparisons retain one supported built-in rule policy across page
+  scans, including when a failed competitor fetch mutates caller configuration.
+  Future comparisons still see caller updates; custom callbacks stay compatible
+  and unverified. Remote content and per-site context are not frozen.
 - Site-wide human-readable rollups prioritize severity before frequency, so a
   rare critical/high finding is not hidden by more common lower-priority types.
   Ties are deterministic and capped lists disclose omitted types. JSON retains

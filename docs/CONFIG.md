@@ -50,6 +50,13 @@ future operations rather than later pages within an active operation. The sample
 budget stays fixed; remote content and sitemap data do not. This is rule-input
 consistency, not a snapshot of the remote site or a guarantee of identical samples.
 
+Competitor comparisons also capture supported built-in rules once, before scanning
+the first URL. A caller update during one page fetch (even a failed competitor)
+cannot change later pages' scoring or suppression. Future comparisons pick up
+caller changes; each page still gathers its own site context, and custom policies
+remain live and unverified. This does not guarantee identical remote content,
+page kinds, site context or extraction across compared pages.
+
 Do not mutate inputs concurrently while the snapshot itself is being captured;
 capture is not a multi-field atomic transaction. Custom policies, custom values
 and unsupported deep shapes are not rewritten or copied through user hooks, and
