@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Evidence-grounded brief wording:** rendered headings, CLI help and plugin
+  guidance call supplied pages comparisons, not verified ranking winners. Own-page
+  Search Console evidence does not prove competitors' rankings; measured facts,
+  scores and JSON are unchanged.
 - **Brief rule consistency:** own-page and topic-mode briefs capture built-in
   weights, thresholds and suppression once before page I/O. Caller changes no
   longer switch rules for later competitors; future briefs still pick them up.
