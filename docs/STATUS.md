@@ -25,6 +25,9 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   weights, thresholds and suppression before its first scan, so caller changes
   cannot switch the rules for later competitors. Future runs pick up updates;
   custom policies remain live. Remote content and per-site context are not frozen.
+- **Priority-first site rollups:** crawl/audit output ranks recurring issue types
+  by severity, then frequency, with stable ties and explicit capped-list omissions.
+  Rare urgent findings remain visible; full JSON counts and scoring are unchanged.
 - **Site-wide rule consistency:** crawls/audits capture one built-in policy at
   entry; later pages retain the same weights, thresholds and suppression under
   caller mutation. Gathered crawl overrides are owned before discovery and audit

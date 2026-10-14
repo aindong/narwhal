@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import hreflang, http, htmlx, links, simhash, sitegraph  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
-from lib.report import below_threshold  # noqa: E402
+from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
 
@@ -311,13 +311,19 @@ def render_markdown(result: dict) -> str:
     for p in ranked[:10]:
         lines.append(f"| {p['score']} | {p['url']} |")
     lines.append("")
-    recurring = result["recurring"].most_common(12)
+    recurring = sorted(result["recurring"].items(), key=lambda item: (
+        SEVERITY.index(item[0][1]) if item[0][1] in SEVERITY else len(SEVERITY),
+        -item[1], item[0]))[:12]
     if recurring:
-        lines += ["## Most common issues (fix these first)", "",
+        lines += ["## Priority issues (severity first, then frequency)", "",
                   "| Count | Severity | Category | Issue |", "|:--:|:--|:--|:--|"]
         for (cat, sev, title), n in recurring:
             lines.append(f"| {n} | {sev} | {cat} | {title} |")
         lines.append("")
+        omitted = len(result["recurring"]) - len(recurring)
+        if omitted:
+            lines += [f"> {omitted} additional issue type(s) not shown; "
+                      "the JSON report retains the full rollup.", ""]
 
     hl = result.get("hreflang")
     if hl and hl.get("used"):
