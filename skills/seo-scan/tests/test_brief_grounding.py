@@ -79,7 +79,7 @@ class TestBriefGrounding(unittest.TestCase):
         self.assertNotIn('pages that win', output.getvalue())
 
     def test_plugin_brief_guidance_does_not_assume_competitor_rankings(self):
-        command = (Path(__file__).resolve().parents[3] / 'commands' / 'narwhal.md').read_text()
+        command = (Path(__file__).resolve().parents[3] / 'commands' / 'narwhal.md').read_text(encoding='utf-8')
         section = command.split('## If `$1` is `brief`', 1)[1].split('\n## ', 1)[0]
         self.assertNotIn('pages that currently win', section)
         self.assertNotIn('pages currently win', section)
