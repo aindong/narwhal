@@ -187,14 +187,15 @@ manual-action list. Never fabricate a score.
 ## If `$1` is `brief` → build a data-driven content brief
 
 Turn "what should we write?" into a plan grounded in real data: the page's own
-Search Console queries + the structure of the pages that currently win. Never
+Search Console queries + the structure of the supplied comparison pages. Never
 invent search volumes or rankings.
 
 **Step 1 — Inputs.** `$2` is either the user's page URL (a rewrite/refresh) or
 a topic phrase (a page that doesn't exist yet). Competitor URLs may follow as
-`$3`–`$5`. If the user named no competitors, ask which 1–3 pages currently win
-for this topic (they know their SERP); with none provided, proceed — the brief
-degrades honestly to page + GSC data only.
+`$3`–`$5`. If the user named no competitors, ask which 1–3 competitor/reference pages
+they want to compare for this topic. Do not assume those pages rank well; own-page
+GSC data does not establish competitor rankings. With none provided, proceed —
+the brief degrades honestly to page + GSC data only.
 
 **Step 2 — Deterministic data pack.** Run:
 ```

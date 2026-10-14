@@ -15,6 +15,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Content-brief headings, recommendations, CLI help and plugin guidance describe
+  supplied comparison pages rather than unverified ranking "winners." Own-page
+  Search Console data does not establish competitor rankings. Facts, scoring,
+  JSON data and recommendation generation remain unchanged.
 - Content briefs retain one supported built-in rule policy across own-page and
   competitor scans, including topic mode and failed competitors. Mid-run caller
   updates no longer switch later pages' scoring/suppression; future briefs still

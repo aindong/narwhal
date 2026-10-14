@@ -525,8 +525,8 @@ class TestBrief(unittest.TestCase):
         b = brief.synthesize(None, [rival], None, topic="widget calibration")
         md = brief.render_markdown(b)
         self.assertIn("Content brief — widget calibration", md)
-        self.assertIn("Subtopics the winning pages cover", md)
-        self.assertNotIn("Gaps vs the pages that win", md)   # nothing to diff
+        self.assertIn("Subtopics the compared pages cover", md)
+        self.assertNotIn("Gaps vs compared pages", md)   # nothing to diff
 
     def test_structure_targets_exclude_hub_rivals(self):
         import brief

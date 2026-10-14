@@ -8,8 +8,8 @@ volumes:
   - **Your real queries** (optional, GSC): the striking-distance queries this
     page already earns impressions for at positions 8-20 — demand you nearly
     satisfy — plus CTR-laggard / decay status for the page.
-  - **The pages that currently win** (compare, #21): scan 1-3 competitor pages
-    with the same auditors and report the on-page gaps.
+  - **Compared pages** (compare, #21): scan 1-3 supplied competitor pages
+    with the same auditors and report on-page gaps, not verified ranking wins.
   - **Missing subtopics**: competitor H2/H3 sections whose topic words don't
     appear anywhere in your page text — coverage to add, not padding.
   - **Questions to answer**: competitors' question-shaped headings you don't
@@ -383,7 +383,7 @@ def render_markdown(b: dict) -> str:
                   "adding content: " + ", ".join(gsc["cannibalized"]), ""]
 
     if b.get("gaps") is not None:
-        lines += ["## Gaps vs the pages that win", ""]
+        lines += ["## Gaps vs compared pages", ""]
         if b["gaps"]:
             for g in b["gaps"]:
                 who = ", ".join(_short(w, 30) for w in g["who"])
@@ -393,7 +393,7 @@ def render_markdown(b: dict) -> str:
         lines.append("")
 
     if b["missing_subtopics"]:
-        title = ("Subtopics the winning pages cover"
+        title = ("Subtopics the compared pages cover"
                  if not b.get("you") else
                  "Missing subtopics — sections they have, your text doesn't")
         lines += [f"## {title}", ""]
@@ -418,7 +418,7 @@ def render_markdown(b: dict) -> str:
                          + " — close the gap by covering the missing subtopics "
                            "above, not by padding.")
         if st.get("question_headings"):
-            lines.append("- **Question-shaped H2/H3s:** the winning pages "
+            lines.append("- **Question-shaped H2/H3s:** the compared pages "
                          "phrase key headings as the questions users ask — "
                          "do the same where it's natural.")
         if "evidence_target" in st:
@@ -462,7 +462,7 @@ def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     ap = argparse.ArgumentParser(
         description="Data-driven content brief from your GSC queries + the "
-                    "pages that win (local-first; no keyword APIs)",
+                    "compared pages (local-first; no keyword APIs)",
         parents=[configlib.config_arg_parser()])
     ap.add_argument("urls", nargs="*",
                     help="YOUR page first, then 1-3 competitor pages "
