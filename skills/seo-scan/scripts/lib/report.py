@@ -30,6 +30,19 @@ CATEGORY_LABELS = {
     "geo": "GEO / LLMO",
 }
 
+TRUNCATED_HTML_ERROR = (
+    "HTML response was truncated; complete HTML is required for comparisons and briefs."
+)
+
+
+def recorded_response_truncated(meta):
+    """Recognize explicit truncation, not certify missing/legacy coverage."""
+    if not isinstance(meta, dict):
+        return False
+    coverage = meta.get("coverage")
+    return meta.get("response_truncated") is True or (
+        isinstance(coverage, dict) and coverage.get("response_truncated") is True)
+
 
 def recorded_scan_scope(meta):
     """Validate recorded execution without inferring coverage from findings."""

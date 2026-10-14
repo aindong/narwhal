@@ -36,6 +36,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
+from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib import text as textlib  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
@@ -264,6 +265,8 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
     doc = getattr(rep, "_doc", None)
     if rep.fetched_status != 200 or doc is None:
         raise RuntimeError(f"HTTP {rep.fetched_status}")
+    if recorded_response_truncated(rep.meta):
+        raise RuntimeError(TRUNCATED_HTML_ERROR)
     return {"url": rep.final_url or url, "facts": compare.facts(rep, doc),
             "headings": list(doc.headings), "text": doc.body_text or ""}
 
@@ -293,6 +296,11 @@ def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None
                                 render=render, config=config))
         except Exception as exc:  # noqa: BLE001
             failed.append({"url": u, "error": str(exc)})
+
+    if not your_url and not rivals:
+        return {"topic": topic, "failed": failed,
+                "error": "brief needs an own page or at least one usable competitor page; "
+                         "no page-grounded brief was measured."}
 
     gsc_data = None
     if use_gsc:
@@ -324,7 +332,10 @@ def _short(url: str, limit: int = 40) -> str:
 
 def render_markdown(b: dict) -> str:
     if b.get("error"):
-        return f"# Narwhal Brief\n\n{b['error']}\n"
+        lines = ["# Narwhal Brief", "", b["error"]]
+        for failure in b.get("failed", []):
+            lines.append(f"- failed: {failure['url']}: {failure['error']}")
+        return "\n".join(lines) + "\n"
 
     subject = b.get("topic") or (_short(b["you"]["url"]) if b.get("you")
                                  else "content brief")
@@ -351,7 +362,8 @@ def render_markdown(b: dict) -> str:
                   "connect GSC (`narwhal gsc --auth`) to ground the brief in "
                   "real demand._", ""]
     for f in b.get("failed", []):
-        lines.append(f"_Skipped competitor (fetch failed): {f['url']}_")
+        detail = f" — {f['error']}" if f.get("error") else ""
+        lines.append(f"_Skipped competitor: {f['url']}{detail}_")
     if b.get("failed"):
         lines.append("")
 

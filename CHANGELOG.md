@@ -15,6 +15,12 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Comparisons and content briefs exclude reports explicitly marked as truncated,
+  rather than turning unseen HTML into missing-feature gaps or full-page scores.
+  Partial targets return errors; partial rivals are skipped with diagnostics.
+  Brief requests without any usable page are errors, not page-grounded briefs.
+  Standalone partial scans remain available with their coverage warnings; missing
+  or malformed legacy flags are not inferred to prove truncation/completeness.
 - Content-brief headings, recommendations, CLI help and plugin guidance describe
   supplied comparison pages rather than unverified ranking "winners." Own-page
   Search Console data does not establish competitor rankings. Facts, scoring,
