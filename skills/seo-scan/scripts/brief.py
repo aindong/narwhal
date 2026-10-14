@@ -275,6 +275,7 @@ def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None
     """Fetch everything and build the brief. Failed competitor fetches are
     reported and skipped; a failed own-page fetch is an error."""
     config = config or configlib.Config()
+    config, _ = configlib.snapshot_rules(config)
     competitor_urls = list(competitor_urls or [])[:MAX_COMPETITORS]
 
     you = None
