@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Comparison target identity:** the first requested URL must supply the user's
+  page. Failed targets return diagnostics rather than relabeling a rival as "You"
+  or producing gap/lead verdicts. Failed competitors remain skippable; successful
+  target redirects retain their role.
 - **Comparison rule consistency:** one competitor comparison captures built-in
   weights, thresholds and suppression before its first scan, so caller changes
   cannot switch the rules for later competitors. Future runs pick up updates;

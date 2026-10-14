@@ -173,12 +173,15 @@ def gap_analysis(you: dict, rivals: list) -> dict:
 
 def run(urls: list, *, timeout=20, allow_private=False, render=False,
         config=None) -> dict:
-    """Scan every URL and build the comparison. Failed fetches are reported and
-    skipped; fewer than two successful scans is an error."""
+    """Scan every URL; the first URL must supply the user's page.
+
+    Failed competitors are reported and skipped. A failed target or fewer than
+    two successful scans is an error, never a comparison between rivals.
+    """
     config = config or configlib.Config()
     config, _ = configlib.snapshot_rules(config)
-    results, failed = [], []
-    for u in urls:
+    results, failed, target = [], [], None
+    for index, u in enumerate(urls):
         try:
             rep = scanner.scan(u, timeout=timeout, allow_private=allow_private,
                                render=render, config=config)
@@ -191,9 +194,14 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
             failed.append({"url": u, "status": rep.fetched_status})
             continue
         results.append(facts(rep, doc))
+        if index == 0:
+            target = results[-1]
     out = {"failed": failed}
-    if len(results) >= 2:
-        you, rivals = results[0], results[1:]
+    if target is None and failed:
+        out["error"] = ("compare could not scan your page (the first URL); "
+                        "no target/competitor verdict was measured.")
+    elif len(results) >= 2:
+        you, rivals = target, results[1:]
         out.update({"you": you, "competitors": rivals,
                     **gap_analysis(you, rivals)})
     else:
