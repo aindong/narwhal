@@ -176,6 +176,7 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
     """Scan every URL and build the comparison. Failed fetches are reported and
     skipped; fewer than two successful scans is an error."""
     config = config or configlib.Config()
+    config, _ = configlib.snapshot_rules(config)
     results, failed = [], []
     for u in urls:
         try:

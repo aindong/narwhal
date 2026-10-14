@@ -15,6 +15,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Competitor comparisons retain one supported built-in rule policy across page
+  scans, including when a failed competitor fetch mutates caller configuration.
+  Future comparisons still see caller updates; custom callbacks stay compatible
+  and unverified. Remote content and per-site context are not frozen.
 - Crawls and audits retain one built-in rule policy across their component/page
   scans instead of mixing configurations after mid-run caller updates. Gathered
   crawl threshold overrides are owned before discovery/worker I/O; audit sitemap

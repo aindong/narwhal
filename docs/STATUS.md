@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Comparison rule consistency:** one competitor comparison captures built-in
+  weights, thresholds and suppression before its first scan, so caller changes
+  cannot switch the rules for later competitors. Future runs pick up updates;
+  custom policies remain live. Remote content and per-site context are not frozen.
 - **Site-wide rule consistency:** crawls/audits capture one built-in policy at
   entry; later pages retain the same weights, thresholds and suppression under
   caller mutation. Gathered crawl overrides are owned before discovery and audit
