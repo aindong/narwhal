@@ -57,6 +57,12 @@ caller changes; each page still gathers its own site context, and custom policie
 remain live and unverified. This does not guarantee identical remote content,
 page kinds, site context or extraction across compared pages.
 
+Content briefs capture the same supported built-in rules before their first page
+scan, including topic mode without an own-page URL. Caller updates during an own
+page or competitor fetch cannot change later pages' scoring or suppression;
+future briefs see the updates. Custom policies remain live and unverified.
+Remote content, per-site context and optional Search Console data are not frozen.
+
 Do not mutate inputs concurrently while the snapshot itself is being captured;
 capture is not a multi-field atomic transaction. Custom policies, custom values
 and unsupported deep shapes are not rewritten or copied through user hooks, and

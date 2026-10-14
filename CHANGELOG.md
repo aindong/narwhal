@@ -15,6 +15,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Content briefs retain one supported built-in rule policy across own-page and
+  competitor scans, including topic mode and failed competitors. Mid-run caller
+  updates no longer switch later pages' scoring/suppression; future briefs still
+  see updates. Custom policies stay live; remote content/context is not frozen.
 - A failed first URL in competitor comparisons cannot promote a rival to "You"
   or produce a successful target/competitor verdict. HTTP failures, host-policy
   rejection and non-HTML targets yield error diagnostics and CLI exit 2; failed

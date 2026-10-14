@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-14 · latest release **1.30.19**_
+_Last updated: 2026-10-15 · latest release **1.30.19**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Brief rule consistency:** own-page and topic-mode briefs capture built-in
+  weights, thresholds and suppression once before page I/O. Caller changes no
+  longer switch rules for later competitors; future briefs still pick them up.
+  Custom policies remain live, and remote content/context is not frozen.
 - **Comparison target identity:** the first requested URL must supply the user's
   page. Failed targets return diagnostics rather than relabeling a rival as "You"
   or producing gap/lead verdicts. Failed competitors remain skippable; successful
