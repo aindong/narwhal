@@ -15,6 +15,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Site-wide human-readable rollups prioritize severity before frequency, so a
+  rare critical/high finding is not hidden by more common lower-priority types.
+  Ties are deterministic and capped lists disclose omitted types. JSON retains
+  its full frequency-ordered counts; scoring and finding generation are unchanged.
 - Crawls and audits retain one built-in rule policy across their component/page
   scans instead of mixing configurations after mid-run caller updates. Gathered
   crawl threshold overrides are owned before discovery/worker I/O; audit sitemap
