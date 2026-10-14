@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
 from lib import htmlx, structured_data  # noqa: E402
+from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 import audit_geo  # noqa: E402
 import scan as scanner  # noqa: E402
 
@@ -193,6 +194,10 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
         if rep.fetched_status != 200 or doc is None:
             failed.append({"url": u, "status": rep.fetched_status})
             continue
+        if recorded_response_truncated(rep.meta):
+            failed.append({"url": u, "status": rep.fetched_status,
+                           "response_truncated": True, "error": TRUNCATED_HTML_ERROR})
+            continue
         results.append(facts(rep, doc))
         if index == 0:
             target = results[-1]
@@ -225,7 +230,8 @@ def render_markdown(r: dict) -> str:
     if r.get("error"):
         lines = [f"# Narwhal Compare", "", r["error"]]
         for f in r.get("failed", []):
-            lines.append(f"- failed: {f['url']} (status {f['status']})")
+            detail = f": {f['error']}" if f.get("error") else ""
+            lines.append(f"- failed: {f['url']} (status {f['status']}){detail}")
         return "\n".join(lines) + "\n"
 
     you, rivals = r["you"], r["competitors"]
@@ -233,7 +239,8 @@ def render_markdown(r: dict) -> str:
     lines = [f"# Narwhal Compare — {_short(you['url'])} vs "
              + ", ".join(_short(c["url"]) for c in rivals), ""]
     for f in r.get("failed", []):
-        lines.append(f"_Skipped (status {f['status']}): {f['url']}_")
+        detail = f" — {f['error']}" if f.get("error") else ""
+        lines.append(f"_Skipped (status {f['status']}): {f['url']}{detail}_")
     if r.get("failed"):
         lines.append("")
 

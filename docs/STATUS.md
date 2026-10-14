@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Comparison/brief HTML coverage:** explicitly truncated page reports are
+  excluded from gap/score benchmarks. Partial targets error, partial rivals are
+  skipped with reasons, and topic briefs require a usable page. Standalone scans
+  still report partial findings with warnings; absent legacy flags are not proof
+  of complete coverage.
 - **Evidence-grounded brief wording:** rendered headings, CLI help and plugin
   guidance call supplied pages comparisons, not verified ranking winners. Own-page
   Search Console evidence does not prove competitors' rankings; measured facts,
