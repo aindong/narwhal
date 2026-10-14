@@ -14,7 +14,7 @@ import brief
 import compare
 import scan
 import mcp_server
-from lib import htmlx, http, report as reportlib
+from lib import config, htmlx, http, report as reportlib
 
 TARGET = 'https://example.test/owner'
 PARTIAL = 'https://example.test/partial'
@@ -167,6 +167,17 @@ class TestComparisonCoverage(unittest.TestCase):
         self.assertTrue(rep.meta['coverage']['response_truncated'])
         self.assertFalse(rep.hard_fail)
         self.assertIn('technical.response.truncated', [f.rule_id for f in rep.findings])
+
+    def test_ignoring_truncation_finding_cannot_bypass_input_coverage_gate(self):
+        cfg = config.Config({'ignore': {'titles': ['Response exceeded scan byte limit']}})
+        with fixture({TARGET}):
+            rep = scan.scan(TARGET, config=cfg)
+            compared = compare.run([TARGET, COMPLETE], config=cfg)
+            content = brief.run(TARGET, [COMPLETE], config=cfg, use_gsc=False)
+        self.assertNotIn('technical.response.truncated', [f.rule_id for f in rep.findings])
+        self.assertTrue(rep.meta['coverage']['response_truncated'])
+        self.assertIn('error', compared)
+        self.assertIn('truncated', content['error'].lower())
 
     def test_truncated_target_cli_outputs_diagnostics_and_exits_two(self):
         with tempfile.TemporaryDirectory() as folder:
