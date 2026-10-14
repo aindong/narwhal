@@ -18,7 +18,7 @@ All notable changes to Narwhal are documented here. The format follows
 - Comparisons and content briefs exclude reports explicitly marked as truncated,
   rather than turning unseen HTML into missing-feature gaps or full-page scores.
   Partial targets return errors; partial rivals are skipped with diagnostics.
-  Topic mode without a usable page is an error, not a page-grounded brief.
+  Brief requests without any usable page are errors, not page-grounded briefs.
   Standalone partial scans remain available with their coverage warnings; missing
   or malformed legacy flags are not inferred to prove truncation/completeness.
 - Content-brief headings, recommendations, CLI help and plugin guidance describe

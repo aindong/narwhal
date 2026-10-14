@@ -297,10 +297,10 @@ def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None
         except Exception as exc:  # noqa: BLE001
             failed.append({"url": u, "error": str(exc)})
 
-    if not your_url and topic and not rivals:
+    if not your_url and not rivals:
         return {"topic": topic, "failed": failed,
-                "error": "brief needs at least one usable competitor page for topic mode; "
-                         "no topic brief was measured."}
+                "error": "brief needs an own page or at least one usable competitor page; "
+                         "no page-grounded brief was measured."}
 
     gsc_data = None
     if use_gsc:

@@ -112,6 +112,11 @@ class TestComparisonCoverage(unittest.TestCase):
         self.assertIn('error', data)
         self.assertNotIn('grounding', data)
 
+    def test_empty_api_and_mcp_requests_cannot_claim_page_grounding(self):
+        for data in (brief.run(use_gsc=False), mcp_server._brief(use_gsc=False)):
+            self.assertIn('error', data)
+            self.assertNotIn('grounding', data)
+
     def test_mcp_adapters_preserve_truncated_input_errors(self):
         with fixture({TARGET}):
             compared = mcp_server._compare(TARGET, [COMPLETE])
