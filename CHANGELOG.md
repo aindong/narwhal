@@ -15,6 +15,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- A failed first URL in competitor comparisons cannot promote a rival to "You"
+  or produce a successful target/competitor verdict. HTTP failures, host-policy
+  rejection and non-HTML targets yield error diagnostics and CLI exit 2; failed
+  competitors remain skippable when the requested target and another rival load.
 - Competitor comparisons retain one supported built-in rule policy across page
   scans, including when a failed competitor fetch mutates caller configuration.
   Future comparisons still see caller updates; custom callbacks stay compatible
