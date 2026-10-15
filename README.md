@@ -295,6 +295,12 @@ does not mean site-wide or exhaustive validation. Fetch/non-HTML failures show
 zero as a fail-safe, not measured health; old reports without scope do not infer
 coverage from finding counts. Truncated HTML coverage stays explicit.
 
+Native page-report HTML/PDF headlines follow the highest reported priority, or
+say "No flagged findings" when none are present—not "Excellent" as an overall
+quality verdict. The numeric score band stays secondary and explicitly describes
+reported findings, not page quality. Scores, severity and machine-readable data
+are unchanged; absent flags do not certify unchecked or unmeasured conditions.
+
 ### Useful flags (`scan.py`)
 - `--render` — render JavaScript via Playwright (for SPAs), and **measure JS
   dependence**: the served HTML is diffed against the rendered DOM — "X% of

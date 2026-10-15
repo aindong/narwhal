@@ -663,6 +663,7 @@ def score_gauge(score: int, label: str = "Health score") -> str:
 
 
 def _score_header(score, grade, counts, status, rendered, score_label="Health score") -> str:
+    """Lead with reported findings; a numeric band is not a quality verdict."""
     chips = "".join(
         f'<span class="chip s-{s}">{counts[s]} {_SEV_LABEL[s]}</span>'
         for s in SEVERITY if counts[s])
@@ -673,10 +674,15 @@ def _score_header(score, grade, counts, status, rendered, score_label="Health sc
         headline, color = "Critical findings first", _SEV_COLOR["critical"]
     elif counts["high"]:
         headline, color = "High-priority findings", _SEV_COLOR["high"]
+    elif counts["medium"]:
+        headline, color = "Medium-priority findings", _SEV_COLOR["medium"]
+    elif counts["low"]:
+        headline, color = "Low-priority findings", _SEV_COLOR["low"]
     else:
-        headline, color = grade.title(), _grade_color(score)
+        headline, color = "No flagged findings", _SEV_COLOR["good"]
     band = ("" if score_label == "Score unavailable" else
-            f'<div class="muted">Score band: {_esc(grade)}</div>')
+            f'<div class="muted">Score band: {_esc(grade)} '
+            '(reported findings, not page quality)</div>')
     return (
         '<header class="hero">'
         f'{score_gauge(score, label=score_label)}'

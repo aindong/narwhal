@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Findings-first page headlines:** native page HTML/PDF heroes describe the
+  highest reported priority or "No flagged findings", not a blanket grade.
+  The secondary numeric band is explicitly not page quality. Critical/high and
+  unmeasured precedence, scores, JSON, Markdown and other report types stay intact.
 - **Literal GEO text cues:** four editorial checks expose bounded pattern counts
   and explicit limits instead of declaring answer quality, source absence or
   engine citability. Advisories stay low priority and plans keep edits conditional;
