@@ -1,9 +1,11 @@
 """Root-file evidence does not confuse HTML/gates/failure with publication."""
 
 import copy
+import io
 import json
 import sys
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest import mock
 
@@ -87,6 +89,36 @@ class TestLlmsResponseEvidence(unittest.TestCase):
                 self.assertEqual('unverified', rep.meta['llms_txt']['state'])
                 self.assertEqual('root_http_response', rep.meta['llms_txt']['basis'])
                 self.assertNotIn('secret-token', rep.to_json())
+
+    def test_incomplete_404_and_410_do_not_certify_absence_or_file_creation(self):
+        for status in (404, 410):
+            for truncated in (True, False):
+                resp = response(status=status, truncated=truncated)
+                if not truncated:
+                    resp.headers['content-range'] = 'bytes 0-10/500'
+                rep = report_for(resp)
+                self.assertFalse(rep.findings)
+                self.assertEqual('unverified', rep.meta['llms_txt']['state'])
+                self.assertIsNotNone(recorded_llms_problem(rep.meta, for_score=True))
+                built = plan.build_plan(json.loads(rep.to_json()), str(Path(__file__).parent / 'fixtures/planner/plain_html'))
+                self.assertEqual(['geo.llms.txt.availability.unverified'], [a['rule_id'] for a in built['actions']])
+                self.assertTrue(built['actions'][0]['manual_action'])
+                forged = {**rep.meta['llms_txt'], 'state': 'absent', 'reason': 'http_absence'}
+                self.assertIsNone(llms_resource.recorded(forged))
+
+    def test_urllib_error_body_budget_preserves_status_closes_stream_and_prevents_false_absence(self):
+        for status in (404, 410):
+            for body, truncated in ((b'12345678', False), (b'123456789', True)):
+                stream = io.BytesIO(body)
+                error = urllib.error.HTTPError(URL, status, 'not found', {'X-Narwhal-Truncated': 'true'}, stream)
+                with mock.patch.object(http, '_urllib_safe_open', side_effect=error):
+                    resp = http._fetch_urllib(URL, 1, http.DEFAULT_UA, 8)
+                self.assertTrue(stream.closed)
+                self.assertEqual(status, resp.status)
+                self.assertEqual('12345678', resp.text)
+                self.assertEqual(truncated, resp.headers.get('x-narwhal-truncated') == 'true')
+                rep = report_for(resp)
+                self.assertEqual('unverified' if truncated else 'absent', rep.meta['llms_txt']['state'])
 
     def test_truncated_candidate_is_not_verified_and_body_is_not_retained(self):
         rep = report_for(response(body='# Project\nsecret-body-token', truncated=True))

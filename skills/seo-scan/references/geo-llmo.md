@@ -83,7 +83,7 @@ file as optional guidance, not a replacement for crawlable, useful content.
 Narwhal probes the root endpoint only, preserving status, media type, final
 redirect URL and body-budget evidence. A complete supported text response with
 an initial ATX/simple Setext H1 is only a candidate, not full format validation
-or proof an engine used it. Root 404/410 observations do not establish absence
+or proof an engine used it. Complete root 404/410 observations do not establish absence
 of subpath files. HTML fallback, gating, unsupported/empty/partial/truncated
 responses remain unverified rather than passing or missing. Known HTTP
 uncertainty blocks relevant score comparisons and produces verification-only

@@ -19,7 +19,7 @@ All notable changes to Narwhal are documented here. The format follows
 - Root llms.txt observations retain HTTP/type/completeness evidence rather than
   treating every nonempty response as publication or every failure as absence.
   HTML/soft-error/gated/empty/partial/truncated candidates stay unverified and
-  non-scoring; observed 404/410 retains the optional low advisory. Root-only
+  non-scoring; complete observed 404/410 retains the optional low advisory. Root-only
   wording, legacy-flag labels, crawl receipts, score-comparison guards and
   manual-only verification plans preserve the limits of this proposal check.
 - Site-graph rankings break equal inbound-link and click-depth ranks by URL
