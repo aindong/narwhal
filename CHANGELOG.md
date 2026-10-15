@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Native page-report score tables scroll within a labelled keyboard-focusable
+  region on narrow screens, with readable area labels and accessible severity
+  headers. This prevents the observed 320/360px page overflow and 390px card
+  spill. Print/PDF removes scroll clipping and focus outlines; scores, counts,
+  JSON and Markdown are unchanged. A dedicated browser regression covers
+  320–1100px layouts, keyboard access, multi-digit counts and print input.
 - Content scans and comparisons share bounded attribution-cue observations:
   nonempty author metadata, declared author links and short leading byline-like
   blocks, independent of main-content extraction. Bare prose words/blank metadata

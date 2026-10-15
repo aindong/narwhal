@@ -550,9 +550,14 @@ class Report:
                     f'<td>{c["good"] or ""}</td></tr>')
             body.append(
                 '<section class="card"><h2>Breakdown by area</h2>'
-                '<table class="areas"><thead><tr><th>Area</th><th>Score</th>'
-                '<th>🔴</th><th>🟠</th><th>🟡</th><th>🔵</th><th>🟢</th></tr></thead>'
-                f'<tbody>{"".join(rows)}</tbody></table></section>')
+                '<p class="muted">Scroll horizontally if needed to view all scores and severity counts.</p>'
+                '<div class="score-table-scroll" tabindex="0" role="region" '
+                'aria-label="Score breakdown by area; scroll horizontally if needed">'
+                '<table class="areas"><thead><tr><th scope="col">Area</th><th scope="col">Score</th>'
+                '<th scope="col" aria-label="Critical">🔴</th><th scope="col" aria-label="High">🟠</th>'
+                '<th scope="col" aria-label="Medium">🟡</th><th scope="col" aria-label="Low">🔵</th>'
+                '<th scope="col" aria-label="Passed">🟢</th></tr></thead>'
+                f'<tbody>{"".join(rows)}</tbody></table></div></section>')
 
         # Priority fixes
         priority = buckets["critical"] + buckets["high"] + buckets["medium"]
@@ -773,6 +778,10 @@ ul.clean li:last-child{border-bottom:0}
 table{width:100%;border-collapse:collapse;font-size:14px}
 table.areas th,table.areas td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--border)}
 table.areas th:first-child,table.areas td:first-child{text-align:left}
+.score-table-scroll{max-width:100%;overflow-x:auto;border:1px solid var(--border);border-radius:8px}
+.score-table-scroll:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
+.score-table-scroll table.areas th:first-child,.score-table-scroll table.areas td:first-child{min-width:10rem}
+.score-table-scroll .score-cell{min-width:8rem}
 .table-scroll{max-width:100%;overflow-x:auto;margin:14px 0 24px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
 .table-scroll:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
 table.markdown th,table.markdown td{min-width:8rem;padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
@@ -807,6 +816,7 @@ pre code{display:block;padding:0;background:transparent;border-radius:0;word-bre
 .foot{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 0}
 .foot a{color:var(--brand);text-decoration:none}
 @media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}pre{white-space:pre-wrap;overflow:visible}pre code{overflow-wrap:break-word}.table-scroll{overflow:visible;border:0;border-radius:0}.table-scroll:focus-visible{outline:0}table.markdown{table-layout:fixed;font-size:11px}table.markdown th,table.markdown td{min-width:0;padding:6px 8px}}
+@media print{.score-table-scroll{overflow:visible;border:0;border-radius:0}.score-table-scroll:focus-visible{outline:0}.score-table-scroll table.areas th:first-child,.score-table-scroll table.areas td:first-child,.score-table-scroll .score-cell{min-width:0}}
 """
 
 
