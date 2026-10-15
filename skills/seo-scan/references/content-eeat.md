@@ -71,11 +71,26 @@ checks so link-dominated index pages aren't judged as thin articles.
 - Warning signs the auditor approximates: no author, no dates, no specifics, no
   sources, filler phrasing. Fixing those usually means adding genuine expertise.
 
-## Filler & AI-writing detection
+<a id="filler--ai-writing-detection"></a>
+
+## Filler & phrase review
 - The content auditor flags **filler/padding phrases** ("in today's fast-paced
-  world", "when it comes to", "needless to say"…) and **AI-writing patterns**
+  world", "when it comes to", "needless to say"…) and **configured common phrases**
   ("it's worth noting", "delve into", "a testament to", "unlock the potential"…),
   plus low **lexical diversity** (repetitive vocabulary), with example matches.
-- These are *signals*, not proof — a few is fine; a high density suggests hollow or
-  generically-generated content. The fix is always the same: replace cliché phrasing
-  with concrete, first-hand specifics, data, and examples.
+- A match is a prompt for **editorial review**, not evidence of AI authorship,
+  poor quality, unoriginality or a search penalty. Even literal subject words
+  such as "tapestry" can match. Read the context and intended audience before
+  deciding whether any edit is useful; accurate, useful wording can stay.
+- Two or more distinct common-phrase matches produce a low-priority advisory;
+  four or more no longer become a medium-priority authorship/ranking warning.
+  The thresholds are unvalidated editorial defaults, not measured SEO risk.
+- An absence of these matches does not prove originality, helpfulness or human
+  authorship either. Vocabulary variety is a count, not an assessment of truth.
+- Historical `ai_*` helper keys and finding rule IDs remain for compatibility,
+  not as detector claims. Displayed titles have changed, so update title-based
+  `[ignore].titles` filters if they used the previous AI-sounding labels.
+  A score change caused by the priority correction is not a page improvement.
+- Google's [guidance on generative AI content](https://developers.google.com/search/docs/fundamentals/using-gen-ai-content)
+  emphasizes accuracy, quality, relevance and value for users, rather than these
+  phrase lists. Narwhal does not measure those outcomes from phrase counts.

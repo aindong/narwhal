@@ -342,8 +342,8 @@
     {
       "category": "content",
       "severity": "good",
-      "title": "Clean, specific writing",
-      "detail": "low filler, diverse vocabulary (0.815)",
+      "title": "Few configured style-pattern matches",
+      "detail": "0 filler matches; 0 distinct common-phrase matches; lexical diversity 0.815. This does not establish authorship, originality or content quality.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "content.clean.specific.writing",

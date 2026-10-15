@@ -1,9 +1,10 @@
-"""Content-quality heuristics: filler language, AI-writing patterns, density.
+"""Editorial heuristics: filler language, common phrases and vocabulary variety.
 
-Pure, stdlib-only signals that approximate what Google's helpful-content and
-Search Quality Rater guidance penalize: hollow padding, generic AI-sounding prose,
-and low information density. These are *signals*, not proof — they flag pages worth
-a human read, and the content auditor reports them with example matches.
+Pure, stdlib-only pattern counts for a contextual human read. Common phrases can
+be appropriate and cannot identify AI authorship, originality, helpfulness or
+search-engine penalties. Example matches are observations, not quality verdicts.
+Legacy AI_PATTERNS and ai_* result names remain for caller compatibility only;
+they are not an authorship detector or a calibrated probability.
 """
 
 from __future__ import annotations
@@ -34,7 +35,8 @@ FILLER = [
     r"in order to",
 ]
 
-# Telltale LLM/marketing-generated phrasings.
+# Configured common/marketing phrases, not evidence of how text was produced.
+# Keep the historical name for callers; neither matches nor absence prove origin.
 AI_PATTERNS = [
     r"it(?:'s| is) worth noting",
     r"delv(?:e|ing) into",

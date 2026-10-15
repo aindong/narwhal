@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Contextual phrase review:** common wording produces low-priority editorial
+  advice with actual examples and explicit limits, not an AI-authorship or ranking
+  risk verdict. Low-match passes also avoid quality/authorship certification.
+  Plans keep edits conditional. Stable IDs and phrase counters remain; four-plus
+  priority changes from medium to low, not proof of improved pages. Review title filters.
 - **Review-pack foundation:** an offline maintainer utility binds reported
   findings to local snapshots and tracks observation, priority and advice review
   separately. The historical 15-case corpus remains pending/report-only, without
