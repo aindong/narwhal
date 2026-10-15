@@ -13,7 +13,7 @@ from lib import report
 def sample_markdown():
     """Return representative readable, literal and deliberately wide tables."""
     header = '| ' + ' | '.join('Column %02d' % n for n in range(1, 15)) + ' |'
-    divider = '|' + ':--|' * 14
+    divider = '|' + '|'.join(('--', ':--:', '--:')[n % 3] for n in range(14)) + '|'
     values = '| ' + ' | '.join('Value %02d' % n for n in range(1, 15)) + ' |'
     return ('# Report table verification\n\n## Actions\n\n'
             '| Rule \\| scope | Evidence |\n|:--|:--|\n'
@@ -51,6 +51,10 @@ def main(argv=None):
             assert rows[1] == ['Title', 'café|🐳']
             assert rows[4] == ['', 'Empty first cell']
             assert len(rows[-1]) == 14 and rows[-1][-1] == 'Value 14'
+            alignment = [('left', 'center', 'right')[n % 3] for n in range(14)]
+            wide_table = page.locator('table.markdown').nth(1)
+            assert wide_table.locator('th').evaluate_all('(cells) => cells.map(c => getComputedStyle(c).textAlign)') == alignment
+            assert wide_table.locator('td').evaluate_all('(cells) => cells.map(c => getComputedStyle(c).textAlign)') == alignment
             styles = page.locator('table.markdown').first.locator('th,td').evaluate_all('(cells) => cells.map(c => {const s=getComputedStyle(c); return {padding:s.padding,align:s.textAlign,border:s.borderBottomWidth}})')
             assert all(s['padding'] == '10px 12px' and s['align'] == 'left' for s in styles), styles
             assert styles[0]['border'] == '1px'
@@ -70,6 +74,7 @@ def main(argv=None):
             page.keyboard.press('ArrowRight')
             page.wait_for_function('(n) => n.scrollLeft > 0', arg=wide.element_handle(), timeout=5000)
             assert page.locator('table tr').evaluate_all('(rows) => rows.map(r => Array.from(r.cells, c => c.textContent))') == rows
+            assert wide_table.locator('td').evaluate_all('(cells) => cells.map(c => getComputedStyle(c).textAlign)') == alignment
             if args.artifacts:
                 page.screenshot(path=str(args.artifacts / 'mobile.png'), full_page=True)
 
@@ -78,6 +83,8 @@ def main(argv=None):
             assert wrappers.evaluate_all('(nodes) => nodes.every(n => getComputedStyle(n).overflowX === "visible")')
             assert wide.evaluate('(n) => getComputedStyle(n).outlineWidth === "0px"'), 'Keyboard focus ring leaked into print'
             assert page.locator('table.markdown').evaluate_all('(nodes) => nodes.every(n => getComputedStyle(n).tableLayout === "fixed")')
+            assert wide_table.locator('th').evaluate_all('(cells) => cells.map(c => getComputedStyle(c).textAlign)') == alignment
+            assert wide_table.locator('td').evaluate_all('(cells) => cells.map(c => getComputedStyle(c).textAlign)') == alignment
             assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
             assert page.locator('table tr').evaluate_all('(rows) => rows.map(r => Array.from(r.cells, c => c.textContent))') == rows
             if args.artifacts:
@@ -93,7 +100,7 @@ def main(argv=None):
             assert requests == [], requests
         finally:
             browser.close()
-    print('OK: Markdown table styling, mobile/keyboard scrolling, print cells, inert HTML and native score-table styles.')
+    print('OK: Markdown table styling/alignment, mobile/keyboard scrolling, print cells, inert HTML and native score-table styles.')
     return 0
 
 

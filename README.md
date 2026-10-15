@@ -611,6 +611,10 @@ of squeezing columns or widening the page. Print/PDF input uses compact wrapping
 columns rather than a clipped scroll area; native scan score tables keep their
 existing presentation. Very large tables may still need manual print review.
 
+Table separator markers set column alignment on both headers and body cells:
+`:--` (or unmarked `--`) is left, `:--:` is centered, and `--:` is right.
+This also keeps comparison score columns right-aligned on screen and in print.
+
 The limited Markdown renderer preserves root fenced code (three or more matching
 backticks or tildes, up to three leading spaces) as escaped literal text. Code
 comments cannot become report titles, and Markdown inside a fence is not styled
