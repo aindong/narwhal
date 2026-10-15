@@ -21,6 +21,14 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Crawl measurement evidence:** link outcomes count successful 2xx, broken and
+  unverified responses separately; zero checks cannot produce a green pass.
+  No-response request failures remain unverified, while existing unreachable
+  entries remain available separately from observed broken HTTP responses.
+  Duplicate results count actual eligible fingerprints (excluding known failed/
+  partial pages); fewer than two means insufficient data, not no duplicates.
+  Unknown legacy coverage remains unrecorded. Audit headlines distinguish not
+  run from scoped observed counts; scores and actual broken-link findings remain.
 - **Sitemap extraction evidence:** validator/audit URL totals include only files
   fully extracted within the supported XML scope. Malformed/unsupported XML,
   DTDs or parser limits produce explicit fetched-file coverage notes, withholding

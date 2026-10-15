@@ -293,6 +293,20 @@ responses leave reachability unverified, and skipped sampling says so explicitly
 Positive health wording applies only to the checks performed, not unsampled URLs
 or deployed indexing/search visibility.
 
+Crawl JSON records HTTP link-response `coverage` (successful 2xx, broken and
+unverified checked targets, with no-response `request_failures` counted within
+unverified) and `duplicate_coverage` (eligible SimHash fingerprints
+within scanned pages). Known failed/partial pages do not enter duplicate
+comparison. Zero checked links and fewer than two eligible fingerprints are
+insufficient evidence, not green passes. Gated/non-success responses stay
+unverified without being mislabeled dead links. Reports retain cap/omission
+notes, scope clean observations to measured targets/pairs, and do not infer
+coverage from legacy missing receipts. Combined audit headlines distinguish
+checks not run from measured counts. These remain sampled measurements and a
+near-duplicate heuristic, not exhaustive link or content health certification.
+The legacy `links.broken` list retains unreachable status-0 entries for
+compatibility; these are request failures, not observed broken HTTP responses.
+
 ### Track health over time (regression tracking, no database)
 
 Narwhal stays stateless: instead of a database, save a scan as JSON and diff two

@@ -30,6 +30,14 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Crawl and combined audit reports distinguish zero link checks, gated/unknown
+  HTTP responses and insufficient duplicate-comparison inputs from clean results.
+  Additive coverage counts retain successful, broken and unverified checks;
+  no-response request failures stay unverified while legacy unreachable entries
+  remain available, distinct from observed broken HTTP responses;
+  duplicate scope counts eligible fingerprints, excluding known failed/partial
+  pages. Missing legacy receipts stay unrecorded. Headlines label observed/sample
+  results rather than presenting disabled checks as zero. Scoring is unchanged.
 - Sitemap validation and combined audits record bounded XML extraction coverage
   instead of treating markers, malformed prefixes or unsupported roots as measured
   URL lists. Namespace-aware extraction decodes XML escaping; incomplete files

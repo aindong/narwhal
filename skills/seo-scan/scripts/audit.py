@@ -161,8 +161,8 @@ def render_markdown(data: dict) -> str:
     page = data["page"]
     site_res = data["site_result"]
     sm = data["sitemap"]
-    broken = len(site_res.get("links", {}).get("broken", [])) if site_res.get("links") else 0
-    dupes = len(site_res.get("duplicates", []))
+    broken = crawl_site.link_summary(site_res.get('links'))
+    dupes = crawl_site.duplicate_summary(site_res)
 
     cwv = data.get("vitals")
     headlines = [h for h in
@@ -207,8 +207,8 @@ def render_html(data: dict) -> str:
     page = data["page"]
     site_res = data["site_result"]
     sm = data["sitemap"]
-    broken = len(site_res.get("links", {}).get("broken", [])) if site_res.get("links") else 0
-    dupes = len(site_res.get("duplicates", []))
+    broken = crawl_site.link_summary(site_res.get('links'))
+    dupes = crawl_site.duplicate_summary(site_res)
     overall = int(round(overall_score(data)))
 
     cwv = data.get("vitals")
