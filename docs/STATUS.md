@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Non-backtracking robots matching:** ordered literal-piece searches replace
+  combinatorial wildcard regex matching. Repeated-star nonmatches complete
+  without changing rule specificity, Allow ties, URL normalization or fetch
+  behavior; exhaustive small-input and adversarial subprocess tests cover this
+  scoped computation, not total crawl CPU or full robots conformance.
 - **Initial robots marker:** a single optional file-start UTF-8 BOM no longer
   hides the first rule group or Sitemap directive. Blocked leaves remain filtered
   and GEO no longer invents root allowance from a missed group; path literals,

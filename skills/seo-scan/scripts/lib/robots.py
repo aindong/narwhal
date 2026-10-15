@@ -15,7 +15,6 @@ Used by the GEO auditor (AI-crawler access) and the polite site crawler.
 
 from __future__ import annotations
 
-import re
 from urllib.parse import urlsplit
 
 
@@ -148,10 +147,37 @@ class RobotsTxt:
 def _match_len(pattern: str, path: str) -> int:
     """Match a rule to a canonical target; measure normalized rule specificity."""
     pattern = _comparison_path(pattern, pattern=True)
-    end_anchor = ""
-    p = pattern
-    if p.endswith("$"):
-        end_anchor = "$"
-        p = p[:-1]
-    regex = "^" + "".join(".*" if ch == "*" else re.escape(ch) for ch in p) + end_anchor
-    return len(pattern) if re.search(regex, path) else -1
+    anchored = pattern.endswith('$')
+    p = pattern[:-1] if anchored else pattern
+    return len(pattern) if _wildcard_match(p, path, anchored) else -1
+
+
+def _wildcard_match(pattern: str, path: str, anchored: bool) -> bool:
+    """Find ordered literal pieces, without enumerating wildcard partitions.
+
+    Earlier placements leave the most room for subsequent pieces. Only the
+    final anchored piece needs a fixed suffix. Preserve the old regex's newline
+    behavior for direct path callers: stars do not cross LF, and $ may precede
+    one final LF. URI normalization and rule specificity stay with the caller.
+    """
+    pieces = pattern.split('*')
+    if not path.startswith(pieces[0]):
+        return False
+    pos = len(pieces[0])
+    if len(pieces) == 1:
+        return not anchored or path[pos:] in ('', '\n')
+    for piece in pieces[1:-1]:
+        found = path.find(piece, pos)
+        if found < 0 or '\n' in path[pos:found]:
+            return False
+        pos = found + len(piece)
+    last = pieces[-1]
+    if not anchored:
+        found = path.find(last, pos)
+        return found >= 0 and '\n' not in path[pos:found]
+    ends = (len(path), len(path) - 1) if path.endswith('\n') else (len(path),)
+    for end in ends:
+        start = end - len(last)
+        if start >= pos and path.startswith(last, start) and '\n' not in path[pos:start]:
+            return True
+    return False

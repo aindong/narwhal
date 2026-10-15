@@ -91,6 +91,11 @@ group or Sitemap declaration is not lost. Literal markers within paths remain
 data; this does not change robots HTTP-error policy or the explicitly requested
 crawl-base override.
 
+Robots wildcard matching searches ordered literal pieces without enumerating
+star partitions. Repeated-star rules no longer stall candidate filtering;
+prefix/end-anchor semantics, encoded literals and Allow/Disallow precedence are
+preserved. This does not impose a whole-crawl CPU or network-work budget.
+
 The generic page robots-meta check combines all active `name="robots"` tags,
 recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
 mistake directive parameter values or substrings for restrictions. Its passing
