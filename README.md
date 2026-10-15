@@ -86,6 +86,11 @@ Legacy caller flags retain stable finding IDs but are labelled unverified contex
 This is a **root request only**, not independent subpath/`rel=describedby` discovery,
 full proposal validation, linked-file checking, engine use or a ranking guarantee.
 
+Robots readers ignore one optional file-start UTF-8 BOM, so the first user-agent
+group or Sitemap declaration is not lost. Literal markers within paths remain
+data; this does not change robots HTTP-error policy or the explicitly requested
+crawl-base override.
+
 The generic page robots-meta check combines all active `name="robots"` tags,
 recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
 mistake directive parameter values or substrings for restrictions. Its passing

@@ -29,6 +29,13 @@ check, plus what to do when the automated check isn't enough.
    a URL blocked in robots.txt can still be indexed without a snippet. Always
    reference the XML sitemap from robots.txt.
 
+Both robots readers ignore one optional initial UTF-8 byte-order mark before
+reading fields, consistent with [Google's file-format guidance](https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec#file-format)
+(checked 2026-10-15). A marker inside a path or on a later line is not stripped.
+This prevents a lost first user-agent group or Sitemap declaration; it does not
+change fetch/error policy, URI matching, reference guards or the explicit
+crawl-base override, and is not proof of live crawler behavior.
+
 The current deterministic page-meta check combines all active generic
 `name="robots"` tags, matches exact restriction names and expands `none` to
 `noindex,nofollow`. It does not interpret parameter values as standalone rules.

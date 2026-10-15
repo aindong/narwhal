@@ -324,8 +324,10 @@ def usable_locations(values, *, diagnostics=None, source='page_locations'):
 
 def robots_sitemaps(text, *, diagnostics=None):
     """Read Sitemap directives without trusting their values as fetch inputs."""
+    text = text or ''
+    text = text[1:] if text.startswith('\ufeff') else text
     values = []
-    for raw in (text or '').splitlines():
+    for raw in text.splitlines():
         field, separator, value = raw.split('#', 1)[0].partition(':')
         if separator and field.strip().lower() == 'sitemap':
             values.append(value.strip())

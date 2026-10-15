@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Initial robots marker:** a single optional file-start UTF-8 BOM no longer
+  hides the first rule group or Sitemap directive. Blocked leaves remain filtered
+  and GEO no longer invents root allowance from a missed group; path literals,
+  reference guards and the explicit crawl-base override stay unchanged.
 - **Root llms.txt evidence:** typed root-response receipts distinguish candidate
   text, observed 404/410 and uncertainty. HTML fallbacks/gates/partial bodies no
   longer produce false publication/absence claims. Crawl/audit notes, GEO-score
