@@ -96,6 +96,31 @@ class TestPlanMemoryBaseline(unittest.TestCase):
         self.assertEqual('unknown', comparison['status'])
         self.assertIsNone(comparison['old_scope'])
 
+    def test_non_sitemap_manual_check_does_not_invent_shared_audit_commands(self):
+        page = {'url': PAGE['url'], 'findings': [{'category': 'technical', 'severity': 'critical',
+                'title': 'Page not served over HTTPS', 'rule_id': 'technical.page.not.served.over.https'}]}
+        built = plan.build_plan({'site': PAGE['url'], 'homepage': page, 'crawl': {}, 'sitemap': {}}, REPO)
+        self.assertTrue(built['actions'][0]['manual_action'])
+        built['actions'][0]['verification'] = ['Review the hosting policy manually; no rerun requested.']
+        markdown = plan.render_markdown(built)
+        self.assertNotIn('## Audit verification', markdown)
+        self.assertNotIn('narwhal audit ', markdown)
+        self.assertNotIn(plan.MEMORY_BASELINE_INSTRUCTION, markdown)
+
+    def test_manual_hosting_remediation_retains_its_requested_deployed_audit(self):
+        page = {'url': PAGE['url'], 'findings': [{'category': 'technical', 'severity': 'critical',
+                'title': 'Page not served over HTTPS', 'rule_id': 'technical.page.not.served.over.https'}]}
+        built = plan.build_plan({'site': PAGE['url'], 'homepage': page, 'crawl': {}, 'sitemap': {}}, REPO)
+        action = built['actions'][0]
+        self.assertTrue(action['manual_action'])
+        self.assertTrue(action['requires_deploy'])
+        self.assertTrue(any(step.startswith('narwhal audit ') for step in action['verification']))
+        markdown = plan.render_markdown(built)
+        self.assertIn('## Audit verification', markdown)
+        self.assertIn('narwhal audit ', markdown)
+        self.assertIn('run after deploy', markdown)
+        self.assertNotIn('narwhal scan ', markdown)
+
 
 if __name__ == '__main__':
     unittest.main()

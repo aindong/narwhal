@@ -24,7 +24,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **In-memory verification prerequisite:** diff-producing plans ask callers to
   preserve the original input report, with all fields, before edits/reruns. The
   planner remains read-only; Markdown does not turn that instruction into shell
-  code. File-backed and manual-only tasks keep their existing responsibilities.
+  code. File-backed and manual measurement checks keep their existing
+  responsibilities; manual hosting fixes retain requested deployed verification.
 - **Fragment-free sitemap-file accounting:** literal `#fragment` aliases share
   file attempts and child/traversal slots, including failed/cyclic references.
   Valid siblings remain reachable within existing limits; pending-file counts

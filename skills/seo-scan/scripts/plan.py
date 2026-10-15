@@ -765,7 +765,8 @@ def render_markdown(plan: dict) -> str:
     if any(MEMORY_BASELINE_INSTRUCTION in action['verification'] for action in plan['actions']):
         lines += ['> ' + MEMORY_BASELINE_INSTRUCTION, '']
     if (plan.get('provenance', {}).get('report_kind') == 'audit'
-            and any(action['rule_id'] not in SITEMAP_VERIFICATION for action in plan['actions'])):
+            and any(step.startswith('narwhal audit ') for action in plan['actions']
+                    for step in action['verification'])):
         page_output, _ = _verification_outputs(plan['provenance']['report'])
         lines += ['## Audit verification', '',
                   'A local page scan can verify page-level changes only. Keep its '

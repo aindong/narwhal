@@ -32,8 +32,9 @@ All notable changes to Narwhal are documented here. The format follows
 ### Fixed
 - In-memory/Python and parsed-object MCP plans explicitly require preserving the
   original report before verification diffs; read-only planning never saves it.
-  Markdown keeps that prerequisite outside shell blocks. File-backed, manual-only
-  and empty plans do not receive invented save/diff tasks; coverage is unchanged.
+  Markdown keeps that prerequisite outside shell blocks. File-backed, measurement-
+  check-only and empty plans do not receive invented save/diff tasks; actual manual
+  hosting fixes retain their requested deployed verification. Coverage is unchanged.
 - Sitemap-file discovery/traversal deduplicates literal fragment aliases before
   counting attempts, child slots and remaining files. Repeated `file.xml#…`
   references no longer crowd valid siblings out of bounded samples or multiply

@@ -58,8 +58,10 @@ JSON, keeping all fields, at a fresh `before.json` before edits/reruns. If using
 an existing saved report, update the diff baseline and choose distinct fresh
 verification output paths; never substitute a new scan or overwrite an
 existing file. Markdown surfaces the same prerequisite outside executable code.
-File-backed plans do not get this memory-only instruction. Manual verification-
-only and empty plans do not acquire an unrelated audit/diff workflow.
+File-backed plans do not get this memory-only instruction. Manual measurement
+checks and empty plans do not acquire an unrelated audit/diff workflow. The shared
+audit section appears only when an action actually requests an audit rerun;
+manual hosting/source remediation can still require verification after deployment.
 
 Known baseline basename collisions select alternate output names: `after.json`
 uses `after-2.json`, and an audit baseline named `page-after.json` uses
