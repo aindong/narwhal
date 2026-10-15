@@ -225,6 +225,13 @@ coverage from finding counts. Truncated HTML coverage stays explicit.
   ```
 - `--allow-private` — permit localhost/staging targets (off by default; see below).
 
+Expected HTTP acquisition or body-stream failures return a failed-fetch page
+report with no measured area scores, including when optional `requests` is
+installed. A failed stream is not analyzed as partial success. Use `--fail-under`
+to make an unsuccessful scan fail a CI quality gate. HTTP error statuses and
+bodies remain available for diagnostics; the `requests` path does not hide
+unrelated processing errors.
+
 Expected URL syntax, DNS and host-policy failures in `scan`, `audit`, `crawl`,
 `llms` and `sitemap` produce a bounded, single-line `ERROR: URL rejected: …`
 diagnostic with exit code **2**; no report is created or overwritten. Python

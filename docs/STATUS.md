@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Optional HTTP transport resilience:** expected `requests` acquisition and
+  stream failures produce explicit failed-fetch reports, matching stdlib
+  degradation rather than crashing. Interrupted prefixes are not page evidence;
+  acquired responses close on success and failure. Unexpected errors still
+  propagate, and URL/redirect guards stay in force.
 - **Comparison snapshot provenance:** compare/brief facts preserve actual
   rendering mode and display the HTML source per page, including mixed modes.
   Legacy missing flags remain unknown; requested rendering is not substituted
