@@ -21,6 +21,9 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Robots path parameters:** full-URL checks retain semicolon path suffixes,
+  preventing both missed exclusions and lost specific allowances. Query and
+  fragment boundaries and encoded reserved distinctions remain unchanged.
 - **Robots URI comparison:** equivalent unreserved escapes and UTF-8 spellings
   now match before crawl filtering. Reserved delimiters and literal encoded
   operators remain distinct, with case sensitivity and normalized Allow ties

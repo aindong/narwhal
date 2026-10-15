@@ -36,7 +36,8 @@ Encoded reserved delimiters stay distinct (`%2F` is not a path separator), and
 encoded literal `%2A` / `%24` do not become wildcard/end operators. Matching
 remains case-sensitive outside escape hex digits; equivalent normalized rules
 retain Allow-on-tie precedence. Query matching and full-URL fragment exclusion
-remain. This does not claim complete URL/robots conformance or change which
+remain. Full URLs retain semicolon path parameters rather than silently dropping
+them. This does not claim complete URL/robots conformance or change which
 paths a caller checks; the GEO policy receipt still explicitly checks `/` only.
 
 ## Mobile / rendering
