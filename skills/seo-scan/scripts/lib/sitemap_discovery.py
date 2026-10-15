@@ -30,6 +30,7 @@ class Discovery:
             self.limits.append(reason)
 
     def read(self, url, *, allow_private, timeout, declared=False):
+        url = sitemap.file_url(url)
         if url in self.seen:
             if declared and url in self.absent:
                 self.absent.remove(url)

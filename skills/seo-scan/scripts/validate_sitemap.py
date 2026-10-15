@@ -63,6 +63,7 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
     seeds = [start] if _looks_like_sitemap(start) else discover(
         start, allow_private=allow_private, timeout=timeout, diagnostics=source_diagnostics,
         coverage=discovery_coverage)
+    seeds = list(dict.fromkeys(sm.file_url(url) for url in seeds))
 
     result = {
         "start": start, "seeds": seeds, "sitemaps_fetched": 0, "sitemaps_attempted": 0, "indexes": 0,
@@ -113,6 +114,7 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
             result["indexes"] += 1
             for loc in sm.usable_locations([e['loc'] for e in entries], diagnostics=source_diagnostics,
                                             source='index_locations'):
+                loc = sm.file_url(loc)
                 if loc not in visited:
                     queue.append(loc)
         else:

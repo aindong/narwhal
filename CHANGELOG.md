@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Sitemap-file discovery/traversal deduplicates literal fragment aliases before
+  counting attempts, child slots and remaining files. Repeated `file.xml#…`
+  references no longer crowd valid siblings out of bounded samples or multiply
+  fetched-file URL entries. Query strings, encoded delimiters and page-location
+  source values remain distinct/unchanged; fetch policies and limits remain.
 - Raw sitemap fetches verify bounded HTTP gzip/deflate wire bodies before
   decoding, including on older optional transports. Short Content-Length and
   incomplete/corrupt compression trailers cannot expose a complete-looking XML

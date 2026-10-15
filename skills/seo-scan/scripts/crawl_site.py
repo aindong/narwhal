@@ -95,7 +95,8 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
         kind, entries = parsed
         locs = [entry['loc'] for entry in entries]
         if kind == 'index':
-            children = list(dict.fromkeys(sm.usable_locations(locs, diagnostics=diagnostics, source='index_locations')))
+            children = list(dict.fromkeys(sm.file_url(child) for child in
+                                         sm.usable_locations(locs, diagnostics=diagnostics, source='index_locations')))
             if len(children) > MAX_INDEX_CHILDREN:
                 discovery.limit('index_child_budget')
             for child in children[:MAX_INDEX_CHILDREN]:

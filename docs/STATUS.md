@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Fragment-free sitemap-file accounting:** literal `#fragment` aliases share
+  file attempts and child/traversal slots, including failed/cyclic references.
+  Valid siblings remain reachable within existing limits; pending-file counts
+  do not multiply aliases. Queries, encoded delimiters and page references are
+  unchanged. This is not general URI canonicalization or a wider fetch policy.
 - **HTTP compression evidence:** raw sitemap fetches acquire bounded wire bytes
   for gzip/deflate and require complete compression streams before decoding.
   Short wire lengths, missing/corrupt trailers and response decode overflow
