@@ -28,7 +28,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib.report import recorded_scan_scope, recorded_js_comparison_problem  # noqa: E402
+from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -79,11 +79,16 @@ def _comparison(o: dict, n: dict) -> dict:
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("js_comparison_unverified") is True
                                            for page in pages):
             reasons.append(label + " audit contains an unverified JS-dependence comparison; its overall score is not comparable.")
+        if isinstance(pages, list) and any(isinstance(page, dict) and page.get('sitemap_discovery_unverified') is True
+                                         for page in pages):
+            reasons.append(label + ' audit contains unverified sitemap availability; its overall score is not comparable.')
         meta = item["meta"] if isinstance(item["meta"], dict) else {}
         coverage = meta.get("coverage")
         js_problem = recorded_js_comparison_problem(meta, for_score=True)
         if js_problem:
             reasons.append(label + " report did not measure JS-dependence: " + js_problem + ".")
+        if recorded_sitemap_discovery_problem(meta, for_score=True):
+            reasons.append(label + ' report did not verify supported sitemap availability; technical-score comparison is unverified.')
         if meta.get("response_truncated") is True or (
                 isinstance(coverage, dict) and coverage.get("response_truncated") is True):
             reasons.append(label + " report used truncated HTML coverage.")
@@ -119,7 +124,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check settings and rule-configuration fingerprints, response truncation, known JS-comparison gaps and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check settings and rule-configuration fingerprints, response truncation, known JS/sitemap-availability gaps and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 

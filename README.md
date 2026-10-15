@@ -310,7 +310,38 @@ wire Content-Length; this is not full transport/encoding conformance validation.
 `--max-sitemaps` bounds distinct file fetch attempts, including failures, recorded
 as `sitemaps_attempted`; it is not a redirect-hop or whole-network request budget.
 Remaining-file counts exclude already-visited and duplicate queued references.
-The legacy marker/regex helpers used by crawl/context discovery are unchanged.
+Scan context, crawl and validator fallback discovery now share checked XML
+extraction too: prefixes, gzip and XML character escaping work without treating
+comments, HTML markers or bare loc tags as pages. Each discovery component has a
+50-distinct-file attempt ceiling and the previous 5,000,000-byte response budget;
+gzip decoded input retains the separate ceiling above. Crawl follows at most
+five distinct syntax-usable child references per index and one index hop
+(nested child indexes are noted, not expanded), retaining
+anchor fallback and valid siblings within those limits. Already-visited entries
+are skipped without retaining entire parsed-file buffers. These are component
+budgets, not an aggregate audit/network/CPU/heap budget; validator traversal has
+its separately selected `--max-sitemaps` budget.
+HTTP `Content-Encoding: gzip`/`deflate` is checked separately from raw `.gz`
+files: the fetch budget bounds both encoded wire bytes and decoded response
+bytes. Short declared bodies, missing/corrupt compression trailers and decode
+overflow contribute no XML prefix. Raw `.gz` files without HTTP encoding stay
+raw for the sitemap decoder and its separate decoded-file budget. Raw fetches
+advertise only supported HTTP encodings; unsolicited unsupported/stacked
+encodings remain explicit fetch gaps rather than guessed complete bodies.
+`sitemap_discovery` receipts record candidate scope, counts and active limits,
+not whole-site URL totals. Unknown formats, incomplete fetches and limits are
+explicit non-scoring notes/manual verification, not proof of missing/invalid
+source. HTTP 404/410 on optional common paths remains distinct from unverified
+fetches; unavailable explicitly declared roots/index children remain coverage
+gaps, including when an earlier optional probe already checked that URL. If no
+supported root was measured, relevant technical-score diffs and score-based
+compare/brief verdicts remain unverified; focused non-technical scores and
+missing legacy receipts are not guessed incomplete. Finding/scoring weights
+are unchanged. The legacy pure marker/regex helpers remain compatibility hints,
+not evidence used by these discovery paths.
+The crawl graph's sitemap sample/count contains actual extracted candidates,
+not an automatically added start URL or anchor-fallback URLs. Without verified
+sitemap URL candidates the orphan check is skipped, not a sitemap-absence claim.
 Unknown/legacy extraction receipts do not certify health. Planner coverage-gap
 actions ask for manual verification, not rewriting an otherwise valid unsupported
 format. Sampled URL success requires a successful 2xx response; gated/other

@@ -30,6 +30,18 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Raw sitemap fetches verify bounded HTTP gzip/deflate wire bodies before
+  decoding, including on older optional transports. Short Content-Length and
+  incomplete/corrupt compression trailers cannot expose a complete-looking XML
+  prefix. Both wire and HTTP-decoded bytes obey the response budget; raw `.gz`
+  files retain the separate sitemap decode path. Unsupported HTTP encodings
+  remain explicit fetch gaps, and network guards are unchanged.
+- Sitemap discovery across scan context, crawl and site validation uses complete
+  bounded namespace-aware XML instead of marker/loc regex guesses. Prefixed and
+  gzip roots and XML-escaped URLs work consistently; unverified files cannot
+  contribute crawl candidates. Candidate scopes/limits are explicit, uncertain
+  availability is a non-scoring note/manual check rather than a missing-source
+  verdict, and affected technical-score comparisons stay unverified.
 - Remediation plans separate sitemap fetch/traversal/sample coverage gaps from
   recorded source defects. Uncertain and legacy-unclassified notes receive manual
   verification without guessed source owners or sitemap-creation instructions;

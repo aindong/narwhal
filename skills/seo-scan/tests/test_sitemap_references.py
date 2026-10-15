@@ -35,6 +35,11 @@ def text_fetch(url, **kwargs):
             CHILD: xml('urlset', [BAD, PAGE])}.get(url)
 
 
+def bytes_fetch(url, **kwargs):
+    text = text_fetch(url, **kwargs)
+    return (text.encode(), None) if text is not None else (None, 'HTTP 404')
+
+
 class TestSitemapReferences(unittest.TestCase):
     def test_loc_problem_handles_lazy_port_brackets_and_nfkc_errors(self):
         for value in (BAD, 'https://example.test:nope/p', 'https://example.test:65536/p',
@@ -55,7 +60,8 @@ class TestSitemapReferences(unittest.TestCase):
         self.assertNotIn('password', json.dumps(receipt))
 
     def test_context_continues_after_bad_directive_and_reports_source_scope(self):
-        with mock.patch.object(http, 'fetch_text', side_effect=text_fetch) as fetch:
+        with mock.patch.object(http, 'fetch_text', side_effect=text_fetch) as fetch, \
+                mock.patch.object(http, 'fetch_bytes', side_effect=bytes_fetch):
             ctx = scan.gather_context(BASE, allow_private=False, timeout=1)
         self.assertTrue(ctx['sitemap_found'])
         self.assertEqual(INDEX, ctx['sitemap_url'])
@@ -65,6 +71,7 @@ class TestSitemapReferences(unittest.TestCase):
     def test_crawl_filters_index_children_and_page_locs_before_using_them(self):
         diagnostics = {}
         with mock.patch.object(http, 'fetch_text', side_effect=text_fetch), \
+                mock.patch.object(http, 'fetch_bytes', side_effect=bytes_fetch), \
                 mock.patch.object(http, 'fetch') as fetch_page:
             urls = crawl_site.discover(BASE, allow_private=False, timeout=1, limit=5,
                                        robots_txt=ROBOT, diagnostics=diagnostics)
@@ -77,7 +84,8 @@ class TestSitemapReferences(unittest.TestCase):
             if url == INDEX:
                 return xml('sitemapindex', [BAD] * 6 + [CHILD])
             return xml('urlset', [PAGE]) if url == CHILD else None
-        with mock.patch.object(http, 'fetch_text', side_effect=fetch) as calls:
+        with mock.patch.object(http, 'fetch_bytes', side_effect=lambda url, **kw:
+                               (fetch(url).encode(), None) if fetch(url) is not None else (None, 'HTTP 404')) as calls:
             urls = crawl_site.discover(BASE, allow_private=False, timeout=1, limit=5,
                                        robots_txt='Sitemap: ' + INDEX)
         self.assertEqual([BASE, PAGE], urls)
@@ -86,6 +94,7 @@ class TestSitemapReferences(unittest.TestCase):
     def test_all_invalid_page_locations_allow_homepage_link_fallback(self):
         body = '<html><a href="/valid">Valid page</a></html>'
         with mock.patch.object(http, 'fetch_text', return_value=xml('urlset', [BAD])), \
+                mock.patch.object(http, 'fetch_bytes', return_value=(xml('urlset', [BAD]).encode(), None)), \
                 mock.patch.object(http, 'fetch', return_value=http.Response(BASE, BASE, 200, {}, body, 1)):
             urls = crawl_site.discover(BASE, allow_private=False, timeout=1, limit=5, robots_txt='')
         self.assertEqual([BASE, PAGE], urls)
@@ -115,7 +124,9 @@ class TestSitemapReferences(unittest.TestCase):
                 return 'Sitemap: ' + BAD
             return xml('urlset', [PAGE]) if url == INDEX else None
         diagnostics = {}
-        with mock.patch.object(http, 'fetch_text', side_effect=fetch):
+        with mock.patch.object(http, 'fetch_text', side_effect=fetch), \
+                mock.patch.object(http, 'fetch_bytes', side_effect=lambda url, **kw:
+                                  (fetch(url).encode(), None) if fetch(url) is not None else (None, 'HTTP 404')):
             self.assertEqual([INDEX], validate_sitemap.discover(BASE, allow_private=False,
                                                                timeout=1, diagnostics=diagnostics))
         self.assertEqual({'robots_directives': 1}, diagnostics)
@@ -124,7 +135,8 @@ class TestSitemapReferences(unittest.TestCase):
         def fetch(url, **kwargs):
             return 'Sitemap: ' + BAD if url.endswith('/robots.txt') else None
         with mock.patch.object(http, 'assert_public_host'), \
-                mock.patch.object(http, 'fetch_text', side_effect=fetch):
+                mock.patch.object(http, 'fetch_text', side_effect=fetch), \
+                mock.patch.object(http, 'fetch_bytes', return_value=(None, 'HTTP 404')):
             result = validate_sitemap.analyze(BASE)
         self.assertFalse(result['seeds'])
         text = validate_sitemap.render_markdown(result)
@@ -183,6 +195,7 @@ class TestSitemapReferences(unittest.TestCase):
     def test_crawl_does_not_multiply_shared_robots_counts_by_scanned_pages(self):
         body = '<html><title>Reference fixture</title><h1>Fixture</h1><a href="/valid">Valid</a></html>'
         with mock.patch.object(http, 'fetch_text', side_effect=text_fetch), \
+                mock.patch.object(http, 'fetch_bytes', side_effect=bytes_fetch), \
                 mock.patch.object(http, 'fetch', side_effect=lambda url, **kw: http.Response(url, url, 200, {}, body, 1)):
             result = crawl_site.crawl(BASE, max_pages=2, concurrency=1, detect_dupes=False)
         self.assertEqual(2, result['pages_scanned'])

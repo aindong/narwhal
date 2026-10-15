@@ -108,6 +108,56 @@ XML_PARSE_REASONS = {
     'entry_limit': 'sitemap entry limit reached',
 }
 
+DISCOVERY_REASONS = {**XML_PARSE_REASONS, 'fetch_unverified': 'fetch status/completeness was unverified',
+                     'declared_unavailable': 'a declared sitemap candidate was unavailable'}
+DISCOVERY_SCOPES = ('context_candidates', 'crawl_candidates', 'validator_candidates')
+DISCOVERY_LIMITS = ('file_attempt_budget', 'index_child_budget', 'nested_index_depth')
+
+
+def recorded_discovery(value):
+    """Validate explicit discovery counts without inferring missing legacy state."""
+    if (not isinstance(value, dict) or value.get('basis') != 'bounded_xml_discovery'
+            or value.get('scope') not in DISCOVERY_SCOPES):
+        return None
+    fields = ('attempted_files', 'verified_files', 'unverified_files', 'absent_files')
+    if any(type(value.get(key)) is not int or value[key] < 0 for key in fields):
+        return None
+    if value['attempted_files'] != sum(value[key] for key in fields[1:]):
+        return None
+    if (type(value.get('file_attempt_limit')) is not int
+            or not 0 <= value['attempted_files'] <= value['file_attempt_limit'] <= 50
+            or any(type(value.get(key)) is not int or value[key] <= 0
+                   for key in ('response_byte_limit', 'decoded_byte_limit'))):
+        return None
+    reasons, limits = value.get('reasons'), value.get('limits')
+    if (not isinstance(reasons, dict) or any(key not in DISCOVERY_REASONS or type(n) is not int or n <= 0
+                                           for key, n in reasons.items())
+            or sum(reasons.values()) != value['unverified_files']
+            or not isinstance(limits, list) or any(item not in DISCOVERY_LIMITS for item in limits)
+            or len(set(limits)) != len(limits)):
+        return None
+    return {**{key: value[key] for key in fields + ('basis', 'scope', 'file_attempt_limit',
+                                                   'response_byte_limit', 'decoded_byte_limit')},
+            'reasons': dict(reasons), 'limits': list(limits)}
+
+
+def discovery_note(value):
+    """Explain known gaps without certifying absence or publishing source advice."""
+    if value is None:
+        return None
+    receipt = recorded_discovery(value)
+    if receipt is None:
+        return 'Sitemap discovery coverage is unrecorded/unrecognized; verify it before inferring absence or complete URL coverage.'
+    if receipt['attempted_files'] and not receipt['unverified_files'] and not receipt['limits']:
+        return None
+    reasons = '; '.join(f'{DISCOVERY_REASONS[key]} ({n})' for key, n in receipt['reasons'].items())
+    limits = ', '.join(item.replace('_', ' ') for item in receipt['limits'])
+    return (f"Sitemap discovery unverified within {receipt['scope'].replace('_', ' ')}: "
+            f"{receipt['unverified_files']} unverified file(s) in {receipt['attempted_files']} attempts. "
+            + ('No candidate files were examined. ' if not receipt['attempted_files'] else '')
+            + (reasons + '. ' if reasons else '') + (limits + ' reached. ' if limits else '')
+            + 'Candidate sampling is not proof of a missing/invalid sitemap or complete site URL coverage.')
+
 
 class _XMLUnverified(Exception):
     """A bounded parser cannot establish complete supported extraction."""

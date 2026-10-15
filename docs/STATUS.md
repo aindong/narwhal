@@ -21,6 +21,17 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **HTTP compression evidence:** raw sitemap fetches acquire bounded wire bytes
+  for gzip/deflate and require complete compression streams before decoding.
+  Short wire lengths, missing/corrupt trailers and response decode overflow
+  contribute no XML prefix, on both transports. Unsupported HTTP encodings stay
+  fetch gaps; unencoded `.gz` files keep the separate sitemap decoder.
+- **Shared XML discovery:** scan context, crawl and validator fallback discovery
+  recognize supported namespace prefixes/gzip and XML escaping from complete
+  bounded inputs, not marker/comment guesses. Discovery caps and unknown formats
+  remain explicit scoped notes; unknown availability cannot imply missing source
+  or silently resolve a technical-score comparison. Valid siblings and anchor
+  fallback remain usable. Receipts describe candidate samples, not a site census.
 - **Evidence-aware sitemap planning:** recorded fetch/cap gaps and uncertain
   sampled probes are manual verification actions, not sitemap creation/removal.
   Unknown legacy notes remain unclassified; consistent current counters add scope,

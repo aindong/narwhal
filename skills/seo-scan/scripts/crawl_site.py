@@ -27,7 +27,8 @@ from lib import hreflang, http, htmlx, links, simhash, sitegraph, sitemap as sm 
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
-from lib.report import recorded_js_comparison_problem  # noqa: E402
+from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
+from lib.sitemap_discovery import COMMON_PATHS, Discovery, MAX_INDEX_CHILDREN  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
 
@@ -67,12 +68,11 @@ def find_duplicates(page_fps: list, threshold_pct: float) -> list:
 # Product token a site would match us on (from http.DEFAULT_UA).
 CRAWLER_AGENT = "seo-scan"
 
-SITEMAP_CANDIDATES = ("/sitemap.xml", "/sitemap_index.xml")
-_LOC = re.compile(r"<loc>\s*(.*?)\s*</loc>", re.I | re.S)
+SITEMAP_CANDIDATES = COMMON_PATHS
 
 
 def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
-             robots_txt=None, diagnostics=None) -> list:
+             robots_txt=None, diagnostics=None, coverage=None, discovered_sitemap=None) -> list:
     root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
     urls: list = []
 
@@ -83,21 +83,37 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
                                      allow_private=allow_private, timeout=timeout) or ""
     robots = robots_txt
     sm_urls = sm.robots_sitemaps(robots, diagnostics=diagnostics)
+    declared = set(sm_urls)
     sm_urls += [urljoin(root + "/", p.lstrip("/")) for p in SITEMAP_CANDIDATES]
+    discovery = Discovery('crawl_candidates')
     for sitemap_url in sm_urls:
-        body = http.fetch_text(sitemap_url, allow_private=allow_private, timeout=timeout)
-        if not body:
+        parsed = discovery.read(sitemap_url, allow_private=allow_private, timeout=timeout, declared=sitemap_url in declared)
+        if not parsed:
+            if 'file_attempt_budget' in discovery.limits:
+                break
             continue
-        locs = _LOC.findall(body)
-        if "<sitemapindex" in body:
-            for child in sm.usable_locations(locs, diagnostics=diagnostics, source='index_locations')[:5]:
-                child_body = http.fetch_text(child, allow_private=allow_private,
-                                             timeout=timeout) or ""
-                urls += sm.usable_locations(_LOC.findall(child_body), diagnostics=diagnostics)
+        kind, entries = parsed
+        locs = [entry['loc'] for entry in entries]
+        if kind == 'index':
+            children = list(dict.fromkeys(sm.usable_locations(locs, diagnostics=diagnostics, source='index_locations')))
+            if len(children) > MAX_INDEX_CHILDREN:
+                discovery.limit('index_child_budget')
+            for child in children[:MAX_INDEX_CHILDREN]:
+                child_data = discovery.read(child, allow_private=allow_private, timeout=timeout, declared=True)
+                if not child_data:
+                    continue
+                if child_data[0] == 'index':
+                    if child_data[1]:
+                        discovery.limit('nested_index_depth')
+                    continue
+                urls += sm.usable_locations([entry['loc'] for entry in child_data[1]], diagnostics=diagnostics)
         else:
             urls += sm.usable_locations(locs, diagnostics=diagnostics)
         if urls:
             break
+    if coverage is not None:
+        coverage.update(discovery.receipt())
+    sitemap_keys = {url.split('#')[0].rstrip('/') for url in urls} if discovered_sitemap is not None else set()
 
     # 2) fallback: internal links on the entry page
     if not urls:
@@ -125,6 +141,8 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
         out.append(u)
         if len(out) >= limit:
             break
+    if discovered_sitemap is not None:
+        discovered_sitemap.extend(url for url in out if url.rstrip('/') in sitemap_keys)
     return out
 
 
@@ -291,9 +309,12 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     # Over-fetch candidates so we still reach max_pages after robots filtering.
     source_diagnostics = {}
+    discovery_coverage = {}
+    sitemap_urls = []
     candidates = discover(base, allow_private=allow_private, timeout=timeout,
                           limit=max_pages * 3 if obey_robots else max_pages,
-                          robots_txt=robots_txt, diagnostics=source_diagnostics)
+                          robots_txt=robots_txt, diagnostics=source_diagnostics, coverage=discovery_coverage,
+                          discovered_sitemap=sitemap_urls)
     gathered = sm.recorded_reference_diagnostics(ctx.get('sitemap_references'))
     if gathered:
         for key, value in gathered['rejected'].items():
@@ -329,6 +350,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         pages.append({"url": u, "score": rep.score(), "hard_fail": bool(rep.hard_fail),
                       "response_truncated": truncated,
                       "js_comparison_unverified": bool(recorded_js_comparison_problem(rep.meta, for_score=True)),
+                      "sitemap_discovery_unverified": bool(recorded_sitemap_discovery_problem(rep.meta, for_score=True)),
                       "scan_settings": rep.meta.get("scan_settings", {}),
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
@@ -351,6 +373,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
               "ecommerce": ecommerce_scope}
+    if discovery_coverage:
+        result['sitemap_discovery'] = discovery_coverage
     if source_diagnostics:
         result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
     omitted = [p["link_extraction"]["invalid_url_occurrences"]
@@ -362,8 +386,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     # data already in hand; orphan detection only makes sense sitemap-sourced.
     result["graph"] = sitegraph.analyze(
         base, [u for u, _ in results], pages_links,
-        candidates, bool(ctx.get("sitemap_found")))
-    result["sitemap_candidates"] = len(candidates)
+        sitemap_urls, bool(sitemap_urls))
+    result["sitemap_candidates"] = len(sitemap_urls)
     # Hreflang reciprocity — only when the site actually uses hreflang. Probe a
     # few same-host alternates (capped) so return tags are verifiable instead of
     # all "unverified".
@@ -393,6 +417,9 @@ def render_markdown(result: dict) -> str:
     sitemap_note = sm.reference_note(result.get('sitemap_references'))
     if sitemap_note:
         lines += ['> ' + sitemap_note, '']
+    discovery_note = sm.discovery_note(result.get('sitemap_discovery'))
+    if discovery_note:
+        lines += ['> ' + discovery_note, '']
     omission = result.get("link_extraction")
     if omission:
         lines += [f"> {omission['invalid_url_occurrences']} malformed HTTP href occurrence(s) "
