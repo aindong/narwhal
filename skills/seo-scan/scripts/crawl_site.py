@@ -28,6 +28,7 @@ from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
+from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery, MAX_INDEX_CHILDREN  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -359,6 +360,9 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "product_confidence": ecommerce.get("confidence", 0.0)})
         if rep.meta.get("link_extraction"):
             pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
+        for key in ('crawler_meta_robots', 'http_robots'):
+            if not rep.hard_fail and isinstance(rep.meta.get(key), dict):
+                pages[-1][key] = rep.meta[key]
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
@@ -409,6 +413,31 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     return result
 
 
+def _observation_literal(value, limit):
+    """Keep bounded page/receipt text literal in Markdown and branded HTML."""
+    value = ' '.join(str(value).split())
+    if len(value) > limit:
+        value = value[:limit] + '…'
+    delimiter = '`' * (1 + max((len(run) for run in re.findall(r'`+', value)), default=0))
+    return delimiter + ' ' + value + ' ' + delimiter
+
+
+def _page_indexing_notes(page):
+    """Read known receipts only; failed/legacy pages cannot establish policy."""
+    if page.get('hard_fail'):
+        return []
+    notes = _crawler_meta_notes(page)
+    header_notes = _http_robots_notes(page)
+    if header_notes:
+        generic = page['http_robots'].get('generic')
+        if (isinstance(generic, list) and generic
+                and all(rule in ('noindex', 'nofollow') for rule in generic)):
+            notes.append('Unprefixed HTTP X-Robots-Tag declares ' + ', '.join(sorted(set(generic)))
+                         + '; corresponding findings remain in the score/issue rollup.')
+        notes.extend('HTTP: ' + note for note in header_notes)
+    return notes
+
+
 def render_markdown(result: dict) -> str:
     skipped = result.get("skipped_robots", 0)
     skip_note = f"  ·  {skipped} skipped (robots.txt)" if skipped else ""
@@ -444,6 +473,25 @@ def render_markdown(result: dict) -> str:
         if omitted:
             lines += [f"> {omitted} additional issue type(s) not shown; "
                       "the JSON report retains the full rollup.", ""]
+
+    observations = []
+    for page in result['pages']:
+        notes = _page_indexing_notes(page)
+        if notes:
+            observations.append((page.get('url', ''), notes))
+    if observations:
+        lines += ['## Sampled-page indexing observations (not scored)', '',
+                  'Recorded declarations and transport notes on scanned pages only; not effective cross-source policy, '
+                  'whole-site coverage or proof of live crawling/indexing. These notes add no score penalties. '
+                  'Partial snapshots establish observed declarations only. Review intended policy manually.', '']
+        for url, notes in observations[:10]:
+            lines += ['### ' + _observation_literal(url, 600), '']
+            lines += ['- ' + _observation_literal(note, 600) for note in notes[:8]]
+            if len(notes) > 8:
+                lines.append(f'- {len(notes) - 8} more notes for this page are not displayed; inspect its JSON receipts.')
+            lines.append('')
+        if len(observations) > 10:
+            lines += [f'> {len(observations) - 10} more sampled page(s) with observations are retained in JSON.', '']
 
     hl = result.get("hreflang")
     if hl and hl.get("used"):

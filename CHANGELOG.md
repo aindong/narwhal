@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl summaries preserve each successful sampled page's HTTP/named-meta
+  indexing receipts, with bounded non-scoring observations in crawl Markdown
+  and comprehensive audit reports. Leaf-page policy evidence is no longer lost
+  behind score-only summaries. JSON retains all collected receipts; display
+  omissions, partial snapshots and sample-only scope are explicit. Scores and
+  recurring-issue counts are unchanged; missing/failed-page evidence is not inferred.
 - Documented `googlebot` and `googlebot-news` HTML meta restrictions now appear
   as non-scoring report observations and additive `meta.crawler_meta_robots`
   evidence. Active repeated tags accumulate exact noindex/nofollow/none rules;

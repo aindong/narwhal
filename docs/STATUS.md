@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Leaf-page indexing evidence:** crawl JSON retains HTTP/named-meta receipts
+  per successfully scanned page; crawl/audit reports show bounded non-scoring
+  observations with literal page/receipt text. Display caps preserve full JSON,
+  scores/issue counts are unchanged, and no unscanned-page or live-indexing
+  coverage is implied.
 - **Named meta visibility:** documented Googlebot/Googlebot-News meta restrictions
   have a distinct non-scoring section and bounded positional JSON witnesses.
   Generic findings/scores stay unchanged. Other named agents, preview/date
