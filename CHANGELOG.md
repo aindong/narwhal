@@ -34,6 +34,11 @@ All notable changes to Narwhal are documented here. The format follows
   original report before verification diffs; read-only planning never saves it.
   Markdown keeps that prerequisite outside shell blocks. File-backed, manual-only
   and empty plans do not receive invented save/diff tasks; coverage is unchanged.
+- Sitemap-file discovery/traversal deduplicates literal fragment aliases before
+  counting attempts, child slots and remaining files. Repeated `file.xml#…`
+  references no longer crowd valid siblings out of bounded samples or multiply
+  fetched-file URL entries. Query strings, encoded delimiters and page-location
+  source values remain distinct/unchanged; fetch policies and limits remain.
 - Planner verification templates avoid known baseline basename collisions for
   both scan and audit workflows, including local page checks. Alternate output
   names stay aligned with diff targets and Markdown, preserving an `after.json`
