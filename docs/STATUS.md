@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Named meta visibility:** documented Googlebot/Googlebot-News meta restrictions
+  have a distinct non-scoring section and bounded positional JSON witnesses.
+  Generic findings/scores stay unchanged. Other named agents, preview/date
+  rules, effective cross-source policy and live indexing remain unverified;
+  intentional restrictions require manual policy review, not automatic removal.
 - **HTTP indexing declarations:** final HTML-response robots headers now produce
   generic noindex/nofollow findings with hosting-owner remediation. Raw field
   boundaries survive repeated headers; named scopes remain non-scoring report
