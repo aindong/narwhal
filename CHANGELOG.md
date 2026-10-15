@@ -30,6 +30,9 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Markdown report tables honor escaped pipes in headers/body, including inline
+  code, and retain empty first/last cells. Only the backslash escaping a pipe is
+  removed; other backslashes and non-table content retain existing behavior.
 - Markdown link destinations remain literal escaped data: underscores and
   asterisks in paths, queries and fragments no longer become emphasis tags in
   `href` values. Labels and surrounding text keep their supported formatting;

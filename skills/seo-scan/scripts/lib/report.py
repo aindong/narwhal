@@ -780,6 +780,35 @@ def _inline_md(text: str) -> str:
                   lambda match: code[int(match.group(1))], out)
 
 
+def _table_cells(line: str) -> list:
+    """Split a table row, honoring escaped pipes and one outer pipe per edge.
+
+    Only the backslash escaping a literal pipe is removed; other backslashes
+    remain data. Even backslash runs leave the following pipe as a delimiter.
+    """
+    row = line.strip()
+    cells, cell = [], []
+    slashes = 0
+    trailing_delimiter = False
+    for char in row:
+        trailing_delimiter = False
+        if char == '|' and not slashes % 2:
+            cells.append(''.join(cell).strip())
+            cell = []
+            trailing_delimiter = True
+        else:
+            if char == '|':
+                cell.pop()  # remove only the backslash that escapes this pipe
+            cell.append(char)
+        slashes = slashes + 1 if char == '\\' else 0
+    cells.append(''.join(cell).strip())
+    if row.startswith('|'):
+        cells.pop(0)
+    if trailing_delimiter:
+        cells.pop()
+    return cells or ['']
+
+
 def md_to_html(md: str) -> str:
     """Convert the limited Markdown our sub-reports emit (headings, tables,
     lists, blockquotes, root code fences, `---`, bold/code) into styled HTML. This is not a
@@ -818,13 +847,13 @@ def md_to_html(md: str) -> str:
                 and set(lines[i + 1].strip()) <= set("|:- ")
                 and "-" in lines[i + 1]):
             close_list(list_stack)
-            headers = [c.strip() for c in stripped.strip("|").split("|")]
+            headers = _table_cells(line)
             out.append('<table><thead><tr>'
                        + "".join(f"<th>{_inline_md(h)}</th>" for h in headers)
                        + "</tr></thead><tbody>")
             i += 2
             while i < n and lines[i].strip().startswith("|"):
-                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                cells = _table_cells(lines[i])
                 out.append("<tr>" + "".join(f"<td>{_inline_md(c)}</td>" for c in cells)
                            + "</tr>")
                 i += 1
