@@ -171,11 +171,31 @@ class TestGeoTextCues(unittest.TestCase):
         self.assertEqual([], report.findings)
         self.assertIn('Not language understanding', json.loads(report.to_json())['meta']['geo_text_cues']['limits'])
 
-    def test_both_parsers_keep_counts_and_stable_ids(self):
+    def test_both_parsers_keep_counts_and_stable_ids_on_the_same_extraction_basis(self):
         markup = '<h2>How this works</h2><p>This is a study of 40% of the ' + 'word ' * 50 + '</p>'
-        reports = [audit(markup, parser) for parser in (htmlx._parse_stdlib, htmlx.parse)]
+        # Compare parsers, not all-visible text against optional main text.
+        with mock.patch.object(htmlx, '_main_content', return_value=''):
+            reports = [audit(markup, parser) for parser in (htmlx._parse_stdlib, htmlx.parse)]
         self.assertEqual(reports[0].meta['geo_text_cues'], reports[1].meta['geo_text_cues'])
         for report in reports:
+            self.assertTrue(set(POSITIVE).issubset({f.rule_id for f in report.findings}))
+
+    def test_intro_receipt_follows_the_selected_text_when_main_extraction_differs(self):
+        main = 'This is a study of 40% of the ' + 'word ' * 50
+        markup = '<h2>How this works</h2><p>' + main + '</p>'
+        response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, markup, 1)
+        reports = []
+        for isolated in ('', main):
+            with mock.patch.object(http, 'fetch', return_value=response), \
+                    mock.patch.object(htmlx, '_main_content', return_value=isolated):
+                reports.append(scan.scan(URL, only=['geo'], ctx={}, check_images=False))
+        self.assertEqual('visible text', reports[0].meta['extraction'])
+        self.assertEqual('main-content (trafilatura)', reports[1].meta['extraction'])
+        counts = [receipt(report, 'intro_cues')['inspected_tokens'] for report in reports]
+        self.assertEqual([61, 58], counts)
+        for report in reports:
+            self.assertEqual(min(80, len(report._doc.body_text.split())),
+                             receipt(report, 'intro_cues')['inspected_tokens'])
             self.assertTrue(set(POSITIVE).issubset({f.rule_id for f in report.findings}))
 
     def test_compact_reports_include_caveats_not_just_json_detail(self):
