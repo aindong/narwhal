@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Root llms.txt observations retain HTTP/type/completeness evidence rather than
+  treating every nonempty response as publication or every failure as absence.
+  HTML/soft-error/gated/empty/partial/truncated candidates stay unverified and
+  non-scoring; complete observed 404/410 retains the optional low advisory. Root-only
+  wording, legacy-flag labels, crawl receipts, score-comparison guards and
+  manual-only verification plans preserve the limits of this proposal check.
 - Site-graph rankings break equal inbound-link and click-depth ranks by URL
   before display caps. Identical sampled graphs no longer choose different
   tied top-five JSON / top-three Markdown entries across Python process seeds.

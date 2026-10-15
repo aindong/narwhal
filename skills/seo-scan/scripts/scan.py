@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import hreflang, http, htmlx, images, jsdiff, links, simhash, sitemap as sm  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery  # noqa: E402
 from lib import config as configlib  # noqa: E402
+from lib import llms_resource  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
 
@@ -54,11 +55,12 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
         allow_private=allow_private, timeout=timeout,
     )
 
-    llms = http.fetch_text(
+    llms = llms_resource.probe(
         urljoin(root + "/", "llms.txt"), allow_private=allow_private, timeout=timeout
     )
-    ctx["llms_txt"] = bool(llms)
-    ctx["llms_txt_url"] = f"{root}/llms.txt" if llms else ""
+    ctx['llms_txt_receipt'] = llms
+    ctx["llms_txt"] = llms['state'] == 'observed'  # legacy caller compatibility only
+    ctx["llms_txt_url"] = f"{root}/llms.txt" if ctx['llms_txt'] else ""
 
     ctx["sitemap_found"] = False
     robots = ctx.get("robots_txt") or ""

@@ -341,15 +341,21 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> R
                         redirects=redirects, robots_header_fields=robots_fields,
                         robots_header_basis='response_header_fields' if robots_fields is not None else 'merged_or_unknown')
     except urllib.error.HTTPError as exc:
-        body = exc.read(max_bytes).decode("utf-8", "replace") if exc.fp else ""
-        return Response(
-            url=url,
-            final_url=url,
-            status=exc.code,
-            headers=_origin_headers(exc.headers or {}),
-            text=body,
-            elapsed_ms=0,
-        )
+        try:
+            raw = exc.read(max_bytes + 1) if exc.fp else b""
+            headers = _origin_headers(exc.headers or {})
+            if len(raw) > max_bytes:
+                headers['x-narwhal-truncated'] = 'true'
+            return Response(
+                url=url,
+                final_url=url,
+                status=exc.code,
+                headers=headers,
+                text=raw[:max_bytes].decode("utf-8", "replace"),
+                elapsed_ms=0,
+            )
+        finally:
+            exc.close()
     except Exception as exc:  # noqa: BLE001
         return Response(url, url, 0, {}, "", 0, error=str(exc))
 

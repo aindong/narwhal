@@ -47,6 +47,13 @@ def page(receipt, only='technical'):
 
 
 class TestSitemapDiscoveryXML(unittest.TestCase):
+    def setUp(self):
+        # These tests own sitemap I/O only; keep the independent root probe offline.
+        patcher = mock.patch.object(scan.llms_resource, 'probe', return_value=scan.llms_resource.assess(
+            http.Response(BASE + 'llms.txt', BASE + 'llms.txt', 404, {}, '', 0)))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_prefixed_namespaces_and_xml_escaping_work_across_consumers(self):
         for body in (PREFIXED, gzip.compress(PREFIXED.encode())):
             with self.subTest(gzip=isinstance(body, bytes)), \

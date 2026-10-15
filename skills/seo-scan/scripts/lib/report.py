@@ -15,6 +15,7 @@ from typing import Optional
 
 from .guides import reference_url
 from . import sitemap as sitemaplib
+from . import llms_resource
 from .code_fences import closes_fence, markdown_lines, opening_fence
 from .markdown_text import TABLE_TEXT_MARKER
 
@@ -43,6 +44,7 @@ UNVERIFIED_JS_COMPARISON_ERROR = (
     "JS-dependence is unverified; complete paired HTML is required for page-score comparisons."
 )
 UNVERIFIED_SITEMAP_DISCOVERY_ERROR = 'Sitemap availability was not verified from a supported XML root; technical-score comparison is unverified.'
+UNVERIFIED_LLMS_ERROR = 'Root llms.txt availability is unverified; GEO-score comparison is unverified.'
 _JS_COMPARISON_PROBLEMS = {
     "rendered_html_truncated": "rendered HTML was truncated",
     "served_html_truncated": "served HTML was truncated",
@@ -87,6 +89,14 @@ def recorded_sitemap_discovery_problem(meta, *, for_score=False):
         if receipt and receipt['verified_files']:
             return None  # availability of at least one supported root was measured
     return note
+
+
+def recorded_llms_problem(meta, *, for_score=False):
+    """Interpret explicit root-response uncertainty only for selected GEO checks."""
+    scope = recorded_scan_scope(meta) if isinstance(meta, dict) else None
+    if for_score and scope is not None and 'geo' not in scope[0]:
+        return None
+    return llms_resource.problem(meta, for_score=for_score)
 
 
 def _crawler_policy_notes(meta):
@@ -271,7 +281,8 @@ class Report:
     def _scope_note(self) -> str:
         scope = self._scope_info()
         discovery = recorded_sitemap_discovery_problem(self.meta)
-        discovery_suffix = ' ' + discovery if discovery else ''
+        llms = recorded_llms_problem(self.meta)
+        discovery_suffix = (' ' + discovery if discovery else '') + (' ' + llms if llms else '')
         if scope is None:
             if self.hard_fail:
                 return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded." + discovery_suffix
@@ -433,6 +444,10 @@ class Report:
             lines += ['- ' + note for note in header_notes]
             lines.append('')
 
+        llms_note = llms_resource.note(self.meta)
+        if llms_note:
+            lines += ['## Root llms.txt response evidence', '', llms_note, '']
+
         named_meta_notes = _crawler_meta_notes(self.meta)
         if named_meta_notes:
             lines += ['## Crawler-specific meta observations (not scored)', '']
@@ -569,6 +584,11 @@ class Report:
             body.append('<section class="card"><h2>HTTP robots observations (not scored)</h2>'
                         + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in header_notes)
                         + '</ul></section>')
+
+        llms_note = llms_resource.note(self.meta)
+        if llms_note:
+            body.append('<section class="card"><h2>Root llms.txt response evidence</h2><p>'
+                        + _esc(llms_note) + '</p></section>')
 
         named_meta_notes = _crawler_meta_notes(self.meta)
         if named_meta_notes:

@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
+from lib.report import recorded_llms_problem  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
@@ -131,6 +132,17 @@ def normalize_report(data: dict) -> dict:
         finding.setdefault("scope", "page")
         findings.append(finding)
     page_meta = page.get('meta')
+    llms_metadata = [page_meta]
+    if kind == 'audit':
+        llms_metadata.append(data.get('crawl'))
+    llms_uncertain = False
+    for meta in llms_metadata:
+        detail = recorded_llms_problem(meta, for_score=True)
+        if detail:
+            llms_uncertain = True
+            findings.append({'category': 'geo', 'severity': 'low', 'scope': 'site',
+                             'rule_id': 'geo.llms.txt.availability.unverified',
+                             'title': 'Root llms.txt needs manual verification', 'detail': detail})
     discovery_receipts = [page_meta.get('sitemap_discovery') if isinstance(page_meta, dict) else None]
     if kind == 'audit':
         discovery_receipts.append(data.get('crawl', {}).get('sitemap_discovery'))
@@ -193,6 +205,10 @@ def normalize_report(data: dict) -> dict:
                                   'Unsupported formats are not necessarily invalid.',
                 'occurrences': parse_coverage['unverified_files'],
             })
+    if llms_uncertain:
+        # Older/contradictory missing-file findings cannot authorize generation
+        # when recorded HTTP evidence explicitly leaves root availability open.
+        findings = [finding for finding in findings if finding['rule_id'] != 'geo.no.llms.txt']
     # Stable action IDs require one action per rule. Multiple page nodes can
     # produce the same rule; retain the worst severity and occurrence evidence.
     coalesced = {}
@@ -547,6 +563,14 @@ SITEMAP_VERIFICATION = {
 }
 
 
+RESOURCE_VERIFICATION = dict(SITEMAP_VERIFICATION)
+RESOURCE_VERIFICATION['geo.llms.txt.availability.unverified'] = (
+    'Verify the root endpoint response and intended file before proposing changes. '
+    'Do not create or rewrite llms.txt solely because this observation was unverified.',
+    ('Review the recorded HTTP status, media type and completeness; retain access/SSRF/body limits.',
+     'Re-scan the deployed root endpoint after resolving a verified cause; subpath files and engine behavior remain separate checks.'))
+
+
 def safety_for(artifact: str) -> tuple:
     if artifact == "server_config":
         return "manual_external", True
@@ -633,8 +657,10 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
     actions = []
     mapped_named = 0
     for finding in normalized["findings"]:
-        verification = SITEMAP_VERIFICATION.get(finding['rule_id'])
-        artifact = 'sitemap' if verification else classify_artifact(finding)
+        verification = RESOURCE_VERIFICATION.get(finding['rule_id'])
+        artifact = classify_artifact(finding)
+        if verification:
+            artifact = 'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap'
         if artifact != "unknown":
             mapped_named += 1
         safety, requires_deploy = safety_for(artifact)
@@ -708,7 +734,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
 def _groups(actions: list) -> list:
     buckets = {}
     for action in actions:
-        if action['rule_id'] in SITEMAP_VERIFICATION:
+        if action['rule_id'] in RESOURCE_VERIFICATION:
             continue  # verification tasks are not shared source/template edits
         key = action["artifact"]
         if key in HEAD_ARTIFACTS:
@@ -786,7 +812,7 @@ def render_markdown(plan: dict) -> str:
         lines += [f"## {label}", ""]
         for action in members:
             owners = ", ".join(f"`{x['path']}`" for x in action["likely_files"][:3]) or "owner not located"
-            if action['rule_id'] in SITEMAP_VERIFICATION:
+            if action['rule_id'] in RESOURCE_VERIFICATION:
                 owners = 'not assigned (verification only)'
             lines += [f"### {action['severity'].upper()} — {action['title']}", "",
                       f"- **Rule:** `{action['rule_id']}`",
