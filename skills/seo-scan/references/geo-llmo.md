@@ -41,21 +41,38 @@ declare the publishing entity with `Organization`/`Person` schema + `sameAs`
 links (Wikipedia, LinkedIn, official socials). Clear entities help models ground
 and attribute the page.
 
-## AI-crawler access — the make-or-break check
-An answer engine can only cite a page its crawler is **allowed to fetch**. Check
-`robots.txt` for these agents and decide deliberately:
+## AI-crawler policies — distinguish purpose before recommending access
+Robots directives are policy signals, not live access tests or promises of
+indexing/citations. Role guidance was checked **2026-10-15** against the
+[OpenAI crawler documentation](https://developers.openai.com/api/docs/bots),
+[Anthropic bot guidance](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler),
+[Perplexity crawler documentation](https://docs.perplexity.ai/docs/resources/perplexity-crawlers),
+[Google Search AI controls](https://developers.google.com/search/docs/appearance/ai-features#controlling-your-content-in-ai-features-in-search),
+[Google-Extended guidance](https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers#google-extended),
+and [Common Crawl's CCBot description](https://commoncrawl.org/ccbot).
 
-| User-agent | Engine |
-|---|---|
-| `GPTBot`, `OAI-SearchBot`, `ChatGPT-User` | OpenAI / ChatGPT |
-| `ClaudeBot`, `Claude-Web` | Anthropic / Claude |
-| `PerplexityBot` | Perplexity |
-| `Google-Extended` | Google Gemini / AI Overviews |
-| `CCBot` | Common Crawl (feeds many LLMs) |
+| Purpose | Agents / controls | Interpretation |
+|---|---|---|
+| Search / documented retrieval | `OAI-SearchBot`, `Claude-SearchBot`, `Claude-User`, `PerplexityBot`, `Googlebot` | Review restrictions if those channels match the owner's goals. Claude-User is user-directed retrieval, not an index crawler. |
+| Training collection | `GPTBot`, `ClaudeBot` | Distinct from search agents; a training opt-out is not a search-access defect. |
+| Other data-use control | `Google-Extended` | Covers training and specified Gemini/Vertex grounding uses, not Google Search or AI Overviews access/ranking. |
+| Dataset collection | `CCBot` | A Common Crawl restriction alone is not proof of direct search impact. |
+| User-triggered fetch directives | `ChatGPT-User`, `Perplexity-User` | OpenAI says robots may not apply; Perplexity says its user fetcher generally ignores robots. Do not call these proven fetch blocks or search-index opt-outs. |
+| Unverified / legacy role | `Claude-Web`, `Bytespider` | No current role inference or search penalty from these tokens alone. |
 
-If you *want* AI visibility, don't `Disallow: /` these. If you're protecting
-content, blocking them is legitimate — the auditor flags the state so the choice
-is intentional, not accidental.
+The deterministic check evaluates **`/` only**, not every page path. Page JSON
+records `meta.ai_crawler_access` with the checked path, robots-only basis,
+dated roles, per-agent source URLs and root disallowance results. Training/data-use,
+nonbinding user-fetch and unverified restrictions appear as **non-scoring policy
+notes** in Markdown/HTML (and therefore PDF input), not green endorsements or
+instructions to enable training. Only documented search/retrieval restrictions
+produce the existing high finding. Its title/rule ID remain compatible with
+title ignores and planner ownership; it is explicitly a site-root observation.
+
+Preserve deliberate opt-outs. A robots allow result does not verify WAF rules,
+bot identity/IP handling, live reachability, other paths, indexing or citations.
+Google Search snippet/index controls are separate from Google-Extended. Policy
+sources are static guidance shipped with the toolkit; scans do not fetch them.
 
 ## llms.txt — low cost, low certainty
 `/llms.txt` is a proposed markdown file pointing AI crawlers to your key content.

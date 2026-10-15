@@ -64,11 +64,20 @@ And yes, it works as a backronym too:
 | **Content & E-E-A-T** | thin-content detection, readability, author/date signals, Open Graph / Twitter cards |
 | **Structured data** | JSON-LD + Microdata + bounded schema.org RDFa detection, required/recommended property validation, merchant checks, source-backed Google feature-retirement notes, JSON-LD generation |
 | **E-commerce** | evidence-gated Product detection; Product/Offer/AggregateOffer completeness; variants; expired prices; visible-vs-schema price, currency, availability, SKU, and brand consistency |
-| **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and **AI-crawler access** (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) |
+| **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and role-aware **search/retrieval robots policies**, with separate non-scoring training/data-use notes |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
+
+Page reports record `meta.ai_crawler_access`: dated agent roles, primary sources,
+and robots.txt root disallowance results at **`/` only**. Training/data-use choices,
+nonbinding user-fetch directives and unverified roles remain visible as
+non-scoring policy notes, not search failures or policy endorsements. Documented
+search/retrieval restrictions retain the high finding, conditional on owner goals.
+This does not test live bot/WAF access, other paths, indexing or citations. See the
+[GEO reference](skills/seo-scan/references/geo-llmo.md#ai-crawler-policies--distinguish-purpose-before-recommending-access)
+for the role distinctions and source scope; no policy service is called by scans.
 
 `compare` and `brief` retain each page's actual `rendered` boolean in JSON facts
 and label its HTML source in reports: served HTML or JavaScript-rendered DOM.

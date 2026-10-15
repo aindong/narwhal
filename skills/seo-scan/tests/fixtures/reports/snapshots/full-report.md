@@ -72,4 +72,4 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 - 🟢 **Question-based headings present** — 2/2 subheadings
 - 🟢 **Citable passage structure** — 3/4 passages in range
 - 🟢 **Evidence signals present** — 0 stats, 2 citation cues
-- 🟢 **AI crawlers are not blocked**
+- 🟢 **Search/retrieval agents are not disallowed at site root** — robots.txt only; live access, other paths, indexing and citations are not verified.
