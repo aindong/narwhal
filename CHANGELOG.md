@@ -30,6 +30,12 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Sitemap gzip decoding uses sized streaming reads and a shared per-file
+  decoded-byte ceiling of 52,428,800 bytes, including concatenated members.
+  Oversized or corrupt/truncated gzip files contribute no XML prefix, URL entries
+  or HTTP samples; fixed extraction notes distinguish budget/integrity gaps and
+  retain verified siblings. The legacy decode helper is also bounded. This is
+  not a total process-memory, CPU or transport budget.
 - Crawl and combined audit reports distinguish zero link checks, gated/unknown
   HTTP responses and insufficient duplicate-comparison inputs from clean results.
   Additive coverage counts retain successful, broken and unverified checks;

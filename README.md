@@ -283,8 +283,16 @@ than counting their locations as pages. Malformed XML, unsupported roots/entry
 shapes, DTDs, or limits (128 nesting levels, 500,000 elements, 50,000 entries per
 file) leave extraction unverified: all entries from that file are withheld,
 valid siblings remain counted, and reports label the partial coverage. DTDs and
-external entities are not loaded. This is not XSD/protocol validation, a complete
-format implementation, or a bound on existing gzip decompression/network memory.
+external entities are not loaded. Decoded input is capped at **52,428,800 bytes
+per fetched file**, before UTF-8 conversion, using sized gzip reads of at most
+64KiB and a one-byte overflow probe. Concatenated gzip members share that budget;
+corrupt/truncated gzip and budget exhaustion withhold all text/entries/samples,
+with fixed `parse_coverage.reasons` and a recorded `decoded_byte_limit`. The
+ceiling follows the [sitemap protocol's uncompressed size limit](https://www.sitemaps.org/protocol.html),
+but a budget note means extraction is unverified, not a complete validity verdict.
+The legacy decode helper is bounded too. This is not XSD/protocol validation,
+complete format support, a total Python heap/CPU bound or a transport budget.
+Raw-fetch limits and existing network guards are unchanged.
 The legacy marker/regex helpers used by crawl/context discovery are unchanged.
 Unknown/legacy extraction receipts do not certify health. Planner coverage-gap
 actions ask for manual verification, not rewriting an otherwise valid unsupported

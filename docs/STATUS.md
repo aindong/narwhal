@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Decoded sitemap budget:** sized gzip reads enforce 52,428,800 decoded bytes
+  per file before UTF-8 conversion/XML parsing, across concatenated members.
+  Budget exhaustion and failed integrity checks withhold all file entries and
+  samples, preserving valid siblings and explicit manual verification notes.
+  This bounds decoded input, not total Python heap, CPU or transport work.
 - **Crawl measurement evidence:** link outcomes count successful 2xx, broken and
   unverified responses separately; zero checks cannot produce a green pass.
   No-response request failures remain unverified, while existing unreachable

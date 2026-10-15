@@ -63,7 +63,8 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
         "invalid_lastmod": 0, "missing_lastmod": 0, "gzip": 0,
         "sample": [], "broken_sample": [],
         "parse_coverage": {"basis": "bounded_xml_parse", "scope": "fetched_files",
-                           "verified_files": 0, "unverified_files": 0, "reasons": {}},
+                           "verified_files": 0, "unverified_files": 0, "reasons": {},
+                           "decoded_byte_limit": sm.MAX_DECODED_BYTES},
     }
     if source_diagnostics:
         result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
@@ -87,9 +88,10 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
             continue
         if raw[:2] == b"\x1f\x8b":
             result["gzip"] += 1
-        text = sm.decode(raw)
         result["sitemaps_fetched"] += 1
-        kind, entries, parse_problem = sm.parse_checked(text)
+        text, parse_problem = sm.decode_checked(raw)
+        if not parse_problem:
+            kind, entries, parse_problem = sm.parse_checked(text)
         coverage = result['parse_coverage']
         if parse_problem:
             coverage['unverified_files'] += 1
