@@ -33,7 +33,11 @@ def http_robots(fields, basis):
     generic, scoped, witnesses = set(), {}, {}
     for number, value in enumerate(fields, 1):
         agent = None
-        for part in value.split(','):
+        # Unfold continuation whitespace first. Browser stacks can expose merged
+        # fields with bare newlines: parse those as rule separators, NOT proof
+        # that generic scope reset at an original wire-field boundary.
+        value = re.sub(r'\r?\n[ \t]+', ' ', value)
+        for part in re.split(r',|\r\n?|\n', value):
             prefix = _PREFIX.match(part)
             if prefix:
                 name, value_part = prefix.groups()

@@ -32,8 +32,17 @@ check, plus what to do when the automated check isn't enough.
 The current deterministic page-meta check combines all active generic
 `name="robots"` tags, matches exact restriction names and expands `none` to
 `noindex,nofollow`. It does not interpret parameter values as standalone rules.
-HTTP `X-Robots-Tag` and crawler-specific meta are outside this check; a passing
-generic-meta observation is not proof of indexability or actual inclusion.
+Crawler-specific meta is outside this check; a passing generic-meta observation
+is not proof of indexability or actual inclusion.
+
+A separate final HTML-response header check recognizes unprefixed `noindex`,
+`nofollow` and `none` in `X-Robots-Tag`. New header fields reset named-agent scope;
+named-crawler restrictions are displayed as non-scoring policy observations.
+`meta.http_robots` records transport provenance. Raw transports preserve repeated
+fields; browsers may combine them before exposing them, so named scope may need
+raw confirmation. Date/preview rules and live crawler/indexing behavior remain
+unverified. Fix header findings at the hosting/CDN/middleware owner, not merely
+by changing an HTML robots meta tag.
 See [Google's primary specification](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag)
 for aliases, multiple tags, named agents and header rules. Engine behavior can
 differ; verify live indexing through the relevant external source when needed.

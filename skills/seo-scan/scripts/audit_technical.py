@@ -210,14 +210,18 @@ def _http_robots(resp, report):
         return
     receipt, witnesses = indexing.http_robots(fields, basis)
     report.meta['http_robots'] = receipt
-    for directive, severity in (('noindex', 'critical'), ('nofollow', 'medium')):
-        if directive in receipt['generic']:
-            report.add(CAT, severity, f'HTTP X-Robots-Tag declares {directive}',
-                       f'An unprefixed response-header rule declares {directive} (including the none alias). '
-                       'This observes a declaration, not live search inclusion or crawler behavior.',
-                       'Review the hosting/CDN/middleware response-header owner; remove the restriction only if unintended. '
-                       'Changing HTML meta tags alone does not remove this header.',
-                       evidence=witnesses[directive], rule_id=f'technical.http.robots.{directive}')
+    recommendation = ('Review the hosting/CDN/middleware response-header owner; remove the restriction only if unintended. '
+                      'Changing HTML meta tags alone does not remove this header.')
+    if 'noindex' in receipt['generic']:
+        report.add(CAT, 'critical', 'HTTP X-Robots-Tag declares noindex',
+                   'An unprefixed response-header rule declares noindex (including the none alias). '
+                   'This observes a declaration, not live search inclusion.', recommendation,
+                   evidence=witnesses['noindex'], rule_id='technical.http.robots.noindex')
+    if 'nofollow' in receipt['generic']:
+        report.add(CAT, 'medium', 'HTTP X-Robots-Tag declares nofollow',
+                   'An unprefixed response-header rule declares nofollow (including the none alias). '
+                   'This observes a declaration, not actual crawler behavior.', recommendation,
+                   evidence=witnesses['nofollow'], rule_id='technical.http.robots.nofollow')
 
 
 def _viewport_lang(doc, report):

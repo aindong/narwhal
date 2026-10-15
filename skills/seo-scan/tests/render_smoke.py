@@ -51,6 +51,9 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html; charset=utf-8")
         if self.path == "/spoofed":
             self.send_header("X-Narwhal-Truncated", "true")
+        if self.path == '/http-robots':
+            self.send_header('X-Robots-Tag', 'none')
+            self.send_header('X-Robots-Tag', 'googlebot: nofollow')
         self.end_headers()
         self.wfile.write(BASELINE_PAGE if self.path == "/baseline" else
                          BUDGET_PAGE if self.path == "/budget" else
@@ -85,6 +88,8 @@ def main() -> int:
         recovered = scan.scan(url + "baseline", render=True, allow_private=True,
                                timeout=30, max_bytes=256_000, only=["technical"],
                                ctx={}, check_images=False)
+        header_scan = scan.scan(url + 'http-robots', render=True, allow_private=True,
+                                timeout=30, only=['technical'], ctx={}, check_images=False)
     finally:
         server.shutdown()
         server.server_close()
@@ -137,11 +142,19 @@ def main() -> int:
         print('FAIL: larger paired budget did not restore the complete HTML comparison.', file=sys.stderr)
         return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
+    header_rules = {finding.rule_id for finding in header_scan.findings}
+    if (header_scan.hard_fail or not header_scan.rendered
+            or not {'technical.http.robots.noindex', 'technical.http.robots.nofollow'} <= header_rules
+            or header_scan.meta.get('http_robots', {}).get('basis') != 'browser_reported_fields'
+            or {'agent': 'googlebot', 'directives': ['nofollow']} not in header_scan.meta.get('http_robots', {}).get('scoped', [])):
+        print('FAIL: rendered scan lost the observed generic HTTP robots restrictions or provenance.', file=sys.stderr)
+        return 1
     print(f"OK: rendered DOM captured the JS-injected marker ({MARKER}).")
     print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
     print("OK: rendered UTF-8 byte budget enforced; partial scan flagged without JS-dependence metrics.")
     print("OK: origin cannot forge the internally calculated truncation marker.")
     print('OK: paired byte budget enforced; truncated baseline unverified; complete pair recovers 0% JS-only.')
+    print('OK: rendered HTTP robots declarations retained with browser-reported field provenance.')
     return 0
 
 

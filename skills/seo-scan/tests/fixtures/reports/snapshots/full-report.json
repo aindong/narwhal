@@ -236,7 +236,7 @@
       "category": "technical",
       "severity": "good",
       "title": "No generic meta noindex detected",
-      "detail": "Generic meta robots check only; HTTP headers and crawler-specific directives are not evaluated. Absence is not proof of indexability.",
+      "detail": "Generic meta robots observation only; it excludes HTTP headers and crawler-specific meta. Absence is not proof of indexability.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "technical.page.is.indexable",
