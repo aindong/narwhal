@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Literal GEO text cues:** four editorial checks expose bounded pattern counts
+  and explicit limits instead of declaring answer quality, source absence or
+  engine citability. Advisories stay low priority and plans keep edits conditional;
+  new/legacy IDs remain compatible. Priority corrections are not page improvements.
+  This does not validate language understanding or AI-answer/ranking outcomes.
 - **Contextual phrase review:** common wording produces low-priority editorial
   advice with actual examples and explicit limits, not an AI-authorship or ranking
   risk verdict. Low-match passes also avoid quality/authorship certification.

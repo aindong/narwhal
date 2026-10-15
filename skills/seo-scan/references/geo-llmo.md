@@ -6,34 +6,69 @@ answer engines — ChatGPT, Claude, Perplexity, Google AI Overviews — not just
 ranking in classic blue links.
 
 ## First principle: GEO is mostly good SEO, plus structure for extraction
-Google's own guidance is blunt: there's no separate "AI SEO" trick — the same
-helpful, well-structured, trustworthy content wins. What GEO adds is optimizing
-for **passage-level extraction**: an answer engine lifts a *chunk* of your page,
-so each chunk must be quotable and self-contained. Be skeptical of vendors
-selling GEO as a distinct dark art.
+Google's [AI-feature guidance](https://developers.google.com/search/docs/appearance/ai-features)
+states that no special optimization or additional technical requirements are
+needed for its AI features. Fundamental SEO and helpful content remain relevant;
+eligibility is not a guarantee of inclusion. That does not establish identical
+behavior across other engines. Narwhal's text cues are prompts for contextual
+editorial review, not measurements of AI-answer visibility or citation likelihood.
 
 ## The signals the auditor scores
 
 ### 1. Question-based headings
-Answer engines match user questions to question-shaped headings. Rewrite key
-H2/H3s as the actual questions people ask ("How does X work?", "What is Y?").
-Target: a meaningful share of subheads are questions.
+The check counts H2–H6 text whose first token is a configured English starter
+(such as "how" or "what") or which ends in an ASCII `?`. Below a 20% match
+fraction it emits a low-priority review prompt, including on articles. This is
+an unvalidated editorial threshold, not an engine requirement. It does not
+recognize every language or establish that a heading matches a real user query.
+Keep descriptive headings that work for readers; use questions only when useful.
 
 ### 2. Citable, self-contained passages
-Models quote passages best when they stand alone without surrounding context and
-sit in a digestible size band (roughly 40–120 words per passage). Avoid giant
-unbroken blocks *and* a page of tiny fragments. Each answer paragraph should make
-sense if pasted on its own.
+The legacy helper splits extracted text at selected sentence boundaries and
+accumulates fragments until the configured minimum word count. Its word regex
+matches ASCII-letter sequences (with apostrophes/hyphens), not words in every
+language. The resulting **synthetic groups are not actual paragraphs**.
+
+`passage_min`/`passage_max` default to 40–120; a match fraction below 30% emits
+a low-priority prompt. Neither those unvalidated defaults nor an in-range group
+establish self-containment, completeness or engine citability. Review readability
+and useful context; do not pad or split useful text just to match a number.
 
 ### 3. Evidence density
-AI answers favor and attribute content with concrete evidence: statistics, dates,
-named studies, and citations ("According to a 2024 study, 40%…"). A page with
-zero numbers or sources is easy to ignore.
+The check counts a limited statistic-pattern list (for example, percentages and
+some scaled quantities) and English lexical citation cues such as "study" or
+"report". It does **not** enumerate all numbers, dates, bibliography entries or
+links, and does not validate factual support or source quality. Zero matches are
+not proof of missing evidence; a "study" mention is not proof of a real study.
+Review actual claims and sources in context. Do not invent statistics or citations
+to satisfy the check. Both zero-match advice and positive counts stay bounded to
+what was observed, not an engine-attribution prediction.
 
 ### 4. Direct-answer intro (inverted pyramid)
-Lead with a 1–2 sentence direct answer or definition before the details. AI
-overviews and featured snippets lift the top summary; burying the answer costs
-you the citation.
+The check looks for configured English terms such as "is", "are" or "helps" in
+the first 80 whitespace-separated tokens of extracted text. A match does not
+prove a direct or accurate answer; no match does not prove one is absent.
+Other languages and non-answer page intents may not fit this pattern. Lead with
+useful information for the actual audience, adding an answer only when suitable.
+No citation likelihood or effect of moving text is measured.
+
+### Text-cue output and compatibility
+
+`meta.geo_text_cues` records version 1, `editorial_review_only` interpretation,
+the English-oriented basis/limits and four bounded count objects:
+`question_headings`, `sentence_groups`, `evidence_cues` and `intro_cues`.
+Empty-input counts are observations, not passes. These receipts do not validate
+language understanding, paragraph semantics, source truth or engine behavior.
+
+The matching algorithms, thresholds and legacy rule IDs remain stable. IDs with
+historical names such as `citable`, `evidence.signals` or `direct.answer` are
+machine identifiers, not semantic certification; read the counts and limits.
+Three negative checks previously using medium priority now use low priority (question
+and evidence checks on articles, and sentence-group range checks). A score may
+rise without any page change; that is a priority correction, not an SEO result.
+Displayed labels have changed: update title-based `[ignore].titles` filters.
+The planner keeps new and legacy cue-rule edits conditional on contextual review.
+Crawler, `llms.txt`, rendering and entity checks are separate and unchanged.
 
 ### 5. Entity clarity
 Keep the `<title>`, `<h1>`, and opening aligned on one clear subject entity, and
@@ -95,5 +130,6 @@ linked-resource discovery or engine/ranking/citation measurement is performed.
 - "Just add llms.txt and you'll rank in AI." — no evidence.
 - "Stuff pages with AI keywords / 'as an AI language model' bait." — spam.
 - "GEO replaces SEO." — it's an extension of it, not a replacement.
-Optimize for genuinely helpful, well-structured, attributable content; the AI
-citations follow the same quality signals as classic ranking.
+Focus on genuinely useful, well-structured, attributable content. Measure actual
+traffic and citations separately; lexical cues and scanner scores do not prove
+those outcomes or identical behavior across engines.

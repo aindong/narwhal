@@ -56,7 +56,7 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 - 🔵 **No Twitter/X card type** — Add twitter:card (e.g. summary_large_image) for X previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata)
 - 🔵 **Article missing recommended properties** — Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md)
 - 🔵 **No Organization/WebSite entity** — Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md)
-- 🔵 **No direct answer up top** — Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#4-direct-answer-intro-inverted-pyramid)
+- 🔵 **No configured introductory answer cues** — Review whether the opening serves the reader's intent and language. Add a concise answer only when useful; English cue absence does not prove a missing answer. Answer accuracy and citation impact are not measured. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#4-direct-answer-intro-inverted-pyramid)
 - 🔵 **No root llms.txt observed** — Optionally publish a curated llms.txt if useful; this is not a required ranking or access control. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#llmstxt--low-cost-low-certainty)
 
 ## Root llms.txt response evidence
@@ -76,7 +76,7 @@ Root llms.txt absent: the root request returned HTTP 404 or 410 (HTTP 404). Root
 - 🟢 **Few configured style-pattern matches** — 0 filler matches; 0 distinct common-phrase matches; lexical diversity 0.815. This does not establish authorship, originality or content quality.
 - 🟢 **Dominant topics detected** — page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy
 - 🟢 **Structured data present** — Article
-- 🟢 **Question-based headings present** — 2/2 subheadings
-- 🟢 **Citable passage structure** — 3/4 passages in range
-- 🟢 **Evidence signals present** — 0 stats, 2 citation cues
+- 🟢 **Configured question-heading cues present** — 2/2 subheadings match configured English starters or a terminal ASCII question mark. Question relevance and engine matching are not measured.
+- 🟢 **Sentence groups in the configured word range** — 3/4 synthetic sentence groups contain 40–120 counted ASCII-word matches. Actual paragraphs, self-containment and engine citability are not measured.
+- 🟢 **Configured statistics/citation cues present** — 0 configured statistic-pattern matches; 2 citation-cue matches. Lexical cues only; factual support and source validity are not checked.
 - 🟢 **Search/retrieval agents are not disallowed at site root** — robots.txt only; live access, other paths, indexing and citations are not verified.

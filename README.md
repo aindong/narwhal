@@ -43,8 +43,8 @@ The narwhal is the perfect mascot for a search-and-AI-visibility tool:
 - **The tusk is a sensor, not a weapon.** A narwhal's tusk is packed with millions
   of nerve endings that read tiny changes in the water around it. Narwhal the tool
   does the same for a page — it senses the subtle, easy-to-miss signals (meta,
-  canonical, schema, passage citability, crawler access) that decide whether you're
-  seen.
+  canonical, schema, crawler directives and editorial text cues) that help you
+  investigate a page's presentation and accessibility—not predict visibility.
 - **It navigates dark, opaque water.** Narwhals thrive in deep, ice-covered Arctic
   seas using sound, surfacing where nothing else can. Modern search and AI answer
   engines are exactly that kind of murky water — Narwhal helps you navigate it.
@@ -64,11 +64,18 @@ And yes, it works as a backronym too:
 | **Content & E-E-A-T** | thin-content detection, readability, author/date signals, Open Graph / Twitter cards |
 | **Structured data** | JSON-LD + Microdata + bounded schema.org RDFa detection, required/recommended property validation, merchant checks, source-backed Google feature-retirement notes, JSON-LD generation |
 | **E-commerce** | evidence-gated Product detection; Product/Offer/AggregateOffer completeness; variants; expired prices; visible-vs-schema price, currency, availability, SKU, and brand consistency |
-| **GEO / LLMO** | question-based headings, citable passage structure, evidence density, direct-answer intros, `llms.txt`, and role-aware **search/retrieval robots policies**, with separate non-scoring training/data-use notes |
+| **GEO / LLMO** | contextual review of question-heading, sentence-group, statistic/citation and intro cues—not measured citability—plus `llms.txt` and role-aware **search/retrieval robots policies**, with separate non-scoring training/data-use notes |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
+
+GEO text-cue checks expose literal counts and limits in `meta.geo_text_cues`.
+English-oriented patterns do not measure answer accuracy, actual paragraphs,
+source validity or citation likelihood. Their low-priority advice keeps edits
+conditional; configured ranges and matches are not engine requirements. Legacy
+rule IDs remain, but displayed titles change. Priority corrections can raise a
+score without changing a page. See the [check boundaries](skills/seo-scan/references/geo-llmo.md#text-cue-output-and-compatibility).
 
 Common-phrase checks are editorial review prompts, not AI-authorship detectors.
 Quoted examples may be appropriate for the audience; neither matches nor their

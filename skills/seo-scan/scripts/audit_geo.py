@@ -67,9 +67,9 @@ AI_BOTS = {agent: purpose for agent, role, purpose, source, note in _CRAWLER_POL
 
 def audit(doc, resp, report, ctx=None) -> None:
     ctx = ctx or {}
-    # Question-heading and evidence advice is *article* advice. On homepages,
-    # hubs, and product pages these checks fired on ~90% of real sites — a check
-    # that flags everyone ranks nothing. Article pages keep the stronger severity.
+    # Editorial pattern counts are not engine/citation measurements. Keep them
+    # low priority, including on articles; article classification stays available
+    # to callers of the individual helpers for compatibility.
     article = htmlx.looks_article(doc)
     _question_headings(doc, report, article=article)
     _passage_citability(doc, report, ctx.get("thresholds", {}))
@@ -82,38 +82,55 @@ def audit(doc, resp, report, ctx=None) -> None:
         jsdiff.geo_finding(ctx["jsdep"], report)
 
 
+def _record_text_cue(report, name, counts):
+    """Expose bounded literal observations, not a semantic or engine verdict."""
+    receipt = report.meta.setdefault('geo_text_cues', {
+        'version': 1, 'basis': 'configured_english_oriented_patterns',
+        'interpretation': 'editorial_review_only',
+        'limits': 'Not language understanding, paragraph segmentation, source validation, '
+                  'answer assessment or measured engine/ranking/citation behavior.',
+        'checks': {},
+    })
+    receipt['checks'][name] = counts
+
+
 def _question_headings(doc, report, article=False):
     subs = [t for lvl, t in doc.headings if lvl >= 2 and t]
-    if not subs:
-        return
     q = [t for t in subs if t.lower().split()[:1] and
          t.lower().split()[0] in _QUESTION_WORDS or t.rstrip().endswith("?")]
+    _record_text_cue(report, 'question_headings', {
+        'matched': len(q), 'examined': len(subs), 'advisory_below_fraction': 0.2,
+        'match_rule': 'english_first_token_or_terminal_ascii_question_mark',
+    })
+    if not subs:
+        return
+    observed = (f"{len(q)}/{len(subs)} subheadings match configured English starters "
+                "or a terminal ASCII question mark.")
     ratio = len(q) / len(subs)
     if ratio < 0.2:
-        report.add(CAT, "medium" if article else "low",
-                   "Few question-based headings",
-                   f"{len(q)} of {len(subs)} subheadings are phrased as questions.",
-                   "Rewrite key H2/H3s as the questions users actually ask — AI "
-                   "engines match answers to question-shaped headings."
-                   + ("" if article else " (Most useful on article/guide pages; "
-                      "lower priority here.)"))
+        report.add(CAT, "low", "Few configured question-heading cues",
+                   observed + " Question relevance and engine matching are not measured.",
+                   observed + " Use descriptive headings suited to the audience; questions "
+                   "are optional when useful. Do not rewrite solely to satisfy these "
+                   "English-oriented cues; citation impact is not measured.",
+                   rule_id="geo.few.question.based.headings")
     else:
-        report.ok(CAT, "Question-based headings present",
-                  f"{len(q)}/{len(subs)} subheadings")
+        report.add(CAT, "good", "Configured question-heading cues present",
+                   observed + " Question relevance and engine matching are not measured.",
+                   rule_id="geo.question.based.headings.present")
 
 
 def _passage_citability(doc, report, th=None):
-    """AI engines quote self-contained passages best when they're ~40–120 words.
+    """Count synthetic sentence groups in a configured ASCII-word size range.
 
-    We approximate passages by splitting visible text on sentence groups. Very
-    long unbroken blocks are hard to lift cleanly; a page of only tiny fragments
-    lacks quotable substance.
+    This does not segment real paragraphs or measure self-containment/citability.
+    The default 40–120 range is a heuristic, not an engine requirement.
     """
     th = th or {}
     lo, hi = th.get("passage_min", 40), th.get("passage_max", 120)
     text = doc.body_text or ""
     chunks = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
-    # group sentences into ~paragraph-sized passages
+    # Historical grouping algorithm, not actual paragraph segmentation.
     passages, buf, count = [], [], 0
     for s in chunks:
         w = len(_WORD.findall(s))
@@ -124,51 +141,77 @@ def _passage_citability(doc, report, th=None):
             buf, count = [], 0
     if buf and count:
         passages.append(count)
+    citable = [p for p in passages if lo <= p <= hi]
+    _record_text_cue(report, 'sentence_groups', {
+        'in_range': len(citable), 'examined': len(passages), 'word_min': lo, 'word_max': hi,
+        'advisory_below_fraction': 0.3,
+        'match_rule': 'ascii_word_counts_in_accumulated_sentence_fragments',
+    })
     if not passages:
         return
-    citable = [p for p in passages if lo <= p <= hi]
+    observed = (f"{len(citable)}/{len(passages)} synthetic sentence groups contain "
+                f"{lo}–{hi} counted ASCII-word matches.")
     ratio = len(citable) / len(passages)
     if ratio < 0.3:
-        report.add(CAT, "medium", "Few self-contained, citable passages",
-                   f"Most passages are outside the ~{lo}–{hi} word range that AI "
-                   "engines quote cleanly.",
-                   "Structure answers as standalone paragraphs that make sense "
-                   "without surrounding context.")
+        report.add(CAT, "low", "Few sentence groups in the configured word range",
+                   observed + " Actual paragraphs, self-containment and engine citability are not measured.",
+                   observed + " Review readability and completeness in context. This configured "
+                   "range is not an engine requirement; do not pad or split useful text "
+                   "just to match it. Citation impact is not measured.",
+                   rule_id="geo.few.self.contained.citable.passages")
     else:
-        report.ok(CAT, "Citable passage structure",
-                  f"{len(citable)}/{len(passages)} passages in range")
+        report.add(CAT, "good", "Sentence groups in the configured word range",
+                   observed + " Actual paragraphs, self-containment and engine citability are not measured.",
+                   rule_id="geo.citable.passage.structure")
 
 
 def _evidence_density(doc, report, article=False):
     text = doc.body_text or ""
     stats = len(_STAT.findall(text))
     cites = len(_CITE_HINT.findall(text))
+    _record_text_cue(report, 'evidence_cues', {
+        'statistic_matches': stats, 'citation_cue_matches': cites,
+        'source_validity_checked': False,
+    })
+    observed = f"{stats} configured statistic-pattern matches; {cites} citation-cue matches."
     if stats + cites == 0:
-        report.add(CAT, "medium" if article else "low",
-                   "No statistics or citations",
-                   "No numbers, data points, or source references detected.",
-                   "Add concrete stats and cite primary sources — AI answers "
-                   "favor and attribute evidence-backed content."
-                   + ("" if article else " (Weighs most on article/guide pages.)"))
+        report.add(CAT, "low", "No configured statistics/citation cues",
+                   observed + " Other numbers, links or references may exist; source validity is not checked.",
+                   observed + " Review factual claims and relevant primary sources in context. "
+                   "Do not invent statistics or citations to satisfy this check. Cue absence "
+                   "does not prove missing evidence; citation impact is not measured.",
+                   rule_id="geo.no.statistics.or.citations")
     else:
-        report.ok(CAT, "Evidence signals present",
-                  f"{stats} stats, {cites} citation cues")
+        report.add(CAT, "good", "Configured statistics/citation cues present",
+                   observed + " Lexical cues only; factual support and source validity are not checked.",
+                   rule_id="geo.evidence.signals.present")
 
 
 def _direct_answer(doc, report):
-    """Reward a concise answer near the top (the 'inverted pyramid')."""
+    """Observe English lexical cues in the first 80 whitespace-separated tokens."""
     text = doc.body_text or ""
-    intro = " ".join(text.split()[:80])
+    tokens = text.split()[:80]
+    intro = " ".join(tokens)
+    matched = bool(re.search(r"\b(is|are|means|refers to|allows|helps|provides)\b", intro, re.I))
+    _record_text_cue(report, 'intro_cues', {
+        'inspected_tokens': len(tokens), 'token_limit': 80, 'matched': matched,
+        'match_rule': 'configured_english_answer_terms',
+    })
     if not intro:
         return
-    # A definitional/answer intro tends to contain 'is/are/means' early.
-    if not re.search(r"\b(is|are|means|refers to|allows|helps|provides)\b", intro, re.I):
-        report.add(CAT, "low", "No direct answer up top",
-                   "The opening doesn't state a concise answer/definition.",
-                   "Lead with a 1–2 sentence direct answer before the details; "
-                   "AI overviews lift the top summary.")
+    if not matched:
+        report.add(CAT, "low", "No configured introductory answer cues",
+                   "No configured English answer term matched in the first 80 whitespace-separated tokens. "
+                   "This does not establish whether the opening answers a question.",
+                   "Review whether the opening serves the reader's intent and language. "
+                   "Add a concise answer only when useful; English cue absence does not "
+                   "prove a missing answer. Answer accuracy and citation impact are not measured.",
+                   rule_id="geo.no.direct.answer.up.top")
     else:
-        report.ok(CAT, "Direct answer near the top")
+        report.add(CAT, "good", "Configured introductory answer cue present",
+                   "A configured English term matched in the first 80 whitespace-separated tokens. "
+                   "Answer directness, accuracy and citation impact are not measured.",
+                   rule_id="geo.direct.answer.near.the.top")
 
 
 def _llms_txt(ctx, report):
