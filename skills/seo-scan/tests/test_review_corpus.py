@@ -210,6 +210,22 @@ class TestReviewCorpus(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'severity'):
             review.prepare(self.path)
 
+    def test_exponent_overflow_is_rejected_before_packet_output(self):
+        for literal in ('1e999', '-1e999', 'NaN', 'Infinity', '-Infinity'):
+            with self.subTest(literal=literal):
+                with self.assertRaises(ValueError):
+                    review._json(('{"nested":[' + literal + ']}').encode('ascii'))
+        self.assertEqual({'small': 1.25, 'large': 1e300}, review._json(b'{"small":1.25,"large":1e300}'))
+        self.report['findings'][0]['confidence'] = 1.0
+        self.save()
+        report = self.root / 'report.json'
+        report.write_text(report.read_text(encoding='utf-8').replace('"confidence": 1.0', '"confidence": 1e999'),
+                          encoding='utf-8')
+        output = self.root / 'invalid-packet.json'
+        with redirect_stderr(io.StringIO()):
+            self.assertEqual(2, review.main(['prepare', str(self.path), '-o', str(output)]))
+        self.assertFalse(output.exists())
+
     def test_empty_corpus_or_no_actionable_findings_is_not_an_accuracy_pass(self):
         self.manifest['cases'] = []
         self.save()
