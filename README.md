@@ -293,6 +293,23 @@ but a budget note means extraction is unverified, not a complete validity verdic
 The legacy decode helper is bounded too. This is not XSD/protocol validation,
 complete format support, a total Python heap/CPU bound or a transport budget.
 Raw-fetch limits and existing network guards are unchanged.
+The raw fetch stage retains at most **20,000,000 response-body bytes** and now
+withholds the entire body on overflow rather than measuring a capped prefix.
+Exact-limit success is distinguished from overflow; non-2xx responses and known
+incomplete transfers also contribute no sitemap entries/samples. Failures appear
+as fetch notes and a `fetch_failures` file count, not successful fetched files or
+unsupported-XML findings. Mixed results label URL totals incomplete. Raw and
+decoded limits describe different stages; neither is a total network/heap/CPU
+budget. Redirect/private-host checks remain active. Only expected transport
+failures become bounded notes; unexpected processing errors propagate after
+response cleanup.
+The explicit received-length check covers identity/unencoded, non-transfer-encoded
+requests bodies too, including older optional dependency versions that do not
+raise on a short stream. Decoded gzip/chunked sizes are not compared directly to
+wire Content-Length; this is not full transport/encoding conformance validation.
+`--max-sitemaps` bounds distinct file fetch attempts, including failures, recorded
+as `sitemaps_attempted`; it is not a redirect-hop or whole-network request budget.
+Remaining-file counts exclude already-visited and duplicate queued references.
 The legacy marker/regex helpers used by crawl/context discovery are unchanged.
 Unknown/legacy extraction receipts do not certify health. Planner coverage-gap
 actions ask for manual verification, not rewriting an otherwise valid unsupported

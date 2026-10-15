@@ -30,6 +30,19 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Raw sitemap fetches withhold failed HTTP bodies, oversized prefixes and known
+  incomplete transfers consistently across requests/urllib. Exact-limit bodies
+  remain valid; fetch failures are separate from XML extraction notes and cannot
+  contribute URL totals or samples. Explicit failed-file counts label mixed totals
+  incomplete. Responses and urllib redirect/error handles
+  close on handled paths; unrelated processing errors propagate. Numeric header
+  comparisons avoid unbounded integer conversion. Failed file attempts consume
+  the sitemap traversal cap, and remaining counts deduplicate visited references.
+  Network guards are unchanged.
+- Short, unencoded requests streams below the raw byte limit are explicitly
+  checked against Content-Length, including older supported optional dependency
+  combinations. Encoded/transfer-decoded body sizes are not mistaken for wire
+  lengths; complete and encoded controls remain usable.
 - Sitemap gzip decoding uses sized streaming reads and a shared per-file
   decoded-byte ceiling of 52,428,800 bytes, including concatenated members.
   Oversized or corrupt/truncated gzip files contribute no XML prefix, URL entries

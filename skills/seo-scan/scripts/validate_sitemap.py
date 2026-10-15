@@ -58,8 +58,8 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
         start, allow_private=allow_private, timeout=timeout, diagnostics=source_diagnostics)
 
     result = {
-        "start": start, "seeds": seeds, "sitemaps_fetched": 0, "indexes": 0,
-        "total_urls": 0, "errors": [], "problems": {},
+        "start": start, "seeds": seeds, "sitemaps_fetched": 0, "sitemaps_attempted": 0, "indexes": 0,
+        "total_urls": 0, "errors": [], "problems": {}, "fetch_failures": 0,
         "invalid_lastmod": 0, "missing_lastmod": 0, "gzip": 0,
         "sample": [], "broken_sample": [],
         "parse_coverage": {"basis": "bounded_xml_parse", "scope": "fetched_files",
@@ -77,13 +77,15 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
     url_entries = []  # {loc, lastmod}
     problems = {"not-absolute": 0, "cross-host": 0}
 
-    while queue and result["sitemaps_fetched"] < max_sitemaps:
+    while queue and len(visited) < max_sitemaps:
         smap = queue.pop(0)
         if smap in visited:
             continue
         visited.add(smap)
+        result['sitemaps_attempted'] += 1
         raw, err = http.fetch_bytes(smap, allow_private=allow_private, timeout=timeout)
-        if raw is None:
+        if raw is None or err:
+            result['fetch_failures'] += 1
             result["errors"].append(f"{smap} -> {err}")
             continue
         if raw[:2] == b"\x1f\x8b":
@@ -121,10 +123,11 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
     result["problems"] = {k: v for k, v in problems.items() if v}
     if source_diagnostics:
         result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
-    if queue:  # cap reached with sitemaps still queued
-        result["truncated"] = len(queue)
+    remaining = set(queue) - visited
+    if remaining:  # cap reached with distinct unattempted files still queued
+        result["truncated"] = len(remaining)
         result["errors"].append(
-            f"Reached --max-sitemaps ({max_sitemaps}); {len(queue)} more sitemap "
+            f"Reached --max-sitemaps ({max_sitemaps}); {len(remaining)} more sitemap "
             f"file(s) not fetched, so total URLs is a partial count.")
 
     # 404 sampling: spread the sample across the URL list
@@ -159,15 +162,20 @@ def render_markdown(r: dict) -> str:
     parse_note = sm.parse_coverage_note(r.get('parse_coverage'), r['sitemaps_fetched'])
     if parse_note:
         lines += ['> ' + parse_note, '']
+    fetch_failures = r.get('fetch_failures')
+    fetch_incomplete = type(fetch_failures) is int and fetch_failures > 0
     lines += [
         f"- **Sitemaps fetched:** {r['sitemaps_fetched']} "
         f"({r['indexes']} index file(s){', ' + str(r['gzip']) + ' gzipped' if r['gzip'] else ''})",
         f"- **Total URLs:** {r['total_urls']}"
         + (" (verified files only; XML extraction is incomplete)" if coverage and coverage['unverified_files'] else "")
+        + (" (verified fetched files only; fetch failures leave total incomplete)" if fetch_incomplete else "")
         + ("+ (partial — --max-sitemaps cap reached)" if r.get("truncated") else ""),
         f"- **Missing lastmod:** {r['missing_lastmod']}  ·  "
         f"**Invalid lastmod:** {r['invalid_lastmod']}",
     ]
+    if fetch_incomplete:
+        lines.append(f'- **Fetch failures:** {fetch_failures} sitemap file(s); see notes below.')
     if r["problems"]:
         probs = ", ".join(f"{k}: {v}" for k, v in r["problems"].items())
         lines.append(f"- **`<loc>` problems:** {probs}")
@@ -188,7 +196,7 @@ def render_markdown(r: dict) -> str:
     if r["errors"]:
         lines += ["## Notes", ""] + [f"- {e}" for e in r["errors"]] + [""]
     if (coverage and coverage['verified_files'] and not coverage['unverified_files']
-            and r['total_urls'] and not r['errors'] and not note
+            and r['total_urls'] and not r['errors'] and not note and not fetch_incomplete
             and all(_sample_succeeded(entry) for entry in r['sample'])
             and not r["broken_sample"] and not r["problems"] and not r["invalid_lastmod"]):
         lines.append("Sitemap looks healthy for the checks performed. 🟢")
@@ -210,7 +218,7 @@ def main(argv=None) -> int:
     ap.add_argument("--sample", type=int, default=d["sample"],
                     help="number of URLs to spot-check for 404 (default 10)")
     ap.add_argument("--max-sitemaps", type=int, default=d["max_sitemaps"],
-                    help="cap on sitemap files fetched (default 50)")
+                    help="cap on distinct sitemap file fetch attempts, including failures (default 50)")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("-o", "--output")
     ap.add_argument("--timeout", type=int, default=d["timeout"])

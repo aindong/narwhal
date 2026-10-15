@@ -21,6 +21,15 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Raw sitemap fetch evidence:** failed/non-success HTTP bodies and oversized
+  response prefixes cannot certify XML extraction, even if a prefix looks
+  complete. Both transports retain actual exact-limit success and bounded fetch
+  notes; known incomplete transfers withhold data. Response/error/redirect
+  handles close, private-host/redirect guards remain active, and processing bugs
+  propagate. Raw fetch failures stay distinct from fetched-file XML coverage;
+  explicit failure counts label mixed URL totals incomplete.
+  Failed file attempts consume the traversal cap; remaining-file counts exclude
+  duplicate/already-visited references. This is not a whole-network request cap.
 - **Decoded sitemap budget:** sized gzip reads enforce 52,428,800 decoded bytes
   per file before UTF-8 conversion/XML parsing, across concatenated members.
   Budget exhaustion and failed integrity checks withhold all file entries and
