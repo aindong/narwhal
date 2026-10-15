@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Cold-start crawl resilience:** HTML helpers initialize the local RDFa module
+  before parallel workers access independent documents. This prevents observed
+  Python 3.9 startup import failures; extraction remains lazy, cached per Doc and
+  local-only. This is not a shared-Doc thread-safety guarantee.
 - **Non-backtracking robots matching:** ordered literal-piece searches replace
   combinatorial wildcard regex matching. Repeated-star nonmatches complete
   without changing rule specificity, Allow ties, URL normalization or fetch

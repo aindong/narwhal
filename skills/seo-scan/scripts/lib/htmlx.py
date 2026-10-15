@@ -15,6 +15,7 @@ from typing import Optional
 from urllib.parse import urljoin
 
 from .template_source import document_source
+from . import rdfa as _rdfa  # initialize before crawl workers; extraction stays lazy
 
 WS = re.compile(r"\s+")
 
@@ -90,8 +91,7 @@ class Doc:
     @property
     def rdfa(self) -> list:
         if self._rdfa_cache is None:
-            from .rdfa import extract
-            self._rdfa_cache = extract(self.document_html, self.base_url)
+            self._rdfa_cache = _rdfa.extract(self.document_html, self.base_url)
         return self._rdfa_cache[0]
 
     @property
