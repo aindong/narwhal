@@ -93,6 +93,13 @@ initial navigation: earlier response headers cannot safely describe a replacemen
 document. Scan the final destination directly. Normal HTTP redirects and
 same-document History API changes remain supported.
 
+Crawl JSON retains these HTTP/named-meta receipts on each successfully scanned
+page, including leaf pages. Crawl Markdown and comprehensive audit reports show
+up to ten sampled pages and eight notes per page, with display omissions labelled
+and full receipts retained in JSON. These notes add no score penalties or
+whole-site/indexing guarantees; generic HTTP findings remain in the normal
+score/issue rollup. Failed or legacy pages do not imply a policy observation.
+
 Page reports record `meta.ai_crawler_access`: dated agent roles, primary sources,
 and robots.txt root disallowance results at **`/` only**. Training/data-use choices,
 nonbinding user-fetch directives and unverified roles remain visible as
