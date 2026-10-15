@@ -43,8 +43,8 @@ class TestAuditors(unittest.TestCase):
         titles = [f.title for f in report.findings if f.severity == "critical"]
         self.assertTrue(any("noindex" in t for t in titles))
 
-    def test_blocked_ai_bot_flagged(self):
-        ctx = {"robots_txt": "User-agent: GPTBot\nDisallow: /",
+    def test_blocked_ai_search_bot_flagged(self):
+        ctx = {"robots_txt": "User-agent: OAI-SearchBot\nDisallow: /",
                "llms_txt": False, "sitemap_found": False}
         report = self._run(GOOD_PAGE, ctx)
         titles = [f.title for f in report.findings]

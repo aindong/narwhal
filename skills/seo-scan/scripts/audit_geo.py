@@ -1,9 +1,9 @@
 """GEO / LLMO auditor — visibility in AI answers (ChatGPT, Claude, Perplexity,
 Google AI Overviews).
 
-AI answer engines lift self-contained passages, prefer question-shaped headings,
-reward clear entities and citable evidence, and — critically — can only quote a
-page their crawler is allowed to fetch. This auditor scores those signals.
+Content heuristics and documented search/retrieval robots directives inform
+this audit. Training/data-use choices are separate policy observations, not
+proof of search visibility or live crawler access.
 """
 
 from __future__ import annotations
@@ -28,18 +28,39 @@ _STAT = re.compile(r"\b\d+([.,]\d+)?\s?(%|percent|million|billion|k\b|x\b)", re.
 _CITE_HINT = re.compile(r"\b(according to|source:|study|research|report|data from|"
                         r"survey|cited|\[\d+\])\b", re.I)
 
-# AI crawler user-agents worth checking in robots.txt.
-AI_BOTS = {
-    "GPTBot": "OpenAI (ChatGPT training/browse)",
-    "OAI-SearchBot": "OpenAI (ChatGPT search)",
-    "ChatGPT-User": "OpenAI (ChatGPT on-demand fetch)",
-    "ClaudeBot": "Anthropic (Claude)",
-    "Claude-Web": "Anthropic (Claude on-demand)",
-    "PerplexityBot": "Perplexity",
-    "Google-Extended": "Google (Gemini / AI Overviews training)",
-    "CCBot": "Common Crawl (feeds many LLMs)",
-    "Bytespider": "ByteDance",
-}
+# Static, primary-source role guidance, checked 2026-10-15. No runtime policy I/O.
+_OPENAI_BOTS = "https://developers.openai.com/api/docs/bots"
+_CLAUDE_BOTS = ("https://support.claude.com/en/articles/8896518-"
+                "does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler")
+_PERPLEXITY_BOTS = "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
+_GOOGLE_BOTS = "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers#google-extended"
+_GOOGLE_SEARCH = "https://developers.google.com/search/docs/appearance/ai-features#controlling-your-content-in-ai-features-in-search"
+
+# agent, role, purpose, source, interpretation for non-scored restrictions.
+_CRAWLER_POLICIES = (
+    ("OAI-SearchBot", "search_retrieval", "ChatGPT Search", _OPENAI_BOTS, ""),
+    ("Claude-SearchBot", "search_retrieval", "Claude search", _CLAUDE_BOTS, ""),
+    ("Claude-User", "search_retrieval", "Claude user-directed retrieval", _CLAUDE_BOTS, ""),
+    ("PerplexityBot", "search_retrieval", "Perplexity search", _PERPLEXITY_BOTS, ""),
+    ("Googlebot", "search_retrieval", "Google Search, including AI features", _GOOGLE_SEARCH, ""),
+    ("GPTBot", "training", "OpenAI training collection", _OPENAI_BOTS,
+     "Training collection opt-out; independent of ChatGPT Search access."),
+    ("ClaudeBot", "training", "Anthropic training collection", _CLAUDE_BOTS,
+     "Training collection opt-out; distinct from Claude search and user-directed retrieval."),
+    ("Google-Extended", "data_use", "Gemini training and grounding", _GOOGLE_BOTS,
+     "Controls training and specified Gemini/Vertex grounding uses, not Google Search or AI Overviews access."),
+    ("CCBot", "data_collection", "Common Crawl dataset", "https://commoncrawl.org/ccbot",
+     "Dataset collection restriction; this alone does not establish a direct search-access failure."),
+    ("ChatGPT-User", "user_triggered", "ChatGPT user-triggered fetches", _OPENAI_BOTS,
+     "A user-triggered directive does not prove a fetch is blocked; robots.txt may not apply. Not a Search opt-out control."),
+    ("Perplexity-User", "user_triggered", "Perplexity user-triggered fetches", _PERPLEXITY_BOTS,
+     "A user-triggered directive does not prove a fetch is blocked; this fetcher generally ignores robots.txt."),
+    ("Claude-Web", "unverified", "Legacy or unverified token", None,
+     "Current role is unverified; a matching directive does not establish a search impact."),
+    ("Bytespider", "unverified", "Unverified role", None,
+     "Current role is unverified; a matching directive does not establish a search impact."),
+)
+AI_BOTS = {agent: purpose for agent, role, purpose, source, note in _CRAWLER_POLICIES}
 
 
 def audit(doc, resp, report, ctx=None) -> None:
@@ -160,21 +181,36 @@ def _llms_txt(ctx, report):
 
 
 def _ai_crawler_access(ctx, report):
+    """Classify root directives by documented purpose, not live bot reachability."""
     robots = ctx.get("robots_txt")
     if robots is None:
         return
     rt = RobotsTxt.parse(robots)
-    # A bot is effectively blocked when it can't fetch the site root.
-    blocked = [b for b in AI_BOTS if rt.disallowed("/", b)]
+    agents, notes = [], []
+    for agent, role, purpose, source, note in _CRAWLER_POLICIES:
+        disallowed = rt.disallowed("/", agent)
+        agents.append({"agent": agent, "role": role, "purpose": purpose,
+                       "source": source, "disallowed": disallowed})
+        if disallowed and role != "search_retrieval":
+            notes.append({"agent": agent, "text": note, "source": source})
+    report.meta["ai_crawler_access"] = {
+        "version": 1, "policy_checked": "2026-10-15", "checked_path": "/",
+        "basis": "robots_txt_only", "agents": agents, "notes": notes,
+    }
+    blocked = [row["agent"] for row in agents
+               if row["role"] == "search_retrieval" and row["disallowed"]]
     if blocked:
         names = ", ".join(f"{b} ({AI_BOTS[b]})" for b in blocked)
         report.add(CAT, "high", "AI crawlers are blocked in robots.txt",
-                   f"Disallowed from the site root: {names}.",
-                   "If you want visibility in AI answers, allow these agents. If "
-                   "the block is intentional (content protection), ignore this.",
-                   evidence=names)
+                   f"robots.txt disallows / for these search/retrieval agents: {names}. "
+                   "Only the site root was checked; live access, other paths, indexing and citations are not verified.",
+                   "If these search or user-retrieval channels match your goals, review their / directives "
+                   "and infrastructure access. Keep deliberate restrictions; do not enable training bots "
+                   "as a search fix.", evidence=names, scope="site")
     else:
-        report.ok(CAT, "AI crawlers are not blocked")
+        report.add(CAT, "good", "Search/retrieval agents are not disallowed at site root",
+                   "robots.txt only; live access, other paths, indexing and citations are not verified.",
+                   scope="site")
 
 
 def _entity_clarity(doc, report):

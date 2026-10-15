@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Role-aware crawler policies:** documented search/retrieval restrictions
+  remain high findings; training/data-use, nonbinding user-fetch and unverified
+  directives are non-scoring notes. Page metadata records dated sources and
+  checked-root scope, without live/WAF/indexing/citation claims. Deliberate
+  opt-outs and the high rule's ignore/planner compatibility are preserved.
 - **Invalid response charset resilience:** unknown/non-text declared encodings
   return bounded failed-fetch diagnostics instead of crashing the optional HTTP
   path. Undecoded bodies are not measured or silently assigned a fallback

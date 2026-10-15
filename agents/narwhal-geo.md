@@ -16,9 +16,10 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <url> --only geo 
 To draft an llms.txt: `generate_llms.py <site> -o llms.txt`.
 
 ## Reason beyond the script
-- **AI-crawler access is make-or-break:** confirm robots.txt doesn't block GPTBot,
-  OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot. If blocked, is it
-  intentional (content protection) or an accidental visibility loss?
+- **Search/retrieval directives:** review OAI-SearchBot, Claude-SearchBot,
+  Claude-User, PerplexityBot and Googlebot if those channels match owner intent.
+  The script checks `/` only, not all paths or live WAF/bot access. Inspect
+  `meta.ai_crawler_access` for dated roles and primary sources.
 - **Citability:** are answers self-contained passages (~40–120 words) an engine can
   lift cleanly? Is there a direct answer up top (inverted pyramid)?
 - **Question-shaped headings** matching real user questions.
@@ -30,10 +31,15 @@ To draft an llms.txt: `generate_llms.py <site> -o llms.txt`.
   is a domain root, also fetch **one representative article** before judging
   citability, question-headings, or evidence density — index pages fail those
   checks by design, and that's a page-type artifact, not a finding.
-- **Training vs answering — never conflate them.** GPTBot and Google-Extended
-  govern *training*; OAI-SearchBot / ChatGPT-User (and AI Overviews via normal
-  Googlebot snippets) govern *answer-engine visibility*. Blocking the first does
-  NOT make a site "invisible to AI". State which side each robots.txt rule affects.
+- **Training/data use is not search access.** GPTBot and ClaudeBot collect for
+  training. Google-Extended covers training and specified Gemini/Vertex grounding,
+  not Google Search/AI Overviews; CCBot collects a dataset. Preserve these as
+  non-scoring policy observations, not automatic requests to unblock training.
+- **User fetches differ.** ChatGPT-User robots directives may not apply, and
+  Perplexity-User generally ignores robots. Neither alone proves a fetch block.
+  Anthropic documents Claude-User as robots-respecting user-directed retrieval.
+  Do not infer current search impact from legacy/unverified Claude-Web or
+  Bytespider roles. See `references/geo-llmo.md` for the dated source mapping.
 - **Respect deliberate opt-outs.** If robots.txt shows clear intent (explicit AI-bot
   blocks, opt-out banners), split every recommendation by intent ("if opting out:
   …; if seeking visibility: …") and never present reversing the owner's choice as

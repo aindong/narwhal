@@ -85,6 +85,106 @@
         }
       },
       "source_warnings": []
+    },
+    "ai_crawler_access": {
+      "version": 1,
+      "policy_checked": "2026-10-15",
+      "checked_path": "/",
+      "basis": "robots_txt_only",
+      "agents": [
+        {
+          "agent": "OAI-SearchBot",
+          "role": "search_retrieval",
+          "purpose": "ChatGPT Search",
+          "source": "https://developers.openai.com/api/docs/bots",
+          "disallowed": false
+        },
+        {
+          "agent": "Claude-SearchBot",
+          "role": "search_retrieval",
+          "purpose": "Claude search",
+          "source": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+          "disallowed": false
+        },
+        {
+          "agent": "Claude-User",
+          "role": "search_retrieval",
+          "purpose": "Claude user-directed retrieval",
+          "source": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+          "disallowed": false
+        },
+        {
+          "agent": "PerplexityBot",
+          "role": "search_retrieval",
+          "purpose": "Perplexity search",
+          "source": "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+          "disallowed": false
+        },
+        {
+          "agent": "Googlebot",
+          "role": "search_retrieval",
+          "purpose": "Google Search, including AI features",
+          "source": "https://developers.google.com/search/docs/appearance/ai-features#controlling-your-content-in-ai-features-in-search",
+          "disallowed": false
+        },
+        {
+          "agent": "GPTBot",
+          "role": "training",
+          "purpose": "OpenAI training collection",
+          "source": "https://developers.openai.com/api/docs/bots",
+          "disallowed": false
+        },
+        {
+          "agent": "ClaudeBot",
+          "role": "training",
+          "purpose": "Anthropic training collection",
+          "source": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+          "disallowed": false
+        },
+        {
+          "agent": "Google-Extended",
+          "role": "data_use",
+          "purpose": "Gemini training and grounding",
+          "source": "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers#google-extended",
+          "disallowed": false
+        },
+        {
+          "agent": "CCBot",
+          "role": "data_collection",
+          "purpose": "Common Crawl dataset",
+          "source": "https://commoncrawl.org/ccbot",
+          "disallowed": false
+        },
+        {
+          "agent": "ChatGPT-User",
+          "role": "user_triggered",
+          "purpose": "ChatGPT user-triggered fetches",
+          "source": "https://developers.openai.com/api/docs/bots",
+          "disallowed": false
+        },
+        {
+          "agent": "Perplexity-User",
+          "role": "user_triggered",
+          "purpose": "Perplexity user-triggered fetches",
+          "source": "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+          "disallowed": false
+        },
+        {
+          "agent": "Claude-Web",
+          "role": "unverified",
+          "purpose": "Legacy or unverified token",
+          "source": null,
+          "disallowed": false
+        },
+        {
+          "agent": "Bytespider",
+          "role": "unverified",
+          "purpose": "Unverified role",
+          "source": null,
+          "disallowed": false
+        }
+      ],
+      "notes": []
     }
   },
   "findings": [
@@ -377,12 +477,12 @@
     {
       "category": "geo",
       "severity": "good",
-      "title": "AI crawlers are not blocked",
-      "detail": "",
+      "title": "Search/retrieval agents are not disallowed at site root",
+      "detail": "robots.txt only; live access, other paths, indexing and citations are not verified.",
       "recommendation": "",
       "evidence": null,
-      "rule_id": "geo.ai.crawlers.are.not.blocked",
-      "scope": "page",
+      "rule_id": "geo.search.retrieval.agents.are.not.disallowed.at.site.root",
+      "scope": "site",
       "confidence": 1.0
     }
   ]

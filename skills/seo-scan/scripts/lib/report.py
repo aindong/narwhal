@@ -68,6 +68,27 @@ def recorded_response_truncated(meta):
         isinstance(coverage, dict) and coverage.get("response_truncated") is True)
 
 
+def _crawler_policy_notes(meta):
+    """Read explicit informational notes without reinterpreting legacy metadata."""
+    receipt = meta.get("ai_crawler_access") if isinstance(meta, dict) else None
+    if (not isinstance(receipt, dict) or type(receipt.get("version")) is not int
+            or receipt["version"] != 1 or receipt.get("basis") != "robots_txt_only"
+            or receipt.get("checked_path") != "/"):
+        return []
+    notes = receipt.get("notes")
+    if not isinstance(notes, list):
+        return []
+    result = []
+    for note in notes:
+        if not isinstance(note, dict) or not all(
+                isinstance(note.get(key), str) and note[key] for key in ("agent", "text")):
+            continue
+        source = note.get("source")
+        result.append({"agent": note["agent"], "text": note["text"],
+                       "source": source if isinstance(source, str) and source.startswith("https://") else None})
+    return result
+
+
 def recorded_scan_scope(meta):
     """Validate recorded execution without inferring coverage from findings."""
     scope = meta.get("scan_scope") if isinstance(meta, dict) else None
@@ -322,6 +343,16 @@ class Report:
                 lines.append(f"- 🔵 **{f.title}**{fix}")
             lines.append("")
 
+        notes = _crawler_policy_notes(self.meta)
+        if notes:
+            lines += ["## Crawler policy notes (not scored)", "",
+                      "Matching disallow directives at / are policy observations, not search-score penalties "
+                      "or endorsements. This is not a live access or whole-site check.", ""]
+            for note in notes:
+                source = f" [Policy source]({note['source']})" if note["source"] else ""
+                lines.append(f"- **{note['agent']}** — {note['text']}{source}")
+            lines.append("")
+
         # --- Passing checks ------------------------------------------------
         if buckets["good"]:
             lines.append("## Passing checks")
@@ -433,6 +464,18 @@ class Report:
                 for f in buckets["low"])
             body.append(f'<section class="card"><h2>Quick wins</h2>'
                         f'<ul class="clean">{items}</ul></section>')
+
+        notes = _crawler_policy_notes(self.meta)
+        if notes:
+            items = []
+            for note in notes:
+                source = (f' <a href="{_esc(note["source"])}">Policy source</a>'
+                          if note["source"] else "")
+                items.append(f'<li><strong>{_esc(note["agent"])}</strong> — {_esc(note["text"])}{source}</li>')
+            body.append('<section class="card"><h2>Crawler policy notes (not scored)</h2>'
+                        '<p>Matching disallow directives at / are policy observations, not search-score penalties '
+                        'or endorsements. This is not a live access or whole-site check.</p>'
+                        f'<ul>{"".join(items)}</ul></section>')
 
         # Passing checks
         if buckets["good"]:

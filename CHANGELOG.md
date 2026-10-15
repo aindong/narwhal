@@ -25,6 +25,13 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- AI-crawler scoring distinguishes documented search/retrieval agents from
+  training/data-use choices, nonbinding user-fetch directives and unverified
+  roles. The latter stay visible as non-scoring policy notes, not blanket
+  visibility penalties or instructions to enable training. Page JSON includes
+  dated primary-source roles and robots-only `/` scope; current retrieval agents
+  are covered without claiming live access, indexing or citations. The existing
+  high finding identity/title ignores and planner ownership remain compatible.
 - Unknown and non-text HTTP charset names produce bounded failed-fetch
   diagnostics rather than crashing optional `requests` scans or guessing an
   encoding. Supported decoding and malformed-byte replacement are unchanged;
