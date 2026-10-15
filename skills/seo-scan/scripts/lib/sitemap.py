@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import gzip
 import re
+import zlib
 from urllib.parse import urlparse
+from xml.parsers import expat
 
 _LOC = re.compile(r"<loc>\s*(.*?)\s*</loc>", re.I | re.S)
 _LASTMOD = re.compile(r"<lastmod>\s*(.*?)\s*</lastmod>", re.I | re.S)
@@ -25,12 +27,13 @@ def decode(raw: bytes) -> str:
     if raw[:2] == b"\x1f\x8b":  # gzip magic number
         try:
             raw = gzip.decompress(raw)
-        except OSError:
+        except (OSError, EOFError, zlib.error):
             pass
     return raw.decode("utf-8", "replace")
 
 
 def kind_of(text: str) -> str:
+    """Legacy marker hint, not proof of complete XML extraction."""
     low = text.lower()
     if "<sitemapindex" in low:
         return "index"
@@ -57,6 +60,133 @@ def parse(text: str):
     if not entries:  # fallback: a bare list of <loc> with no wrapping tags
         entries = [{"loc": l.strip(), "lastmod": None} for l in _LOC.findall(text)]
     return kind, entries
+
+
+MAX_XML_DEPTH = 128
+MAX_XML_ELEMENTS = 500_000
+MAX_XML_ENTRIES = 50_000
+_SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+XML_PARSE_REASONS = {
+    'unparseable_xml': 'content could not be parsed as complete XML',
+    'unrecognized_root': 'root/namespace is outside supported XML sitemap formats',
+    'unsupported_dtd': 'DTD/entity declarations are outside the supported XML scope',
+    'unsupported_entry_shape': 'entry location shape is missing, ambiguous or unsupported',
+    'xml_depth_limit': 'XML nesting limit reached',
+    'xml_element_limit': 'XML element limit reached',
+    'entry_limit': 'sitemap entry limit reached',
+}
+
+
+class _XMLUnverified(Exception):
+    """A bounded parser cannot establish complete supported extraction."""
+
+
+def parse_checked(text: str):
+    """Return (kind, entries, reason); withhold all entries on a coverage gap.
+
+    This streaming parser does not build a DOM, fetch resources or validate an
+    XSD. DTDs are declined before declarations/expansion; namespaces and direct
+    URL fields are interpreted, including normal XML character escaping.
+    """
+    parser = expat.ParserCreate(namespace_separator='}')
+    parser.SetParamEntityParsing(expat.XML_PARAM_ENTITY_PARSING_NEVER)
+    path, entries = [], []
+    kind, namespace, entry_name = 'unknown', '', ''
+    current, value_buffer, value_key = None, None, None
+    elements = 0
+
+    def start(name, attrs):
+        nonlocal kind, namespace, entry_name, current, value_buffer, value_key, elements
+        elements += 1
+        if elements > MAX_XML_ELEMENTS:
+            raise _XMLUnverified('xml_element_limit')
+        uri, _, local = name.rpartition('}')
+        path.append((uri, local))
+        if len(path) > MAX_XML_DEPTH:
+            raise _XMLUnverified('xml_depth_limit')
+        if len(path) == 1:
+            if uri not in ('', _SITEMAP_NS) or local not in ('urlset', 'sitemapindex'):
+                raise _XMLUnverified('unrecognized_root')
+            namespace = uri
+            kind = 'index' if local == 'sitemapindex' else 'urlset'
+            entry_name = 'sitemap' if kind == 'index' else 'url'
+        elif len(path) == 2 and path[-1] == (namespace, entry_name):
+            current = {'loc': None, 'lastmod': None}
+        elif (len(path) == 3 and current is not None
+              and uri == namespace and local in ('loc', 'lastmod')):
+            if local == 'loc' and current['loc'] is not None:
+                raise _XMLUnverified('unsupported_entry_shape')
+            value_key, value_buffer = local, []
+        elif len(path) > 3 and value_buffer is not None:
+            raise _XMLUnverified('unsupported_entry_shape')
+
+    def end(name):
+        nonlocal current, value_buffer, value_key
+        if len(path) == 3 and value_buffer is not None:
+            if current[value_key] is None:
+                current[value_key] = ''.join(value_buffer).strip()
+            value_buffer, value_key = None, None
+        if len(path) == 2 and current is not None and path[-1] == (namespace, entry_name):
+            if current['loc'] is None:
+                raise _XMLUnverified('unsupported_entry_shape')
+            if len(entries) >= MAX_XML_ENTRIES:
+                raise _XMLUnverified('entry_limit')
+            entries.append(current)
+            current = None
+        path.pop()
+
+    def data(value):
+        if value_buffer is not None:
+            value_buffer.append(value)
+
+    def decline_dtd(*args):
+        raise _XMLUnverified('unsupported_dtd')
+
+    parser.StartElementHandler = start
+    parser.EndElementHandler = end
+    parser.CharacterDataHandler = data
+    parser.StartDoctypeDeclHandler = decline_dtd
+    parser.EntityDeclHandler = decline_dtd
+    parser.ExternalEntityRefHandler = decline_dtd
+    try:
+        parser.Parse(text, True)
+    except _XMLUnverified as exc:
+        return kind, [], exc.args[0]
+    except expat.ExpatError:
+        return kind, [], 'unparseable_xml'
+    return kind, entries, None
+
+
+def recorded_parse_coverage(value, fetched=None):
+    """Recognize explicit fetched-file coverage without guessing legacy state."""
+    if (not isinstance(value, dict) or value.get('basis') != 'bounded_xml_parse'
+            or value.get('scope') != 'fetched_files'):
+        return None
+    if any(type(value.get(key)) is not int or value[key] < 0
+           for key in ('verified_files', 'unverified_files')):
+        return None
+    reasons = value.get('reasons')
+    if (not isinstance(reasons, dict) or any(key not in XML_PARSE_REASONS or type(n) is not int or n <= 0
+                                           for key, n in reasons.items())
+            or sum(reasons.values()) != value['unverified_files']):
+        return None
+    if fetched is not None and (type(fetched) is not int or fetched < 0
+                               or value['verified_files'] + value['unverified_files'] != fetched):
+        return None
+    return {**value, 'reasons': dict(reasons)}
+
+
+def parse_coverage_note(value, fetched=None):
+    """Explain withheld measurements without declaring unsupported data invalid."""
+    coverage = recorded_parse_coverage(value, fetched)
+    if coverage is None:
+        return 'XML extraction coverage was not recorded; verify source formats before trusting URL totals or a health verdict.'
+    if not coverage['unverified_files']:
+        return None
+    reasons = '; '.join(f'{XML_PARSE_REASONS[key]} ({n})' for key, n in coverage['reasons'].items())
+    return (f"XML extraction unverified for {coverage['unverified_files']} fetched file(s): {reasons}. "
+            'URL totals cover verified files only, not all sitemap content. '
+            'Unsupported formats are not necessarily invalid; verify them separately.')
 
 
 def valid_lastmod(value) -> bool:
