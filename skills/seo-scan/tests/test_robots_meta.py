@@ -55,6 +55,15 @@ class TestRobotsMeta(unittest.TestCase):
         rep = audit_meta('<meta name="robots" content="max-image-preview: none, noindex">')
         self.assertEqual([NOINDEX], [f.rule_id for f in rep.findings])
 
+    def test_standalone_names_before_parameter_are_retained(self):
+        for content, expected in (
+                ('noindex max-image-preview:none', {NOINDEX}),
+                ('nofollow noindex max-snippet : 50', {NOINDEX, NOFOLLOW}),
+                ('none unavailable_after: Wed, 21 Oct 2099 12:00:00 GMT', {NOINDEX, NOFOLLOW})):
+            with self.subTest(content=content):
+                rep = audit_meta('<meta name="robots" content="' + content + '">')
+                self.assertEqual(expected, {f.rule_id for f in rep.findings})
+
     def test_nofollow_does_not_imply_noindex(self):
         rep = audit_meta('<meta name="robots" content="index, nofollow">')
         self.assertEqual([NOFOLLOW, META_PASS], [f.rule_id for f in rep.findings])
@@ -83,9 +92,24 @@ class TestRobotsMeta(unittest.TestCase):
         rep = audit_meta('<template><meta name="robots" content="none"></template>')
         self.assertEqual([META_PASS], [f.rule_id for f in rep.findings])
 
+    def test_body_nested_templates_are_removed_before_metadata_collection(self):
+        html = '<html><head><meta name="robots" content="nofollow"></head><body><template><template><meta name="robots" content="none"></template><meta name="robots" content="noindex"></template></body></html>'
+        parsers = [htmlx._parse_stdlib]
+        if importlib.util.find_spec('bs4'):
+            parsers.append(htmlx._parse_bs4)
+        for parser in parsers:
+            with self.subTest(parser=parser.__name__):
+                doc = parser(html, 'https://example.test/')
+                self.assertNotIn('content="none"', doc.document_html)
+                self.assertEqual(['nofollow'], [m.get('content') for m in doc.meta])
+                rep = Report('https://example.test/')
+                audit_technical._robots_directives(doc, rep)
+                self.assertEqual([NOFOLLOW, META_PASS], [f.rule_id for f in rep.findings])
+
     @unittest.skipUnless(importlib.util.find_spec('bs4'), 'optional BeautifulSoup backend absent')
     def test_optional_parser_agrees_on_duplicate_alias_and_inert_cases(self):
         for markup in ('<meta name="robots" content="index"><meta name="robots" content="NONE">',
+                       '<meta name="robots" content="noindex max-image-preview:none">',
                        '<meta name="robots" content="max-image-preview: none">',
                        '<template><meta name="robots" content="noindex"></template>',
                        '<meta name="robots" content="x-noindex">'):

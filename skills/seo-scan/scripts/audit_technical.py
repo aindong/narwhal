@@ -160,7 +160,8 @@ def _canonical(doc, resp, report):
 def _generic_meta_robots(doc):
     """Collect exact restriction names across active generic robots meta tags.
 
-    Parameterized segments are not standalone rules (e.g. image-preview:none).
+    Parameter names/values are not standalone rules (e.g. image-preview:none),
+    but standalone names before a parameter remain observable.
     Keep one bounded positional witness per recognized name, scanning every tag.
     """
     observed = {}
@@ -169,8 +170,12 @@ def _generic_meta_robots(doc):
             continue
         for segment in (meta.get('content') or '').lower().split(','):
             if ':' in segment:
-                continue
-            for token in segment.split():
+                # Ignore the parameter name and remainder (which may be a date
+                # or free-form value), without losing preceding standalone names.
+                tokens = segment.split(':', 1)[0].split()[:-1]
+            else:
+                tokens = segment.split()
+            for token in tokens:
                 if token in ('noindex', 'nofollow', 'none'):
                     observed.setdefault(token, position)
     rules = set(observed)
