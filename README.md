@@ -78,7 +78,7 @@ unchanged; this does not certify complete site coverage.
 
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a
-candidate, 404/410 is observed root absence, and HTML fallbacks, gates, empty,
+candidate, complete 404/410 is observed root absence, and HTML fallbacks, gates, empty,
 partial or truncated responses remain unverified. Unverified responses create
 neither a published-file pass nor a missing-file penalty; known HTTP uncertainty
 blocks GEO score comparisons/diffs/briefs and yields manual-only plan verification.

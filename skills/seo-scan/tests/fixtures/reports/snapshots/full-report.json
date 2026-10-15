@@ -95,6 +95,7 @@
       "http_status": 404,
       "media_type": "",
       "body_truncated": false,
+      "partial_response": false,
       "requested_url": "https://example.test/llms.txt",
       "final_url": "https://example.test/llms.txt",
       "source": "https://llmstxt.org/",

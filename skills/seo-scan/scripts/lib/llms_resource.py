@@ -42,16 +42,22 @@ def assess(response):
     status = response.status if type(response.status) is int else 0
     mime = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()[:120]
     truncated = response.headers.get('x-narwhal-truncated') == 'true'
+    partial = status == 206 or bool(response.headers.get('content-range'))
     text = response.text if isinstance(response.text, str) else ''
     state, reason = 'unverified', 'http_unverified'
     if status in (404, 410):
-        state, reason = 'absent', 'http_absence'
+        if truncated:
+            reason = 'truncated'
+        elif partial:
+            reason = 'partial_response'
+        else:
+            state, reason = 'absent', 'http_absence'
     elif response.error:
         reason = 'request_failed'
     elif 200 <= status < 300:
         if truncated:
             reason = 'truncated'
-        elif status == 206 or response.headers.get('content-range'):
+        elif partial:
             reason = 'partial_response'
         elif status in (204, 205):
             reason = 'empty_body'
@@ -68,7 +74,7 @@ def assess(response):
             state, reason = 'observed', 'candidate_text'
     return {'version': 1, 'basis': 'root_http_response', 'checked_path': '/llms.txt',
             'state': state, 'reason': reason, 'http_status': status,
-            'media_type': mime, 'body_truncated': truncated,
+            'media_type': mime, 'body_truncated': truncated, 'partial_response': partial,
             'requested_url': response.url, 'final_url': response.final_url,
             'source': SOURCE, 'source_checked': SOURCE_CHECKED}
 
@@ -88,6 +94,7 @@ def recorded(value):
             value['basis'] == 'not_recorded' or type(value.get('reported_present')) is bool) else None
     if (value.get('basis') != 'root_http_response' or type(value.get('http_status')) is not int
             or not 0 <= value['http_status'] <= 999 or type(value.get('body_truncated')) is not bool
+            or type(value.get('partial_response')) is not bool
             or not isinstance(value.get('media_type'), str)
             or not all(isinstance(value.get(key), str) for key in ('requested_url', 'final_url'))):
         return None
@@ -96,12 +103,17 @@ def recorded(value):
         return None
     if state == 'observed':
         valid = (reason == 'candidate_text' and 200 <= status < 300 and status not in (204, 205, 206)
-                 and not value['body_truncated'] and value['media_type'] in _TEXT_TYPES)
+                 and not value['body_truncated'] and not value['partial_response']
+                 and value['media_type'] in _TEXT_TYPES)
     elif state == 'absent':
-        valid = reason == 'http_absence' and status in (404, 410)
+        valid = (reason == 'http_absence' and status in (404, 410)
+                 and not value['body_truncated'] and not value['partial_response'])
     else:
         valid = (state == 'unverified' and reason in _REASONS
-                 and reason not in ('candidate_text', 'http_absence') and status not in (404, 410))
+                 and reason not in ('candidate_text', 'http_absence')
+                 and (reason != 'truncated' or value['body_truncated'])
+                 and (reason != 'partial_response' or value['partial_response'])
+                 and (status not in (404, 410) or reason in ('truncated', 'partial_response')))
     return value if valid else None
 
 
