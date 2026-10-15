@@ -8,3 +8,6 @@ venv/
 report.json
 report.md
 .DS_Store
+
+# Private scan/review evidence must not be published with repository changes.
+/.narwhal-review/

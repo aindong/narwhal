@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- A prospective 50-URL acquisition plan records intended page-role/language
+  diversity, operational site-family splits, reserved-output rules and bounded
+  conservative collection policy before scans. Local evidence is git-ignored;
+  failures are retained without replacement. The initial 46 pending bundles and
+  four preflight skips are acquisition coverage only, not independent accuracy,
+  healthy-page or ranking/citation evidence. Historical reports are untouched.
 - An opt-in maintainer capture command freezes one scan's decoded response/DOM,
   paired served input when available, response metadata and site context into a
   fresh local review bundle. Existing files are never overwritten; manifests are

@@ -181,6 +181,48 @@ heap or CPU. Limit exhaustion errors instead of silently dropping cases.
 
 ## The larger validation milestone
 
+The prospective [`prospective-cases.json`](prospective-cases.json) registers
+**50 candidate URLs** across 25 declared operational site groups: 30 development
+cases and 20 reserved for later review. Five request rendering. It is a purposeful
+acquisition plan, not a representative population sample or validated benchmark.
+Version 2 supersedes an uncollected version 1 before any acquisition, adding
+conservative robots preflight, a half-second inter-case delay and a 180-second
+per-case execution limit. URLs, splits and scanner settings were not changed.
+Disallowed/unverified preflights and interrupted attempts remain visible cases,
+not page-quality failures or opportunities to select easier replacements.
+Roles/languages are intended strata, not verified labels; shared ownership,
+templates and earlier exposure are not exhaustively established. There are no
+healthy/known-fault labels assigned from reputation.
+
+Freeze the selection/settings in git **before** scanning this cohort. Retain
+original failures, gates, partial snapshots and redirect aliases; do not replace
+unhelpful results with easier URLs. Keep attempts and private raw captures
+separate from this public plan. Local acquisition uses the git-ignored
+`.narwhal-review/` directory with requested owner-only permissions; it must not
+be force-added to git. An ignore rule is not a security or redaction boundary.
+A candidate count is not a count of distinct,
+measurable or validated pages. Reserved finding rows must not be inspected for
+tuning in this cycle; acquisition status/coverage checks are permitted. If those
+reports are used to tune the tool, record that exposure and do not call them
+held-out evidence for the resulting change. Any later selection/settings change
+creates a new cohort. Optional image probes are outside this first acquisition
+stage and still require separate evidence/opportunities.
+
+This registration does **not** complete the steps below. In particular, neither
+successful capture nor a passing scan assigns independent truth labels or
+enumerates the tool's missed issues.
+
+The first v2 acquisition run, using frozen source revision
+`016d43c54f3ad7978320bf1bbf7e15c4667fc6a1`, recorded all 50 candidate attempts:
+46 local bundles and pending review packets (44 primary HTTP 200, two HTTP 403),
+plus four unverified-robots-preflight skips. No case was substituted, no execution
+deadline was reached, and no finding was adjudicated. HTTP 200 does not certify
+a real/unblocked page or complete coverage; redirected aliases and site intent
+still need review. Raw inputs, preflight receipts, acquisition journal and
+executor copy remain private under `.narwhal-review/prospective-inputs-2026-10-v2/`;
+they are not published with this registration. Reserved findings/scores were not
+inspected for tuning. The historical 15 report-only cases remain unchanged.
+
 Before publishing accuracy claims:
 
 1. Pre-register a diverse 50–100-page corpus and a held-out subset, including
