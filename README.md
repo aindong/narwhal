@@ -321,6 +321,13 @@ anchor fallback and valid siblings within those limits. Already-visited entries
 are skipped without retaining entire parsed-file buffers. These are component
 budgets, not an aggregate audit/network/CPU/heap budget; validator traversal has
 its separately selected `--max-sitemaps` budget.
+HTTP `Content-Encoding: gzip`/`deflate` is checked separately from raw `.gz`
+files: the fetch budget bounds both encoded wire bytes and decoded response
+bytes. Short declared bodies, missing/corrupt compression trailers and decode
+overflow contribute no XML prefix. Raw `.gz` files without HTTP encoding stay
+raw for the sitemap decoder and its separate decoded-file budget. Raw fetches
+advertise only supported HTTP encodings; unsolicited unsupported/stacked
+encodings remain explicit fetch gaps rather than guessed complete bodies.
 `sitemap_discovery` receipts record candidate scope, counts and active limits,
 not whole-site URL totals. Unknown formats, incomplete fetches and limits are
 explicit non-scoring notes/manual verification, not proof of missing/invalid

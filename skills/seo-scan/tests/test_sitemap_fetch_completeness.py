@@ -1,6 +1,8 @@
 """Only complete successful raw responses may feed sitemap extraction."""
 
 import io
+import gzip
+import zlib
 import sys
 import types
 import unittest
@@ -21,7 +23,10 @@ class TransportError(OSError):
     pass
 
 
-REQUESTS = types.SimpleNamespace(RequestException=TransportError)
+REQUESTS = types.SimpleNamespace(
+    RequestException=TransportError,
+    packages=types.SimpleNamespace(urllib3=types.SimpleNamespace(
+        exceptions=types.SimpleNamespace(HTTPError=TransportError))))
 
 
 class Stream(io.BytesIO):
@@ -108,14 +113,108 @@ class TestSitemapFetchCompleteness(unittest.TestCase):
                 self.assertIn('Incomplete response', error)
                 response.close.assert_called_once()
 
-    def test_encoded_or_transfer_decoded_lengths_are_not_compared_to_wire_length(self):
-        for header, value in (('content-encoding', 'gzip'), ('content-encoding', 'deflate'),
-                              ('transfer-encoding', 'chunked')):
-            response = requests_response([XML], length=len(XML) + 20)
-            response.headers[header] = value
-            with self.subTest(header=header, value=value):
-                self.assertEqual((XML, None), fetch('requests', response))
-                response.close.assert_called_once()
+    def test_transfer_decoded_lengths_are_not_compared_to_wire_length(self):
+        response = requests_response([XML], length=len(XML) + 20)
+        response.headers['transfer-encoding'] = 'chunked'
+        self.assertEqual((XML, None), fetch('requests', response))
+        response.close.assert_called_once()
+
+    def encoded_fetch(self, provider, wire, encoding='gzip', declared=None, budget=1024):
+        if provider == 'requests':
+            response = requests_response([], length=declared)
+            response.raw.read.return_value = wire
+            response.headers['content-encoding'] = encoding
+        else:
+            response = Stream(wire, declared=declared)
+            response.headers['Content-Encoding'] = encoding
+        result = fetch(provider, response, budget=budget)
+        if provider == 'requests':
+            response.raw.read.assert_called_once_with(budget + 1, decode_content=False)
+            response.iter_content.assert_not_called()
+            response.close.assert_called_once()
+        else:
+            self.assertTrue(response.closed)
+        return result
+
+    def test_http_encoded_bodies_are_checked_as_wire_then_decoded(self):
+        for provider in ('requests', 'urllib'):
+            for encoding, wire in (('gzip', gzip.compress(XML)), ('x-gzip', gzip.compress(XML)),
+                                   ('deflate', zlib.compress(XML)),
+                                   ('deflate', zlib.compress(XML)[2:-4])):
+                for length in (None, len(wire)):
+                    with self.subTest(provider=provider, encoding=encoding, length=length):
+                        self.assertEqual((XML, None), self.encoded_fetch(provider, wire, encoding, length))
+
+    def test_short_encoded_wire_does_not_expose_complete_xml(self):
+        wire = gzip.compress(XML)
+        for provider in ('requests', 'urllib'):
+            with self.subTest(provider=provider):
+                body, error = self.encoded_fetch(provider, wire, declared=len(wire) + 20)
+                self.assertIsNone(body)
+                self.assertIn('Content-Length not satisfied', error)
+
+    def test_missing_footer_and_invalid_encoded_streams_with_exact_length_are_unverified(self):
+        gzip_body = gzip.compress(XML)
+        cases = [('gzip', gzip_body[:-8]), ('gzip', gzip_body[:-1]),
+                 ('gzip', gzip_body[:-8] + b'\x00' * 8), ('gzip', XML), ('gzip', b''),
+                 ('deflate', zlib.compress(XML)[:-4]), ('deflate', zlib.compress(XML) + b'junk')]
+        for provider in ('requests', 'urllib'):
+            for encoding, wire in cases:
+                with self.subTest(provider=provider, encoding=encoding, wire=wire[-8:]):
+                    body, error = self.encoded_fetch(provider, wire, encoding, len(wire))
+                    self.assertIsNone(body)
+                    self.assertEqual('Incomplete or invalid HTTP encoded body; body unverified.', error)
+
+    def test_http_wire_and_decoded_bodies_both_obey_budget(self):
+        for provider in ('requests', 'urllib'):
+            for encoding, wire in (('gzip', gzip.compress(b'x' * 10_000)),
+                                   ('deflate', zlib.compress(b'x' * 10_000))):
+                with self.subTest(provider=provider, encoding=encoding):
+                    body, error = self.encoded_fetch(provider, wire, encoding, len(wire), budget=100)
+                    self.assertIsNone(body)
+                    self.assertIn('decoded byte limit', error)
+            body, error = self.encoded_fetch(provider, gzip.compress(XML), budget=10)
+            self.assertIsNone(body)
+            self.assertIn('raw byte limit', error)
+            wire = gzip.compress(b'x' * 100)
+            self.assertEqual((b'x' * 100, None),
+                             self.encoded_fetch(provider, wire, declared=len(wire), budget=100))
+
+    def test_raw_gzip_files_remain_raw_without_http_encoding(self):
+        wire = gzip.compress(XML)
+        for provider in ('requests', 'urllib'):
+            response = requests_response([wire], length=len(wire)) if provider == 'requests' else Stream(wire, declared=len(wire))
+            self.assertEqual((wire, None), fetch(provider, response))
+
+    def test_http_gzip_members_share_budget_and_require_final_integrity(self):
+        wire = gzip.compress(XML[:20]) + gzip.compress(XML[20:])
+        for provider in ('requests', 'urllib'):
+            self.assertEqual((XML, None), self.encoded_fetch(provider, wire, declared=len(wire)))
+            body, error = self.encoded_fetch(provider, wire[:-1], declared=len(wire)-1)
+            self.assertIsNone(body)
+            self.assertIn('invalid HTTP encoded', error)
+            self.assertEqual((b'', None), self.encoded_fetch(provider, gzip.compress(b'')))
+
+    def test_unsupported_http_encoding_is_explicitly_unverified(self):
+        for provider in ('requests', 'urllib'):
+            for encoding in ('br', 'gzip, deflate'):
+                body, error = self.encoded_fetch(provider, XML, encoding, len(XML))
+                self.assertIsNone(body)
+                self.assertEqual('Unsupported HTTP content encoding; body unverified.', error)
+
+    def test_encoded_requests_wire_errors_withhold_body_and_close_response(self):
+        response = requests_response([])
+        response.headers['content-encoding'] = 'gzip'
+        response.raw.read.side_effect = TransportError('secret-token')
+        self.assertEqual((None, 'TransportError'), fetch('requests', response))
+        response.close.assert_called_once()
+        for failure in (RuntimeError('bug'), ValueError('bug')):
+            response = requests_response([])
+            response.headers['content-encoding'] = 'gzip'
+            response.raw.read.side_effect = failure
+            with self.subTest(failure=type(failure).__name__), self.assertRaises(type(failure)):
+                fetch('requests', response)
+            response.close.assert_called_once()
 
     def test_large_declared_lengths_do_not_crash_integer_conversion(self):
         for declared in ('9' * 10_000, '000' + str(len(XML) + 20)):

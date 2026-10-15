@@ -34,6 +34,12 @@ All notable changes to Narwhal are documented here. The format follows
   an audit overall score. Local page checks use a separate artifact; final
   verification reruns an audit after deployment and asks callers to restore the
   original settings and limits. Scan workflows and diff eligibility guards remain.
+- Raw sitemap fetches verify bounded HTTP gzip/deflate wire bodies before
+  decoding, including on older optional transports. Short Content-Length and
+  incomplete/corrupt compression trailers cannot expose a complete-looking XML
+  prefix. Both wire and HTTP-decoded bytes obey the response budget; raw `.gz`
+  files retain the separate sitemap decode path. Unsupported HTTP encodings
+  remain explicit fetch gaps, and network guards are unchanged.
 - Sitemap discovery across scan context, crawl and site validation uses complete
   bounded namespace-aware XML instead of marker/loc regex guesses. Prefixed and
   gzip roots and XML-escaped URLs work consistently; unverified files cannot

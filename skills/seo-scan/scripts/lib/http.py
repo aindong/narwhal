@@ -8,8 +8,11 @@ pages with Playwright when it is available and the caller asks for it.
 from __future__ import annotations
 
 import ipaddress
+import gzip
+import io
 import socket
 import time
+import zlib
 from dataclasses import dataclass, field, replace
 from typing import Optional
 from urllib.parse import urlparse, urlunparse
@@ -426,13 +429,43 @@ def fetch_text(url: str, **kwargs) -> Optional[str]:
     return resp.text if resp.ok else None
 
 
+def _decode_http_content(raw, encoding, max_bytes):
+    """Bound HTTP gzip/deflate decoding and require a complete encoded stream."""
+    if encoding == 'identity':
+        return raw, None
+    if encoding not in ('gzip', 'x-gzip', 'deflate'):
+        return None, 'Unsupported HTTP content encoding; body unverified.'
+    try:
+        if encoding in ('gzip', 'x-gzip'):
+            if not raw.startswith(b'\x1f\x8b'):
+                return None, 'Incomplete or invalid HTTP encoded body; body unverified.'
+            with gzip.GzipFile(fileobj=io.BytesIO(raw)) as stream:
+                decoded = stream.read(max_bytes + 1)
+        else:
+            decoder = zlib.decompressobj()
+            try:
+                decoded = decoder.decompress(raw, max_bytes + 1)
+            except zlib.error:  # HTTP servers also use unwrapped DEFLATE
+                decoder = zlib.decompressobj(-zlib.MAX_WBITS)
+                decoded = decoder.decompress(raw, max_bytes + 1)
+            if len(decoded) <= max_bytes and (not decoder.eof or decoder.unused_data):
+                return None, 'Incomplete or invalid HTTP encoded body; body unverified.'
+        if len(decoded) > max_bytes:
+            return None, f'Response exceeded decoded byte limit ({max_bytes} bytes); body unverified.'
+        return decoded, None
+    except (EOFError, OSError, zlib.error):
+        return None, 'Incomplete or invalid HTTP encoded body; body unverified.'
+
+
 def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
                 user_agent: str = DEFAULT_UA, allow_private: bool = False,
                 max_bytes: int = 20_000_000):
     """Return complete successful raw bytes, or (None, bounded failure note).
 
     Prefixes from oversized, failed or known-incomplete responses are withheld.
-    The byte budget covers this response body, not all network/process work.
+    HTTP gzip/deflate is decoded only after bounded wire acquisition; a raw .gz
+    file without Content-Encoding remains raw. The byte budget applies to both
+    wire and HTTP-decoded bodies, not all network/process work.
     """
     if type(max_bytes) is not int or max_bytes <= 0:
         raise ValueError('Raw response byte budget must be a positive integer.')
@@ -450,21 +483,31 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
         try:
             r, _, _ = _requests_safe(
                 requests, "GET", url, timeout=timeout,
-                headers={"User-Agent": user_agent}, allow_private=allow_private,
+                headers={"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate, identity"},
+                allow_private=allow_private,
                 stream=True)
         except (requests.RequestException, SSRFError, ValueError) as exc:
             return None, type(exc).__name__
         try:
             if not 200 <= r.status_code < 300:
                 return None, f'HTTP {r.status_code}'
-            raw, truncated = _limited_content(r, max_bytes)
+            encoding = (r.headers.get('content-encoding') or 'identity').strip().lower()
+            if encoding != 'identity':
+                # iter_content auto-decodes and older urllib3 can accept a short
+                # wire body or missing gzip trailer if its XML prefix is complete.
+                try:
+                    raw = r.raw.read(max_bytes + 1, decode_content=False)
+                except requests.packages.urllib3.exceptions.HTTPError as exc:
+                    return None, type(exc).__name__
+                truncated = len(raw) > max_bytes
+            else:
+                raw, truncated = _limited_content(r, max_bytes)
             if truncated:
                 return None, limit_note
-            encoding = (r.headers.get('content-encoding') or 'identity').strip().lower()
-            if (encoding == 'identity' and not r.headers.get('transfer-encoding')
+            if (not r.headers.get('transfer-encoding')
                     and _declared_length_exceeds(r.headers.get('content-length'), len(raw))):
                 return None, 'Incomplete response body (Content-Length not satisfied).'
-            return raw, None
+            return _decode_http_content(raw, encoding, max_bytes)
         except requests.RequestException as exc:
             return None, type(exc).__name__
         finally:
@@ -492,7 +535,8 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
             if (not fh.headers.get('transfer-encoding')
                     and _declared_length_exceeds(length, len(raw))):
                 return None, 'Incomplete response body (Content-Length not satisfied).'
-            return raw, None
+            encoding = (fh.headers.get('content-encoding') or 'identity').strip().lower()
+            return _decode_http_content(raw, encoding, max_bytes)
     except (OSError, http_client.HTTPException) as exc:
         return None, type(exc).__name__
 

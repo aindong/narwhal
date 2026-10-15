@@ -25,6 +25,11 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   from the final deployed audit/diff. Templates require the original settings and
   limits rather than inventing a replay; matching kinds alone does not establish
   comparable coverage. Scan plans and manual sitemap gap tasks are unchanged.
+- **HTTP compression evidence:** raw sitemap fetches acquire bounded wire bytes
+  for gzip/deflate and require complete compression streams before decoding.
+  Short wire lengths, missing/corrupt trailers and response decode overflow
+  contribute no XML prefix, on both transports. Unsupported HTTP encodings stay
+  fetch gaps; unencoded `.gz` files keep the separate sitemap decoder.
 - **Shared XML discovery:** scan context, crawl and validator fallback discovery
   recognize supported namespace prefixes/gzip and XML escaping from complete
   bounded inputs, not marker/comment guesses. Discovery caps and unknown formats
