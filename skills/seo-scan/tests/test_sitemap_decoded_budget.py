@@ -52,6 +52,39 @@ class TestSitemapDecodedBudget(unittest.TestCase):
         self.assertEqual(('', 'decoded_byte_limit'), sm.decode_checked(compressed, max_bytes=len(first)))
         self.assertEqual((XML.decode(), None), sm.decode_checked(compressed + b'\x00' * 8, max_bytes=len(XML)))
 
+    def test_streams_close_on_success_limit_integrity_failure_and_unexpected_errors(self):
+        factory = gzip.GzipFile
+        opened = []
+
+        def track(**kwargs):
+            stream = factory(**kwargs)
+            opened.append(stream)
+            return stream
+
+        raw = gzip.compress(XML)
+        with mock.patch.object(gzip, 'GzipFile', side_effect=track):
+            self.assertEqual((XML.decode(), None), sm.decode_checked(raw))
+            self.assertEqual('decoded_byte_limit', sm.decode_checked(raw, max_bytes=1)[1])
+            self.assertEqual('gzip_decode_failed', sm.decode_checked(raw[:-1])[1])
+            with mock.patch.object(factory, 'read', side_effect=RuntimeError('bug')):
+                with self.assertRaisesRegex(RuntimeError, 'bug'):
+                    sm.decode_checked(raw)
+        self.assertEqual(4, len(opened))
+        self.assertTrue(all(stream.closed for stream in opened))
+
+    def test_large_budget_still_uses_bounded_chunks(self):
+        compressed = gzip.compress(b' ' * 100_001)
+        original_read = gzip.GzipFile.read
+        reads = []
+
+        def read(stream, size=-1):
+            reads.append(size)
+            return original_read(stream, size)
+
+        with mock.patch.object(gzip.GzipFile, 'read', read):
+            self.assertEqual(('', 'decoded_byte_limit'), sm.decode_checked(compressed, max_bytes=100_000))
+        self.assertEqual([65_536, 34_465], reads)
+
     def test_truncated_crc_corrupt_and_trailing_garbage_withhold_all_text(self):
         raw = gzip.compress(XML)
         corrupt = bytearray(raw)
@@ -67,10 +100,11 @@ class TestSitemapDecodedBudget(unittest.TestCase):
             self.assertEqual((expected, None), sm.decode_checked(raw, max_bytes=1))
 
     def test_invalid_budgets_fail_before_starting_decompression(self):
+        compressed = gzip.compress(XML)
         for budget in (True, 0, -1, 1.5, '1024'):
             with self.subTest(budget=budget), mock.patch.object(gzip, 'GzipFile') as stream:
                 with self.assertRaises(ValueError):
-                    sm.decode_checked(gzip.compress(XML), max_bytes=budget)
+                    sm.decode_checked(compressed, max_bytes=budget)
                 stream.assert_not_called()
 
     def test_validator_does_not_parse_or_sample_over_budget_prefixes(self):
