@@ -13,10 +13,12 @@ try:
     from lib import htmlx
     from lib import jsdiff
     from lib import links
+    from lib import sitemap as sm
 except ImportError:  # when imported as a package
     from .lib import htmlx  # type: ignore
     from .lib import jsdiff  # type: ignore
     from .lib import links  # type: ignore
+    from .lib import sitemap as sm  # type: ignore
 
 CAT = "technical"
 
@@ -291,7 +293,16 @@ def _robots_txt(ctx, report):
                    "Could not fetch /robots.txt.",
                    "Add a robots.txt; reference the XML sitemap in it.")
         return
-    if "sitemap:" not in robots.lower():
+    rejected = {}
+    references = sm.robots_sitemaps(robots, diagnostics=rejected)
+    if rejected:
+        report.add(CAT, "low", "Rejected sitemap URL references",
+                   sm.reference_note(sm.reference_diagnostics(rejected)),
+                   "Use absolute HTTP(S) sitemap URLs with valid hosts and ports in robots.txt. "
+                   "Correct rejected references and re-scan; syntax checks do not prove reachability.",
+                   rule_id="technical.sitemap.invalid.references", scope="site")
+        return  # do not endorse invalid directives as a passing sitemap reference
+    if not references:
         report.add(CAT, "low", "robots.txt has no Sitemap directive",
                    "No 'Sitemap:' line in robots.txt.",
                    "Add 'Sitemap: https://…/sitemap.xml' to robots.txt.")

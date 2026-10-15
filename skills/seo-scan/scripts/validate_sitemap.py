@@ -33,12 +33,11 @@ def _looks_like_sitemap(url: str) -> bool:
     return low.endswith((".xml", ".xml.gz")) or "sitemap" in low
 
 
-def discover(base: str, *, allow_private, timeout) -> list:
+def discover(base: str, *, allow_private, timeout, diagnostics=None) -> list:
     root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
     robots = http.fetch_text(urljoin(root + "/", "robots.txt"),
                              allow_private=allow_private, timeout=timeout) or ""
-    found = [ln.split(":", 1)[1].strip() for ln in robots.splitlines()
-             if ln.lower().strip().startswith("sitemap:")]
+    found = sm.robots_sitemaps(robots, diagnostics=diagnostics)
     if found:
         return found
     for cand in COMMON:
@@ -54,8 +53,9 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
     start = http.normalize_url(start)
     http.assert_public_host(start, allow_private=allow_private)
     host = urlparse(start).netloc
+    source_diagnostics = {}
     seeds = [start] if _looks_like_sitemap(start) else discover(
-        start, allow_private=allow_private, timeout=timeout)
+        start, allow_private=allow_private, timeout=timeout, diagnostics=source_diagnostics)
 
     result = {
         "start": start, "seeds": seeds, "sitemaps_fetched": 0, "indexes": 0,
@@ -63,6 +63,8 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
         "invalid_lastmod": 0, "missing_lastmod": 0, "gzip": 0,
         "sample": [], "broken_sample": [],
     }
+    if source_diagnostics:
+        result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
     if not seeds:
         result["errors"].append("No sitemap found (robots.txt or common paths).")
         return result
@@ -88,15 +90,18 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
         kind, entries = sm.parse(text)
         if kind == "index":
             result["indexes"] += 1
-            for e in entries:
-                if e["loc"] not in visited:
-                    queue.append(e["loc"])
+            for loc in sm.usable_locations([e['loc'] for e in entries], diagnostics=source_diagnostics,
+                                            source='index_locations'):
+                if loc not in visited:
+                    queue.append(loc)
         else:
             for e in entries:
                 url_entries.append(e)
                 prob = sm.loc_problem(e["loc"], host)
                 if prob:
                     problems[prob] = problems.get(prob, 0) + 1
+                    if prob in ('invalid-url', 'not-absolute'):
+                        source_diagnostics['page_locations'] = source_diagnostics.get('page_locations', 0) + 1
                 if e["lastmod"] is None:
                     result["missing_lastmod"] += 1
                 elif not sm.valid_lastmod(e["lastmod"]):
@@ -104,6 +109,8 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
 
     result["total_urls"] = len(url_entries)
     result["problems"] = {k: v for k, v in problems.items() if v}
+    if source_diagnostics:
+        result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
     if queue:  # cap reached with sitemaps still queued
         result["truncated"] = len(queue)
         result["errors"].append(
@@ -126,6 +133,9 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
 
 def render_markdown(r: dict) -> str:
     lines = [f"# Sitemap validation — {r['start']}", ""]
+    note = sm.reference_note(r.get('sitemap_references'))
+    if note:
+        lines += ['> ' + note, '']
     if not r["seeds"]:
         lines += ["**No sitemap found.** Publish an XML sitemap and reference it "
                   "from robots.txt.", ""]
@@ -153,7 +163,8 @@ def render_markdown(r: dict) -> str:
         lines.append("")
     if r["errors"]:
         lines += ["## Notes", ""] + [f"- {e}" for e in r["errors"]] + [""]
-    if not r["broken_sample"] and not r["problems"] and not r["invalid_lastmod"]:
+    if (r['sitemaps_fetched'] and not r['errors'] and not note
+            and not r["broken_sample"] and not r["problems"] and not r["invalid_lastmod"]):
         lines.append("Sitemap looks healthy. 🟢")
     return "\n".join(lines).rstrip() + "\n"
 

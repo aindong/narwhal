@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import hreflang, http, htmlx, images, jsdiff, links, simhash  # noqa: E402
+from lib import hreflang, http, htmlx, images, jsdiff, links, simhash, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
@@ -61,17 +61,16 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
     ctx["sitemap_found"] = False
     robots = ctx.get("robots_txt") or ""
-    sitemap_urls = [
-        ln.split(":", 1)[1].strip()
-        for ln in robots.splitlines()
-        if ln.lower().strip().startswith("sitemap:")
-    ]
+    rejected_references = {}
+    sitemap_urls = sm.robots_sitemaps(robots, diagnostics=rejected_references)
     for cand in list(sitemap_urls) + [urljoin(root + "/", p.lstrip("/")) for p in SITEMAP_CANDIDATES]:
         body = http.fetch_text(cand, allow_private=allow_private, timeout=timeout)
         if body and ("<urlset" in body or "<sitemapindex" in body):
             ctx["sitemap_found"] = True
             ctx["sitemap_url"] = cand
             break
+    if rejected_references:
+        ctx['sitemap_references'] = sm.reference_diagnostics(rejected_references)
     return ctx
 
 
@@ -159,6 +158,15 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     if ctx is None:
         ctx = gather_context(resp.final_url or url,
                              allow_private=allow_private, timeout=timeout)
+    receipt = sm.recorded_reference_diagnostics(ctx.get('sitemap_references'))
+    reference_counts = dict(receipt['rejected']) if receipt else {}
+    observed = {}
+    sm.robots_sitemaps(ctx.get('robots_txt') or '', diagnostics=observed)
+    if observed:
+        reference_counts['robots_directives'] = max(observed['robots_directives'],
+                                                    reference_counts.get('robots_directives', 0))
+    if reference_counts:
+        report.meta['sitemap_references'] = sm.reference_diagnostics(reference_counts)
     # expose tunable thresholds to auditors without mutating a shared ctx
     effective_thresholds, owned_effective_rules = configlib.owned_value(ctx.get("thresholds", config.thresholds))
     ctx = {**ctx, "thresholds": effective_thresholds}

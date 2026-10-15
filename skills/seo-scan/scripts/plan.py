@@ -251,7 +251,7 @@ ARTIFACT_RULES = (
     ("open_graph", ("open.graph", "twitter.x.card", "og.image")),
     ("product_schema", ("schema.ecommerce.", "product page has no product")),
     ("json_ld", ("json.ld", "structured.data", "schema", "rich.result", "organization.website.entity")),
-    ("robots_txt", ("robots.txt", "ai.crawlers.are.blocked")),
+    ("robots_txt", ("robots.txt", "ai.crawlers.are.blocked", "technical.sitemap.invalid.references")),
     ("sitemap", ("xml.sitemap", "sitemap.directive", "sitemap.validation")),
     ("llms_txt", ("llms.txt",)),
     ("content", ("thin.content", "content.is.on.the.short.side", "read", "filler", "generic",
