@@ -30,6 +30,13 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Sitemap validation and combined audits record bounded XML extraction coverage
+  instead of treating markers, malformed prefixes or unsupported roots as measured
+  URL lists. Namespace-aware extraction decodes XML escaping; incomplete files
+  contribute no entries, while verified siblings remain usable. Coverage gaps
+  get manual verification advice, not instructions to rewrite unsupported formats.
+  Sample success requires a successful 2xx response; gated/other responses no
+  longer count as OK, and skipped samples explicitly leave reachability unverified.
 - Malformed/non-absolute discovered sitemap references no longer abort site
   context, anchor-independent crawl discovery or sitemap validation. Robots
   directives, index children and page locations are syntax-checked before use;

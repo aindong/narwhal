@@ -62,6 +62,8 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
         "total_urls": 0, "errors": [], "problems": {},
         "invalid_lastmod": 0, "missing_lastmod": 0, "gzip": 0,
         "sample": [], "broken_sample": [],
+        "parse_coverage": {"basis": "bounded_xml_parse", "scope": "fetched_files",
+                           "verified_files": 0, "unverified_files": 0, "reasons": {}},
     }
     if source_diagnostics:
         result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
@@ -87,7 +89,13 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
             result["gzip"] += 1
         text = sm.decode(raw)
         result["sitemaps_fetched"] += 1
-        kind, entries = sm.parse(text)
+        kind, entries, parse_problem = sm.parse_checked(text)
+        coverage = result['parse_coverage']
+        if parse_problem:
+            coverage['unverified_files'] += 1
+            coverage['reasons'][parse_problem] = coverage['reasons'].get(parse_problem, 0) + 1
+            continue  # a parsed prefix is not complete file evidence
+        coverage['verified_files'] += 1
         if kind == "index":
             result["indexes"] += 1
             for loc in sm.usable_locations([e['loc'] for e in entries], diagnostics=source_diagnostics,
@@ -131,6 +139,11 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
     return result
 
 
+def _sample_succeeded(entry: dict) -> bool:
+    status = entry.get('status')
+    return type(status) is int and 200 <= status < 300 and not entry.get('error')
+
+
 def render_markdown(r: dict) -> str:
     lines = [f"# Sitemap validation — {r['start']}", ""]
     note = sm.reference_note(r.get('sitemap_references'))
@@ -140,10 +153,15 @@ def render_markdown(r: dict) -> str:
         lines += ["**No sitemap found.** Publish an XML sitemap and reference it "
                   "from robots.txt.", ""]
         return "\n".join(lines) + "\n"
+    coverage = sm.recorded_parse_coverage(r.get('parse_coverage'), r['sitemaps_fetched'])
+    parse_note = sm.parse_coverage_note(r.get('parse_coverage'), r['sitemaps_fetched'])
+    if parse_note:
+        lines += ['> ' + parse_note, '']
     lines += [
         f"- **Sitemaps fetched:** {r['sitemaps_fetched']} "
         f"({r['indexes']} index file(s){', ' + str(r['gzip']) + ' gzipped' if r['gzip'] else ''})",
         f"- **Total URLs:** {r['total_urls']}"
+        + (" (verified files only; XML extraction is incomplete)" if coverage and coverage['unverified_files'] else "")
         + ("+ (partial — --max-sitemaps cap reached)" if r.get("truncated") else ""),
         f"- **Missing lastmod:** {r['missing_lastmod']}  ·  "
         f"**Invalid lastmod:** {r['invalid_lastmod']}",
@@ -152,8 +170,12 @@ def render_markdown(r: dict) -> str:
         probs = ", ".join(f"{k}: {v}" for k, v in r["problems"].items())
         lines.append(f"- **`<loc>` problems:** {probs}")
     if r["sample"]:
-        ok = len(r["sample"]) - len(r["broken_sample"])
-        lines.append(f"- **Sample check:** {ok}/{len(r['sample'])} URLs returned OK")
+        ok = sum(_sample_succeeded(entry) for entry in r['sample'])
+        unverified = max(0, len(r['sample']) - ok - len(r['broken_sample']))
+        lines.append(f"- **Sample check:** {ok}/{len(r['sample'])} URLs returned successful 2xx"
+                     + (f"; {unverified} response(s) leave reachability unverified" if unverified else ""))
+    elif r['total_urls']:
+        lines.append('- **Sample check:** not run; URL reachability unverified.')
     lines.append("")
 
     if r["broken_sample"]:
@@ -163,9 +185,11 @@ def render_markdown(r: dict) -> str:
         lines.append("")
     if r["errors"]:
         lines += ["## Notes", ""] + [f"- {e}" for e in r["errors"]] + [""]
-    if (r['sitemaps_fetched'] and not r['errors'] and not note
+    if (coverage and coverage['verified_files'] and not coverage['unverified_files']
+            and r['total_urls'] and not r['errors'] and not note
+            and all(_sample_succeeded(entry) for entry in r['sample'])
             and not r["broken_sample"] and not r["problems"] and not r["invalid_lastmod"]):
-        lines.append("Sitemap looks healthy. 🟢")
+        lines.append("Sitemap looks healthy for the checks performed. 🟢")
     return "\n".join(lines).rstrip() + "\n"
 
 

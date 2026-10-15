@@ -18,6 +18,8 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib import sitemap as sitemaplib  # noqa: E402
+
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
 MAX_FILE_BYTES = 2_000_000
@@ -88,6 +90,18 @@ def normalize_report(data: dict) -> dict:
                 "rule_id": "technical.sitemap.validation.issues",
                 "scope": "site", "detail": "; ".join(map(str, sitemap_issues[:5])),
                 "recommendation": "Fix the reported sitemap entries and validate again.",
+            })
+        parse_coverage = sitemaplib.recorded_parse_coverage(sitemap.get('parse_coverage'),
+                                                           sitemap.get('sitemaps_fetched'))
+        if parse_coverage and parse_coverage['unverified_files']:
+            findings.append({
+                'category': 'technical', 'severity': 'low',
+                'title': 'Sitemap XML extraction is unverified',
+                'rule_id': 'technical.sitemap.extraction.unverified', 'scope': 'site',
+                'detail': sitemaplib.parse_coverage_note(parse_coverage),
+                'recommendation': 'Verify source format and parser coverage before trusting URL totals. '
+                                  'Unsupported formats are not necessarily invalid.',
+                'occurrences': parse_coverage['unverified_files'],
             })
     # Stable action IDs require one action per rule. Multiple page nodes can
     # produce the same rule; retain the worst severity and occurrence evidence.
@@ -456,12 +470,15 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
     actions = []
     mapped_named = 0
     for finding in normalized["findings"]:
-        artifact = classify_artifact(finding)
+        verify_xml = finding['rule_id'] == 'technical.sitemap.extraction.unverified'
+        artifact = 'sitemap' if verify_xml else classify_artifact(finding)
         if artifact != "unknown":
             mapped_named += 1
         safety, requires_deploy = safety_for(artifact)
-        owners = likely_files(root, inv["files"], framework["name"], artifact,
-                              normalized["target"])
+        if verify_xml:
+            safety, requires_deploy = 'manual_external', False
+        owners = ([] if verify_xml else likely_files(root, inv["files"], framework["name"], artifact,
+                                                     normalized["target"]))
         if not owners and safety != "manual_external":
             warnings.append(f"No likely source owner found for {finding['rule_id']}.")
         actions.append({
@@ -474,10 +491,13 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "safety": safety,
             "requires_deploy": requires_deploy,
             "manual_action": safety == "manual_external",
-            "proposed_change": CHANGE_GUIDANCE[artifact],
+            "proposed_change": ('Verify the fetched format and XML extraction coverage manually. '
+                                'Do not rewrite a valid unsupported format merely to clear this note.'
+                                if verify_xml else CHANGE_GUIDANCE[artifact]),
             "likely_files": owners,
-            "verification": verification_for(artifact, normalized["target"],
-                                               report_source),
+            "verification": (['Validate the source with a trusted XML/sitemap validator.',
+                              'Re-run narwhal sitemap and confirm complete supported extraction before using URL totals.']
+                             if verify_xml else verification_for(artifact, normalized["target"], report_source)),
             "evidence": finding.get("evidence") or finding.get("detail") or "",
             "source_recommendation": finding.get("recommendation", ""),
             "confidence": finding.get("confidence", 1.0),

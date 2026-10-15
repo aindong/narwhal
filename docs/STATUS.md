@@ -21,6 +21,13 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Sitemap extraction evidence:** validator/audit URL totals include only files
+  fully extracted within the supported XML scope. Malformed/unsupported XML,
+  DTDs or parser limits produce explicit fetched-file coverage notes, withholding
+  partial entries while retaining verified siblings. Planner advice is manual
+  verification, not source rewriting. Samples require successful 2xx responses
+  for positive reachability; gated/other responses are unverified, not invented
+  dead links. This is not complete sitemap/XSD or whole-site validation.
 - **Sitemap reference resilience:** rejected robots/index/page URL references
   no longer abort otherwise usable discovery or validation. Counts are scoped
   per examined source component, not network-dead statuses or whole-site totals;

@@ -275,6 +275,24 @@ never an automatic retry. This is
 basic URL/host-policy validation, not a complete URL conformance validator;
 unexpected programming errors are not suppressed.
 
+Sitemap validation (also inside `audit`) records `parse_coverage` over fetched
+files. Its bounded XML parser supports `urlset`/`sitemapindex` in the official
+sitemap namespace, including prefixes, plus namespace-free compatibility. It
+decodes XML character escaping and ignores foreign extension elements rather
+than counting their locations as pages. Malformed XML, unsupported roots/entry
+shapes, DTDs, or limits (128 nesting levels, 500,000 elements, 50,000 entries per
+file) leave extraction unverified: all entries from that file are withheld,
+valid siblings remain counted, and reports label the partial coverage. DTDs and
+external entities are not loaded. This is not XSD/protocol validation, a complete
+format implementation, or a bound on existing gzip decompression/network memory.
+The legacy marker/regex helpers used by crawl/context discovery are unchanged.
+Unknown/legacy extraction receipts do not certify health. Planner coverage-gap
+actions ask for manual verification, not rewriting an otherwise valid unsupported
+format. Sampled URL success requires a successful 2xx response; gated/other
+responses leave reachability unverified, and skipped sampling says so explicitly.
+Positive health wording applies only to the checks performed, not unsampled URLs
+or deployed indexing/search visibility.
+
 ### Track health over time (regression tracking, no database)
 
 Narwhal stays stateless: instead of a database, save a scan as JSON and diff two
