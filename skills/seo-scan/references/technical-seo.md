@@ -43,6 +43,9 @@ fields; browsers may combine them before exposing them, so named scope may need
 raw confirmation. Date/preview rules and live crawler/indexing behavior remain
 unverified. Fix header findings at the hosting/CDN/middleware owner, not merely
 by changing an HTML robots meta tag.
+Rendered scans reject post-load main-document navigation rather than attributing
+the initial response's headers to a replacement DOM; scan the final URL directly.
+Ordinary HTTP redirects and same-document History API changes remain supported.
 See [Google's primary specification](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag)
 for aliases, multiple tags, named agents and header rules. Engine behavior can
 differ; verify live indexing through the relevant external source when needed.

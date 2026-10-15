@@ -399,6 +399,15 @@ def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Respo
             try:
                 page = browser.new_page(user_agent=user_agent)
                 page.set_default_timeout(nav_ms)
+                latest_document_request = [None]
+
+                def observe_document_request(request):
+                    # Keep one bounded witness, including navigations still in
+                    # flight. Same-document history changes have no request.
+                    if request.is_navigation_request() and request.frame == page.main_frame:
+                        latest_document_request[0] = request
+
+                page.on('request', observe_document_request)
                 if not allow_private:
                     def guard_request(route):
                         try:
@@ -427,6 +436,10 @@ def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Respo
                     robots_fields = None
                 final_url = page.url
                 assert_public_host(final_url, allow_private=allow_private)
+                if resp and latest_document_request[0] != resp.request:
+                    raise ValueError(
+                        'Rendered page started another document navigation after the initial load; '
+                        'response headers and DOM cannot be safely paired. Scan the final destination directly.')
             finally:
                 browser.close()
         return Response(

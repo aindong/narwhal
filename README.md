@@ -83,6 +83,10 @@ policy observations in reports and `meta.http_robots`, not universal crawler
 blocks. Raw transports retain duplicate fields; browser/legacy transports record
 their field-boundary limits. Preview/date directives and real indexing are not
 evaluated. Header fixes are manual hosting/CDN/middleware actions, not HTML edits.
+Rendered scans fail explicitly if another main-document request starts after the
+initial navigation: earlier response headers cannot safely describe a replacement
+document. Scan the final destination directly. Normal HTTP redirects and
+same-document History API changes remain supported.
 
 Page reports record `meta.ai_crawler_access`: dated agent roles, primary sources,
 and robots.txt root disallowance results at **`/` only**. Training/data-use choices,

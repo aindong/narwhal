@@ -17,6 +17,9 @@ All notable changes to Narwhal are documented here. The format follows
   scope boundaries; named-crawler policies remain non-scoring notes with
   additive `meta.http_robots` provenance. Browser/legacy boundary limits,
   unsupported preview/date rules and unverified actual indexing are explicit.
+  Post-load cross-document browser navigation now fails explicitly instead of
+  pairing an earlier response's headers with a replacement DOM. Ordinary HTTP
+  redirects and same-document History API changes remain supported.
 - Branded Markdown tables have scoped cell/header styling, semantic column
   headers and labelled keyboard-focusable scroll regions. Screen columns retain
   readable minimum widths; print/PDF input uses compact wrapping styles without

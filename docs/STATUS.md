@@ -26,6 +26,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   boundaries survive repeated headers; named scopes remain non-scoring report
   notes. JSON provenance documents browser/legacy boundary limits; date/preview
   semantics and actual indexing/crawler behavior are not inferred.
+  Rendered post-load document replacement fails explicitly to prevent header/DOM
+  misattribution; HTTP redirects and same-document history changes still work.
 - **Evidence-scoped robots meta:** all active generic robots tags contribute
   exact restriction names; `none` expands to noindex/nofollow. Substrings and
   parameter values do not create false restrictions. Bounded positional
