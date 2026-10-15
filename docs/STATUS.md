@@ -26,7 +26,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   seeds no longer change tied most-linked selection for the same fixed sample;
   graph measurements, scoring and sample-aware coverage are unchanged.
 - **Literal crawl table data:** weakest-page and broken-link tables encode
-  dynamic URL/error cells instead of interpreting them as Markdown. Table-local
+  dynamic URL/error cells instead of interpreting them as Markdown, including
+  GFM tildes; internal whitespace is preserved apart from CR/LF breaks. Table-local
   opt-in preserves legacy rendering elsewhere, full JSON and scores; browser CI
   checks desktop/mobile/print columns, literal text and table markup boundaries.
 - **Leaf-page indexing evidence:** crawl JSON retains HTTP/named-meta receipts

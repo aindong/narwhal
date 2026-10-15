@@ -19,7 +19,7 @@ def fixture():
             'pages': [{'url': base + suffix, 'score': 75} for suffix in
                       ('catalog|featured', '[guide](https://outside.test/)', '_topic_/', r'a\|`b`')],
             'recurring': Counter(), 'links': {'checked': 1, 'skipped_over_cap': 0,
-                'broken': [{'status': 0, 'error': 'request | [error](https://outside.test/)',
+                'broken': [{'status': 0, 'error': 'request | [error](https://outside.test/) ~~timeout~~  Bad\tGateway',
                             'internal': False, 'url': base + 'a|b', 'sources': [base + '`source`']}]}}
 
 
@@ -57,8 +57,8 @@ def main(argv=None):
             if not args.html:
                 broken = page.get_by_role('heading', name='Broken or unreachable targets (1 of 1 checked)', exact=True).locator('xpath=following-sibling::div[1]//table')
                 assert broken.locator('tbody tr td').all_text_contents() == [
-                    'request | [error](https://outside.test/)', 'external', 'https://example.test/a|b', 'https://example.test/`source`']
-                assert broken.locator('a,em,strong,img,script').count() == 0
+                    'request | [error](https://outside.test/) ~~timeout~~  Bad\tGateway', 'external', 'https://example.test/a|b', 'https://example.test/`source`']
+                assert broken.locator('a,em,strong,del,img,script').count() == 0
             if args.artifacts:
                 heading.scroll_into_view_if_needed()
                 page.screenshot(path=str(args.artifacts / 'desktop.png'))

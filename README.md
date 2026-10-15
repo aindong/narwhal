@@ -647,8 +647,12 @@ create links or emphasis. A versioned `<!-- narwhal: escaped-table-cells-v1 -->`
 comment immediately before these tables opts the branded renderer into ASCII
 punctuation unescaping for that table only. Other Markdown readers understand
 the standard backslash escapes directly. Legacy tables, ordinary text and code
-remain unchanged; line breaks in cell data become spaces, while JSON retains
-the original evidence. Other subreport sections are outside this table-only fix.
+remain unchanged; CR/LF line breaks in cell data become spaces without collapsing
+other internal spaces or tabs. Literal tildes are escaped for GFM readers. JSON retains
+the original evidence. URL autolink prefixes are escaped too, preventing GFM
+URL links with escape backslashes in their targets. Third-party postprocessing,
+such as GitHub's email autolinking, remains outside the encoder's control.
+Other subreport sections are outside this table-only fix.
 
 Branded Markdown tables have padded cells, aligned column headers and row guides.
 Wide tables scroll within their own keyboard-focusable region on screen instead

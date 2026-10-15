@@ -115,10 +115,34 @@ class TestCrawlTableLiterals(unittest.TestCase):
         self.assertEqual([], parsed.formatting)
 
     def test_multiline_data_is_one_cell_and_marker_requires_adjacent_table(self):
-        self.assertEqual('a b', table_text('  a\n\tb  '))
+        self.assertEqual('  a \tb  ', table_text('  a\n\tb  '))
         rendered = report.md_to_html(TABLE_TEXT_MARKER + '\n\n| Value |\n|:--|\n| \\#literal |')
         self.assertEqual([['Value'], [r'\#literal']], Table(rendered).rows)
         self.assertIn('&lt;!-- narwhal: escaped-table-cells-v1 --&gt;', rendered)
+
+    def test_tildes_are_escaped_for_gfm_and_branded_output_stays_literal(self):
+        self.assertEqual(r'\~\~timeout\~\~', table_text('~~timeout~~'))
+        value = '~~timeout~~ ~literal~ ~~~also literal~~~'
+        md = TABLE_TEXT_MARKER + '\n| Value |\n|:--|\n| ' + table_text(value) + ' |'
+        self.assertEqual([['Value'], [value]], Table(report.md_to_html(md)).rows)
+
+    def test_internal_spaces_tabs_and_non_crlf_characters_are_not_collapsed(self):
+        value = 'server returned  Bad\tGateway\v\f\u0085\u2028\u2029 end'
+        self.assertEqual(value, table_text(value))
+        self.assertEqual('a b c d', table_text('a\r\nb\rc\nd'))
+        md = TABLE_TEXT_MARKER + '\n| Value |\n|:--|\n| ' + table_text(value) + ' |'
+        self.assertEqual([['Value'], [value]], Table(report.md_to_html(md)).rows)
+
+    def test_gfm_autolink_prefixes_and_addresses_are_escaped_as_data(self):
+        for value, encoded in (('https://example.test/~~literal~~', r'https\://example\.test/\~\~literal\~\~'),
+                               ('www.example.test/path', r'www\.example\.test/path'),
+                               ('person@example.test', r'person\@example\.test')):
+            with self.subTest(value=value):
+                self.assertEqual(encoded, table_text(value))
+                md = TABLE_TEXT_MARKER + '\n| Value |\n|:--|\n| ' + table_text(value) + ' |'
+                parsed = Table(report.md_to_html(md))
+                self.assertEqual([['Value'], [value]], parsed.rows)
+                self.assertEqual([], parsed.formatting)
 
 
 if __name__ == '__main__':
