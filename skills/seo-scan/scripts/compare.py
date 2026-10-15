@@ -30,6 +30,7 @@ from lib import htmlx, structured_data  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
+from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 import audit_geo  # noqa: E402
 import scan as scanner  # noqa: E402
 
@@ -212,6 +213,10 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
         if recorded_sitemap_discovery_problem(rep.meta, for_score=True):
             failed.append({'url': u, 'status': rep.fetched_status,
                            'sitemap_discovery_unverified': True, 'error': UNVERIFIED_SITEMAP_DISCOVERY_ERROR})
+            continue
+        if recorded_llms_problem(rep.meta, for_score=True):
+            failed.append({'url': u, 'status': rep.fetched_status,
+                           'llms_txt_unverified': True, 'error': UNVERIFIED_LLMS_ERROR})
             continue
         results.append(facts(rep, doc))
         if index == 0:

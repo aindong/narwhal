@@ -41,6 +41,13 @@ def bytes_fetch(url, **kwargs):
 
 
 class TestSitemapReferences(unittest.TestCase):
+    def setUp(self):
+        # These tests own sitemap I/O only; keep the independent root probe offline.
+        patcher = mock.patch.object(scan.llms_resource, 'probe', return_value=scan.llms_resource.assess(
+            http.Response(BASE + 'llms.txt', BASE + 'llms.txt', 404, {}, '', 0)))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_loc_problem_handles_lazy_port_brackets_and_nfkc_errors(self):
         for value in (BAD, 'https://example.test:nope/p', 'https://example.test:65536/p',
                       'https://exa／mple.test/p'):

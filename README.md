@@ -76,6 +76,16 @@ longer change which tied pages enter the top-five JSON or top-three Markdown
 most-linked list. Numeric priority, counts, URL identities and scores stay
 unchanged; this does not certify complete site coverage.
 
+Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
+complete supported text response with an initial ATX/simple Setext H1 is a
+candidate, 404/410 is observed root absence, and HTML fallbacks, gates, empty,
+partial or truncated responses remain unverified. Unverified responses create
+neither a published-file pass nor a missing-file penalty; known HTTP uncertainty
+blocks GEO score comparisons/diffs/briefs and yields manual-only plan verification.
+Legacy caller flags retain stable finding IDs but are labelled unverified context.
+This is a **root request only**, not independent subpath/`rel=describedby` discovery,
+full proposal validation, linked-file checking, engine use or a ranking guarantee.
+
 The generic page robots-meta check combines all active `name="robots"` tags,
 recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
 mistake directive parameter values or substrings for restrictions. Its passing

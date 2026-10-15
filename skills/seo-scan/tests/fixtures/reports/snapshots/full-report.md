@@ -57,7 +57,11 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 - 🔵 **Article missing recommended properties** — Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md)
 - 🔵 **No Organization/WebSite entity** — Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md)
 - 🔵 **No direct answer up top** — Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#4-direct-answer-intro-inverted-pyramid)
-- 🔵 **No llms.txt** — Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#llmstxt--low-cost-low-certainty)
+- 🔵 **No root llms.txt observed** — Optionally publish a curated llms.txt if useful; this is not a required ranking or access control. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#llmstxt--low-cost-low-certainty)
+
+## Root llms.txt response evidence
+
+Root llms.txt absent: the root request returned HTTP 404 or 410 (HTTP 404). Root /llms.txt request only; independent subpath files and rel=describedby discovery were not checked. Redirect destinations are recorded. This is not full proposal validation, linked-resource verification, engine adoption or evidence of ranking/citation impact.
 
 ## Passing checks
 

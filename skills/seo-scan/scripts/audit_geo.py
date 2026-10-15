@@ -14,10 +14,12 @@ try:
     from lib.robots import RobotsTxt
     from lib import htmlx
     from lib import jsdiff
+    from lib import llms_resource
 except ImportError:  # when imported as a package
     from .lib.robots import RobotsTxt  # type: ignore
     from .lib import htmlx  # type: ignore
     from .lib import jsdiff  # type: ignore
+    from .lib import llms_resource  # type: ignore
 
 CAT = "geo"
 
@@ -170,14 +172,23 @@ def _direct_answer(doc, report):
 
 
 def _llms_txt(ctx, report):
-    if ctx.get("llms_txt"):
-        report.ok(CAT, "llms.txt published", ctx.get("llms_txt_url", ""))
-    else:
-        report.add(CAT, "low", "No llms.txt",
-                   "No /llms.txt found.",
-                   "Optionally publish /llms.txt to guide AI crawlers to your key "
-                   "content. Evidence for ranking impact is still thin — treat as "
-                   "low-cost, low-certainty.")
+    supplied = ctx.get('llms_txt_receipt')
+    receipt = llms_resource.recorded(supplied)
+    if receipt is None:
+        receipt = {'version': 1, 'checked_path': '/llms.txt', 'state': 'unverified',
+                   'basis': 'legacy_context' if type(ctx.get('llms_txt')) is bool and supplied is None else 'not_recorded'}
+        if receipt['basis'] == 'legacy_context':
+            receipt['reported_present'] = ctx['llms_txt']
+    report.meta['llms_txt'] = dict(receipt)
+    legacy = receipt['basis'] == 'legacy_context'
+    if receipt['state'] == 'observed' or (legacy and receipt['reported_present']):
+        report.add(CAT, 'good', 'Root llms.txt text candidate observed' if not legacy else 'llms.txt presence reported (legacy context)',
+                   llms_resource.note(report.meta), rule_id='geo.llms.txt.published', scope='site')
+    elif receipt['state'] == 'absent' or (legacy and not receipt['reported_present']):
+        report.add(CAT, 'low', 'No root llms.txt observed' if not legacy else 'No root llms.txt recorded (legacy context)',
+                   llms_resource.note(report.meta),
+                   'Optionally publish a curated llms.txt if useful; this is not a required ranking or access control.',
+                   rule_id='geo.no.llms.txt', scope='site')
 
 
 def _ai_crawler_access(ctx, report):

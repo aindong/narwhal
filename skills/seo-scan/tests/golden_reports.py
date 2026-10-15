@@ -10,7 +10,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import scan as scan_mod  # noqa: E402
-from lib import htmlx, http  # noqa: E402
+from lib import htmlx, http, llms_resource  # noqa: E402
 
 FIXTURE = HERE / "fixtures" / "reports" / "full-report.html"
 SNAPSHOTS = HERE / "fixtures" / "reports" / "snapshots"
@@ -31,6 +31,8 @@ def build_report():
     context = {
         "robots_txt": "User-agent: *\nDisallow:\nSitemap: https://example.test/sitemap.xml",
         "llms_txt": False,
+        'llms_txt_receipt': llms_resource.assess(http.Response(
+            'https://example.test/llms.txt', 'https://example.test/llms.txt', 404, {}, '', 0)),
         "sitemap_found": True,
     }
     parse_stdlib = lambda text, base_url="": htmlx._parse_stdlib(text, base_url)

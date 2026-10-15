@@ -39,6 +39,7 @@ from lib import config as configlib  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
+from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
@@ -274,6 +275,8 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
         raise RuntimeError(UNVERIFIED_JS_COMPARISON_ERROR + " " + problem + ".")
     if recorded_sitemap_discovery_problem(rep.meta, for_score=True):
         raise RuntimeError(UNVERIFIED_SITEMAP_DISCOVERY_ERROR)
+    if recorded_llms_problem(rep.meta, for_score=True):
+        raise RuntimeError(UNVERIFIED_LLMS_ERROR)
     return {"url": rep.final_url or url, "facts": compare.facts(rep, doc),
             "headings": list(doc.headings), "text": doc.body_text or ""}
 

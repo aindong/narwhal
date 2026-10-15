@@ -86,6 +86,20 @@
       },
       "source_warnings": []
     },
+    "llms_txt": {
+      "version": 1,
+      "basis": "root_http_response",
+      "checked_path": "/llms.txt",
+      "state": "absent",
+      "reason": "http_absence",
+      "http_status": 404,
+      "media_type": "",
+      "body_truncated": false,
+      "requested_url": "https://example.test/llms.txt",
+      "final_url": "https://example.test/llms.txt",
+      "source": "https://llmstxt.org/",
+      "source_checked": "2026-10-15"
+    },
     "ai_crawler_access": {
       "version": 1,
       "policy_checked": "2026-10-15",
@@ -477,12 +491,12 @@
     {
       "category": "geo",
       "severity": "low",
-      "title": "No llms.txt",
-      "detail": "No /llms.txt found.",
-      "recommendation": "Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.",
+      "title": "No root llms.txt observed",
+      "detail": "Root llms.txt absent: the root request returned HTTP 404 or 410 (HTTP 404). Root /llms.txt request only; independent subpath files and rel=describedby discovery were not checked. Redirect destinations are recorded. This is not full proposal validation, linked-resource verification, engine adoption or evidence of ranking/citation impact.",
+      "recommendation": "Optionally publish a curated llms.txt if useful; this is not a required ranking or access control.",
       "evidence": null,
       "rule_id": "geo.no.llms.txt",
-      "scope": "page",
+      "scope": "site",
       "confidence": 1.0,
       "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#llmstxt--low-cost-low-certainty"
     },

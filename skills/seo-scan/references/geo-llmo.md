@@ -75,10 +75,21 @@ Google Search snippet/index controls are separate from Google-Extended. Policy
 sources are static guidance shipped with the toolkit; scans do not fetch them.
 
 ## llms.txt — low cost, low certainty
-`/llms.txt` is a proposed markdown file pointing AI crawlers to your key content.
-Adoption by major engines is still limited and there's **no strong evidence** it
-moves rankings today. Treat it as a cheap, optional bet — publish it if trivial,
-but don't oversell it, and don't let it displace the fundamentals above.
+The [llms.txt proposal](https://llmstxt.org/) describes Markdown guidance for
+agents; v2 also permits scoped subpath files and requires an H1 (checked
+2026-10-15). This is not a ranking/access-control requirement. Treat a curated
+file as optional guidance, not a replacement for crawlable, useful content.
+
+Narwhal probes the root endpoint only, preserving status, media type, final
+redirect URL and body-budget evidence. A complete supported text response with
+an initial ATX/simple Setext H1 is only a candidate, not full format validation
+or proof an engine used it. Root 404/410 observations do not establish absence
+of subpath files. HTML fallback, gating, unsupported/empty/partial/truncated
+responses remain unverified rather than passing or missing. Known HTTP
+uncertainty blocks relevant score comparisons and produces verification-only
+plan actions, not automatic file creation. Legacy flags are explicitly caller
+context; no HTTP measurement is inferred from them. No runtime proposal fetch,
+linked-resource discovery or engine/ranking/citation measurement is performed.
 
 ## Myths worth rejecting
 - "Just add llms.txt and you'll rank in AI." — no evidence.

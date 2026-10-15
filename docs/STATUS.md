@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Root llms.txt evidence:** typed root-response receipts distinguish candidate
+  text, observed 404/410 and uncertainty. HTML fallbacks/gates/partial bodies no
+  longer produce false publication/absence claims. Crawl/audit notes, GEO-score
+  comparison guards and verification-only plans preserve uncertainty without
+  inventing file-generation work, full-site coverage or engine/ranking benefits.
 - **Repeatable graph rankings:** inbound-link and deep-page lists keep numeric
   priority, then sort tied ranks by URL before display caps. Cross-process hash
   seeds no longer change tied most-linked selection for the same fixed sample;

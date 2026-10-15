@@ -29,6 +29,8 @@ from lib.cli_errors import url_errors  # noqa: E402
 from lib.markdown_text import TABLE_TEXT_MARKER, table_text  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
+from lib.report import recorded_llms_problem  # noqa: E402
+from lib import llms_resource  # noqa: E402
 from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery, MAX_INDEX_CHILDREN  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
@@ -354,6 +356,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "response_truncated": truncated,
                       "js_comparison_unverified": bool(recorded_js_comparison_problem(rep.meta, for_score=True)),
                       "sitemap_discovery_unverified": bool(recorded_sitemap_discovery_problem(rep.meta, for_score=True)),
+                      "llms_txt_unverified": bool(recorded_llms_problem(rep.meta, for_score=True)),
                       "scan_settings": rep.meta.get("scan_settings", {}),
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
@@ -361,7 +364,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "product_confidence": ecommerce.get("confidence", 0.0)})
         if rep.meta.get("link_extraction"):
             pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
-        for key in ('crawler_meta_robots', 'http_robots'):
+        for key in ('crawler_meta_robots', 'http_robots', 'llms_txt'):
             if not rep.hard_fail and isinstance(rep.meta.get(key), dict):
                 pages[-1][key] = rep.meta[key]
         for f in rep.findings:
@@ -379,6 +382,9 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
               "ecommerce": ecommerce_scope}
+    llms = llms_resource.recorded(ctx.get('llms_txt_receipt'))
+    if llms:
+        result['llms_txt'] = dict(llms)
     if discovery_coverage:
         result['sitemap_discovery'] = discovery_coverage
     if source_diagnostics:
@@ -459,6 +465,9 @@ def render_markdown(result: dict) -> str:
                   f"in {omission['affected_pages']} scanned page(s) were omitted from HTTP link collection. "
                   "These are source syntax issues, not network failures; they were not HTTP-checked.", ""]
     ranked = sorted(result["pages"], key=lambda p: p["score"])
+    llms_note = llms_resource.note(result)
+    if llms_note:
+        lines += ['## Root llms.txt response evidence', '', llms_note, '']
     lines += ["## Weakest pages", "", TABLE_TEXT_MARKER, "| Score | URL |", "|:--:|:--|"]
     for p in ranked[:10]:
         lines.append(f"| {p['score']} | {table_text(p['url'])} |")
