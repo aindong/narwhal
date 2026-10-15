@@ -671,6 +671,8 @@ table.areas th:first-child,table.areas td:first-child{text-align:left}
 table.markdown th,table.markdown td{min-width:8rem;padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
 table.markdown th{background:#f0f1f3;font-weight:600}
 table.markdown tbody tr:last-child td{border-bottom:0}
+table.markdown .align-center{text-align:center}
+table.markdown .align-right{text-align:right}
 .score-cell{white-space:nowrap}
 .score-cell span{margin-left:8px;font-weight:600}
 .bar{display:inline-block;width:70px;height:8px;background:#eef0f2;border-radius:4px;overflow:hidden;vertical-align:middle}
@@ -814,6 +816,19 @@ def _table_cells(line: str) -> list:
     return cells or ['']
 
 
+def _table_alignment_classes(separator: str) -> list:
+    """Return only static classes from valid marker cells; left is the default."""
+    classes = []
+    for marker in _table_cells(separator):
+        if not re.fullmatch(r':?-+:?', marker) or not marker.endswith(':'):
+            classes.append('')
+        elif marker.startswith(':'):
+            classes.append(' class="align-center"')
+        else:
+            classes.append(' class="align-right"')
+    return classes
+
+
 def md_to_html(md: str) -> str:
     """Convert the limited Markdown our sub-reports emit (headings, tables,
     lists, blockquotes, root code fences, `---`, bold/code) into styled HTML. This is not a
@@ -853,13 +868,21 @@ def md_to_html(md: str) -> str:
                 and "-" in lines[i + 1]):
             close_list(list_stack)
             headers = _table_cells(line)
+            alignments = _table_alignment_classes(lines[i + 1])
+
+            def column_class(column):
+                """Use only a parsed static class; extra cells stay default left."""
+                return alignments[column] if column < len(alignments) else ''
+
             out.append('<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable report table"><table class="markdown"><thead><tr>'
-                       + "".join(f'<th scope="col">{_inline_md(h)}</th>' for h in headers)
+                       + "".join(f'<th scope="col"{column_class(column)}>{_inline_md(h)}</th>'
+                                 for column, h in enumerate(headers))
                        + "</tr></thead><tbody>")
             i += 2
             while i < n and lines[i].strip().startswith("|"):
                 cells = _table_cells(lines[i])
-                out.append("<tr>" + "".join(f"<td>{_inline_md(c)}</td>" for c in cells)
+                out.append("<tr>" + "".join(f'<td{column_class(column)}>{_inline_md(c)}</td>'
+                                             for column, c in enumerate(cells))
                            + "</tr>")
                 i += 1
             out.append("</tbody></table></div>")

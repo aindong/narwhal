@@ -35,6 +35,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Markdown tables honor left/center/right separator markers on both headers
+  and body cells, including comparison score columns. Only static alignment
+  classes are emitted; unmarked/missing/invalid markers retain default left
+  alignment, and cell values, column counts and native score tables are unchanged.
 - Markdown report tables honor escaped pipes in headers/body, including inline
   code, and retain empty first/last cells. Only the backslash escaping a pipe is
   removed; other backslashes and non-table content retain existing behavior.

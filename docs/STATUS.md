@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Column-aligned reports:** Markdown table separator markers now control
+  header/body alignment, so comparison scores honor their right-aligned columns.
+  Static classes preserve cell data and header scopes; missing/invalid markers
+  keep default left alignment. Browser CI covers mixed alignment and print.
 - **Readable branded tables:** dedicated Markdown styles add padding, row guides
   and aligned semantic headers. Wide tables scroll locally via mouse/keyboard;
   print uses compact wrapping cells without focused-region outlines. Score tables
