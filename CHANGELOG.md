@@ -6,6 +6,11 @@ All notable changes to Narwhal are documented here. The format follows
 
 ## [Unreleased]
 
+- Compare and content briefs retain each page's actual rendering flag in JSON
+  and label served HTML versus JavaScript-rendered DOM in their reports. Missing
+  legacy flags remain unknown; generic grounding text no longer calls rendered
+  snapshots served HTML. Scores and gap/brief calculations are unchanged.
+
 ### Improved
 - Reports lead with high/critical findings rather than an unqualified numeric
   grade. HTML/PDF heroes distinguish urgency from the explicitly labelled score

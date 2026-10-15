@@ -70,6 +70,11 @@ And yes, it works as a backronym too:
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
+`compare` and `brief` retain each page's actual `rendered` boolean in JSON facts
+and label its HTML source in reports: served HTML or JavaScript-rendered DOM.
+Mixed modes are labeled per page; legacy missing flags stay unknown. This is
+snapshot provenance, not proof that every dynamic element finished loading.
+
 `compare` and `brief` exclude scans explicitly marked as truncated. Partial
 targets return errors (CLI exit 2); partial competitors are skipped with reasons.
 Topic mode needs at least one usable page. Standalone `scan` still emits partial

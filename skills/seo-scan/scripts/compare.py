@@ -62,6 +62,7 @@ def facts(report, doc) -> dict:
             else "home" if htmlx.is_homepage(doc) else "page")
     return {
         "url": report.final_url or report.url,
+        "rendered": report.rendered,
         "score": report.score(),
         "cat_scores": {k: report.category_score(v) for k, v in cats.items()},
         "page_kind": kind,
@@ -228,6 +229,15 @@ def _yn(v) -> str:
     return "✅" if v else "—"
 
 
+def html_source(page: dict) -> str:
+    """Label actual snapshot provenance; missing legacy flags stay unknown."""
+    if page.get("rendered") is True:
+        return "JavaScript-rendered DOM"
+    if page.get("rendered") is False:
+        return "Served HTML"
+    return "Unknown (not recorded)"
+
+
 def _short(url: str, limit: int = 40) -> str:
     u = url.split("://", 1)[-1].rstrip("/")
     return u if len(u) <= limit else u[: limit - 1] + "…"
@@ -262,6 +272,7 @@ def render_markdown(r: dict) -> str:
     lines.append("")
 
     rows = [
+        ("HTML snapshot", [html_source(c) for c in cols]),
         ("Page type", [c["page_kind"] for c in cols]),
         ("Title length", [str(c["title_len"]) for c in cols]),
         ("Meta description", [f"{c['meta_desc_len']} ch" if c["meta_desc_len"]
@@ -297,7 +308,7 @@ def render_markdown(r: dict) -> str:
             lines.append(f"- 🟢 **{l['what']}**{detail}")
         lines.append("")
 
-    lines += ["_Compared from the pages' own served HTML (same auditors for every "
+    lines += ["_Compared from the pages' own HTML snapshots (same auditors for every "
               "URL). No rank or traffic data is used or implied — a gap here is an "
               "on-page difference, not proof of why anyone ranks._"]
     return "\n".join(lines).rstrip() + "\n"
