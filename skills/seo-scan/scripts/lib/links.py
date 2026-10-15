@@ -7,30 +7,55 @@ decide which HTTP results count as broken.
 
 from __future__ import annotations
 
+import re
 from urllib.parse import urljoin, urlparse
 
 # Non-navigational hrefs we should never HTTP-check.
 SKIP_SCHEMES = ("mailto:", "tel:", "javascript:", "data:", "sms:", "callto:")
+_SCHEME = re.compile(r'^([a-zA-Z][a-zA-Z0-9+.-]*):')
 
 
-def extract_links(doc, base_url: str) -> list:
+def resolve_http_link(href: str, base_url: str):
+    """Resolve a source href without I/O; malformed HTTP syntax raises ValueError.
+
+    Empty, fragment-only and non-HTTP references return None. This is not host
+    authorization or complete URI validation: every fetch still needs HTTP guards.
+    """
+    href = href.strip()
+    scheme = _SCHEME.match(href)
+    if (not href or href.startswith('#') or href.lower().startswith(SKIP_SCHEMES)
+            or (scheme and scheme.group(1).lower() not in ('http', 'https'))):
+        return None
+    full = urljoin(base_url, href).split('#')[0]
+    parts = urlparse(full)
+    if parts.scheme not in ('http', 'https'):
+        return None
+    if not parts.hostname:
+        raise ValueError('HTTP link has no hostname')
+    parts.port  # lazy numeric/range validation, also used at the fetch boundary
+    return full
+
+
+def extract_links(doc, base_url: str, *, diagnostics=None) -> list:
     """Return unique outbound links from ``doc`` as ``[{url, internal}]``.
 
     Resolves relative hrefs against ``base_url``, drops fragments and non-HTTP
     schemes (mailto/tel/…), and marks each link internal or external by host.
+    Known malformed hrefs are omitted, not assigned a network-failure status.
+    Optional diagnostics counts occurrences without retaining raw URLs/errors.
     """
     host = urlparse(base_url).netloc.lower()
     seen, out = set(), []
     for a in doc.links:
-        href = (a.get("href") or "").strip()
-        if not href or href.startswith("#"):
+        try:
+            full = resolve_http_link(a.get("href") or "", base_url)
+        except ValueError:
+            if diagnostics is not None:
+                diagnostics['invalid_url_occurrences'] = diagnostics.get('invalid_url_occurrences', 0) + 1
             continue
-        if href.lower().startswith(SKIP_SCHEMES):
+        if full is None:
             continue
-        full = urljoin(base_url, href).split("#")[0]
         parts = urlparse(full)
-        if parts.scheme not in ("http", "https") or not parts.netloc:
-            continue
         if full in seen:
             continue
         seen.add(full)

@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Malformed anchor resilience:** parser-known host/port errors no longer abort
+  page checks, link collection or anchor discovery. Source findings and bounded
+  omission counts remain visible without fabricating dead-link statuses; valid
+  links and fetch guards are retained. Counts describe scanned href occurrences,
+  not complete URI validation or site-wide failure totals.
 - **Source anchor-text fallbacks:** image-only alternatives and empty-anchor
   titles no longer create false empty-link advice. Both parsers keep image alt
   data out of page text/headings, and blank/generic labels remain flagged.

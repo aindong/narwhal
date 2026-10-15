@@ -107,10 +107,12 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
             doc = htmlx.parse(resp.text, base_url=resp.final_url or base)
             host = urlparse(resp.final_url or base).netloc
             for a in doc.links:
-                href = a.get("href") or ""
-                full = urljoin(resp.final_url or base, href)
-                if urlparse(full).netloc == host and full.startswith("http"):
-                    urls.append(full.split("#")[0])
+                try:
+                    full = links.resolve_http_link(a.get("href") or "", resp.final_url or base)
+                except ValueError:
+                    continue  # malformed source href, not a failed network request
+                if full is not None and urlparse(full).netloc == host:
+                    urls.append(full)
 
     # de-dupe, keep order, drop obvious non-HTML assets. Normalize the dedupe key
     # so "…/page" and "…/page/" (and #fragments) count as one URL.
@@ -263,6 +265,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "is_product": bool(ecommerce.get("is_product")),
                       "is_merchant": bool(ecommerce.get("is_merchant")),
                       "product_confidence": ecommerce.get("confidence", 0.0)})
+        if rep.meta.get("link_extraction"):
+            pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
@@ -278,6 +282,11 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
               "ecommerce": ecommerce_scope}
+    omitted = [p["link_extraction"]["invalid_url_occurrences"]
+               for p in pages if p.get("link_extraction")]
+    if omitted:
+        result["link_extraction"] = {"invalid_url_occurrences": sum(omitted),
+                                     "affected_pages": len(omitted), "basis": "url_syntax_only"}
     # Site structure (click depth, orphans, link equity) — pure computation on
     # data already in hand; orphan detection only makes sense sitemap-sourced.
     result["graph"] = sitegraph.analyze(
@@ -308,6 +317,11 @@ def render_markdown(result: dict) -> str:
     lines = [f"# Site SEO & GEO Scan — {result['base']}", "",
              f"**Pages scanned:** {result['pages_scanned']}  ·  "
              f"**Average score:** {result['avg_score']}/100{skip_note}", ""]
+    omission = result.get("link_extraction")
+    if omission:
+        lines += [f"> {omission['invalid_url_occurrences']} malformed HTTP href occurrence(s) "
+                  f"in {omission['affected_pages']} scanned page(s) were omitted from HTTP link collection. "
+                  "These are source syntax issues, not network failures; they were not HTTP-checked.", ""]
     ranked = sorted(result["pages"], key=lambda p: p["score"])
     lines += ["## Weakest pages", "", "| Score | URL |", "|:--:|:--|"]
     for p in ranked[:10]:
@@ -345,7 +359,8 @@ def render_markdown(result: dict) -> str:
         lines.append(header)
         lines.append("")
         if not broken:
-            lines.append("No broken links found. 🟢")
+            lines.append("No broken links found among HTTP-checked targets. Malformed hrefs were "
+                         "omitted, not verified." if omission else "No broken links found. 🟢")
             lines.append("")
         else:
             lines += ["| Status | Type | Broken URL | Linked from |",

@@ -30,6 +30,12 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Malformed anchor hrefs no longer crash technical checks, link collection or
+  anchor-based crawl discovery. Valid later links remain usable. A low source
+  finding and conditional page/crawl omission counts distinguish parser-known
+  URL syntax issues from network-dead links, without retaining raw hrefs or
+  exception messages. Direct user URL errors and actual-fetch host/redirect
+  protections remain unchanged; this is not complete URI or sitemap validation.
 - Image-only links with descriptive image alternatives, and otherwise-empty
   links with title fallbacks, no longer receive the empty-anchor-text heuristic.
   Both parser backends retain image alternatives separately from visible text;

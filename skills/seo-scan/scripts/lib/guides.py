@@ -26,7 +26,7 @@ _SECTION_RULES = (
      'content.served.only.as.a.noscript.fallback'),
     ('technical', 'hreflang-international', 'duplicate.hreflang.entries no.x.default.hreflang'),
     ('technical', 'images', 'images.missing.alt.text no.lazy.loaded.images'),
-    ('technical', 'links', 'links.with.no.anchor.text generic.anchor.text'),
+    ('technical', 'links', 'links.with.no.anchor.text generic.anchor.text links.invalid.url'),
     ('technical', 'http-hygiene',
      'redirect.chain page.not.served.over.https unexpected.content.type no.compression.header'),
     ('content', 'content-depth-not-word-count-for-its-own-sake',
