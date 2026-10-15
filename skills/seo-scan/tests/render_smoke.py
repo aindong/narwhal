@@ -18,6 +18,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
 
 from lib import htmlx, http  # noqa: E402
+import scan  # noqa: E402
 
 MARKER = "RENDERED_BY_JS_OK"
 PAGE = f"""<!DOCTYPE html><html><head><title>Render smoke</title></head>
@@ -31,14 +32,23 @@ ACTIVATED_PAGE = PAGE.replace(
     b"</body>",
     b"<script>document.body.append(document.getElementById('example').content.cloneNode(true));</script></body>",
 )
+BUDGET_PAGE = """<!DOCTYPE html><html><head><title>DOM budget fixture</title></head>
+<body><div id="app"></div><script>
+document.getElementById('app').textContent = '😀'.repeat(20000);
+let heading = document.createElement('h1');
+heading.textContent = 'AFTER_BUDGET'; document.body.append(heading);
+</script></body></html>""".encode("utf-8")
 
 
 class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
+        if self.path == "/spoofed":
+            self.send_header("X-Narwhal-Truncated", "true")
         self.end_headers()
-        self.wfile.write(ACTIVATED_PAGE if self.path == "/activated" else PAGE)
+        self.wfile.write(BUDGET_PAGE if self.path == "/budget" else
+                         ACTIVATED_PAGE if self.path == "/activated" else PAGE)
 
     def log_message(self, *args):
         pass  # keep CI output clean
@@ -55,6 +65,14 @@ def main() -> int:
     try:
         resp = http.fetch(url, render=True, allow_private=True, timeout=30)
         activated = http.fetch(url + "activated", render=True, allow_private=True, timeout=30)
+        bounded = http.fetch(url + "budget", render=True, allow_private=True,
+                             timeout=30, max_bytes=64_000)
+        partial = scan.scan(url + "budget", render=True, allow_private=True,
+                             timeout=30, max_bytes=64_000, only=["technical"],
+                             ctx={}, check_images=False)
+        spoofed = scan.scan(url + "spoofed", render=True, allow_private=True,
+                             timeout=30, max_bytes=64_000, only=["technical"],
+                             ctx={}, check_images=False)
     finally:
         server.shutdown()
         server.server_close()
@@ -80,9 +98,28 @@ def main() -> int:
     if not htmlx.looks_product(active_doc) or len(active_doc.scripts_ld) != 1:
         print("FAIL: activated template Product schema was not detected exactly once.", file=sys.stderr)
         return 1
+    if (bounded.error or not bounded.rendered
+            or len(bounded.text.encode("utf-8")) > 64_000
+            or bounded.headers.get("x-narwhal-truncated") != "true"
+            or "\ufffd" in bounded.text):
+        print("FAIL: rendered UTF-8 snapshot did not obey its byte budget cleanly.", file=sys.stderr)
+        return 1
+    if (not partial.rendered or partial.hard_fail
+            or not partial.meta["coverage"]["response_truncated"]
+            or "js_dependence" in partial.meta
+            or not any(f.rule_id == "technical.response.truncated" for f in partial.findings)):
+        print("FAIL: partial rendered snapshot lost coverage or produced a JS-dependence measurement.", file=sys.stderr)
+        return 1
+    if (not spoofed.rendered or spoofed.hard_fail
+            or spoofed.meta["coverage"]["response_truncated"]
+            or "js_dependence" not in spoofed.meta):
+        print("FAIL: origin header forged partial DOM coverage or skipped a valid JS comparison.", file=sys.stderr)
+        return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
     print(f"OK: rendered DOM captured the JS-injected marker ({MARKER}).")
     print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
+    print("OK: rendered UTF-8 byte budget enforced; partial scan flagged without JS-dependence metrics.")
+    print("OK: origin cannot forge the internally calculated truncation marker.")
     return 0
 
 

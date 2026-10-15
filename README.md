@@ -76,6 +76,11 @@ Topic mode needs at least one usable page. Standalone `scan` still emits partial
 findings with coverage warnings. Missing/malformed legacy flags are not inferred
 to prove truncation or complete coverage.
 
+The primary HTML budget (`scan --max-bytes`, 64KB–20MB) also applies to a rendered
+DOM's retained UTF-8 snapshot. Truncation is explicit, without a broken final code
+point; JS-dependence is not measured from that incomplete DOM. This is an analysis
+input limit, not a cap on Chromium's DOM memory or subresource network traffic.
+
 ## Multi-agent deep audit
 
 `/narwhal audit <site>` (in Claude Code) is more than a script — it's a

@@ -15,6 +15,13 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Rendered HTML snapshots now obey the primary HTML byte budget in UTF-8, with
+  explicit truncation metadata and no broken final code point. Partial rendered
+  snapshots do not produce JS-dependence measurements. Smaller complete snapshots,
+  errors, SSRF checks and browser cleanup retain their behavior. This caps retained
+  analysis input, not Chromium DOM memory or subresource downloads.
+- Origin response headers cannot forge Narwhal's internal truncation marker;
+  raw and rendered coverage reflects the client's byte-count calculation.
 - Comparisons and content briefs exclude reports explicitly marked as truncated,
   rather than turning unseen HTML into missing-feature gaps or full-page scores.
   Partial targets return errors; partial rivals are skipped with diagnostics.

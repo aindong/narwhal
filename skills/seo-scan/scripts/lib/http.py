@@ -10,7 +10,7 @@ from __future__ import annotations
 import ipaddress
 import socket
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Optional
 from urllib.parse import urlparse, urlunparse
 from urllib.parse import urljoin
@@ -21,6 +21,12 @@ DEFAULT_UA = (
 )
 DEFAULT_TIMEOUT = 20
 MAX_REDIRECTS = 10
+
+
+def _origin_headers(headers):
+    """Normalize origin headers without trusting our internal coverage marker."""
+    return {key.lower(): value for key, value in headers.items()
+            if key.lower() != "x-narwhal-truncated"}
 
 
 @dataclass
@@ -207,6 +213,13 @@ def fetch(
         rendered = _try_render(url, timeout=timeout, user_agent=user_agent,
                                allow_private=allow_private)
         if rendered is not None:
+            # Bound the retained UTF-8 DOM snapshot, not Chromium's in-memory
+            # DOM or network traffic. Drop an incomplete final code point.
+            encoded = rendered.text.encode("utf-8", "replace")
+            if len(encoded) > max_bytes:
+                headers = {**rendered.headers, "x-narwhal-truncated": "true"}
+                rendered = replace(rendered, headers=headers,
+                                   text=encoded[:max(0, max_bytes)].decode("utf-8", "ignore"))
             return rendered
 
     start = time.time()
@@ -233,7 +246,7 @@ def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) ->
     raw, truncated = _limited_content(r, max_bytes)
     encoding = r.encoding or "utf-8"
     text = raw.decode(encoding, "replace")
-    headers = {k.lower(): v for k, v in r.headers.items()}
+    headers = _origin_headers(r.headers)
     if truncated:
         headers["x-narwhal-truncated"] = "true"
     r.close()
@@ -261,7 +274,7 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> R
             raw = fh.read(max_bytes + 1)
             truncated = len(raw) > max_bytes
             raw = raw[:max_bytes]
-            headers = {k.lower(): v for k, v in fh.headers.items()}
+            headers = _origin_headers(fh.headers)
             charset = fh.headers.get_content_charset() or "utf-8"
             status = fh.status
             if truncated:
@@ -275,7 +288,7 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> R
             url=url,
             final_url=url,
             status=exc.code,
-            headers={k.lower(): v for k, v in (exc.headers or {}).items()},
+            headers=_origin_headers(exc.headers or {}),
             text=body,
             elapsed_ms=0,
         )
@@ -347,8 +360,7 @@ def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Respo
                     pass
                 html = page.content()
                 status = resp.status if resp else 0
-                headers = {k.lower(): v
-                           for k, v in (resp.headers if resp else {}).items()}
+                headers = _origin_headers(resp.headers if resp else {})
                 final_url = page.url
                 assert_public_host(final_url, allow_private=allow_private)
             finally:
