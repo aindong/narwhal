@@ -36,7 +36,7 @@ All notable changes to Narwhal are documented here. The format follows
   valid siblings/fallbacks remain available. Bounded source counts distinguish
   rejected references from HTTP failures, preserve raw entry/problem totals,
   and do not echo invalid URLs. Sitemap health is not declared after rejections,
-  fetch errors or partial work. User-input errors and fetch guards are unchanged.
+  fetch errors or a reached file cap. User-input errors and fetch guards are unchanged.
 - Malformed anchor hrefs no longer crash technical checks, link collection or
   anchor-based crawl discovery. Valid later links remain usable. A low source
   finding and conditional page/crawl omission counts distinguish parser-known

@@ -64,7 +64,7 @@ path / homepage-link fallbacks remain available.
 Rejected references are visible as source issues/notes, not synthetic dead-link
 statuses. Raw rejected URLs and parser exception text are not retained in the
 receipts. The validator does not issue its healthy conclusion after rejections,
-fetch errors or capped/incomplete work. A basic page scan still checks only its
+fetch errors or a reached sitemap-file cap. A basic page scan still checks only its
 site context, not every nested sitemap. Missing/legacy receipts are unverified,
 not complete validation. Direct user URL errors and unexpected implementation
 errors still propagate through their existing boundaries.
