@@ -3,7 +3,6 @@
 from collections import Counter, defaultdict
 import json
 from pathlib import Path
-import re
 import unittest
 from urllib.parse import urlparse
 
@@ -60,6 +59,15 @@ class TestProspectiveCohort(unittest.TestCase):
                            for case in historical['cases']}
         reserved = {case['url'] for case in self.plan['cases'] if case['split'] == 'reserved'}
         self.assertFalse(reserved & historical_urls)
+
+    def test_preacquisition_amendment_preserves_explicit_limits_and_unknowns(self):
+        self.assertEqual('prospective-inputs-2026-10-v2', self.plan['cohort_id'])
+        self.assertEqual('prospective-inputs-2026-10-v1', self.plan['supersedes_uncaptured_cohort'])
+        policy = self.plan['acquisition_policy']
+        self.assertEqual(0.5, policy['delay_between_cases_seconds'])
+        self.assertEqual(180, policy['case_execution_deadline_seconds'])
+        self.assertIn('unverified preflight skips', policy['robots_preflight'])
+        self.assertIn('not an effective-policy or site-quality verdict', policy['robots_preflight'])
 
 
 if __name__ == '__main__':

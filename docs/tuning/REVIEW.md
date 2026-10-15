@@ -185,6 +185,11 @@ The prospective [`prospective-cases.json`](prospective-cases.json) registers
 **50 candidate URLs** across 25 declared operational site groups: 30 development
 cases and 20 reserved for later review. Five request rendering. It is a purposeful
 acquisition plan, not a representative population sample or validated benchmark.
+Version 2 supersedes an uncollected version 1 before any acquisition, adding
+conservative robots preflight, a half-second inter-case delay and a 180-second
+per-case execution limit. URLs, splits and scanner settings were not changed.
+Disallowed/unverified preflights and interrupted attempts remain visible cases,
+not page-quality failures or opportunities to select easier replacements.
 Roles/languages are intended strata, not verified labels; shared ownership,
 templates and earlier exposure are not exhaustively established. There are no
 healthy/known-fault labels assigned from reputation.

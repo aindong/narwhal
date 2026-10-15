@@ -1,6 +1,8 @@
 {
   "schema_version": 1,
-  "cohort_id": "prospective-inputs-2026-10-v1",
+  "cohort_id": "prospective-inputs-2026-10-v2",
+  "supersedes_uncaptured_cohort": "prospective-inputs-2026-10-v1",
+  "amendment_basis": "Before any cohort acquisition, specify conservative robots preflight and execution budgets. No URLs, splits, intended labels or scan settings changed, and no v1 sample results exist.",
   "interpretation": "purposeful_capture_sample_not_validated_benchmark",
   "registration_rule": "Freeze this file in git before sample scans; changing selection/settings creates a new cohort, not a replacement of awkward results.",
   "selection_basis": "Purposeful page-role/language diversity, not random population sampling. Intended roles/languages are unverified declarations. Reputation does not label a page healthy or a finding wrong.",
@@ -21,6 +23,13 @@
     "config_basis": "explicit_default_config_no_discovery",
     "source_revision": "record actual acquisition revision per run; do not infer from shared Unreleased version",
     "resource_scope": "Optional image probes disabled for this first input-capture cohort. Additional resource/field-data evidence and check opportunities remain future work, not validated coverage."
+  },
+  "acquisition_policy": {
+    "robots_preflight": "Once per origin, use the existing public-host-guarded fetcher for /robots.txt, at most 500000 response bytes and 20 seconds per request. Complete HTTP 404/410 permits this preflight; complete 2xx text/plain is parsed for the configured scanner user agent/path. Disallowed, gated, truncated, HTML-like or otherwise unverified preflight skips the page and retains the case/reason. This is a conservative acquisition gate, not an effective-policy or site-quality verdict.",
+    "delay_between_cases_seconds": 0.5,
+    "case_execution_deadline_seconds": 180,
+    "deadline_basis": "A per-case acquisition process limit, separate from per-request timeout. Terminated attempts retain partial output and are not retried or silently replaced.",
+    "output_policy": "Private local raw bundles and append-only attempt records. Acquisition summaries may describe status/coverage only; reserved finding rows and aggregate SEO scores remain uninspected for tuning."
   },
   "cases": [
     {"id":"mdn-html-link","url":"https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a","site_group":"mdn","intended_role":"reference","intended_language":"en","split":"development","render":false},
