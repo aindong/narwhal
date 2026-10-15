@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Terminal error identity:** stdlib HTML/text fetches carry their guarded
+  terminal URL and observed redirect hops into HTTP-error responses. Failed-page
+  reports and root llms receipts no longer substitute the starting URL; origin
+  URL claims do not override fetch identity. Status codes, body budgets and
+  network guards are preserved; this does not claim transfer completeness.
 - **Cold-start crawl resilience:** HTML helpers initialize the local RDFa module
   before parallel workers access independent documents. This prevents observed
   Python 3.9 startup import failures; extraction remains lazy, cached per Doc and

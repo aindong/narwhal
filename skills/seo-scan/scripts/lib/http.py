@@ -228,6 +228,10 @@ def _urllib_safe_open(url: str, *, timeout: int, headers: dict,
             return opener.open(req, timeout=timeout), current, redirects
         except urllib.error.HTTPError as exc:
             if exc.code not in (301, 302, 303, 307, 308) or not exc.headers.get("Location"):
+                # Keep only the guarded request identity, not Content-Location
+                # or another origin-supplied claim about where this was fetched.
+                exc._narwhal_final_url = current
+                exc._narwhal_redirects = tuple(redirects)
                 raise
             try:
                 if len(redirects) >= MAX_REDIRECTS:
@@ -348,11 +352,12 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> R
                 headers['x-narwhal-truncated'] = 'true'
             return Response(
                 url=url,
-                final_url=url,
+                final_url=getattr(exc, '_narwhal_final_url', url),
                 status=exc.code,
                 headers=headers,
                 text=raw[:max_bytes].decode("utf-8", "replace"),
                 elapsed_ms=0,
+                redirects=list(getattr(exc, '_narwhal_redirects', ())),
             )
         finally:
             exc.close()

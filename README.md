@@ -96,6 +96,12 @@ star partitions. Repeated-star rules no longer stall candidate filtering;
 prefix/end-anchor semantics, encoded literals and Allow/Disallow precedence are
 preserved. This does not impose a whole-crawl CPU or network-work budget.
 
+The bare-Python HTML/text fetch path retains the guarded terminal URL and
+observed redirect hops even for HTTP errors, so reports and root-resource
+receipts identify the response actually fetched. Origin `Content-Location`
+claims cannot replace that identity; status/body limits and network guards are
+unchanged. This is not a transfer-completeness guarantee.
+
 The generic page robots-meta check combines all active `name="robots"` tags,
 recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
 mistake directive parameter values or substrings for restrictions. Its passing

@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Stdlib terminal HTTP-error responses retain the actual guarded destination
+  and observed redirect chain instead of attributing the error to the starting
+  URL. Failed-page reports and root-resource receipts now identify that response
+  correctly; status/body limits, stream closure and redirect/private-host guards
+  are unchanged. Origin Content-Location headers do not set fetch identity.
 - RDFa module initialization happens when HTML helpers load, before parallel
   crawl workers begin. This prevents cold-start partially-initialized-module
   failures observed on bare Python 3.9 while keeping per-document extraction
