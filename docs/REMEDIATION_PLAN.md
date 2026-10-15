@@ -32,6 +32,26 @@ Safety values mean:
 `groups` identify findings best fixed in one shared template. `conflicts` stop
 automation where canonical/index/crawler intent must be decided first.
 
+## Verification templates
+
+`verification` contains ordered human instructions and command templates, not
+an executable script or an exact replay of the original invocation. For an audit
+baseline, source actions may first suggest a local page scan to `page-after.json`.
+That scan verifies page-level changes only: it must not be diffed against an audit
+overall score or treated as deployed site verification. The final template runs
+`narwhal audit` after deployment, then diffs that audit against the audit baseline.
+Scan baselines retain the page-scan/diff workflow. Sitemap measurement-gap actions
+remain manual verification tasks rather than source edits.
+Markdown audit plans expose the shared audit rerun and settings reminder before
+the action list; per-action JSON retains the complete ordered instructions.
+
+Restore the original configuration, rendering, access settings and crawl/link/
+sitemap limits before running an audit template. Reports do not record the full
+invocation, so the planner does not invent those options or grant private-host
+access to deployed targets. Matching report kinds avoids a known mismatch; it
+does not certify equal execution coverage, settings, samples or environments.
+The diff's existing incomparability checks remain in force.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

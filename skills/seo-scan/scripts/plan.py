@@ -554,9 +554,30 @@ def safety_for(artifact: str) -> tuple:
     return "safely_automatable", False
 
 
-def verification_for(artifact: str, target: str, report_source: str) -> list:
+def verification_for(artifact: str, target: str, report_source: str,
+                     report_kind: str = "scan") -> list:
     before = ("before.json" if report_source.startswith("<") else
               json.dumps(report_source))
+    if report_kind == 'audit':
+        commands = []
+        if artifact not in ("robots_txt", "sitemap", "llms_txt", "server_config"):
+            commands += [
+                'narwhal scan "<local-preview-url>" --allow-private '
+                '--format json -o page-after.json',
+                'The local scan verifies page-level changes only; do not compare '
+                'page-after.json with the audit baseline or treat it as deployed site verification.',
+            ]
+        commands += [
+            'Restore the original audit configuration, rendering, access settings and '
+            'crawl/link/sitemap limits before running this template; the report does '
+            'not record the complete invocation. A matching report kind alone does '
+            'not establish comparable coverage.',
+            f'narwhal audit {json.dumps(target)} --format json -o after.json  # run after deploy',
+            f'narwhal diff {before} after.json',
+        ]
+        if artifact in ("json_ld", "product_schema"):
+            commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
+        return commands
     if artifact in ("robots_txt", "sitemap", "llms_txt", "server_config"):
         scan_target = json.dumps(target)
         scan_command = f"narwhal scan {scan_target} --format json -o after.json  # run after deploy"
@@ -617,7 +638,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                                 else CHANGE_GUIDANCE[artifact]),
             "likely_files": owners,
             "verification": (list(verification[1]) if verification else
-                             verification_for(artifact, normalized["target"], report_source)),
+                             verification_for(artifact, normalized["target"], report_source,
+                                              normalized["kind"])),
             "evidence": finding.get("evidence") or finding.get("detail") or "",
             "source_recommendation": finding.get("recommendation", ""),
             "confidence": finding.get("confidence", 1.0),
@@ -716,6 +738,13 @@ def render_markdown(plan: dict) -> str:
         f"**Actions:** {len(plan['actions'])}  ·  **Mapping coverage:** {round(100 * c['mapping_ratio'])}%",
         "", "_Read-only plan: inspect proposed owners and values before applying edits._", "",
     ]
+    if plan.get('provenance', {}).get('report_kind') == 'audit':
+        lines += ['## Audit verification', '',
+                  'A local page scan can verify page-level changes only. Keep its '
+                  '`page-after.json` separate; do not diff it against the audit baseline. '
+                  'Site-level signals remain pending deployment.', '']
+        steps = verification_for('server_config', plan['target'], plan['provenance']['report'], 'audit')
+        lines += [steps[0], '', '```sh', steps[1], steps[2], '```', '']
     for safety, label in (("manual_external", "Manual / external"),
                           ("review_required", "Review required"),
                           ("deploy_verification", "Apply, then verify after deploy"),

@@ -30,6 +30,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Audit-based remediation plans no longer suggest diffing a page scan against
+  an audit overall score. Local page checks use a separate artifact; final
+  verification reruns an audit after deployment and asks callers to restore the
+  original settings and limits. Scan workflows and diff eligibility guards remain.
 - Sitemap discovery across scan context, crawl and site validation uses complete
   bounded namespace-aware XML instead of marker/loc regex guesses. Prefixed and
   gzip roots and XML-escaped URLs work consistently; unverified files cannot

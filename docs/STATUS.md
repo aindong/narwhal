@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Kind-matched planner verification:** audit plans separate local page checks
+  from the final deployed audit/diff. Templates require the original settings and
+  limits rather than inventing a replay; matching kinds alone does not establish
+  comparable coverage. Scan plans and manual sitemap gap tasks are unchanged.
 - **Shared XML discovery:** scan context, crawl and validator fallback discovery
   recognize supported namespace prefixes/gzip and XML escaping from complete
   bounded inputs, not marker/comment guesses. Discovery caps and unknown formats
