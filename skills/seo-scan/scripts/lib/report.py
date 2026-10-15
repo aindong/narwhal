@@ -721,6 +721,13 @@ def html_document(title: str, subtitle: str, body: str) -> str:
         "</div></body></html>\n")
 
 
+def _inline_emphasis(text: str) -> str:
+    """Format escaped display text, never an HTML attribute or code body."""
+    out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+    # Only at word boundaries so snake_case / paths aren't matched.
+    return re.sub(r"(?<!\w)_([^_]+)_(?!\w)", r"<em>\1</em>", out)
+
+
 def _inline_md(text: str) -> str:
     """Render our limited inline Markdown, keeping code spans escaped/literal.
 
@@ -728,7 +735,6 @@ def _inline_md(text: str) -> str:
     before links/emphasis, then restore them without reinterpreting their body.
     This is not a general Markdown parser (e.g. no multiline code spans).
     """
-    import re
     out = _esc(text)
     runs = list(re.finditer(r'`+', out))
     following, last = {}, {}
@@ -754,13 +760,22 @@ def _inline_md(text: str) -> str:
         index = end_index + 1
     chunks.append(out[cursor:])
     out = ''.join(chunks)
-    # [text](http…) links — before other spans; URL restricted to http(s).
-    # A protected code span may be a label, but never part of an href value.
+    links = []
+
+    def protect_link(match):
+        """Format a label but keep the already-escaped destination opaque."""
+        label, destination = match.groups()
+        token = f'<narwhal-link-{len(links)}>'
+        links.append(f'<a href="{destination}">{_inline_emphasis(label)}</a>')
+        return token
+
+    # Protect full links before emphasis. Like code tokens, raw-angle link
+    # tokens cannot occur in escaped user input. Code may be a label, not an href.
     out = re.sub(r"\[([^\]]+)\]\((https?://[^)\s<>]+)\)",
-                 r'<a href="\2">\1</a>', out)
-    out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
-    # _italic_ — only at word boundaries so snake_case / paths aren't matched.
-    out = re.sub(r"(?<!\w)_([^_]+)_(?!\w)", r"<em>\1</em>", out)
+                 protect_link, out)
+    out = _inline_emphasis(out)
+    out = re.sub(r'<narwhal-link-(\d+)>',
+                 lambda match: links[int(match.group(1))], out)
     return re.sub(r'<narwhal-code-(\d+)>',
                   lambda match: code[int(match.group(1))], out)
 

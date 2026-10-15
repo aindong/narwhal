@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Literal report-link destinations:** inline rendering isolates HTTP(S)
+  destinations from emphasis processing while formatting labels and surrounding
+  text. Query characters/entities are escaped once and round-trip as data;
+  literal code, scheme restrictions and collision-safe protection remain.
 - **Literal inline-code reports:** equal-length backtick runs protect escaped
   contents from link/emphasis processing while retaining surrounding formatting.
   Unmatched runs stay text; token lookalikes cannot replace user data, and code

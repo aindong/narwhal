@@ -30,6 +30,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Markdown link destinations remain literal escaped data: underscores and
+  asterisks in paths, queries and fragments no longer become emphasis tags in
+  `href` values. Labels and surrounding text keep their supported formatting;
+  existing HTTP(S)-only link recognition and literal-code guards remain.
 - Inline code retains literal Markdown, links and escaped HTML rather than
   formatting its contents. Equal-length backtick runs allow embedded shorter
   runs; surrounding formatting still works. Code cannot become an href value,

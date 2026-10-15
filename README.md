@@ -595,6 +595,10 @@ runs support literal shorter backticks inside a span; unmatched runs stay text.
 Spans are single-line and retain their inner spaces/tabs. This is a limited
 report renderer, not a full CommonMark implementation.
 
+Markdown HTTP(S) links format their labels without interpreting destination
+characters as Markdown. Underscores and asterisks in a path/query/fragment stay
+part of the URL; code examples and unsupported URL schemes do not become links.
+
 The limited Markdown renderer preserves root fenced code (three or more matching
 backticks or tildes, up to three leading spaces) as escaped literal text. Code
 comments cannot become report titles, and Markdown inside a fence is not styled
