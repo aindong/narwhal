@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Opt-in review acquisition:** a maintainer-only capture command preserves the
+  same scan's decoded primary/paired source, available response fields and context
+  in a new local bundle, without an evidence re-fetch or ordinary-scan retention.
+  Completion manifests are last-written, output sizes bounded and data sensitive;
+  no automatic publication/redaction/review labels. Missing network inputs remain
+  explicit. This enables new frozen cases, not completed independent validation.
 - **Mobile score-table containment:** native page HTML score breakdowns use a
   labelled keyboard-focusable scroll region, readable area labels and named
   severity headers instead of widening narrow phones/spilling outside cards.

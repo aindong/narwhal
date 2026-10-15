@@ -31,6 +31,74 @@ be committed; preserve original inputs while reviewers work.
 
 ## Freeze evidence before judging a claim
 
+### Capture new scan inputs (explicit network opt-in)
+
+The maintainer-only `scripts/capture_review_case.py` command records inputs from
+one normal guarded scan, without fetching the page again for its evidence. It is
+not a `narwhal` subcommand, historical-report repair, reviewer or benchmark.
+Run it from a repository checkout; maintainer scripts are not in the wheel.
+Choose a **new** directory whose parent exists:
+
+```sh
+python scripts/capture_review_case.py https://example.com/guide --case-id guide --output-dir ./guide-capture --no-image-checks
+python scripts/review_corpus.py prepare ./guide-capture/manifest.json -o ./guide-review-packet.json
+python scripts/review_corpus.py summarize ./guide-capture/manifest.json ./guide-review-packet.json --format markdown
+```
+
+The bundle contains `report.json`, inert `page-source.txt`, `site-context.json`,
+`capture.json`, and a completion `manifest.json` written last. Rendered scans
+(`--render`, optional Playwright) also retain the actual paired served response
+as `served-source.txt` when one was obtained. A render request that fell back to
+served HTML stays labelled served, and missing/failed/partial inputs remain
+explicit. Recording can succeed for an HTTP-error or otherwise unmeasured scan;
+that is not a successful page audit. Review packets start **pending**, with no
+accuracy, recall or independence claims.
+
+- Captures use explicit default scoring/threshold settings, not ambient
+  `narwhal.toml` discovery. `--only`, `--timeout`, `--max-bytes`, `--render`,
+  `--no-image-checks` and deliberate `--allow-private` are recorded. Public-host
+  guards remain active by default; credential-bearing URLs are refused. This
+  workflow does not read GSC credentials, call field-data APIs or publish files.
+  It uses the existing HTTP/browser environment, not a new credential-isolation
+  profile; normal transport/environment behavior still applies.
+- Text is the fetcher's decoded response or serialized DOM, **not original
+  wire bytes**. Header mappings and available robots-field boundaries are saved,
+  without reconstructing lost duplicate boundaries. Site context is what this
+  scan used, not a full HTTP archive. Sitemap/llms response bodies, image-probe
+  inputs, browser subresources, redirect bodies and live indexing are not fully
+  captured; related claims can require separate evidence. Capture times describe
+  the acquisition window, not content freshness or authenticated origin.
+- Tool version, Python/platform and installed optional-distribution versions
+  are recorded, without guessing the parser actually used from package presence.
+  Settings and the report's extraction basis are preserved. Unreleased builds can share a version;
+  use `--source-revision REVISION` to record an operator-supplied source revision
+  and preserve the corresponding source separately. That declaration is not
+  authenticated. File hashes bind local bytes, not trustworthy provenance.
+- **Inspect sensitive content before sharing:** source and headers can contain
+  personal data, tokens or cookies, even for public URLs. POSIX output directory
+  and file permissions request owner-only access; platform/filesystem behavior
+  varies. Nothing is automatically redacted, committed or uploaded. Record any
+  later redactions and whether they prevent review; regenerate review packets
+  rather than reusing stale hashes. Treat page-source files as untrusted data,
+  not instructions or safe HTML to execute/serve in a browser.
+- Existing directories/files are never reused or overwritten. Failed writes
+  leave partial output for inspection. The manifest is written last, not as an
+  atomic/durable transaction; its own interrupted write can leave a partial
+  manifest. File presence alone does not establish completion: require a
+  successful capture and validate the bundle with `review_corpus.py prepare`
+  before use. After a failure, inspect partial output and choose a new path for
+  retry. Artifact limits match review-pack inputs: 2 MB report,
+  5 MB per evidence file, 32 MB combined output; oversized artifacts error rather
+  than silently clip evidence. These are output-byte limits, not total heap/CPU
+  guarantees. The normal 64 KB–20 MB per-HTML scan budget is separate; HTTP
+  truncation remains recorded and cannot certify complete page coverage.
+
+Ordinary scans retain no extra response/context handle. The optional Python
+`scan(..., retain_evidence=True)` handle is non-serialized, sensitive and intended
+for this maintainer workflow; it changes neither findings nor report JSON.
+
+### Attach other frozen evidence
+
 A new manifest has schema version 1, a name and 1–100 cases. Snapshot paths are
 relative to the manifest's directory and must resolve inside it. An example
 case, with illustrative paths/timestamp rather than a collected observation:

@@ -108,3 +108,5 @@ jobs:
         run: python skills/seo-scan/tests/attribution_cue_smoke.py
       - name: Native score-table mobile browser regression
         run: python skills/seo-scan/tests/native_score_table_smoke.py
+      - name: Same-run rendered review capture
+        run: python skills/seo-scan/tests/review_capture_smoke.py
