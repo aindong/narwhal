@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Evidence-scoped robots meta:** all active generic robots tags contribute
+  exact restriction names; `none` expands to noindex/nofollow. Substrings and
+  parameter values do not create false restrictions. Bounded positional
+  witnesses retain late matches; the passing legacy rule ID stays stable, with
+  wording limited to generic meta (not HTTP headers, named bots or indexability).
 - **Column-aligned reports:** Markdown table separator markers now control
   header/body alignment, so comparison scores honor their right-aligned columns.
   Static classes preserve cell data and header scopes; missing/invalid markers

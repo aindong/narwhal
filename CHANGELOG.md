@@ -35,6 +35,12 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Generic robots-meta checks combine all active tags, recognize `none` as
+  `noindex,nofollow`, and match exact names instead of substrings/parameter
+  values. Later restrictions are no longer hidden by an earlier allowing tag.
+  Passing wording now says only that no generic meta noindex was detected, not
+  that the page is indexable. Existing rule IDs remain; affected restriction
+  findings/scores are corrected. Headers/crawler-specific meta remain unverified.
 - Markdown tables honor left/center/right separator markers on both headers
   and body cells, including comparison score columns. Only static alignment
   classes are emitted; unmarked/missing/invalid markers retain default left
