@@ -93,6 +93,14 @@ class TestReviewCapture(unittest.TestCase):
         self.assertGreater(summary['finding_count'], 0)
         self.assertEqual(0, summary['fully_labelled_findings'])
 
+    def test_credential_rejection_is_initial_url_only_not_an_anonymous_archive_claim(self):
+        final = 'https://declared:remote@example.test/guide'
+        self.record(replies=[response(final_url=final, redirects=[final])])
+        metadata = self.read('capture.json')
+        self.assertEqual(final, metadata['primary_response']['final_url'])
+        self.assertEqual([final], metadata['primary_response']['redirects'])
+        self.assertTrue(any('Only initial URL userinfo is refused' in note for note in metadata['limitations']))
+
     def test_normal_scans_do_not_retain_raw_inputs_or_change_json_when_opted_in(self):
         reports = []
         for retain in (False, True):

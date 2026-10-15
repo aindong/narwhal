@@ -57,10 +57,12 @@ accuracy, recall or independence claims.
 - Captures use explicit default scoring/threshold settings, not ambient
   `narwhal.toml` discovery. `--only`, `--timeout`, `--max-bytes`, `--render`,
   `--no-image-checks` and deliberate `--allow-private` are recorded. Public-host
-  guards remain active by default; credential-bearing URLs are refused. This
+  guards remain active by default; initial URLs containing userinfo are refused. This
   workflow does not read GSC credentials, call field-data APIs or publish files.
   It uses the existing HTTP/browser environment, not a new credential-isolation
-  profile; normal transport/environment behavior still applies.
+  profile; normal transport/environment behavior still applies. Redirect userinfo
+  is not newly rejected or redacted, and request auth/proxy state is not fully
+  captured. Do not interpret a bundle as an anonymous or credential-free archive.
 - Text is the fetcher's decoded response or serialized DOM, **not original
   wire bytes**. Header mappings and available robots-field boundaries are saved,
   without reconstructing lost duplicate boundaries. Site context is what this

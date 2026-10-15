@@ -32,6 +32,7 @@ MAX_CAPTURE_BYTES = 32_000_000
 LIMITATIONS = [
     'Decoded response text/serialized DOM, not original HTTP wire bytes or authenticated origin evidence.',
     'Headers are the fetcher mapping plus available robots-field boundaries, not every raw header line.',
+    'Only initial URL userinfo is refused. Redirect userinfo and transport auth/proxy state are not newly isolated or fully captured.',
     'Site context retains inputs used by this scan, not all sitemap/llms response bodies or linked resources.',
     'Image-probe inputs, browser subresources, redirect response bodies and live indexing are not captured.',
     'Capture timestamps describe this local acquisition window, not content freshness or response authenticity.',
