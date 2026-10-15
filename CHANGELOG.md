@@ -14,7 +14,9 @@ All notable changes to Narwhal are documented here. The format follows
 ### Improved
 - Crawl weakest-page and broken-link tables retain literal URL/error text:
   pipes stay in one cell and Markdown-like data cannot create table links or
-  emphasis. Generated tables use a versioned, table-local punctuation-escape
+  emphasis/strikethrough. CR/LF breaks become spaces without collapsing other
+  internal spaces or tabs; GFM URL autolink prefixes are escaped as data.
+  Generated tables use a versioned, table-local punctuation-escape
   marker; legacy Markdown, ordinary text and code keep their prior behavior.
   Original JSON, scores and crawl calculations are unchanged. Chromium CI
   verifies desktop/mobile/print table content and literal-output safety.
