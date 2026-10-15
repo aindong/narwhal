@@ -53,8 +53,9 @@ class TestPlanVerificationKind(unittest.TestCase):
     def test_schema_review_stays_before_local_and_deployed_checks(self):
         for artifact in ('json_ld', 'product_schema'):
             commands = plan.verification_for(artifact, 'https://example.test', '<memory>', 'audit')
-            self.assertIn('replace every TODO', commands[0])
-            self.assertIn('-o page-after.json', commands[1])
+            self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
+            self.assertIn('replace every TODO', commands[1])
+            self.assertIn('-o page-after.json', commands[2])
             self.assertEqual('narwhal diff -- before.json after.json', commands[-1])
 
     def test_scan_contract_does_not_change(self):
