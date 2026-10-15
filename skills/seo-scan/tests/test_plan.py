@@ -135,10 +135,10 @@ class TestPlanContract(unittest.TestCase):
         self.assertEqual([], manual["likely_files"])
         local = next(a for a in built["actions"]
                      if a["rule_id"] == "technical.missing.title")
-        self.assertIn("<local-preview-url>", local["verification"][0])
+        self.assertIn("<local-preview-url>", next(step for step in local["verification"] if step.startswith('narwhal ')))
         deployed = next(a for a in built["actions"]
                         if a["rule_id"] == "technical.no.robots.txt.found")
-        self.assertIn("run after deploy", deployed["verification"][0])
+        self.assertIn("run after deploy", next(step for step in deployed["verification"] if step.startswith('narwhal ')))
 
     def test_legacy_report_gets_compatible_rule_id_and_warning(self):
         report = {"url": "https://example.test", "score": 80, "findings": [

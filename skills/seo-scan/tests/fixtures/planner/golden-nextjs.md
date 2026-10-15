@@ -6,6 +6,8 @@ _Read-only plan: inspect proposed owners and values before applying edits._
 
 Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace placeholders and add original options before `--`; do not execute instruction text as commands.
 
+> Save the original input report JSON, keeping all fields, to a fresh before.json before edits or reruns. If using an existing saved report, point the diff at that baseline and choose distinct fresh verification output paths. Do not overwrite files or substitute a new scan. This read-only plan has not saved a baseline.
+
 ## Review required
 
 ### HIGH — Missing meta description

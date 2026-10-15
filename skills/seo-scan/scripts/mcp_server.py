@@ -218,7 +218,9 @@ def _plan(report: dict, repo: str = ".", max_files: int = 5000) -> dict:
 
     Returns stable rule-linked actions, likely owning files, framework evidence,
     safety classifications, grouped fixes, conflicts, coverage, and verification
-    commands. This tool never edits repository files.
+    commands. This tool never edits repository files or saves a baseline. Before
+    a suggested diff, preserve the original report JSON as instructed by the plan;
+    do not replace it with a new scan.
     """
     from pathlib import Path
     import plan as plan_mod

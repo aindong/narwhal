@@ -35,6 +35,11 @@ All notable changes to Narwhal are documented here. The format follows
   fence rules keep code headings out of title extraction; screen blocks scroll
   and print/PDF input wraps long lines. Existing non-code rendering and scan
   scoring are unchanged; this is a limited subset, not a full Markdown engine.
+- In-memory/Python and parsed-object MCP plans explicitly require preserving the
+  original report before verification diffs; read-only planning never saves it.
+  Markdown keeps that prerequisite outside shell blocks. File-backed, measurement-
+  check-only and empty plans do not receive invented save/diff tasks; actual manual
+  hosting fixes retain their requested deployed verification. Coverage is unchanged.
 - Sitemap-file discovery/traversal deduplicates literal fragment aliases before
   counting attempts, child slots and remaining files. Repeated `file.xml#…`
   references no longer crowd valid siblings out of bounded samples or multiply

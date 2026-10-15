@@ -25,6 +25,11 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   and exclude code comments from report-title extraction. Whitespace survives
   documented indentation/newline normalization; long lines scroll on screen and
   wrap for print/PDF input. No highlighting dependency or full Markdown claim.
+- **In-memory verification prerequisite:** diff-producing plans ask callers to
+  preserve the original input report, with all fields, before edits/reruns. The
+  planner remains read-only; Markdown does not turn that instruction into shell
+  code. File-backed and manual measurement checks keep their existing
+  responsibilities; manual hosting fixes retain requested deployed verification.
 - **Fragment-free sitemap-file accounting:** literal `#fragment` aliases share
   file attempts and child/traversal slots, including failed/cyclic references.
   Valid siblings remain reachable within existing limits; pending-file counts
