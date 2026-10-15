@@ -163,7 +163,8 @@ def _canonical(doc, resp, report):
 def _generic_meta_robots(doc):
     """Collect exact restriction names across active generic robots meta tags.
 
-    Parameterized segments are not standalone rules (e.g. image-preview:none).
+    Parameter names/values are not standalone rules (e.g. image-preview:none),
+    but standalone names before a parameter remain observable.
     Keep one bounded positional witness per recognized name, scanning every tag.
     """
     observed = {}

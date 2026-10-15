@@ -37,7 +37,8 @@ All notable changes to Narwhal are documented here. The format follows
 ### Fixed
 - Generic robots-meta checks combine all active tags, recognize `none` as
   `noindex,nofollow`, and match exact names instead of substrings/parameter
-  values. Later restrictions are no longer hidden by an earlier allowing tag.
+  values. Standalone restrictions before a parameter are retained; later tags
+  are no longer hidden by an earlier allowing tag.
   Passing wording now says only that no generic meta noindex was detected, not
   that the page is indexable. Existing rule IDs remain; affected restriction
   findings/scores are corrected. Headers/crawler-specific meta remain unverified.

@@ -8,8 +8,11 @@ _PARAMETERS = {'max-snippet', 'max-image-preview', 'max-video-preview', 'unavail
 
 def restriction_names(value):
     """Recognize standalone names, never substrings or directive parameters."""
-    return {token for part in value.lower().split(',') if ':' not in part
-            for token in part.split() if token in ('noindex', 'nofollow', 'none')}
+    names = set()
+    for part in value.lower().split(','):
+        tokens = part.split(':', 1)[0].split()[:-1] if ':' in part else part.split()
+        names.update(token for token in tokens if token in ('noindex', 'nofollow', 'none'))
+    return names
 
 
 def expand(names):
