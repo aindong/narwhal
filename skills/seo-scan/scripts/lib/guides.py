@@ -19,7 +19,7 @@ _SECTION_RULES = (
      'no.h1.heading multiple.h1.headings heading.levels.skip.a.level'),
     ('technical', 'canonicalization', 'no.canonical.url canonical.points.elsewhere'),
     ('technical', 'robots-directives-two-layers',
-     'page.is.set.to.noindex page.level.nofollow no.robots.txt.found '
+     'page.is.set.to.noindex page.level.nofollow http.robots.noindex http.robots.nofollow no.robots.txt.found '
      'robots.txt.has.no.sitemap.directive no.xml.sitemap.found sitemap.invalid.references'),
     ('technical', 'mobile--rendering',
      'no.responsive.viewport.tag no.lang.attribute.on.html '
