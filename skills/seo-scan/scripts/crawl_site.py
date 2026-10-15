@@ -23,7 +23,7 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import hreflang, http, htmlx, links, simhash, sitegraph  # noqa: E402
+from lib import hreflang, http, htmlx, links, simhash, sitegraph, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
@@ -72,7 +72,7 @@ _LOC = re.compile(r"<loc>\s*(.*?)\s*</loc>", re.I | re.S)
 
 
 def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
-             robots_txt=None) -> list:
+             robots_txt=None, diagnostics=None) -> list:
     root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
     urls: list = []
 
@@ -82,21 +82,20 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
         robots_txt = http.fetch_text(urljoin(root + "/", "robots.txt"),
                                      allow_private=allow_private, timeout=timeout) or ""
     robots = robots_txt
-    sm_urls = [ln.split(":", 1)[1].strip() for ln in robots.splitlines()
-               if ln.lower().strip().startswith("sitemap:")]
+    sm_urls = sm.robots_sitemaps(robots, diagnostics=diagnostics)
     sm_urls += [urljoin(root + "/", p.lstrip("/")) for p in SITEMAP_CANDIDATES]
-    for sm in sm_urls:
-        body = http.fetch_text(sm, allow_private=allow_private, timeout=timeout)
+    for sitemap_url in sm_urls:
+        body = http.fetch_text(sitemap_url, allow_private=allow_private, timeout=timeout)
         if not body:
             continue
         locs = _LOC.findall(body)
         if "<sitemapindex" in body:
-            for child in locs[:5]:
+            for child in sm.usable_locations(locs, diagnostics=diagnostics, source='index_locations')[:5]:
                 child_body = http.fetch_text(child, allow_private=allow_private,
                                              timeout=timeout) or ""
-                urls += _LOC.findall(child_body)
+                urls += sm.usable_locations(_LOC.findall(child_body), diagnostics=diagnostics)
         else:
-            urls += locs
+            urls += sm.usable_locations(locs, diagnostics=diagnostics)
         if urls:
             break
 
@@ -226,9 +225,14 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     rt = RobotsTxt.parse(robots_txt)
 
     # Over-fetch candidates so we still reach max_pages after robots filtering.
+    source_diagnostics = {}
     candidates = discover(base, allow_private=allow_private, timeout=timeout,
                           limit=max_pages * 3 if obey_robots else max_pages,
-                          robots_txt=robots_txt)
+                          robots_txt=robots_txt, diagnostics=source_diagnostics)
+    gathered = sm.recorded_reference_diagnostics(ctx.get('sitemap_references'))
+    if gathered:
+        for key, value in gathered['rejected'].items():
+            source_diagnostics[key] = max(value, source_diagnostics.get(key, 0))
 
     urls, skipped = select_urls(candidates, base, rt, obey_robots, max_pages)
 
@@ -282,6 +286,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
               "ecommerce": ecommerce_scope}
+    if source_diagnostics:
+        result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
     omitted = [p["link_extraction"]["invalid_url_occurrences"]
                for p in pages if p.get("link_extraction")]
     if omitted:
@@ -317,6 +323,9 @@ def render_markdown(result: dict) -> str:
     lines = [f"# Site SEO & GEO Scan — {result['base']}", "",
              f"**Pages scanned:** {result['pages_scanned']}  ·  "
              f"**Average score:** {result['avg_score']}/100{skip_note}", ""]
+    sitemap_note = sm.reference_note(result.get('sitemap_references'))
+    if sitemap_note:
+        lines += ['> ' + sitemap_note, '']
     omission = result.get("link_extraction")
     if omission:
         lines += [f"> {omission['invalid_url_occurrences']} malformed HTTP href occurrence(s) "

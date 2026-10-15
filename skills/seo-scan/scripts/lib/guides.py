@@ -20,7 +20,7 @@ _SECTION_RULES = (
     ('technical', 'canonicalization', 'no.canonical.url canonical.points.elsewhere'),
     ('technical', 'robots-directives-two-layers',
      'page.is.set.to.noindex page.level.nofollow no.robots.txt.found '
-     'robots.txt.has.no.sitemap.directive no.xml.sitemap.found'),
+     'robots.txt.has.no.sitemap.directive no.xml.sitemap.found sitemap.invalid.references'),
     ('technical', 'mobile--rendering',
      'no.responsive.viewport.tag no.lang.attribute.on.html '
      'content.served.only.as.a.noscript.fallback'),

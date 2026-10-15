@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Sitemap reference resilience:** rejected robots/index/page URL references
+  no longer abort otherwise usable discovery or validation. Counts are scoped
+  per examined source component, not network-dead statuses or whole-site totals;
+  valid entries and actual-fetch guards remain. Fetch errors, rejected references
+  or a reached sitemap-file cap prevent the validator's healthy conclusion.
 - **Malformed anchor resilience:** parser-known host/port errors no longer abort
   page checks, link collection or anchor discovery. Source findings and bounded
   omission counts remain visible without fabricating dead-link statuses; valid

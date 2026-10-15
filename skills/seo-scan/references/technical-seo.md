@@ -40,6 +40,35 @@ remain. Full URLs retain semicolon path parameters rather than silently dropping
 them. This does not claim complete URL/robots conformance or change which
 paths a caller checks; the GEO policy receipt still explicitly checks `/` only.
 
+Discovered sitemap references have a separate bounded syntax check. Robots.txt
+`Sitemap:` values, sitemap-index child locations and sitemap page locations must
+be supported absolute HTTP(S) URLs with parser-valid hosts/ports before they are
+used for fetching, discovery or sampling. Relative values are rejected, not
+silently resolved against the site. This follows the absolute-location requirement
+in the [Sitemaps protocol](https://www.sitemaps.org/protocol.html) (checked
+2026-10-15), not complete URI/XML/protocol validation. Existing cross-host page
+checks and actual-fetch host/redirect protections remain; syntax acceptance is
+not authorization or proof of reachability.
+
+Known context rejections appear in page `meta.sitemap_references`; crawl and
+sitemap-validator JSON expose their own `sitemap_references` receipts. The
+`basis: absolute_http_url_syntax` receipt contains only positive scalar counts
+under `rejected`: `robots_directives`, `index_locations`, `page_locations` when
+observed. These count examined reference occurrences per component, not unique
+destinations or whole-site failures; shared robots context is not multiplied by
+crawled page count. Invalid page locations remain in the validator's raw entry
+total/problem counts but are never HTTP-sampled. Invalid index references do not
+consume the crawler's five usable-child fetch budget. Valid siblings and common
+path / homepage-link fallbacks remain available.
+
+Rejected references are visible as source issues/notes, not synthetic dead-link
+statuses. Raw rejected URLs and parser exception text are not retained in the
+receipts. The validator does not issue its healthy conclusion after rejections,
+fetch errors or a reached sitemap-file cap. A basic page scan still checks only its
+site context, not every nested sitemap. Missing/legacy receipts are unverified,
+not complete validation. Direct user URL errors and unexpected implementation
+errors still propagate through their existing boundaries.
+
 ## Mobile / rendering
 - `<meta name="viewport" content="width=device-width, initial-scale=1">` is
   mandatory under mobile-first indexing.
