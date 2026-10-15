@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Inline code retains literal Markdown, links and escaped HTML rather than
+  formatting its contents. Equal-length backtick runs allow embedded shorter
+  runs; surrounding formatting still works. Code cannot become an href value,
+  and internal span protection cannot collide with user text. Single-line spans
+  retain inner whitespace; this remains a limited report Markdown subset.
 - Branded Markdown rendering preserves root fenced code as escaped literal
   content, including whitespace, comments and Markdown-looking examples. Shared
   fence rules keep code headings out of title extraction; screen blocks scroll

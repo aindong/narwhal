@@ -589,6 +589,12 @@ branded report:
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```
 
+Inline code stays escaped and literal: Markdown markers, links and HTML inside
+matching backtick runs are displayed as text, not interpreted. Equal-length
+runs support literal shorter backticks inside a span; unmatched runs stay text.
+Spans are single-line and retain their inner spaces/tabs. This is a limited
+report renderer, not a full CommonMark implementation.
+
 The limited Markdown renderer preserves root fenced code (three or more matching
 backticks or tildes, up to three leading spaces) as escaped literal text. Code
 comments cannot become report titles, and Markdown inside a fence is not styled

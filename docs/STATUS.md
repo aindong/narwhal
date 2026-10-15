@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Literal inline-code reports:** equal-length backtick runs protect escaped
+  contents from link/emphasis processing while retaining surrounding formatting.
+  Unmatched runs stay text; token lookalikes cannot replace user data, and code
+  cannot be inserted into link attributes. Single-line spans preserve inner
+  spaces/tabs; this does not add full CommonMark parsing or new dependencies.
 - **Literal fenced-code reports:** shared root-fence rules preserve escaped code
   and exclude code comments from report-title extraction. Whitespace survives
   documented indentation/newline normalization; long lines scroll on screen and
