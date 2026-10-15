@@ -135,6 +135,16 @@ def _redirect_target(current_url: str, location: str, *, allow_private=False) ->
     return target
 
 
+def _declared_length_exceeds(value, size):
+    """Compare an ASCII Content-Length without unbounded integer conversion."""
+    value = str(value or '').strip()
+    if not value or any(char < '0' or char > '9' for char in value):
+        return False
+    value = value.lstrip('0') or '0'
+    actual = str(size)
+    return (len(value), value) > (len(actual), actual)
+
+
 def _limited_content(response, max_bytes: int) -> tuple:
     """Read at most ``max_bytes`` from a streaming requests response."""
     chunks, size, truncated = [], 0, False
@@ -152,7 +162,7 @@ def _limited_content(response, max_bytes: int) -> tuple:
             break
         if size >= max_bytes:
             length = response.headers.get("content-length")
-            if str(length or "").isdigit() and int(length) > max_bytes:
+            if _declared_length_exceeds(length, max_bytes):
                 truncated = True
                 break
             # With no trustworthy length, consume at most the next yielded chunk
@@ -201,11 +211,14 @@ def _urllib_safe_open(url: str, *, timeout: int, headers: dict,
         except urllib.error.HTTPError as exc:
             if exc.code not in (301, 302, 303, 307, 308) or not exc.headers.get("Location"):
                 raise
-            if len(redirects) >= MAX_REDIRECTS:
-                raise SSRFError(f"Too many redirects (>{MAX_REDIRECTS})")
-            current = _redirect_target(current, exc.headers["Location"],
-                                       allow_private=allow_private)
-            redirects.append(current)
+            try:
+                if len(redirects) >= MAX_REDIRECTS:
+                    raise SSRFError(f"Too many redirects (>{MAX_REDIRECTS})")
+                current = _redirect_target(current, exc.headers["Location"],
+                                           allow_private=allow_private)
+                redirects.append(current)
+            finally:
+                exc.close()
 
 
 def fetch(
@@ -416,7 +429,14 @@ def fetch_text(url: str, **kwargs) -> Optional[str]:
 def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
                 user_agent: str = DEFAULT_UA, allow_private: bool = False,
                 max_bytes: int = 20_000_000):
-    """Fetch raw bytes (for gzipped sitemaps etc.). Returns ``(bytes, error)``."""
+    """Return complete successful raw bytes, or (None, bounded failure note).
+
+    Prefixes from oversized, failed or known-incomplete responses are withheld.
+    The byte budget covers this response body, not all network/process work.
+    """
+    if type(max_bytes) is not int or max_bytes <= 0:
+        raise ValueError('Raw response byte budget must be a positive integer.')
+    limit_note = f'Response exceeded raw byte limit ({max_bytes} bytes); body unverified.'
     try:
         url = normalize_url(url)
         assert_public_host(url, allow_private=allow_private)
@@ -424,30 +444,50 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
         return None, str(exc)
     try:
         import requests  # noqa: PLC0415
+    except ImportError:
+        requests = None
+    if requests is not None:
         try:
             r, _, _ = _requests_safe(
                 requests, "GET", url, timeout=timeout,
                 headers={"User-Agent": user_agent}, allow_private=allow_private,
                 stream=True)
-            raw, _ = _limited_content(r, max_bytes)
-            error = None if r.ok else f"HTTP {r.status_code}"
-            r.close()
-            return raw, error
         except (requests.RequestException, SSRFError, ValueError) as exc:
             return None, type(exc).__name__
-    except ImportError:
-        pass
+        try:
+            if not 200 <= r.status_code < 300:
+                return None, f'HTTP {r.status_code}'
+            raw, truncated = _limited_content(r, max_bytes)
+            return (None, limit_note) if truncated else (raw, None)
+        except requests.RequestException as exc:
+            return None, type(exc).__name__
+        finally:
+            r.close()
     import urllib.error  # noqa: PLC0415
     import urllib.request  # noqa: PLC0415
+    import http.client as http_client  # noqa: PLC0415
     try:
         fh, _, _ = _urllib_safe_open(
             url, timeout=timeout, headers={"User-Agent": user_agent},
             allow_private=allow_private)
-        with fh:
-            return fh.read(max_bytes), None
     except urllib.error.HTTPError as exc:
+        exc.close()
         return None, f"HTTP {exc.code}"
-    except Exception as exc:  # noqa: BLE001
+    except (OSError, http_client.HTTPException, ValueError) as exc:
+        return None, type(exc).__name__
+    try:
+        with fh:
+            if not 200 <= fh.status < 300:
+                return None, f'HTTP {fh.status}'
+            raw = fh.read(max_bytes + 1)
+            if len(raw) > max_bytes:
+                return None, limit_note
+            length = fh.headers.get('content-length')
+            if (not fh.headers.get('transfer-encoding')
+                    and _declared_length_exceeds(length, len(raw))):
+                return None, 'Incomplete response body (Content-Length not satisfied).'
+            return raw, None
+    except (OSError, http_client.HTTPException) as exc:
         return None, type(exc).__name__
 
 

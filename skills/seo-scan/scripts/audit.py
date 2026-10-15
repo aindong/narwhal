@@ -284,7 +284,7 @@ def main(argv=None) -> int:
     ap.add_argument("--max-links", type=int, default=100,
                     help="cap on outbound links checked (default 100)")
     ap.add_argument("--max-sitemaps", type=int, default=12,
-                    help="cap on sitemap files fetched (default 12)")
+                    help="cap on distinct sitemap file fetch attempts, including failures (default 12)")
     ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--ignore-robots", action="store_true")
