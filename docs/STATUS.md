@@ -10,9 +10,10 @@ plan see [ROADMAP.md](ROADMAP.md); for release history see
 A local-first SEO + GEO/LLMO scanning toolkit shipped as a Claude Code plugin
 (also runnable via `uvx` / cloned repo / any agent via `AGENTS.md`). Two layers:
 
-- **Deterministic scripts** (`skills/seo-scan/scripts/`) — fast, reproducible,
-  zero-dependency **measurement**. These are the source of truth and are fully
-  tested.
+- **Deterministic scripts** (`skills/seo-scan/scripts/`) — bounded measurements
+  and heuristic findings, with zero required dependencies. Regression tests
+  support repeatability and implementation correctness, not independent SEO
+  accuracy or proof of ranking/citation outcomes.
 - **Multi-agent orchestration** (`agents/` + `commands/narwhal.md`) — specialist
   subagents that run the scripts as tools and add **reasoning** on top; `/narwhal
   audit` fans them out in parallel and synthesizes one report.
@@ -24,8 +25,9 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 - **Contextual phrase review:** common wording produces low-priority editorial
   advice with actual examples and explicit limits, not an AI-authorship or ranking
   risk verdict. Low-match passes also avoid quality/authorship certification.
-  Plans keep edits conditional. Stable IDs and phrase counters remain; four-plus
-  priority changes from medium to low, not proof of improved pages. Review title filters.
+  Plans keep edits conditional. Stable IDs and phrase counters remain; four-plus-
+  distinct-phrase priority changes from medium to low, not proof of improved pages.
+  Review title filters.
 - **Review-pack foundation:** an offline maintainer utility binds reported
   findings to local snapshots and tracks observation, priority and advice review
   separately. The historical 15-case corpus remains pending/report-only, without

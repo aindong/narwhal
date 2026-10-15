@@ -72,7 +72,7 @@ And yes, it works as a backronym too:
 
 Common-phrase checks are editorial review prompts, not AI-authorship detectors.
 Quoted examples may be appropriate for the audience; neither matches nor their
-absence establish originality, helpfulness or ranking impact. The four-plus-match
+absence establish originality, helpfulness or ranking impact. The four-distinct-phrase
 advisory is now low priority (previously medium), so that score correction is not
 a page improvement. Stable rule IDs remain; update title-based ignore filters
 for the [revised labels and interpretation](skills/seo-scan/references/content-eeat.md#filler--phrase-review).

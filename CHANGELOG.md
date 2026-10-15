@@ -16,7 +16,7 @@ All notable changes to Narwhal are documented here. The format follows
   not AI-authorship or helpful-content/ranking verdicts. Examples and limits
   remain visible in compact reports; a low-match pass no longer certifies clean,
   specific writing. Matching logic, helper keys and stable rule IDs remain;
-  four-plus-match priority changes from medium to low, so scores may rise without
+  four-plus-distinct-phrase priority changes from medium to low, so scores may rise without
   any page change. Plans keep edits conditional. Update title-based ignore filters.
 - An offline maintainer review-pack utility inventories reported actionable
   findings with source hashes and separate observation/priority/advice labels.
