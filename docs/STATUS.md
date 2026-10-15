@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Stable report-table cells:** escaped pipes stay inside their cells, including
+  code examples; one optional outer delimiter no longer consumes empty edge
+  cells. Odd/even backslash runs distinguish escaped pipes from separators.
+  Non-table/fenced text and existing inline escaping remain unchanged.
 - **Literal report-link destinations:** inline rendering isolates HTTP(S)
   destinations from emphasis processing while formatting labels and surrounding
   text. Query characters/entities are escaped once and round-trip as data;

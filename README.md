@@ -599,6 +599,12 @@ Markdown HTTP(S) links format their labels without interpreting destination
 characters as Markdown. Underscores and asterisks in a path/query/fragment stay
 part of the URL; code examples and unsupported URL schemes do not become links.
 
+In pipe tables, use `\|` for a literal pipe in a header or cell (also inside
+inline code). Empty edge cells are retained. An odd backslash run escapes the
+pipe and loses only its final escaping backslash; other backslashes stay data.
+Unescaped pipes remain column separators. This does not add general Markdown
+backslash escapes or alter fenced/non-table text.
+
 The limited Markdown renderer preserves root fenced code (three or more matching
 backticks or tildes, up to three leading spaces) as escaped literal text. Code
 comments cannot become report titles, and Markdown inside a fence is not styled
