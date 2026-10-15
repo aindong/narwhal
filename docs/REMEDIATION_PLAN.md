@@ -52,6 +52,14 @@ An explicit `--` separates options from data so a leading dash cannot become an
 option. Replace placeholders and insert original CLI options **before** `--`.
 Instruction text is not shell code, and the planner never executes a template.
 
+For in-memory/Python or parsed-object MCP inputs, no baseline file is created.
+Every diff-producing action first asks the caller to preserve the original report
+JSON, keeping all fields, at a fresh `before.json` or update the diff to its saved
+path. Do this before edits/reruns; never substitute a new scan or overwrite an
+existing file. Markdown surfaces the same prerequisite outside executable code.
+File-backed plans do not get this memory-only instruction. Manual verification-
+only and empty plans do not acquire an unrelated audit/diff workflow.
+
 Known baseline basename collisions select alternate output names: `after.json`
 uses `after-2.json`, and an audit baseline named `page-after.json` uses
 `page-after-2.json` for its local page check. Commands, diff targets and Markdown

@@ -25,6 +25,11 @@ PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
 MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
+MEMORY_BASELINE_INSTRUCTION = (
+    'Save the original input report JSON, keeping all fields, to a fresh before.json '
+    '(or update the diff to its existing saved path) before edits or reruns. '
+    'Do not overwrite files or substitute a new scan. This read-only plan has not saved a baseline.'
+)
 SKIP_DIRS = {
     ".git", ".hg", ".svn", ".next", ".nuxt", ".output", ".cache",
     "node_modules", "vendor", "dist", "build", "coverage", "__pycache__",
@@ -570,7 +575,9 @@ def _verification_outputs(report_source):
 def verification_for(artifact: str, target: str, report_source: str,
                      report_kind: str = "scan") -> list:
     """Human POSIX-shell templates; quote data and stop option interpretation."""
-    before = ("before.json" if report_source.startswith("<") else
+    memory_source = report_source.startswith("<")
+    prerequisites = [MEMORY_BASELINE_INSTRUCTION] if memory_source else []
+    before = ("before.json" if memory_source else
               shlex.quote(report_source))
     page_output, comparison_output = _verification_outputs(report_source)
     if report_kind == 'audit':
@@ -591,7 +598,7 @@ def verification_for(artifact: str, target: str, report_source: str,
         ]
         if artifact in ("json_ld", "product_schema"):
             commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
-        return commands
+        return prerequisites + commands
     if artifact in ("robots_txt", "sitemap", "llms_txt", "server_config"):
         scan_target = shlex.quote(target)
         scan_command = f"narwhal scan --format json -o {comparison_output} -- {scan_target}  # run after deploy"
@@ -601,7 +608,7 @@ def verification_for(artifact: str, target: str, report_source: str,
                 f"narwhal diff -- {before} {comparison_output}"]
     if artifact in ("json_ld", "product_schema"):
         commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
-    return commands
+    return prerequisites + commands
 
 
 def build_plan(report: dict, repo: str, *, report_source="<memory>",
@@ -754,13 +761,16 @@ def render_markdown(plan: dict) -> str:
         'Replace placeholders and add original options before `--`; do not execute '
         'instruction text as commands.', '',
     ]
-    if plan.get('provenance', {}).get('report_kind') == 'audit':
+    if any(MEMORY_BASELINE_INSTRUCTION in action['verification'] for action in plan['actions']):
+        lines += ['> ' + MEMORY_BASELINE_INSTRUCTION, '']
+    if (plan.get('provenance', {}).get('report_kind') == 'audit'
+            and any(action['rule_id'] not in SITEMAP_VERIFICATION for action in plan['actions'])):
         page_output, _ = _verification_outputs(plan['provenance']['report'])
         lines += ['## Audit verification', '',
                   'A local page scan can verify page-level changes only. Keep its '
                   f'`{page_output}` separate; do not diff it against the audit baseline. '
                   'Site-level signals remain pending deployment.', '']
-        steps = verification_for('server_config', plan['target'], plan['provenance']['report'], 'audit')
+        steps = verification_for('server_config', plan['target'], plan['provenance']['report'], 'audit')[-3:]
         lines += [steps[0], '', '```sh', steps[1], steps[2], '```', '']
     for safety, label in (("manual_external", "Manual / external"),
                           ("review_required", "Review required"),

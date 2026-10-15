@@ -30,6 +30,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- In-memory/Python and parsed-object MCP plans explicitly require preserving the
+  original report before verification diffs; read-only planning never saves it.
+  Markdown keeps that prerequisite outside shell blocks. File-backed, manual-only
+  and empty plans do not receive invented save/diff tasks; coverage is unchanged.
 - Planner verification templates avoid known baseline basename collisions for
   both scan and audit workflows, including local page checks. Alternate output
   names stay aligned with diff targets and Markdown, preserving an `after.json`

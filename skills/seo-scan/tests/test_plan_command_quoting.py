@@ -62,8 +62,9 @@ class TestPlanCommandQuoting(unittest.TestCase):
     def test_local_placeholder_and_memory_baseline_remain_explicit(self):
         for kind, output in (('scan', 'after.json'), ('audit', 'page-after.json')):
             commands = plan.verification_for('title', 'https://example.test', '<memory>', kind)
+            self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
             self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
-                              '-o', output, '--', '<local-preview-url>'], shlex.split(commands[0]))
+                              '-o', output, '--', '<local-preview-url>'], shlex.split(commands[1]))
             self.assertEqual('narwhal diff -- before.json after.json', commands[-1])
 
     def test_actual_diff_parser_accepts_leading_dash_filename_after_separator(self):
@@ -88,7 +89,7 @@ class TestPlanCommandQuoting(unittest.TestCase):
              'title': 'No robots.txt found'}]}
         original = copy.deepcopy(report)
         built = mcp_server._plan(report, REPO)
-        command = built['actions'][0]['verification'][0]
+        command = next(step for step in built['actions'][0]['verification'] if step.startswith('narwhal '))
         self.assertEqual(report['url'], shlex.split(command, comments=True)[-1])
         markdown = plan.render_markdown(built)
         self.assertIn('POSIX shell quoting', markdown)

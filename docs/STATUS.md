@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **In-memory verification prerequisite:** diff-producing plans ask callers to
+  preserve the original input report, with all fields, before edits/reruns. The
+  planner remains read-only; Markdown does not turn that instruction into shell
+  code. File-backed and manual-only tasks keep their existing responsibilities.
 - **Baseline-preserving verification names:** scan/audit output templates choose
   distinct names when the input basename collides with `after.json` or local
   `page-after.json`. JSON and Markdown share that choice; filesystem aliases are
