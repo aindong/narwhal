@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Comparison/brief byte budgets:** CLI, Python and MCP callers can select the
+  per-snapshot HTML limit (5MB default, 64KB–20MB bounds) and retry large-page
+  coverage failures without bypassing eligibility checks. One limit covers all
+  pages and paired inputs; default private-host protections remain unchanged.
 - **Optional HTTP transport resilience:** expected `requests` acquisition and
   stream failures produce explicit failed-fetch reports, matching stdlib
   degradation rather than crashing. Interrupted prefixes are not page evidence;

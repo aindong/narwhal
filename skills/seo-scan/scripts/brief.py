@@ -259,10 +259,10 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
 
 
 def _page(url: str, *, timeout=20, allow_private=False, render=False,
-          config=None) -> dict:
+          config=None, max_bytes=5_000_000) -> dict:
     """Scan one URL into the page dict the pure functions consume."""
     rep = scanner.scan(url, timeout=timeout, allow_private=allow_private,
-                       render=render, config=config)
+                       render=render, config=config, max_bytes=max_bytes)
     doc = getattr(rep, "_doc", None)
     if rep.fetched_status != 200 or doc is None:
         raise RuntimeError(f"HTTP {rep.fetched_status}")
@@ -278,9 +278,11 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
 def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None,
         use_gsc: bool = True, days: int = 28, min_impressions: int = 50,
         timeout: int = 20, allow_private: bool = False, render: bool = False,
-        config=None) -> dict:
+        config=None, max_bytes: int = 5_000_000) -> dict:
     """Fetch everything and build the brief. Failed competitor fetches are
-    reported and skipped; a failed own-page fetch is an error."""
+    reported and skipped; a failed own-page fetch is an error. ``max_bytes`` is
+    the per-snapshot HTML limit (64KB–20MB), shared by all pages."""
+    max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     config = config or configlib.Config()
     config, _ = configlib.snapshot_rules(config)
     competitor_urls = list(competitor_urls or [])[:MAX_COMPETITORS]
@@ -289,7 +291,7 @@ def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None
     if your_url:
         try:
             you = _page(your_url, timeout=timeout, allow_private=allow_private,
-                        render=render, config=config)
+                        render=render, config=config, max_bytes=max_bytes)
         except Exception as exc:  # noqa: BLE001
             return {"error": f"could not scan your page {your_url}: {exc}"}
 
@@ -297,7 +299,7 @@ def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None
     for u in competitor_urls:
         try:
             rivals.append(_page(u, timeout=timeout, allow_private=allow_private,
-                                render=render, config=config))
+                                render=render, config=config, max_bytes=max_bytes))
         except Exception as exc:  # noqa: BLE001
             failed.append({"url": u, "error": str(exc)})
 
@@ -506,6 +508,8 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=cfg.default("timeout"))
     ap.add_argument("--render", action="store_true",
                     help="render JS with Playwright if installed")
+    ap.add_argument("--max-bytes", type=int, default=5_000_000, metavar="N",
+                    help="HTML bytes per page/snapshot (64KB–20MB; default 5MB)")
     ap.add_argument("--allow-private", action="store_true")
     args = ap.parse_args(argv)
 
@@ -533,7 +537,7 @@ def main(argv=None) -> int:
     b = run(your_url, competitors, topic=args.topic, use_gsc=not args.no_gsc,
             days=args.days, min_impressions=args.min_impressions,
             timeout=args.timeout, allow_private=args.allow_private,
-            render=args.render, config=cfg)
+            render=args.render, config=cfg, max_bytes=args.max_bytes)
     # Topic mode with an explicit GSC site: fold real adjacent demand in.
     if args.topic and args.gsc_site and not args.no_gsc and not b.get("error"):
         g = run_topic_gsc(args.gsc_site, days=args.days,

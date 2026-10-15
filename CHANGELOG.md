@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Compare and brief CLI, Python and MCP interfaces accept a bounded per-snapshot
+  `max_bytes` option, allowing deliberate retries of large-page coverage failures.
+  The default remains 5MB; 64KB–20MB bounds apply uniformly to all compared pages
+  and paired served/rendered inputs. Incomplete-input and private-host guards
+  remain active; this is not a total network/browser memory budget.
 - Reports lead with high/critical findings rather than an unqualified numeric
   grade. HTML/PDF heroes distinguish urgency from the explicitly labelled score
   band, and Markdown/HTML summaries put findings needing attention first.

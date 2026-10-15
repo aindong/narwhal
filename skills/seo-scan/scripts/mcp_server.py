@@ -146,13 +146,15 @@ def _schema(type: str, fields: dict) -> dict:
     return schema_mod.build(type, {k: str(v) for k, v in (fields or {}).items()})
 
 
-def _compare(your_url: str, competitor_urls: list, render: bool = False) -> dict:
+def _compare(your_url: str, competitor_urls: list, render: bool = False,
+             max_bytes: int = 5_000_000) -> dict:
     """Compare YOUR page against 1–3 competitor pages (local-first gap analysis).
 
     Args:
         your_url: The page you own/optimize.
         competitor_urls: 1–3 competitor page URLs to compare against.
         render: Render JavaScript with Playwright first (for SPAs).
+        max_bytes: HTML bytes retained per page/snapshot (64KB–20MB; default 5MB).
 
     Returns per-page facts (scores, schema types, meta strategy, depth,
     structure, evidence, social packaging), the gaps competitors have that you
@@ -160,13 +162,14 @@ def _compare(your_url: str, competitor_urls: list, render: bool = False) -> dict
     """
     import compare as compare_mod
     urls = [your_url] + list(competitor_urls)[: compare_mod.MAX_COMPETITORS]
-    return compare_mod.run(urls, render=render)
+    max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
+    return compare_mod.run(urls, render=render, max_bytes=max_bytes)
 
 
 def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
-           use_gsc: bool = True) -> dict:
+           use_gsc: bool = True, max_bytes: int = 5_000_000) -> dict:
     """Build a data-driven content brief: your real GSC queries (if credentials
-    are set) + gaps vs the competitor pages that currently win.
+    are set) + gaps vs the supplied competitor/reference pages.
 
     Args:
         your_url: The page you're rewriting (omit when planning a new page).
@@ -175,13 +178,15 @@ def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
         use_gsc: Pull striking-distance queries from Search Console (needs GSC
             credentials in the environment; degrades to a labeled
             structure-only brief without them).
+        max_bytes: HTML bytes retained per page/snapshot (64KB–20MB; default 5MB).
 
     Returns target queries (real GSC data only — never invented), competitor
     gaps, missing subtopics, questions to answer, schema and structure targets.
     """
     import brief as brief_mod
+    max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     return brief_mod.run(your_url or None, list(competitor_urls or []),
-                         topic=topic or None, use_gsc=use_gsc)
+                         topic=topic or None, use_gsc=use_gsc, max_bytes=max_bytes)
 
 
 def _diff(old_json: str, new_json: str) -> dict:
