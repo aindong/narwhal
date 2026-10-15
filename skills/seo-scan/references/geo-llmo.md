@@ -62,7 +62,7 @@ and [Common Crawl's CCBot description](https://commoncrawl.org/ccbot).
 
 The deterministic check evaluates **`/` only**, not every page path. Page JSON
 records `meta.ai_crawler_access` with the checked path, robots-only basis,
-dated roles, per-agent source URLs and matching directives. Training/data-use,
+dated roles, per-agent source URLs and root disallowance results. Training/data-use,
 nonbinding user-fetch and unverified restrictions appear as **non-scoring policy
 notes** in Markdown/HTML (and therefore PDF input), not green endorsements or
 instructions to enable training. Only documented search/retrieval restrictions

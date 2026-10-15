@@ -71,7 +71,7 @@ And yes, it works as a backronym too:
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
 Page reports record `meta.ai_crawler_access`: dated agent roles, primary sources,
-and matching robots.txt directives at **`/` only**. Training/data-use choices,
+and robots.txt root disallowance results at **`/` only**. Training/data-use choices,
 nonbinding user-fetch directives and unverified roles remain visible as
 non-scoring policy notes, not search failures or policy endorsements. Documented
 search/retrieval restrictions retain the high finding, conditional on owner goals.
