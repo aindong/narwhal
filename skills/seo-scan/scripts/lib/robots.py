@@ -7,6 +7,8 @@ Implements the rules that matter for correctness:
 - **Longest-match precedence**: among matching rules, the one with the longest
   pattern applies; on an equal-length tie, ``Allow`` beats ``Disallow``.
 - An empty ``Disallow:`` means "allow everything".
+- URI comparison normalizes unreserved escapes and UTF-8, preserving encoded
+  reserved characters and literal encoded wildcard/end-marker characters.
 
 Used by the GEO auditor (AI-crawler access) and the polite site crawler.
 """
@@ -15,6 +17,31 @@ from __future__ import annotations
 
 import re
 from urllib.parse import urlparse
+
+
+_UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+_HEX = frozenset("0123456789abcdefABCDEF")
+
+
+def _comparison_path(value: str, *, pattern=False) -> str:
+    """Canonicalize comparison octets, not URI structure or repeated escapes."""
+    out, i = [], 0
+    while i < len(value):
+        char = value[i]
+        if (char == "%" and i + 2 < len(value)
+                and value[i + 1] in _HEX and value[i + 2] in _HEX):
+            octet = int(value[i + 1:i + 3], 16)
+            decoded = chr(octet)
+            out.append(decoded if decoded in _UNRESERVED else f"%{octet:02X}")
+            i += 3
+            continue
+        operator = pattern and (char == "*" or (char == "$" and i == len(value) - 1))
+        if ord(char) > 127 or (char in "*$" and not operator):
+            out.extend(f"%{octet:02X}" for octet in char.encode("utf-8"))
+        else:
+            out.append(char)
+        i += 1
+    return "".join(out)
 
 
 class RobotsTxt:
@@ -57,7 +84,7 @@ class RobotsTxt:
     # ---- querying --------------------------------------------------------
     def allowed(self, url_or_path: str, user_agent: str) -> bool:
         """Is ``user_agent`` allowed to fetch ``url_or_path``?"""
-        path = self._path(url_or_path)
+        path = _comparison_path(self._path(url_or_path))
         rules = self._rules_for(user_agent)
         if not rules:
             return True  # no applicable group => allowed
@@ -116,7 +143,8 @@ class RobotsTxt:
 
 
 def _match_len(pattern: str, path: str) -> int:
-    """Return len(pattern) if it matches ``path`` from the start, else -1."""
+    """Match a rule to a canonical target; measure normalized rule specificity."""
+    pattern = _comparison_path(pattern, pattern=True)
     end_anchor = ""
     p = pattern
     if p.endswith("$"):
