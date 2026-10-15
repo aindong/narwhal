@@ -71,7 +71,7 @@ def analyze(base: str, crawled: list, pages_links: dict,
                     depths[nxt] = depths[cur] + 1
                     q.append(nxt)
     deep = sorted(({"url": display[n], "depth": d} for n, d in depths.items()
-                   if d > DEPTH_WARN), key=lambda x: -x["depth"])
+                   if d > DEPTH_WARN), key=lambda x: (-x["depth"], x["url"]))
     unreachable = sorted(display[n] for n in nodes - set(depths))
 
     # --- inbound internal links per crawled page ----------------------------
@@ -81,8 +81,10 @@ def analyze(base: str, crawled: list, pages_links: dict,
             inbound[dst] += 1
     zero_inbound = sorted(display[n] for n, c in inbound.items()
                           if c == 0 and n != base_n)
+    # Break equal ranks before capping, so process/set order cannot change
+    # which tied pages enter the JSON top five or Markdown top three.
     top = sorted(((display[n], c) for n, c in inbound.items() if c),
-                 key=lambda x: -x[1])[:5]
+                 key=lambda x: (-x[1], x[0]))[:5]
 
     # --- orphan candidates: in the sitemap, linked from no crawled page -----
     # Crawled pages are excluded — a crawled page with no inbound links is

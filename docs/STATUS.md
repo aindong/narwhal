@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Repeatable graph rankings:** inbound-link and deep-page lists keep numeric
+  priority, then sort tied ranks by URL before display caps. Cross-process hash
+  seeds no longer change tied most-linked selection for the same fixed sample;
+  graph measurements, scoring and sample-aware coverage are unchanged.
 - **Literal crawl table data:** weakest-page and broken-link tables encode
   dynamic URL/error cells instead of interpreting them as Markdown, including
   GFM tildes; internal whitespace is preserved apart from CR/LF breaks. Table-local
