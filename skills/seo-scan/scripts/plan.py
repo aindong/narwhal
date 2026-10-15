@@ -370,6 +370,8 @@ ARTIFACT_RULES = (
 
 def classify_artifact(finding: dict) -> str:
     rid = finding["rule_id"].lower()
+    if rid.startswith('technical.http.robots.'):
+        return 'server_config'  # header owner, never an HTML robots-meta edit
     title = str(finding.get("title", "")).lower()
     haystack = rid + " " + title
     for artifact, needles in ARTIFACT_RULES:

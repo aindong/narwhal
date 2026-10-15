@@ -108,6 +108,25 @@ def _crawler_policy_notes(meta):
     return result
 
 
+def _http_robots_notes(meta):
+    """Read bounded non-scoring header notes only from the known receipt shape."""
+    receipt = meta.get('http_robots') if isinstance(meta, dict) else None
+    if (not isinstance(receipt, dict) or type(receipt.get('version')) is not int
+            or receipt['version'] != 1 or receipt.get('basis') not in
+            ('response_header_fields', 'browser_reported_fields', 'merged_or_unknown')):
+        return []
+    notes = receipt.get('notes')
+    if not isinstance(notes, list):
+        return []
+    valid = [note for note in notes if isinstance(note, str)]
+    result = ['Only noindex/nofollow and the none alias are interpreted. Preview/date rules, '
+              'crawler support, actual access and live indexing are not verified.']
+    result.extend(note[:600] for note in valid[:20])
+    if len(valid) > 20:
+        result.append(f'{len(valid) - 20} more observations are retained in meta.http_robots.')
+    return result
+
+
 def recorded_scan_scope(meta):
     """Validate recorded execution without inferring coverage from findings."""
     scope = meta.get("scan_scope") if isinstance(meta, dict) else None
@@ -382,6 +401,12 @@ class Report:
                 lines.append(f"- **{note['agent']}** — {note['text']}{source}")
             lines.append("")
 
+        header_notes = _http_robots_notes(self.meta)
+        if header_notes:
+            lines += ['## HTTP robots observations (not scored)', '']
+            lines += ['- ' + note for note in header_notes]
+            lines.append('')
+
         # --- Passing checks ------------------------------------------------
         if buckets["good"]:
             lines.append("## Passing checks")
@@ -506,6 +531,12 @@ class Report:
                         '<p>Matching disallow directives at / are policy observations, not search-score penalties '
                         'or endorsements. This is not a live access or whole-site check.</p>'
                         f'<ul>{"".join(items)}</ul></section>')
+
+        header_notes = _http_robots_notes(self.meta)
+        if header_notes:
+            body.append('<section class="card"><h2>HTTP robots observations (not scored)</h2>'
+                        + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in header_notes)
+                        + '</ul></section>')
 
         # Passing checks
         if buckets["good"]:

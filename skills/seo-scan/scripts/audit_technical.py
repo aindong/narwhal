@@ -14,11 +14,13 @@ try:
     from lib import jsdiff
     from lib import links
     from lib import sitemap as sm
+    from lib import indexing
 except ImportError:  # when imported as a package
     from .lib import htmlx  # type: ignore
     from .lib import jsdiff  # type: ignore
     from .lib import links  # type: ignore
     from .lib import sitemap as sm  # type: ignore
+    from .lib import indexing  # type: ignore
 
 CAT = "technical"
 
@@ -31,6 +33,7 @@ def audit(doc, resp, report, ctx=None) -> None:
     _headings(doc, report)
     _canonical(doc, resp, report)
     _robots_directives(doc, report)
+    _http_robots(resp, report)
     _viewport_lang(doc, report)
     _hreflang(doc, report)
     _images(doc, report)
@@ -168,19 +171,9 @@ def _generic_meta_robots(doc):
     for position, meta in enumerate(doc.meta, 1):
         if (meta.get('name') or '').lower() != 'robots':
             continue
-        for segment in (meta.get('content') or '').lower().split(','):
-            if ':' in segment:
-                # Ignore the parameter name and remainder (which may be a date
-                # or free-form value), without losing preceding standalone names.
-                tokens = segment.split(':', 1)[0].split()[:-1]
-            else:
-                tokens = segment.split()
-            for token in tokens:
-                if token in ('noindex', 'nofollow', 'none'):
-                    observed.setdefault(token, position)
-    rules = set(observed)
-    if 'none' in rules:
-        rules.update(('noindex', 'nofollow'))
+        for token in indexing.restriction_names(meta.get('content') or ''):
+            observed.setdefault(token, position)
+    rules = indexing.expand(observed)
     evidence = '; '.join(f'meta robots #{position}: {token}'
                          for token, position in sorted(observed.items()))
     return rules, evidence
@@ -200,9 +193,35 @@ def _robots_directives(doc, report):
                    evidence=evidence)
     if 'noindex' not in robots:
         report.add(CAT, 'good', 'No generic meta noindex detected',
-                   'Generic meta robots check only; HTTP headers and crawler-specific directives are not evaluated. '
+                   'Generic meta robots observation only; it excludes HTTP headers and crawler-specific meta. '
                    'Absence is not proof of indexability.',
                    rule_id='technical.page.is.indexable')
+
+
+def _http_robots(resp, report):
+    """Score only observed unprefixed restrictions; named scopes are policy notes."""
+    fields = getattr(resp, 'robots_header_fields', None)
+    basis = getattr(resp, 'robots_header_basis', 'merged_or_unknown')
+    if fields is None:
+        value = next((value for key, value in resp.headers.items() if key.lower() == 'x-robots-tag'), '')
+        fields = [value] if value else []
+        basis = 'merged_or_unknown'
+    if not fields:
+        return
+    receipt, witnesses = indexing.http_robots(fields, basis)
+    report.meta['http_robots'] = receipt
+    recommendation = ('Review the hosting/CDN/middleware response-header owner; remove the restriction only if unintended. '
+                      'Changing HTML meta tags alone does not remove this header.')
+    if 'noindex' in receipt['generic']:
+        report.add(CAT, 'critical', 'HTTP X-Robots-Tag declares noindex',
+                   'An unprefixed response-header rule declares noindex (including the none alias). '
+                   'This observes a declaration, not live search inclusion.', recommendation,
+                   evidence=witnesses['noindex'], rule_id='technical.http.robots.noindex')
+    if 'nofollow' in receipt['generic']:
+        report.add(CAT, 'medium', 'HTTP X-Robots-Tag declares nofollow',
+                   'An unprefixed response-header rule declares nofollow (including the none alias). '
+                   'This observes a declaration, not actual crawler behavior.', recommendation,
+                   evidence=witnesses['nofollow'], rule_id='technical.http.robots.nofollow')
 
 
 def _viewport_lang(doc, report):

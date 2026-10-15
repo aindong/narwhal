@@ -73,9 +73,20 @@ And yes, it works as a backronym too:
 The generic page robots-meta check combines all active `name="robots"` tags,
 recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
 mistake directive parameter values or substrings for restrictions. Its passing
-message is scoped to generic meta only: HTTP `X-Robots-Tag` and crawler-specific
-meta are not evaluated here. Absence of a generic meta restriction does not prove
+message is scoped to generic meta only; crawler-specific meta is not evaluated.
+Absence of a generic meta restriction does not prove
 indexability or actual search inclusion.
+
+Final HTML-response `X-Robots-Tag` headers are checked separately for unprefixed
+`noindex`/`nofollow` (including `none`). Named-crawler restrictions are non-scoring
+policy observations in reports and `meta.http_robots`, not universal crawler
+blocks. Raw transports retain duplicate fields; browser/legacy transports record
+their field-boundary limits. Preview/date directives and real indexing are not
+evaluated. Header fixes are manual hosting/CDN/middleware actions, not HTML edits.
+Rendered scans fail explicitly if another main-document request starts after the
+initial navigation: earlier response headers cannot safely describe a replacement
+document. Scan the final destination directly. Normal HTTP redirects and
+same-document History API changes remain supported.
 
 Page reports record `meta.ai_crawler_access`: dated agent roles, primary sources,
 and robots.txt root disallowance results at **`/` only**. Training/data-use choices,

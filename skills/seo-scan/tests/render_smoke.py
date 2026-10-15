@@ -47,11 +47,30 @@ BASELINE_PAGE = ("""<!DOCTYPE html><html><head><title>Paired HTML fixture</title
 
 class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.path == '/http-redirect':
+            self.send_response(302)
+            self.send_header('Location', '/http-robots')
+            self.end_headers()
+            return
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         if self.path == "/spoofed":
             self.send_header("X-Narwhal-Truncated", "true")
+        if self.path == '/http-robots':
+            self.send_header('X-Robots-Tag', 'none')
+            self.send_header('X-Robots-Tag', 'googlebot: nofollow')
+        if self.path == '/js-navigation':
+            self.send_header('X-Robots-Tag', 'none')
         self.end_headers()
+        if self.path == '/js-navigation':
+            self.wfile.write(b'<html><body><script>setTimeout(()=>location.href="/",100)</script></body></html>')
+            return
+        if self.path == '/same-document':
+            self.wfile.write(b'<html><body><script>history.pushState({}, "", "/virtual");</script>History API</body></html>')
+            return
+        if self.path == '/js-reload':
+            self.wfile.write(b'<html><body><script>if(!sessionStorage.reloaded){sessionStorage.reloaded="1";setTimeout(()=>location.reload(),100)}</script>Reload</body></html>')
+            return
         self.wfile.write(BASELINE_PAGE if self.path == "/baseline" else
                          BUDGET_PAGE if self.path == "/budget" else
                          ACTIVATED_PAGE if self.path == "/activated" else PAGE)
@@ -85,6 +104,13 @@ def main() -> int:
         recovered = scan.scan(url + "baseline", render=True, allow_private=True,
                                timeout=30, max_bytes=256_000, only=["technical"],
                                ctx={}, check_images=False)
+        header_scan = scan.scan(url + 'http-robots', render=True, allow_private=True,
+                                timeout=30, only=['technical'], ctx={}, check_images=False)
+        redirected = http.fetch(url + 'http-redirect', render=True, allow_private=True, timeout=30)
+        navigated = scan.scan(url + 'js-navigation', render=True, allow_private=True,
+                              timeout=30, only=['technical'], ctx={}, check_images=False)
+        same_document = http.fetch(url + 'same-document', render=True, allow_private=True, timeout=30)
+        reloaded = http.fetch(url + 'js-reload', render=True, allow_private=True, timeout=30)
     finally:
         server.shutdown()
         server.server_close()
@@ -137,11 +163,35 @@ def main() -> int:
         print('FAIL: larger paired budget did not restore the complete HTML comparison.', file=sys.stderr)
         return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
+    header_rules = {finding.rule_id for finding in header_scan.findings}
+    if (redirected.error or not redirected.final_url.endswith('/http-robots')
+            or redirected.robots_header_fields != ['none', 'googlebot: nofollow']):
+        print('FAIL: ordinary HTTP redirect lost the final response header pairing.', file=sys.stderr)
+        return 1
+    if (not navigated.hard_fail
+            or any(f.rule_id.startswith('technical.http.robots.') for f in navigated.findings)
+            or not any('response headers and DOM cannot be safely paired' in f.detail for f in navigated.findings)):
+        print('FAIL: cross-document JS navigation scored an earlier response header.', file=sys.stderr)
+        return 1
+    if same_document.error or not same_document.final_url.endswith('/virtual'):
+        print('FAIL: same-document History API navigation was treated as a document replacement.', file=sys.stderr)
+        return 1
+    if not reloaded.error or 'response headers and DOM cannot be safely paired' not in reloaded.error:
+        print('FAIL: same-URL document reload escaped response/DOM pairing validation.', file=sys.stderr)
+        return 1
+    if (header_scan.hard_fail or not header_scan.rendered
+            or not {'technical.http.robots.noindex', 'technical.http.robots.nofollow'} <= header_rules
+            or header_scan.meta.get('http_robots', {}).get('basis') != 'browser_reported_fields'
+            or {'agent': 'googlebot', 'directives': ['nofollow']} not in header_scan.meta.get('http_robots', {}).get('scoped', [])):
+        print('FAIL: rendered scan lost the observed generic HTTP robots restrictions or provenance.', file=sys.stderr)
+        return 1
     print(f"OK: rendered DOM captured the JS-injected marker ({MARKER}).")
     print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
     print("OK: rendered UTF-8 byte budget enforced; partial scan flagged without JS-dependence metrics.")
     print("OK: origin cannot forge the internally calculated truncation marker.")
     print('OK: paired byte budget enforced; truncated baseline unverified; complete pair recovers 0% JS-only.')
+    print('OK: rendered HTTP robots declarations retained with browser-reported field provenance.')
+    print('OK: JS document replacement fails explicitly; HTTP redirects and History API remain supported.')
     return 0
 
 

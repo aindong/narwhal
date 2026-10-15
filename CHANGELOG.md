@@ -12,6 +12,14 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Final HTML-response `X-Robots-Tag` restrictions are audited with separate
+  header findings and manual hosting remediation. Repeated raw fields retain
+  scope boundaries; named-crawler policies remain non-scoring notes with
+  additive `meta.http_robots` provenance. Browser/legacy boundary limits,
+  unsupported preview/date rules and unverified actual indexing are explicit.
+  Post-load cross-document browser navigation now fails explicitly instead of
+  pairing an earlier response's headers with a replacement DOM. Ordinary HTTP
+  redirects and same-document History API changes remain supported.
 - Branded Markdown tables have scoped cell/header styling, semantic column
   headers and labelled keyboard-focusable scroll regions. Screen columns retain
   readable minimum widths; print/PDF input uses compact wrapping styles without
@@ -41,7 +49,8 @@ All notable changes to Narwhal are documented here. The format follows
   are no longer hidden by an earlier allowing tag.
   Passing wording now says only that no generic meta noindex was detected, not
   that the page is indexable. Existing rule IDs remain; affected restriction
-  findings/scores are corrected. Headers/crawler-specific meta remain unverified.
+  findings/scores are corrected. This generic-meta observation excludes headers
+  and crawler-specific meta; response headers are handled by the separate check above.
 - Markdown tables honor left/center/right separator markers on both headers
   and body cells, including comparison score columns. Only static alignment
   classes are emitted; unmarked/missing/invalid markers retain default left

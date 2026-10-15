@@ -32,6 +32,19 @@ def _origin_headers(headers):
             if key.lower() != "x-narwhal-truncated"}
 
 
+def _robots_header_fields(headers):
+    """Capture just robots fields through a duplicate-preserving header API."""
+    for name in ('getlist', 'get_all'):
+        getter = getattr(headers, name, None)
+        if callable(getter):
+            values = getter('X-Robots-Tag')
+            if values is None:
+                return []
+            if isinstance(values, (list, tuple)) and all(isinstance(value, str) for value in values):
+                return list(values)
+    return None
+
+
 class _ResponseDecodeError(ValueError):
     """A remote charset is unknown or is not a text encoding."""
 
@@ -60,6 +73,8 @@ class Response:
     rendered: bool = False
     redirects: list = field(default_factory=list)
     error: Optional[str] = None
+    robots_header_fields: Optional[list] = None
+    robots_header_basis: str = 'merged_or_unknown'
 
     @property
     def ok(self) -> bool:
@@ -281,6 +296,7 @@ def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) ->
         encoding = r.encoding or "utf-8"
         text = _decode_html(raw, encoding)
         headers = _origin_headers(r.headers)
+        robots_fields = _robots_header_fields(getattr(getattr(r, 'raw', None), 'headers', None))
         if truncated:
             headers["x-narwhal-truncated"] = "true"
         return Response(
@@ -291,6 +307,8 @@ def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) ->
             text=text,
             elapsed_ms=0,
             redirects=redirects,
+            robots_header_fields=robots_fields,
+            robots_header_basis='response_header_fields' if robots_fields is not None else 'merged_or_unknown',
         )
     except (requests.RequestException, _ResponseDecodeError) as exc:
         # A partial or undecodable body is not usable page evidence.
@@ -313,13 +331,15 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> R
             truncated = len(raw) > max_bytes
             raw = raw[:max_bytes]
             headers = _origin_headers(fh.headers)
+            robots_fields = _robots_header_fields(fh.headers)
             charset = fh.headers.get_content_charset() or "utf-8"
             status = fh.status
             if truncated:
                 headers["x-narwhal-truncated"] = "true"
         return Response(url=url, final_url=current, status=status, headers=headers,
                         text=_decode_html(raw, charset), elapsed_ms=0,
-                        redirects=redirects)
+                        redirects=redirects, robots_header_fields=robots_fields,
+                        robots_header_basis='response_header_fields' if robots_fields is not None else 'merged_or_unknown')
     except urllib.error.HTTPError as exc:
         body = exc.read(max_bytes).decode("utf-8", "replace") if exc.fp else ""
         return Response(
@@ -379,6 +399,15 @@ def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Respo
             try:
                 page = browser.new_page(user_agent=user_agent)
                 page.set_default_timeout(nav_ms)
+                latest_document_request = [None]
+
+                def observe_document_request(request):
+                    # Keep one bounded witness, including navigations still in
+                    # flight. Same-document history changes have no request.
+                    if request.is_navigation_request() and request.frame == page.main_frame:
+                        latest_document_request[0] = request
+
+                page.on('request', observe_document_request)
                 if not allow_private:
                     def guard_request(route):
                         try:
@@ -399,8 +428,18 @@ def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Respo
                 html = page.content()
                 status = resp.status if resp else 0
                 headers = _origin_headers(resp.headers if resp else {})
+                try:
+                    robots_fields = resp.header_values('x-robots-tag') if resp else []
+                    if not isinstance(robots_fields, list) or not all(isinstance(v, str) for v in robots_fields):
+                        robots_fields = None
+                except Exception:  # optional metadata must not discard an otherwise valid DOM
+                    robots_fields = None
                 final_url = page.url
                 assert_public_host(final_url, allow_private=allow_private)
+                if resp and latest_document_request[0] != resp.request:
+                    raise ValueError(
+                        'Rendered page started another document navigation after the initial load; '
+                        'response headers and DOM cannot be safely paired. Scan the final destination directly.')
             finally:
                 browser.close()
         return Response(
@@ -411,6 +450,8 @@ def _try_render(url, timeout, user_agent, allow_private=False) -> Optional[Respo
             text=html,
             elapsed_ms=int((time.time() - start) * 1000),
             rendered=True,
+            robots_header_fields=robots_fields,
+            robots_header_basis='browser_reported_fields' if robots_fields is not None else 'merged_or_unknown',
         )
     except PWTimeout as exc:
         return Response(url, url, 0, {}, "", 0, rendered=True,
