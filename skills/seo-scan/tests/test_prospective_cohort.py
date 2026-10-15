@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 import json
 from pathlib import Path
 import unittest
+from unittest import mock
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -54,11 +55,20 @@ class TestProspectiveCohort(unittest.TestCase):
         self.assertFalse(self.plan['capture_defaults']['check_images'])
 
     def test_reserved_urls_are_not_reused_from_the_historical_report_inventory(self):
-        historical = json.loads((ROOT / 'docs/tuning/review-corpus.json').read_text())
-        historical_urls = {json.loads((ROOT / 'docs/tuning' / case['report']).read_text())['url']
+        historical = json.loads((ROOT / 'docs/tuning/review-corpus.json').read_text(encoding='utf-8'))
+        historical_urls = {json.loads((ROOT / 'docs/tuning' / case['report']).read_text(encoding='utf-8'))['url']
                            for case in historical['cases']}
         reserved = {case['url'] for case in self.plan['cases'] if case['split'] == 'reserved'}
         self.assertFalse(reserved & historical_urls)
+
+    def test_inventory_reads_are_explicit_utf8_not_the_machine_locale(self):
+        original = Path.read_text
+        def read_utf8(path, *args, **kwargs):
+            if path.suffix == '.json':
+                self.assertEqual('utf-8', kwargs.get('encoding'))
+            return original(path, *args, **kwargs)
+        with mock.patch.object(Path, 'read_text', read_utf8):
+            self.test_reserved_urls_are_not_reused_from_the_historical_report_inventory()
 
     def test_preacquisition_amendment_preserves_explicit_limits_and_unknowns(self):
         self.assertEqual('prospective-inputs-2026-10-v2', self.plan['cohort_id'])
