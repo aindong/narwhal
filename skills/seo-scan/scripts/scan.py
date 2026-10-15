@@ -167,7 +167,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     # diff — content that only exists post-JS is invisible to non-rendering
     # crawlers (incl. most AI fetchers). Without Playwright there is no rendered
     # DOM, so nothing is measured and nothing is said (never guess).
-    if resp.rendered and not resp.error:
+    if resp.headers.get("x-narwhal-truncated") == "true":
+        ctx.pop("jsdep", None)  # a cached value is not evidence for this partial snapshot
+    if (resp.rendered and not resp.error
+            and resp.headers.get("x-narwhal-truncated") != "true"):
         raw_resp = http.fetch(url, allow_private=allow_private, timeout=timeout)
         if raw_resp.ok:
             dep = jsdiff.analyze(raw_resp.text, resp.text, resp.final_url or url)

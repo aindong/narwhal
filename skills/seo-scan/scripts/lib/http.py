@@ -10,7 +10,7 @@ from __future__ import annotations
 import ipaddress
 import socket
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Optional
 from urllib.parse import urlparse, urlunparse
 from urllib.parse import urljoin
@@ -207,6 +207,13 @@ def fetch(
         rendered = _try_render(url, timeout=timeout, user_agent=user_agent,
                                allow_private=allow_private)
         if rendered is not None:
+            # Bound the retained UTF-8 DOM snapshot, not Chromium's in-memory
+            # DOM or network traffic. Drop an incomplete final code point.
+            encoded = rendered.text.encode("utf-8", "replace")
+            if len(encoded) > max_bytes:
+                headers = {**rendered.headers, "x-narwhal-truncated": "true"}
+                rendered = replace(rendered, headers=headers,
+                                   text=encoded[:max(0, max_bytes)].decode("utf-8", "ignore"))
             return rendered
 
     start = time.time()

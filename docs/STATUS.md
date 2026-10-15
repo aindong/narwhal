@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Rendered HTML byte budgets:** serialized DOM snapshots obey the primary UTF-8
+  byte limit and record partial coverage; incomplete DOMs are not JS-dependence
+  measurements. This bounds retained analysis input, not browser memory or network
+  traffic. Complete snapshots and existing fetch/browser safety checks are unchanged.
 - **Comparison/brief HTML coverage:** explicitly truncated page reports are
   excluded from gap/score benchmarks. Partial targets error, partial rivals are
   skipped with reasons, and topic briefs require a usable page. Standalone scans
