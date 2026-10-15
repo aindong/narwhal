@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -554,17 +555,50 @@ def safety_for(artifact: str) -> tuple:
     return "safely_automatable", False
 
 
-def verification_for(artifact: str, target: str, report_source: str) -> list:
+def _verification_outputs(report_source):
+    """Avoid known baseline basename collisions without inspecting the filesystem.
+
+    Treat case and either path separator conservatively for portable templates;
+    callers must still choose fresh paths and check symlink/hardlink aliases.
+    """
+    baseline = report_source.replace('\\', '/').rsplit('/', 1)[-1].casefold()
+    page = 'page-after-2.json' if baseline == 'page-after.json' else 'page-after.json'
+    comparison = 'after-2.json' if baseline == 'after.json' else 'after.json'
+    return page, comparison
+
+
+def verification_for(artifact: str, target: str, report_source: str,
+                     report_kind: str = "scan") -> list:
+    """Human POSIX-shell templates; quote data and stop option interpretation."""
     before = ("before.json" if report_source.startswith("<") else
-              json.dumps(report_source))
+              shlex.quote(report_source))
+    page_output, comparison_output = _verification_outputs(report_source)
+    if report_kind == 'audit':
+        commands = []
+        if artifact not in ("robots_txt", "sitemap", "llms_txt", "server_config"):
+            commands += [
+                f"narwhal scan --allow-private --format json -o {page_output} -- '<local-preview-url>'",
+                'The local scan verifies page-level changes only; do not compare '
+                f'{page_output} with the audit baseline or treat it as deployed site verification.',
+            ]
+        commands += [
+            'Restore the original audit configuration, rendering, access settings and '
+            'crawl/link/sitemap limits before running this template; the report does '
+            'not record the complete invocation. A matching report kind alone does '
+            'not establish comparable coverage.',
+            f'narwhal audit --format json -o {comparison_output} -- {shlex.quote(target)}  # run after deploy',
+            f'narwhal diff -- {before} {comparison_output}',
+        ]
+        if artifact in ("json_ld", "product_schema"):
+            commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
+        return commands
     if artifact in ("robots_txt", "sitemap", "llms_txt", "server_config"):
-        scan_target = json.dumps(target)
-        scan_command = f"narwhal scan {scan_target} --format json -o after.json  # run after deploy"
+        scan_target = shlex.quote(target)
+        scan_command = f"narwhal scan --format json -o {comparison_output} -- {scan_target}  # run after deploy"
     else:
-        scan_command = ('narwhal scan "<local-preview-url>" --allow-private '
-                        '--format json -o after.json')
+        scan_command = f"narwhal scan --allow-private --format json -o {comparison_output} -- '<local-preview-url>'"
     commands = [scan_command,
-                f"narwhal diff {before} after.json"]
+                f"narwhal diff -- {before} {comparison_output}"]
     if artifact in ("json_ld", "product_schema"):
         commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
     return commands
@@ -617,7 +651,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                                 else CHANGE_GUIDANCE[artifact]),
             "likely_files": owners,
             "verification": (list(verification[1]) if verification else
-                             verification_for(artifact, normalized["target"], report_source)),
+                             verification_for(artifact, normalized["target"], report_source,
+                                              normalized["kind"])),
             "evidence": finding.get("evidence") or finding.get("detail") or "",
             "source_recommendation": finding.get("recommendation", ""),
             "confidence": finding.get("confidence", 1.0),
@@ -715,7 +750,18 @@ def render_markdown(plan: dict) -> str:
         f"**Framework:** {f['name']} ({round(100 * f['confidence'])}% confidence)  ·  "
         f"**Actions:** {len(plan['actions'])}  ·  **Mapping coverage:** {round(100 * c['mapping_ratio'])}%",
         "", "_Read-only plan: inspect proposed owners and values before applying edits._", "",
+        'Command templates use POSIX shell quoting; adapt for PowerShell/cmd. '
+        'Replace placeholders and add original options before `--`; do not execute '
+        'instruction text as commands.', '',
     ]
+    if plan.get('provenance', {}).get('report_kind') == 'audit':
+        page_output, _ = _verification_outputs(plan['provenance']['report'])
+        lines += ['## Audit verification', '',
+                  'A local page scan can verify page-level changes only. Keep its '
+                  f'`{page_output}` separate; do not diff it against the audit baseline. '
+                  'Site-level signals remain pending deployment.', '']
+        steps = verification_for('server_config', plan['target'], plan['provenance']['report'], 'audit')
+        lines += [steps[0], '', '```sh', steps[1], steps[2], '```', '']
     for safety, label in (("manual_external", "Manual / external"),
                           ("review_required", "Review required"),
                           ("deploy_verification", "Apply, then verify after deploy"),

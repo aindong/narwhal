@@ -21,6 +21,16 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Baseline-preserving verification names:** scan/audit output templates choose
+  distinct names when the input basename collides with `after.json` or local
+  `page-after.json`. JSON and Markdown share that choice; filesystem aliases are
+  not inferred, and fresh output paths remain the caller's responsibility.
+- **Kind-matched planner verification:** audit plans separate local page checks
+  from the final deployed audit/diff. Templates require the original settings and
+  limits rather than inventing a replay; matching kinds alone does not establish
+  comparable coverage. Scan plans and manual sitemap gap tasks are unchanged.
+  Verification templates quote paths/URLs as POSIX-shell literals and separate
+  data from options; they are not universal shell syntax or automatically run.
 - **HTTP compression evidence:** raw sitemap fetches acquire bounded wire bytes
   for gzip/deflate and require complete compression streams before decoding.
   Short wire lengths, missing/corrupt trailers and response decode overflow

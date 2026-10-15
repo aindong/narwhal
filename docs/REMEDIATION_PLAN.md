@@ -32,6 +32,41 @@ Safety values mean:
 `groups` identify findings best fixed in one shared template. `conflicts` stop
 automation where canonical/index/crawler intent must be decided first.
 
+## Verification templates
+
+`verification` contains ordered human instructions and command templates, not
+an executable script or an exact replay of the original invocation. For an audit
+baseline, source actions may first suggest a local page scan to `page-after.json`.
+That scan verifies page-level changes only: it must not be diffed against an audit
+overall score or treated as deployed site verification. The final template runs
+`narwhal audit` after deployment, then diffs that audit against the audit baseline.
+Scan baselines retain the page-scan/diff workflow. Sitemap measurement-gap actions
+remain manual verification tasks rather than source edits.
+Markdown audit plans expose the shared audit rerun and settings reminder before
+the action list; per-action JSON retains the complete ordered instructions.
+
+Command strings use **POSIX shell** quoting, not universal terminal syntax;
+adapt them for PowerShell/cmd. URLs and report paths are quoted as literal
+arguments, including dollar signs, command-substitution syntax and apostrophes.
+An explicit `--` separates options from data so a leading dash cannot become an
+option. Replace placeholders and insert original CLI options **before** `--`.
+Instruction text is not shell code, and the planner never executes a template.
+
+Known baseline basename collisions select alternate output names: `after.json`
+uses `after-2.json`, and an audit baseline named `page-after.json` uses
+`page-after-2.json` for its local page check. Commands, diff targets and Markdown
+use those same selections. Basename comparison is conservatively case-insensitive
+and recognizes either path separator without filesystem reads. This is not
+filesystem identity verification: choose fresh regular output paths and check
+symlink/hardlink aliases before running a template. Do not overwrite the baseline.
+
+Restore the original configuration, rendering, access settings and crawl/link/
+sitemap limits before running an audit template. Reports do not record the full
+invocation, so the planner does not invent those options or grant private-host
+access to deployed targets. Matching report kinds avoids a known mismatch; it
+does not certify equal execution coverage, settings, samples or environments.
+The diff's existing incomparability checks remain in force.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.
