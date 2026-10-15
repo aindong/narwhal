@@ -180,9 +180,11 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
                 statuses[u] = (status, err)
 
     broken = []
-    successful = 0
+    successful, request_failures = 0, 0
     for u in targets:
         status, err = statuses[u]
+        if status == 0:
+            request_failures += 1
         if type(status) is int and 200 <= status < 300 and not err:
             successful += 1
         if links.is_broken(status):
@@ -198,8 +200,9 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
             "skipped_over_cap": max(0, len(order) - len(targets)),
             "broken": broken,
             "coverage": {"basis": "head_responses", "scope": "checked_targets",
-                         "successful_2xx": successful, "broken": len(broken),
-                         "unverified": len(targets) - successful - len(broken)}}
+                         "successful_2xx": successful, "broken": len(broken) - request_failures,
+                         "unverified": len(targets) - successful - len(broken) + request_failures,
+                         "request_failures": request_failures}}
 
 
 def _link_coverage(info):
@@ -208,9 +211,12 @@ def _link_coverage(info):
             or receipt.get('scope') != 'checked_targets'):
         return None
     values = [receipt.get(key) for key in ('successful_2xx', 'broken', 'unverified')]
+    request_failures = receipt.get('request_failures')
     if (any(type(value) is not int or value < 0 for value in values)
+            or type(request_failures) is not int or not 0 <= request_failures <= receipt['unverified']
             or type(info.get('checked')) is not int or sum(values) != info['checked']
-            or receipt['broken'] != len(info.get('broken', []))):
+            or request_failures != sum(entry.get('status') == 0 for entry in info.get('broken', []))
+            or receipt['broken'] + request_failures != len(info.get('broken', []))):
         return None
     return receipt
 
@@ -233,9 +239,12 @@ def link_summary(info):
     if info is None:
         return 'not run'
     receipt = _link_coverage(info)
-    summary = f"{len(info.get('broken', []))} observed / {info.get('checked', 0)} checked"
     if receipt is None:
-        return summary + ' (response coverage unrecorded)'
+        return (f"{len(info.get('broken', []))} reported / {info.get('checked', 0)} checked"
+                ' (response coverage unrecorded)')
+    summary = f"{receipt['broken']} observed / {info['checked']} checked"
+    if receipt['request_failures']:
+        return summary + f" ({receipt['unverified']} unverified; {receipt['request_failures']} no HTTP response)"
     return summary + (f" ({receipt['unverified']} unverified)" if receipt['unverified'] else '')
 
 
@@ -420,7 +429,7 @@ def render_markdown(result: dict) -> str:
     link_info = result.get("links")
     if link_info is not None:
         broken = link_info["broken"]
-        header = (f"## Broken links ({len(broken)} of {link_info['checked']} checked"
+        header = (f"## Broken or unreachable targets ({len(broken)} of {link_info['checked']} checked"
                   + (f", {link_info['skipped_over_cap']} over cap" if link_info["skipped_over_cap"] else "")
                   + ")")
         lines.append(header)
@@ -433,6 +442,9 @@ def render_markdown(result: dict) -> str:
                       f"{receipt['broken']} broken response(s); "
                       f"{receipt['unverified']} response(s) leave reachability unverified. "
                       'Counts cover HTTP-checked targets only, not all site links.', '']
+            if receipt['request_failures']:
+                lines += [f"{receipt['request_failures']} request(s) produced no HTTP response "
+                          '(included in unverified, not broken HTTP responses).', '']
         if not broken:
             if not link_info['checked']:
                 lines.append('No HTTP link targets were checked; reachability unverified.')
@@ -441,7 +453,7 @@ def render_markdown(result: dict) -> str:
                              + (' Malformed hrefs were omitted, not verified.' if omission else ''))
             lines.append("")
         else:
-            lines += ["| Status | Type | Broken URL | Linked from |",
+            lines += ["| Status / request error | Type | Target URL | Linked from |",
                       "|:--:|:--|:--|:--|"]
             for b in broken:
                 status = b["status"] or (b["error"] or "unreachable")

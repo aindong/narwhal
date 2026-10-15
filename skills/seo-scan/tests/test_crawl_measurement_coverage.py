@@ -52,8 +52,22 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
     def test_mixed_status_counts_preserve_actual_broken_links(self):
         data, _ = checked([(200, None), (204, None), (403, None), (404, None), (0, 'timeout')])
         self.assertEqual({'basis': 'head_responses', 'scope': 'checked_targets',
-                          'successful_2xx': 2, 'unverified': 1, 'broken': 2}, data['coverage'])
+                          'successful_2xx': 2, 'unverified': 2, 'broken': 1,
+                          'request_failures': 1}, data['coverage'])
         self.assertEqual([404, 0], [entry['status'] for entry in data['broken']])
+
+    def test_no_http_response_is_unverified_without_losing_unreachable_entries(self):
+        data = result()
+        data['links'], _ = checked([(0, 'timeout')])
+        self.assertEqual(1, len(data['links']['broken']))
+        self.assertEqual(0, data['links']['coverage']['broken'])
+        self.assertEqual(1, data['links']['coverage']['unverified'])
+        self.assertEqual(1, data['links']['coverage']['request_failures'])
+        self.assertIn('0 observed / 1 checked (1 unverified; 1 no HTTP response)',
+                      crawl.link_summary(data['links']))
+        text = crawl.render_markdown(data)
+        self.assertIn('produced no HTTP response', text)
+        self.assertIn('timeout', text)
 
     def test_positive_checks_are_scoped_and_caps_remain_visible(self):
         data = result()
@@ -70,7 +84,8 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
         info, _ = checked([(200, None)])
         valid = info.get('coverage', {})
         for receipt in (None, {**valid, 'basis': 'future'}, {**valid, 'successful_2xx': True},
-                        {**valid, 'unverified': 1}, {**valid, 'broken': 1}):
+                        {**valid, 'unverified': 1}, {**valid, 'broken': 1},
+                        {**valid, 'request_failures': True}, {**valid, 'request_failures': 1}):
             with self.subTest(receipt=receipt):
                 data['links'] = {**info, 'coverage': receipt}
                 text = crawl.render_markdown(data)

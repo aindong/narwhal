@@ -23,6 +23,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 ## Unreleased improvements
 - **Crawl measurement evidence:** link outcomes count successful 2xx, broken and
   unverified responses separately; zero checks cannot produce a green pass.
+  No-response request failures remain unverified, while existing unreachable
+  entries remain available separately from observed broken HTTP responses.
   Duplicate results count actual eligible fingerprints (excluding known failed/
   partial pages); fewer than two means insufficient data, not no duplicates.
   Unknown legacy coverage remains unrecorded. Audit headlines distinguish not
