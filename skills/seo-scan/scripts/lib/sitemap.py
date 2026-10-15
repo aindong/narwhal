@@ -9,6 +9,7 @@ The orchestration (fetching, recursion, 404 sampling) lives in
 from __future__ import annotations
 
 import gzip
+import io
 import re
 import zlib
 from urllib.parse import urlparse
@@ -22,14 +23,43 @@ _LASTMOD_FMT = re.compile(
 )
 
 
-def decode(raw: bytes) -> str:
-    """Decode sitemap bytes to text, transparently gunzipping ``.gz`` payloads."""
-    if raw[:2] == b"\x1f\x8b":  # gzip magic number
+# Uncompressed per-file ceiling from https://www.sitemaps.org/protocol.html.
+MAX_DECODED_BYTES = 52_428_800
+
+
+def decode_checked(raw: bytes, *, max_bytes=None):
+    """Return (text, reason), withholding text on decode failure or byte limit.
+
+    Sized reads bound retained gzip output before UTF-8 conversion. This is a
+    per-file decoded-byte budget, not a total memory, CPU or transport budget.
+    Concatenated members share the budget; no decoded prefix is returned.
+    """
+    max_bytes = MAX_DECODED_BYTES if max_bytes is None else max_bytes
+    if type(max_bytes) is not int or max_bytes <= 0:
+        raise ValueError('Decoded sitemap byte budget must be a positive integer.')
+    if raw[:2] == b"\x1f\x8b":
+        decoded = bytearray()
         try:
-            raw = gzip.decompress(raw)
+            with io.BytesIO(raw) as source, gzip.GzipFile(fileobj=source, mode='rb') as stream:
+                while True:
+                    chunk = stream.read(min(65_536, max_bytes + 1 - len(decoded)))
+                    if not chunk:
+                        break
+                    decoded.extend(chunk)
+                    if len(decoded) > max_bytes:
+                        return '', 'decoded_byte_limit'
         except (OSError, EOFError, zlib.error):
-            pass
-    return raw.decode("utf-8", "replace")
+            return '', 'gzip_decode_failed'
+    else:
+        if len(raw) > max_bytes:
+            return '', 'decoded_byte_limit'
+        decoded = raw
+    return decoded.decode('utf-8', 'replace'), None
+
+
+def decode(raw: bytes) -> str:
+    """Decode within the per-file budget; failed/unverified inputs yield no text."""
+    return decode_checked(raw)[0]
 
 
 def kind_of(text: str) -> str:
@@ -67,6 +97,8 @@ MAX_XML_ELEMENTS = 500_000
 MAX_XML_ENTRIES = 50_000
 _SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 XML_PARSE_REASONS = {
+    'decoded_byte_limit': 'decoded sitemap byte limit reached',
+    'gzip_decode_failed': 'gzip decoding could not be completed or integrity checked',
     'unparseable_xml': 'content could not be parsed as complete XML',
     'unrecognized_root': 'root/namespace is outside supported XML sitemap formats',
     'unsupported_dtd': 'DTD/entity declarations are outside the supported XML scope',
@@ -184,7 +216,11 @@ def parse_coverage_note(value, fetched=None):
     if not coverage['unverified_files']:
         return None
     reasons = '; '.join(f'{XML_PARSE_REASONS[key]} ({n})' for key, n in coverage['reasons'].items())
+    limit = coverage.get('decoded_byte_limit')
+    budget = (f'Decoded-byte budget: {limit:,} bytes per file. '
+              if 'decoded_byte_limit' in coverage['reasons'] and type(limit) is int and limit > 0 else '')
     return (f"XML extraction unverified for {coverage['unverified_files']} fetched file(s): {reasons}. "
+            + budget +
             'URL totals cover verified files only, not all sitemap content. '
             'Unsupported formats are not necessarily invalid; verify them separately.')
 
