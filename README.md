@@ -75,6 +75,14 @@ and label its HTML source in reports: served HTML or JavaScript-rendered DOM.
 Mixed modes are labeled per page; legacy missing flags stay unknown. This is
 snapshot provenance, not proof that every dynamic element finished loading.
 
+For large HTML pages, both commands accept `--max-bytes N` (default 5,000,000;
+clamped to 64,000–20,000,000), as do their Python `run(..., max_bytes=N)` APIs
+and MCP `compare_pages` / `content_brief` tools. One selected limit applies to
+each page's primary HTML and, when rendering, its served-HTML baseline. Retry
+known incomplete coverage with a sufficient budget; inputs that still exceed
+the cap remain excluded rather than silently compared. This is a per-snapshot
+retained HTML limit, not a total network, browser-memory or site budget.
+
 `compare` and `brief` exclude scans explicitly marked as truncated. Partial
 targets return errors (CLI exit 2); partial competitors are skipped with reasons.
 Topic mode needs at least one usable page. Standalone `scan` still emits partial

@@ -175,19 +175,21 @@ def gap_analysis(you: dict, rivals: list) -> dict:
 
 
 def run(urls: list, *, timeout=20, allow_private=False, render=False,
-        config=None) -> dict:
+        config=None, max_bytes=5_000_000) -> dict:
     """Scan every URL; the first URL must supply the user's page.
 
     Failed competitors are reported and skipped. A failed target or fewer than
     two successful scans is an error, never a comparison between rivals.
+    ``max_bytes`` is the per-snapshot HTML limit (64KB–20MB), shared by all pages.
     """
+    max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     config = config or configlib.Config()
     config, _ = configlib.snapshot_rules(config)
     results, failed, target = [], [], None
     for index, u in enumerate(urls):
         try:
             rep = scanner.scan(u, timeout=timeout, allow_private=allow_private,
-                               render=render, config=config)
+                               render=render, config=config, max_bytes=max_bytes)
         except Exception as exc:  # noqa: BLE001 — unresolvable host, SSRF guard…
             # One dead competitor URL must not sink the whole comparison.
             failed.append({"url": u, "status": 0, "error": str(exc)})
@@ -330,6 +332,8 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=cfg.default("timeout"))
     ap.add_argument("--render", action="store_true",
                     help="render JS with Playwright if installed")
+    ap.add_argument("--max-bytes", type=int, default=5_000_000, metavar="N",
+                    help="HTML bytes per page/snapshot (64KB–20MB; default 5MB)")
     ap.add_argument("--allow-private", action="store_true")
     args = ap.parse_args(argv)
 
@@ -348,7 +352,7 @@ def main(argv=None) -> int:
               f"(got {len(args.urls) - 1}).", file=sys.stderr)
 
     r = run(urls, timeout=args.timeout, allow_private=args.allow_private,
-            render=args.render, config=cfg)
+            render=args.render, config=cfg, max_bytes=args.max_bytes)
     out = render_json(r) if args.format == "json" else render_markdown(r)
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:
