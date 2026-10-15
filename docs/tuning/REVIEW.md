@@ -197,7 +197,10 @@ healthy/known-fault labels assigned from reputation.
 Freeze the selection/settings in git **before** scanning this cohort. Retain
 original failures, gates, partial snapshots and redirect aliases; do not replace
 unhelpful results with easier URLs. Keep attempts and private raw captures
-separate from this public plan. A candidate count is not a count of distinct,
+separate from this public plan. Local acquisition uses the git-ignored
+`.narwhal-review/` directory with requested owner-only permissions; it must not
+be force-added to git. An ignore rule is not a security or redaction boundary.
+A candidate count is not a count of distinct,
 measurable or validated pages. Reserved finding rows must not be inspected for
 tuning in this cycle; acquisition status/coverage checks are permitted. If those
 reports are used to tune the tool, record that exposure and do not call them
