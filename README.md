@@ -79,6 +79,13 @@ This does not test live bot/WAF access, other paths, indexing or citations. See 
 [GEO reference](skills/seo-scan/references/geo-llmo.md#ai-crawler-policies--distinguish-purpose-before-recommending-access)
 for the role distinctions and source scope; no policy service is called by scans.
 
+Non-passing page findings include **Learn more** links in Markdown/HTML (and PDF
+input), plus an additive `reference_url` in JSON. Known rule IDs select guide
+sections; unmapped rules in built-in categories receive general category context.
+Unknown categories and passing checks have no reference link. These are static
+project-guide links, not proof that a heuristic finding is correct; scans do not
+fetch them, and scores/rule identities are unchanged.
+
 `compare` and `brief` retain each page's actual `rendered` boolean in JSON facts
 and label its HTML source in reports: served HTML or JavaScript-rendered DOM.
 Mixed modes are labeled per page; legacy missing flags stay unknown. This is

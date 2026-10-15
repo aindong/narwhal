@@ -263,7 +263,8 @@
       "evidence": null,
       "rule_id": "technical.images.missing.alt.text",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#images"
     },
     {
       "category": "technical",
@@ -274,7 +275,8 @@
       "evidence": null,
       "rule_id": "technical.no.compression.header",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#http-hygiene"
     },
     {
       "category": "technical",
@@ -307,7 +309,8 @@
       "evidence": null,
       "rule_id": "content.thin.content",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#content-depth-not-word-count-for-its-own-sake"
     },
     {
       "category": "content",
@@ -318,7 +321,8 @@
       "evidence": null,
       "rule_id": "content.content.is.fairly.hard.to.read",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#readability"
     },
     {
       "category": "content",
@@ -351,7 +355,8 @@
       "evidence": null,
       "rule_id": "content.no.visible.author.byline",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#experience--expertise"
     },
     {
       "category": "content",
@@ -362,7 +367,8 @@
       "evidence": null,
       "rule_id": "content.no.visible.date.signal",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#freshness"
     },
     {
       "category": "content",
@@ -373,7 +379,8 @@
       "evidence": null,
       "rule_id": "content.incomplete.open.graph.tags",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata"
     },
     {
       "category": "content",
@@ -384,7 +391,8 @@
       "evidence": null,
       "rule_id": "content.no.twitter.x.card.type",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata"
     },
     {
       "category": "schema",
@@ -395,7 +403,8 @@
       "evidence": null,
       "rule_id": "schema.article.missing.recommended.properties",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md"
     },
     {
       "category": "schema",
@@ -417,7 +426,8 @@
       "evidence": null,
       "rule_id": "schema.no.organization.website.entity",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md"
     },
     {
       "category": "geo",
@@ -461,7 +471,8 @@
       "evidence": null,
       "rule_id": "geo.no.direct.answer.up.top",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#4-direct-answer-intro-inverted-pyramid"
     },
     {
       "category": "geo",
@@ -472,7 +483,8 @@
       "evidence": null,
       "rule_id": "geo.no.llms.txt",
       "scope": "page",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#llmstxt--low-cost-low-certainty"
     },
     {
       "category": "geo",

@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Non-passing page findings link to reference-guide sections in Markdown/HTML
+  and PDF input, with additive `reference_url` JSON metadata. Unmapped rules use
+  general category context; unknown categories and passing checks get no link.
+  Destinations are static, never fetched by scans, and do not validate findings
+  or change scores, severity, identities, suppression or diff classifications.
 - Compare and brief CLI, Python and MCP interfaces accept a bounded per-snapshot
   `max_bytes` option, allowing deliberate retries of large-page coverage failures.
   The default remains 5MB; 64KB–20MB bounds apply uniformly to all compared pages

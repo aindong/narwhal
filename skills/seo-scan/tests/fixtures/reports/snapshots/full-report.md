@@ -31,30 +31,33 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 
 - **Observed:** ~146 words of main text (measured on visible text).
 - **Fix:** Expand to cover the topic fully; thin pages struggle to rank and are rarely cited by AI answers.
+- [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#content-depth-not-word-count-for-its-own-sake)
 
 ### 2. 🟡 Images missing alt text  
 *Technical SEO · medium*
 
 - **Observed:** 1 of 1 <img> tags have no alt attribute.
 - **Fix:** Add descriptive alt text (empty alt="" only for decorative images).
+- [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#images)
 
 ### 3. 🟡 No visible author/byline  
 *Content & E-E-A-T · medium*
 
 - **Observed:** No author meta tag or byline detected near the top.
 - **Fix:** Add a named author with credentials — a core E-E-A-T (experience/expertise) signal.
+- [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#experience--expertise)
 
 ## Quick wins
 
-- 🔵 **No compression header** — Enable gzip or Brotli compression to cut transfer size.
-- 🔵 **Content is fairly hard to read** — Consider shorter sentences/simpler words unless the audience is specialist.
-- 🔵 **No visible date signal** — Expose a publish or last-updated date to signal freshness.
-- 🔵 **Incomplete Open Graph tags** — Add og:title, og:description and og:image for rich social and chat-app link previews.
-- 🔵 **No Twitter/X card type** — Add twitter:card (e.g. summary_large_image) for X previews.
-- 🔵 **Article missing recommended properties** — Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article
-- 🔵 **No Organization/WebSite entity** — Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity.
-- 🔵 **No direct answer up top** — Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.
-- 🔵 **No llms.txt** — Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty.
+- 🔵 **No compression header** — Enable gzip or Brotli compression to cut transfer size. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#http-hygiene)
+- 🔵 **Content is fairly hard to read** — Consider shorter sentences/simpler words unless the audience is specialist. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#readability)
+- 🔵 **No visible date signal** — Expose a publish or last-updated date to signal freshness. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#freshness)
+- 🔵 **Incomplete Open Graph tags** — Add og:title, og:description and og:image for rich social and chat-app link previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata)
+- 🔵 **No Twitter/X card type** — Add twitter:card (e.g. summary_large_image) for X previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata)
+- 🔵 **Article missing recommended properties** — Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md)
+- 🔵 **No Organization/WebSite entity** — Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md)
+- 🔵 **No direct answer up top** — Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#4-direct-answer-intro-inverted-pyramid)
+- 🔵 **No llms.txt** — Optionally publish /llms.txt to guide AI crawlers to your key content. Evidence for ranking impact is still thin — treat as low-cost, low-certainty. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/geo-llmo.md#llmstxt--low-cost-low-certainty)
 
 ## Passing checks
 
