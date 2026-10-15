@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Site-graph rankings break equal inbound-link and click-depth ranks by URL
+  before display caps. Identical sampled graphs no longer choose different
+  tied top-five JSON / top-three Markdown entries across Python process seeds.
+  Counts, depths, scoring, URL identities and orphan coverage are unchanged.
 - Crawl weakest-page and broken-link tables retain literal URL/error text:
   pipes stay in one cell and Markdown-like data cannot create table links or
   emphasis. Generated tables use a versioned, table-local punctuation-escape
