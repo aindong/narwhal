@@ -12,6 +12,14 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- RDFa module initialization happens when HTML helpers load, before parallel
+  crawl workers begin. This prevents cold-start partially-initialized-module
+  failures observed on bare Python 3.9 while keeping per-document extraction
+  lazy and cached, without optional parser imports or scoring changes.
+- Robots wildcard matching finds ordered literal pieces instead of enumerating
+  regex wildcard partitions. Short repeated-star rules no longer stall candidate
+  filtering; prefix/end-anchor behavior, encoded literals and rule precedence
+  are preserved. This is not a whole-crawl CPU or request-budget guarantee.
 - An optional initial UTF-8 BOM no longer hides the first robots.txt user-agent
   group or Sitemap declaration. Crawl leaf filtering, GEO root-policy checks
   and sitemap discovery now read the same directives as their unmarked forms;
