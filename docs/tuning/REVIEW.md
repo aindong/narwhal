@@ -212,6 +212,17 @@ This registration does **not** complete the steps below. In particular, neither
 successful capture nor a passing scan assigns independent truth labels or
 enumerates the tool's missed issues.
 
+The first v2 acquisition run, using frozen source revision
+`016d43c54f3ad7978320bf1bbf7e15c4667fc6a1`, recorded all 50 candidate attempts:
+46 local bundles and pending review packets (44 primary HTTP 200, two HTTP 403),
+plus four unverified-robots-preflight skips. No case was substituted, no execution
+deadline was reached, and no finding was adjudicated. HTTP 200 does not certify
+a real/unblocked page or complete coverage; redirected aliases and site intent
+still need review. Raw inputs, preflight receipts, acquisition journal and
+executor copy remain private under `.narwhal-review/prospective-inputs-2026-10-v2/`;
+they are not published with this registration. Reserved findings/scores were not
+inspected for tuning. The historical 15 report-only cases remain unchanged.
+
 Before publishing accuracy claims:
 
 1. Pre-register a diverse 50–100-page corpus and a held-out subset, including

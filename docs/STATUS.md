@@ -22,6 +22,13 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Prospective acquisition cohort:** 50 candidate URLs are registered before
+  scans, split into 30 development and 20 reserved cases across 25 declared site
+  families. Conservative preflight/delay/deadline rules preserve failures rather
+  than replace them. The first private run retained 46 pending-review bundles
+  (44 HTTP 200, two HTTP 403) and four unverified-preflight skips. These are
+  acquisition counts, not 44 healthy pages or measured accuracy. Raw captures
+  stay in ignored owner-only local storage; independent adjudication remains open.
 - **Opt-in review acquisition:** a maintainer-only capture command preserves the
   same scan's decoded primary/paired source, available response fields and context
   in a new local bundle, without an evidence re-fetch or ordinary-scan retention.
