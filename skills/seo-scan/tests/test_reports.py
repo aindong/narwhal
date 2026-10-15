@@ -58,7 +58,7 @@ class TestHtmlRenderer(unittest.TestCase):
         md = ("# Title\n\n## Section\n\n| A | B |\n|:--|:--|\n| 1 | `x` |\n\n"
               "- one\n- two\n\n> a note with **bold**\n\n---\n")
         out = report_lib.md_to_html(md)
-        for tag in ("<h1>", "<h2>", "<table>", "<th>", "<td>", "<ul>",
+        for tag in ("<h1>", "<h2>", "<table ", "<th ", "<td>", "<ul>",
                     "<li>", "<blockquote>", "<strong>", "<code>", "<hr>"):
             self.assertIn(tag, out)
 

@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Branded Markdown tables have scoped cell/header styling, semantic column
+  headers and labelled keyboard-focusable scroll regions. Screen columns retain
+  readable minimum widths; print/PDF input uses compact wrapping styles without
+  scroll clipping or focus rings. Native scan score-table styling is unchanged.
+  A Chromium regression now runs in CI for desktop/mobile/keyboard/print behavior.
 - Non-passing page findings link to reference-guide sections in Markdown/HTML
   and PDF input, with additive `reference_url` JSON metadata. Unmapped rules use
   general category context; unknown categories and passing checks get no link.

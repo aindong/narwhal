@@ -129,7 +129,7 @@ class TestCodeFences(unittest.TestCase):
         html = report.md_to_html(md)
         self.assertIn('</ul>\n<pre>', html)
         self.assertIn('<h2>After</h2>', html)
-        self.assertIn('<table>', html)
+        self.assertIn('<table class="markdown">', html)
         self.assertIn('<blockquote><strong>note</strong></blockquote>', html)
 
     def test_real_render_cli_preserves_title_code_and_pdf_input(self):

@@ -666,6 +666,11 @@ ul.clean li:last-child{border-bottom:0}
 table{width:100%;border-collapse:collapse;font-size:14px}
 table.areas th,table.areas td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--border)}
 table.areas th:first-child,table.areas td:first-child{text-align:left}
+.table-scroll{max-width:100%;overflow-x:auto;margin:14px 0 24px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.table-scroll:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
+table.markdown th,table.markdown td{min-width:8rem;padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+table.markdown th{background:#f0f1f3;font-weight:600}
+table.markdown tbody tr:last-child td{border-bottom:0}
 .score-cell{white-space:nowrap}
 .score-cell span{margin-left:8px;font-weight:600}
 .bar{display:inline-block;width:70px;height:8px;background:#eef0f2;border-radius:4px;overflow:hidden;vertical-align:middle}
@@ -692,7 +697,7 @@ pre code{display:block;padding:0;background:transparent;border-radius:0;word-bre
 .m-lab{font-size:12px;color:var(--muted)}
 .foot{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 0}
 .foot a{color:var(--brand);text-decoration:none}
-@media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}pre{white-space:pre-wrap;overflow:visible}pre code{overflow-wrap:break-word}}
+@media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}pre{white-space:pre-wrap;overflow:visible}pre code{overflow-wrap:break-word}.table-scroll{overflow:visible;border:0;border-radius:0}.table-scroll:focus-visible{outline:0}table.markdown{table-layout:fixed;font-size:11px}table.markdown th,table.markdown td{min-width:0;padding:6px 8px}}
 """
 
 
@@ -848,8 +853,8 @@ def md_to_html(md: str) -> str:
                 and "-" in lines[i + 1]):
             close_list(list_stack)
             headers = _table_cells(line)
-            out.append('<table><thead><tr>'
-                       + "".join(f"<th>{_inline_md(h)}</th>" for h in headers)
+            out.append('<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable report table"><table class="markdown"><thead><tr>'
+                       + "".join(f'<th scope="col">{_inline_md(h)}</th>' for h in headers)
                        + "</tr></thead><tbody>")
             i += 2
             while i < n and lines[i].strip().startswith("|"):
@@ -857,7 +862,7 @@ def md_to_html(md: str) -> str:
                 out.append("<tr>" + "".join(f"<td>{_inline_md(c)}</td>" for c in cells)
                            + "</tr>")
                 i += 1
-            out.append("</tbody></table>")
+            out.append("</tbody></table></div>")
             continue
 
         if not stripped:

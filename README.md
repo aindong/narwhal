@@ -605,6 +605,12 @@ pipe and loses only its final escaping backslash; other backslashes stay data.
 Unescaped pipes remain column separators. This does not add general Markdown
 backslash escapes or alter fenced/non-table text.
 
+Branded Markdown tables have padded cells, aligned column headers and row guides.
+Wide tables scroll within their own keyboard-focusable region on screen instead
+of squeezing columns or widening the page. Print/PDF input uses compact wrapping
+columns rather than a clipped scroll area; native scan score tables keep their
+existing presentation. Very large tables may still need manual print review.
+
 The limited Markdown renderer preserves root fenced code (three or more matching
 backticks or tildes, up to three leading spaces) as escaped literal text. Code
 comments cannot become report titles, and Markdown inside a fence is not styled
