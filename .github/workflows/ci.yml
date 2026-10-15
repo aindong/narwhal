@@ -106,3 +106,5 @@ jobs:
         run: python skills/seo-scan/tests/report_headline_smoke.py
       - name: Literal attribution-cue browser regression
         run: python skills/seo-scan/tests/attribution_cue_smoke.py
+      - name: Native score-table mobile browser regression
+        run: python skills/seo-scan/tests/native_score_table_smoke.py

@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Mobile score-table containment:** native page HTML score breakdowns use a
+  labelled keyboard-focusable scroll region, readable area labels and named
+  severity headers instead of widening narrow phones/spilling outside cards.
+  Print/PDF removes scroll clipping/focus outlines. Scores, counts, JSON and
+  Markdown stay unchanged; browser CI covers narrow/desktop/keyboard/print cases.
 - **Bounded attribution candidates:** scan and comparison share nonempty author
   metadata, author-link and short leading byline-like witnesses independent of
   main-text extraction. Bare prose words/blank metadata no longer pass; source,

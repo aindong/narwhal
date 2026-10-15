@@ -710,8 +710,12 @@ Other subreport sections are outside this table-only fix.
 Branded Markdown tables have padded cells, aligned column headers and row guides.
 Wide tables scroll within their own keyboard-focusable region on screen instead
 of squeezing columns or widening the page. Print/PDF input uses compact wrapping
-columns rather than a clipped scroll area; native scan score tables keep their
-existing presentation. Very large tables may still need manual print review.
+columns rather than a clipped scroll area. Native scan score breakdowns have a
+separate keyboard-focusable horizontal scroll region, readable area labels and
+accessible severity headers; narrow phones no longer widen the page or spill
+the table outside its card. Print/PDF removes the scroll clipping and focus
+outline. This is presentation only: scores, counts, JSON and Markdown stay the
+same. Very large tables may still need manual print review.
 
 Table separator markers set column alignment on both headers and body cells:
 `:--` (or unmarked `--`) is left, `:--:` is centered, and `--:` is right.
