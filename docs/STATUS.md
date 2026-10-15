@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Review-pack foundation:** an offline maintainer utility binds reported
+  findings to local snapshots and tracks observation, priority and advice review
+  separately. The historical 15-case corpus remains pending/report-only, without
+  invented accuracy, recall or independent-review claims. The 50–100-page held-out
+  validation milestone still requires new evidence and human adjudication.
 - **Terminal error identity:** stdlib HTML/text fetches carry their guarded
   terminal URL and observed redirect hops into HTTP-error responses. Failed-page
   reports and root llms receipts no longer substitute the starting URL; origin

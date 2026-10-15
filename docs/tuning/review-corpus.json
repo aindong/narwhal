@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "Historical Round 2 report review — not ground truth",
+  "cases": [
+    {"id": "allbirds-home", "report": "2026-07-round-2/after/allbirds-home.json"},
+    {"id": "allbirds-dead-url", "report": "2026-07-round-2/after/allbirds-product.json"},
+    {"id": "apple-locales", "report": "2026-07-round-2/after/apple.json"},
+    {"id": "hacker-news-hub", "report": "2026-07-round-2/after/hn.json"},
+    {"id": "jvns-article", "report": "2026-07-round-2/after/jvns-article.json"},
+    {"id": "jvns-home", "report": "2026-07-round-2/after/jvns-home.json"},
+    {"id": "lemonde-fr", "report": "2026-07-round-2/after/lemonde.json"},
+    {"id": "python-docs-article", "report": "2026-07-round-2/after/pydocs-article.json"},
+    {"id": "python-docs-hub", "report": "2026-07-round-2/after/pydocs-hub.json"},
+    {"id": "recipe", "report": "2026-07-round-2/after/recipe.json"},
+    {"id": "stripe-home", "report": "2026-07-round-2/after/stripe.json"},
+    {"id": "theverge-home", "report": "2026-07-round-2/after/theverge-home.json"},
+    {"id": "vercel-home", "report": "2026-07-round-2/after/vercel.json"},
+    {"id": "wikipedia-article", "report": "2026-07-round-2/after/wikipedia.json"},
+    {"id": "opensky-noscript", "report": "2026-07-round-2/after/openskyelabs.json"}
+  ]
+}

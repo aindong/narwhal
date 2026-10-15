@@ -814,6 +814,12 @@ their reasoning scored, and the best behaviors encoded back into their prompts a
 site's deliberate AI-crawler opt-outs). Full methodology and raw data:
 [docs/tuning](docs/tuning/README.md).
 
+The offline maintainer [review-pack workflow](docs/tuning/REVIEW.md) separates
+observation, priority and advice review against local snapshot versions. Its
+counts describe annotation coverage, **not scanner accuracy**: historical
+reports without frozen page evidence stay explicitly report-only, and accuracy
+and recall remain unmeasured. Independent held-out validation is still needed.
+
 ## Reference guides
 
 Deep-dive reasoning behind each check lives in
