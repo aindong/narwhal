@@ -157,7 +157,7 @@ def render_markdown(g: dict, *, sitemap_total: int = 0) -> list:
             lines.append("- **Orphan candidates:** none — every checked sitemap "
                          "URL is linked from the crawled sample. 🟢")
     else:
-        lines.append("- **Orphan check skipped** — no sitemap was found.")
+        lines.append("- **Orphan check skipped** — no verified sitemap URL sample was available.")
 
     lines += ["", f"_Structure is computed from the {n}-page crawl sample"
               + (f" against {sitemap_total} discovered sitemap URLs"

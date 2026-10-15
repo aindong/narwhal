@@ -24,6 +24,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import hreflang, http, htmlx, images, jsdiff, links, simhash, sitemap as sm  # noqa: E402
+from lib.sitemap_discovery import COMMON_PATHS, Discovery  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
@@ -40,7 +41,7 @@ AUDITORS = {
     "geo": audit_geo.audit,
 }
 
-SITEMAP_CANDIDATES = ("/sitemap.xml", "/sitemap_index.xml", "/sitemap-index.xml")
+SITEMAP_CANDIDATES = COMMON_PATHS
 
 
 def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
@@ -63,12 +64,17 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
     robots = ctx.get("robots_txt") or ""
     rejected_references = {}
     sitemap_urls = sm.robots_sitemaps(robots, diagnostics=rejected_references)
+    declared = set(sitemap_urls)
+    discovery = Discovery('context_candidates')
     for cand in list(sitemap_urls) + [urljoin(root + "/", p.lstrip("/")) for p in SITEMAP_CANDIDATES]:
-        body = http.fetch_text(cand, allow_private=allow_private, timeout=timeout)
-        if body and ("<urlset" in body or "<sitemapindex" in body):
+        parsed = discovery.read(cand, allow_private=allow_private, timeout=timeout, declared=cand in declared)
+        if parsed:
             ctx["sitemap_found"] = True
             ctx["sitemap_url"] = cand
             break
+        if discovery.limits:
+            break
+    ctx['sitemap_discovery'] = discovery.receipt()
     if rejected_references:
         ctx['sitemap_references'] = sm.reference_diagnostics(rejected_references)
     return ctx

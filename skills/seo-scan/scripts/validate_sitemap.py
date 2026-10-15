@@ -24,8 +24,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import http, links, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
+from lib.sitemap_discovery import COMMON_PATHS, Discovery  # noqa: E402
 
-COMMON = ("/sitemap.xml", "/sitemap_index.xml", "/sitemap-index.xml")
+COMMON = COMMON_PATHS
 
 
 def _looks_like_sitemap(url: str) -> bool:
@@ -33,19 +34,23 @@ def _looks_like_sitemap(url: str) -> bool:
     return low.endswith((".xml", ".xml.gz")) or "sitemap" in low
 
 
-def discover(base: str, *, allow_private, timeout, diagnostics=None) -> list:
+def discover(base: str, *, allow_private, timeout, diagnostics=None, coverage=None) -> list:
     root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
     robots = http.fetch_text(urljoin(root + "/", "robots.txt"),
                              allow_private=allow_private, timeout=timeout) or ""
     found = sm.robots_sitemaps(robots, diagnostics=diagnostics)
     if found:
         return found
+    discovery = Discovery('validator_candidates')
     for cand in COMMON:
         u = urljoin(root + "/", cand.lstrip("/"))
-        body = http.fetch_text(u, allow_private=allow_private, timeout=timeout)
-        if body and ("<urlset" in body or "<sitemapindex" in body):
+        if discovery.read(u, allow_private=allow_private, timeout=timeout):
+            if coverage is not None:
+                coverage.update(discovery.receipt())
             return [u]
-    return []
+    if coverage is not None:
+        coverage.update(discovery.receipt())
+    return discovery.uncertain_urls[:1]  # candidate only; validator must verify its body
 
 
 def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
@@ -54,8 +59,10 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
     http.assert_public_host(start, allow_private=allow_private)
     host = urlparse(start).netloc
     source_diagnostics = {}
+    discovery_coverage = {}
     seeds = [start] if _looks_like_sitemap(start) else discover(
-        start, allow_private=allow_private, timeout=timeout, diagnostics=source_diagnostics)
+        start, allow_private=allow_private, timeout=timeout, diagnostics=source_diagnostics,
+        coverage=discovery_coverage)
 
     result = {
         "start": start, "seeds": seeds, "sitemaps_fetched": 0, "sitemaps_attempted": 0, "indexes": 0,
@@ -66,6 +73,8 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
                            "verified_files": 0, "unverified_files": 0, "reasons": {},
                            "decoded_byte_limit": sm.MAX_DECODED_BYTES},
     }
+    if discovery_coverage:
+        result['sitemap_discovery'] = discovery_coverage
     if source_diagnostics:
         result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
     if not seeds:
@@ -154,6 +163,9 @@ def render_markdown(r: dict) -> str:
     note = sm.reference_note(r.get('sitemap_references'))
     if note:
         lines += ['> ' + note, '']
+    discovery_note = sm.discovery_note(r.get('sitemap_discovery'))
+    if discovery_note:
+        lines += ['> ' + discovery_note, '']
     if not r["seeds"]:
         lines += ["**No sitemap found.** Publish an XML sitemap and reference it "
                   "from robots.txt.", ""]
@@ -196,7 +208,7 @@ def render_markdown(r: dict) -> str:
     if r["errors"]:
         lines += ["## Notes", ""] + [f"- {e}" for e in r["errors"]] + [""]
     if (coverage and coverage['verified_files'] and not coverage['unverified_files']
-            and r['total_urls'] and not r['errors'] and not note and not fetch_incomplete
+            and r['total_urls'] and not r['errors'] and not note and not fetch_incomplete and not discovery_note
             and all(_sample_succeeded(entry) for entry in r['sample'])
             and not r["broken_sample"] and not r["problems"] and not r["invalid_lastmod"]):
         lines.append("Sitemap looks healthy for the checks performed. 🟢")

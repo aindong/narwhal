@@ -197,7 +197,8 @@ class TestCLIURLRejections(unittest.TestCase):
                 text.assert_not_called(); binary.assert_not_called()
 
     def test_explicit_local_sitemap_and_bare_host_normalization_are_supported(self):
-        with mock.patch.object(http, 'fetch_text', return_value=None):
+        with mock.patch.object(http, 'fetch_text', return_value=None), \
+                mock.patch.object(http, 'fetch_bytes', return_value=(None, 'HTTP 404')):
             result = validate_sitemap.analyze('127.0.0.1', allow_private=True)
         self.assertEqual('https://127.0.0.1/', result['start'])
         self.assertIn('No sitemap found', result['errors'][0])  # attempted discovery, not blocked input

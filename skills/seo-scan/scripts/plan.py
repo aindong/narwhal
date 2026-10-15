@@ -123,6 +123,18 @@ def normalize_report(data: dict) -> dict:
         finding["rule_id"] = _legacy_rule_id(finding)
         finding.setdefault("scope", "page")
         findings.append(finding)
+    page_meta = page.get('meta')
+    discovery_receipts = [page_meta.get('sitemap_discovery') if isinstance(page_meta, dict) else None]
+    if kind == 'audit':
+        discovery_receipts.append(data.get('crawl', {}).get('sitemap_discovery'))
+    for receipt in discovery_receipts:
+        detail = sitemaplib.discovery_note(receipt)
+        if detail:
+            recorded = sitemaplib.recorded_discovery(receipt)
+            findings.append({'category': 'technical', 'severity': 'low', 'scope': 'site',
+                             'rule_id': 'technical.sitemap.discovery.unverified',
+                             'title': 'Sitemap discovery needs manual verification', 'detail': detail,
+                             'occurrences': max(1, recorded['unverified_files']) if recorded else 1})
     if kind == "audit":
         seen = {f["rule_id"]: f for f in findings}
         for raw in data.get("crawl", {}).get("recurring", []):
@@ -491,6 +503,11 @@ CHANGE_GUIDANCE = {
 
 
 SITEMAP_VERIFICATION = {
+    'technical.sitemap.discovery.unverified': (
+        'Verify declared/common sitemap candidates, supported XML format and discovery limits manually. '
+        'Do not publish or rewrite a sitemap solely because discovery was unverified.',
+        ('Review the recorded candidate scope and original endpoint/fetch evidence.',
+         'Recheck bounded sitemap discovery on the deployed site; preserve host and request-budget guards.')),
     'technical.sitemap.extraction.unverified': (
         'Verify the fetched format and XML extraction coverage manually. '
         'Do not rewrite a valid unsupported format merely to clear this note.',

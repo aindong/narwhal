@@ -13,6 +13,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Optional
 
 from .guides import reference_url
+from . import sitemap as sitemaplib
 
 REPORT_SCHEMA_VERSION = "2.0"
 
@@ -38,6 +39,7 @@ TRUNCATED_HTML_ERROR = (
 UNVERIFIED_JS_COMPARISON_ERROR = (
     "JS-dependence is unverified; complete paired HTML is required for page-score comparisons."
 )
+UNVERIFIED_SITEMAP_DISCOVERY_ERROR = 'Sitemap availability was not verified from a supported XML root; technical-score comparison is unverified.'
 _JS_COMPARISON_PROBLEMS = {
     "rendered_html_truncated": "rendered HTML was truncated",
     "served_html_truncated": "served HTML was truncated",
@@ -68,6 +70,20 @@ def recorded_response_truncated(meta):
     coverage = meta.get("coverage")
     return meta.get("response_truncated") is True or (
         isinstance(coverage, dict) and coverage.get("response_truncated") is True)
+
+
+def recorded_sitemap_discovery_problem(meta, *, for_score=False):
+    """Keep site-discovery gaps visible without inferring absent legacy receipts."""
+    value = meta.get('sitemap_discovery') if isinstance(meta, dict) else None
+    note = sitemaplib.discovery_note(value)
+    if for_score:
+        scope = recorded_scan_scope(meta)
+        if scope is not None and 'technical' not in scope[0]:
+            return None
+        receipt = sitemaplib.recorded_discovery(value)
+        if receipt and receipt['verified_files']:
+            return None  # availability of at least one supported root was measured
+    return note
 
 
 def _crawler_policy_notes(meta):
@@ -208,14 +224,16 @@ class Report:
 
     def _scope_note(self) -> str:
         scope = self._scope_info()
+        discovery = recorded_sitemap_discovery_problem(self.meta)
+        discovery_suffix = ' ' + discovery if discovery else ''
         if scope is None:
             if self.hard_fail:
-                return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded."
-            return "Auditor selection was not recorded; do not infer overall page health from this score."
+                return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded." + discovery_suffix
+            return "Auditor selection was not recorded; do not infer overall page health from this score." + discovery_suffix
         requested, completed = scope
         labels = lambda names: "; ".join(CATEGORY_LABELS[name] for name in names)
         if not completed:
-            return f"No auditor groups completed. Requested: {labels(requested)}. The zero score is a fail-safe, not measured page health."
+            return f"No auditor groups completed. Requested: {labels(requested)}. The zero score is a fail-safe, not measured page health." + discovery_suffix
         note = f"Checked auditor groups: {labels(completed)}."
         pending = [name for name in requested if name not in completed]
         skipped = [name for name in CATEGORY_LABELS if name not in requested]
@@ -242,7 +260,7 @@ class Report:
             elif settings.get("rendered") is False:
                 note += (" Rendering was requested but no rendered DOM was measured; findings use served HTML."
                          if settings.get("render_requested") is True else " Findings use served HTML.")
-        return note
+        return note + discovery_suffix
 
     def _report_title(self, title):
         if title != "SEO & GEO Audit":

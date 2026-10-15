@@ -311,8 +311,15 @@ def _robots_txt(ctx, report):
 
 
 def _sitemap(ctx, report):
-    if ctx.get("sitemap_found"):
+    value = ctx.get('sitemap_discovery')
+    receipt = sm.recorded_discovery(value)
+    if value is not None:
+        report.meta['sitemap_discovery'] = receipt or {'basis': 'unrecognized'}
+    found = ctx.get('sitemap_found') if value is None else bool(receipt and receipt['verified_files'])
+    if found:
         report.ok(CAT, "XML sitemap reachable", ctx.get("sitemap_url", ""))
+    elif sm.discovery_note(value):
+        return  # coverage note, not proof of absence or a source penalty
     else:
         report.add(CAT, "medium", "No XML sitemap found",
                    "No sitemap.xml at the common locations or in robots.txt.",
