@@ -280,7 +280,7 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         doc, resp, rep = self._scan_page(html)
         audit_geo.audit(doc, resp, rep, {})
         sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("Few question-based headings"), "low")
+        self.assertEqual(sev.get("Few configured question-heading cues"), "low")
 
     def test_month_tokens_are_not_dominant_topics(self):
         # Archive pages full of dates reported "dec (78), jan (74)" as topics.
@@ -292,13 +292,13 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         self.assertNotIn("jan", names)
         self.assertIn("networking", names)
 
-    def test_geo_question_headings_medium_on_article(self):
+    def test_geo_question_heading_cues_remain_low_on_article(self):
         html = ('<meta property="og:type" content="article">'
                 "<h2>Overview</h2><h2>Details</h2><h2>Setup</h2><h2>Usage</h2><h2>Notes</h2>")
         doc, resp, rep = self._scan_page(html)
         audit_geo.audit(doc, resp, rep, {})
         sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("Few question-based headings"), "medium")
+        self.assertEqual(sev.get("Few configured question-heading cues"), "low")
 
 class TestRound2Tuning(unittest.TestCase):
     """Regression tests for the 2026-07 Round 2 tuning sweep fixes."""

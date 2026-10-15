@@ -92,8 +92,8 @@ The numbers behind individual checks.
 | `meta_desc_max` | 165 | above → "meta description truncated" |
 | `thin_content` | 300 | below → "thin content" |
 | `short_content` | 600 | thin…this → "on the short side" |
-| `passage_min` | 40 | GEO citable-passage lower bound (words) |
-| `passage_max` | 120 | GEO citable-passage upper bound (words) |
+| `passage_min` | 40 | GEO synthetic sentence-group lower bound (ASCII-word matches; not an engine requirement) |
+| `passage_max` | 120 | GEO synthetic sentence-group upper bound (ASCII-word matches; not a citability measurement) |
 
 ```toml
 [thresholds]

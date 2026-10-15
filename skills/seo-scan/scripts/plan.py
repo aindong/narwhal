@@ -534,6 +534,24 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
     'Phrase matches do not determine authorship, originality, helpfulness or ranking impact.')
 
 
+EDITORIAL_REVIEW_GUIDANCE = {
+    **PHRASE_REVIEW_GUIDANCE,
+    'geo.few.question.based.headings':
+        'Review heading clarity for the intended audience and language. Keep useful headings; '
+        'question phrasing is optional, not a required rewrite or measured citation benefit.',
+    'geo.few.self.contained.citable.passages':
+        'Review readability and completeness in context. Keep useful text; do not pad or '
+        'split it solely to fit the configured word range. Synthetic group counts do not measure citability.',
+    'geo.no.statistics.or.citations':
+        'Review factual claims and actual references in context. Cue absence does not prove '
+        'missing evidence. Keep useful text and do not invent statistics or citations to satisfy this check.',
+    'geo.no.direct.answer.up.top':
+        'Review whether the opening serves the intended audience and language. Keep useful text; '
+        'add a direct answer only when appropriate. English cue absence does not prove a missing answer '
+        'or measure citation impact.',
+}
+
+
 SITEMAP_VERIFICATION = {
     'technical.sitemap.discovery.unverified': (
         'Verify declared/common sitemap candidates, supported XML format and discovery limits manually. '
@@ -691,7 +709,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                                 'Correct the recorded sitemap URL/lastmod problems or failing sampled HTTP targets '
                                 'in the actual sitemap owner after verifying intended behavior.'
                                 if finding['rule_id'] == 'technical.sitemap.validation.issues'
-                                else PHRASE_REVIEW_GUIDANCE.get(finding['rule_id'], CHANGE_GUIDANCE[artifact])),
+                                else EDITORIAL_REVIEW_GUIDANCE.get(finding['rule_id'], CHANGE_GUIDANCE[artifact])),
             "likely_files": owners,
             "verification": (list(verification[1]) if verification else
                              verification_for(artifact, normalized["target"], report_source,

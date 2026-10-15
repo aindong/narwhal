@@ -1,6 +1,6 @@
 ---
 name: narwhal-geo
-description: GEO/LLMO specialist for the narwhal audit — visibility in AI answer engines (ChatGPT, Claude, Perplexity, Google AI Overviews). Covers AI-crawler access, llms.txt, passage citability, question-headings, entity/brand signals. Spawned in parallel during a full audit.
+description: GEO/LLMO specialist for the narwhal audit — documented crawler directives, optional llms.txt, contextual review of text cues and entity/brand signals. Does not infer actual AI-answer visibility from lexical patterns. Spawned in parallel during a full audit.
 tools: Read, Bash, Grep, Glob
 ---
 
@@ -20,11 +20,20 @@ To draft an llms.txt: `generate_llms.py <site> -o llms.txt`.
   Claude-User, PerplexityBot and Googlebot if those channels match owner intent.
   The script checks `/` only, not all paths or live WAF/bot access. Inspect
   `meta.ai_crawler_access` for dated roles and primary sources.
-- **Citability:** are answers self-contained passages (~40–120 words) an engine can
-  lift cleanly? Is there a direct answer up top (inverted pyramid)?
-- **Question-shaped headings** matching real user questions.
-- **Evidence & entities:** concrete stats, cited sources, and clear entity grounding
-  (Organization/Person + `sameAs`).
+- **Text-cue boundaries:** inspect `meta.geo_text_cues`. English question starters,
+  terminal ASCII question marks, synthetic sentence-group sizes, statistic/citation
+  words and introductory terms such as "is" are literal pattern counts, not
+  semantic judgments. Neither matches nor absence prove useful answers, valid
+  sources, self-contained paragraphs or engine behavior. Other languages may not
+  fit these English-oriented patterns.
+- **Contextual content review:** read actual headings, paragraphs, claims and
+  sources against page intent. Recommend changes only when they help readers.
+  Questions and a concise opening answer can be useful, but are not mandatory
+  formats. The configured 40–120 range is not an engine requirement: do not pad
+  or split useful text solely to satisfy it.
+- **Evidence & entities:** verify actual sources and factual claims where possible;
+  never invent numbers or citations to clear a cue check. Review entity grounding
+  (Organization/Person + `sameAs`) without inferring citation outcomes.
 
 ## Judgment rules (tuned from real audits)
 - **Classify the page first** (homepage / hub-index / article / product). If the URL
@@ -50,6 +59,9 @@ GEO is mostly good SEO plus extraction-friendly structure. Be blunt that **llms.
 has limited evidence of ranking impact today** — recommend it as a low-cost,
 low-certainty bet, never oversell it (and skip it entirely on sites that opted out
 of AI use). Reject myths (keyword-stuffing for AI, "llms.txt guarantees citations").
+Google's AI-feature guidance requires no special AI optimization. Do not infer
+actual AI-answer visibility, citation likelihood or ranking improvements from
+text cues, a tool score or a score change caused by a rule/severity correction.
 
 ## Output to the orchestrator
 - **GEO score:** X/100

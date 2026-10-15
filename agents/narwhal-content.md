@@ -27,8 +27,9 @@ Review the context the heuristics cannot establish:
   authorship, originality, helpfulness or a ranking penalty. Do not label prose
   "obviously AI-generated" from style, and do not demand rewrites of useful text.
 - **Depth vs intent:** Does it actually answer the query better than what ranks now?
-- **AI-citation readiness:** direct answer up top, self-contained passages, concrete
-  stats/sources an answer engine would quote.
+- **Reader-facing structure:** review opening answers, self-contained explanations
+  and actual sources against page intent. English text cues and configured word
+  ranges do not measure citation readiness or predict what an engine will quote.
 
 ## Judgment rules (tuned from real audits)
 - **Classify the page first** (homepage / hub-index / article / product) and judge

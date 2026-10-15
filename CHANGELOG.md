@@ -12,6 +12,14 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- GEO question-heading, sentence-group size, statistic/citation and introductory
+  term checks report literal cue counts and limitations, not semantic judgments
+  or measured citation outcomes. Their editorial advisories are low priority,
+  including on articles; new count receipts and compact-report caveats preserve
+  uncertainty. Programmatic numeric bounds use JSON-safe receipts without
+  rounding their comparisons. Plans keep edits conditional. Algorithms, thresholds and rule IDs
+  remain; priority corrections can raise scores without page changes. Review
+  title-based ignore filters for the new labels.
 - Common-phrase matches are contextual, low-priority editorial review prompts,
   not AI-authorship or helpful-content/ranking verdicts. Examples and limits
   remain visible in compact reports; a low-match pass no longer certifies clean,

@@ -86,6 +86,39 @@
       },
       "source_warnings": []
     },
+    "geo_text_cues": {
+      "version": 1,
+      "basis": "configured_english_oriented_patterns",
+      "interpretation": "editorial_review_only",
+      "limits": "Not language understanding, paragraph segmentation, source validation, answer assessment or measured engine/ranking/citation behavior.",
+      "checks": {
+        "question_headings": {
+          "matched": 2,
+          "examined": 2,
+          "advisory_below_fraction": 0.2,
+          "match_rule": "english_first_token_or_terminal_ascii_question_mark"
+        },
+        "sentence_groups": {
+          "in_range": 3,
+          "examined": 4,
+          "word_min": 40,
+          "word_max": 120,
+          "advisory_below_fraction": 0.3,
+          "match_rule": "ascii_word_counts_in_accumulated_sentence_fragments"
+        },
+        "evidence_cues": {
+          "statistic_matches": 0,
+          "citation_cue_matches": 2,
+          "source_validity_checked": false
+        },
+        "intro_cues": {
+          "inspected_tokens": 80,
+          "token_limit": 80,
+          "matched": false,
+          "match_rule": "configured_english_answer_terms"
+        }
+      }
+    },
     "llms_txt": {
       "version": 1,
       "basis": "root_http_response",
@@ -447,8 +480,8 @@
     {
       "category": "geo",
       "severity": "good",
-      "title": "Question-based headings present",
-      "detail": "2/2 subheadings",
+      "title": "Configured question-heading cues present",
+      "detail": "2/2 subheadings match configured English starters or a terminal ASCII question mark. Question relevance and engine matching are not measured.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "geo.question.based.headings.present",
@@ -458,8 +491,8 @@
     {
       "category": "geo",
       "severity": "good",
-      "title": "Citable passage structure",
-      "detail": "3/4 passages in range",
+      "title": "Sentence groups in the configured word range",
+      "detail": "3/4 synthetic sentence groups contain 40–120 counted ASCII-word matches. Actual paragraphs, self-containment and engine citability are not measured.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "geo.citable.passage.structure",
@@ -469,8 +502,8 @@
     {
       "category": "geo",
       "severity": "good",
-      "title": "Evidence signals present",
-      "detail": "0 stats, 2 citation cues",
+      "title": "Configured statistics/citation cues present",
+      "detail": "0 configured statistic-pattern matches; 2 citation-cue matches. Lexical cues only; factual support and source validity are not checked.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "geo.evidence.signals.present",
@@ -480,9 +513,9 @@
     {
       "category": "geo",
       "severity": "low",
-      "title": "No direct answer up top",
-      "detail": "The opening doesn't state a concise answer/definition.",
-      "recommendation": "Lead with a 1–2 sentence direct answer before the details; AI overviews lift the top summary.",
+      "title": "No configured introductory answer cues",
+      "detail": "No configured English answer term matched in the first 80 whitespace-separated tokens. This does not establish whether the opening answers a question.",
+      "recommendation": "Review whether the opening serves the reader's intent and language. Add a concise answer only when useful; English cue absence does not prove a missing answer. Answer accuracy and citation impact are not measured.",
       "evidence": null,
       "rule_id": "geo.no.direct.answer.up.top",
       "scope": "page",
