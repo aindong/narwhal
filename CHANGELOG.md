@@ -25,6 +25,10 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Unknown and non-text HTTP charset names produce bounded failed-fetch
+  diagnostics rather than crashing optional `requests` scans or guessing an
+  encoding. Supported decoding and malformed-byte replacement are unchanged;
+  unrelated processing errors still propagate on the requests path.
 - Optional `requests` connection/TLS/timeout and interrupted-body failures now
   return failed-fetch responses instead of aborting scans. Failed streams do
   not expose a received prefix as usable HTML; acquired responses close even

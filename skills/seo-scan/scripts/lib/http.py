@@ -29,6 +29,23 @@ def _origin_headers(headers):
             if key.lower() != "x-narwhal-truncated"}
 
 
+class _ResponseDecodeError(ValueError):
+    """A remote charset is unknown or is not a text encoding."""
+
+
+def _decode_html(raw, encoding):
+    """Decode a declared charset without guessing; bound invalid-name diagnostics."""
+    try:
+        return raw.decode(encoding, "replace")
+    except LookupError as exc:
+        label = ascii(encoding[:80])
+        clipped = len(encoding) > 80 or len(label) > 100
+        label = label[:100] + ("…" if clipped else "")
+        raise _ResponseDecodeError(
+            "Unsupported HTTP charset " + label
+            + "; set a supported text encoding in Content-Type.") from exc
+
+
 @dataclass
 class Response:
     url: str
@@ -246,7 +263,7 @@ def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) ->
     try:
         raw, truncated = _limited_content(r, max_bytes)
         encoding = r.encoding or "utf-8"
-        text = raw.decode(encoding, "replace")
+        text = _decode_html(raw, encoding)
         headers = _origin_headers(r.headers)
         if truncated:
             headers["x-narwhal-truncated"] = "true"
@@ -259,8 +276,8 @@ def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) ->
             elapsed_ms=0,
             redirects=redirects,
         )
-    except requests.RequestException as exc:
-        # A received prefix is not a usable page when the stream failed.
+    except (requests.RequestException, _ResponseDecodeError) as exc:
+        # A partial or undecodable body is not usable page evidence.
         return Response(url, current, 0, {}, "", 0, redirects=redirects, error=str(exc))
     finally:
         r.close()
@@ -285,7 +302,7 @@ def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> R
             if truncated:
                 headers["x-narwhal-truncated"] = "true"
         return Response(url=url, final_url=current, status=status, headers=headers,
-                        text=raw.decode(charset, "replace"), elapsed_ms=0,
+                        text=_decode_html(raw, charset), elapsed_ms=0,
                         redirects=redirects)
     except urllib.error.HTTPError as exc:
         body = exc.read(max_bytes).decode("utf-8", "replace") if exc.fp else ""

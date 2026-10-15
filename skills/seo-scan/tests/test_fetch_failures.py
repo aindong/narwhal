@@ -108,11 +108,10 @@ class TestFetchFailures(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'unexpected bug'):
             self.fetch(acquisition_error=RuntimeError('unexpected bug'))
 
-    def test_decode_errors_propagate_but_still_close_response(self):
+    def test_unknown_remote_charset_is_a_failed_response_and_still_closes(self):
         raw = response()
         raw.encoding = 'nonexistent-character-set'
-        with self.assertRaises(LookupError):
-            self.fetch(raw=raw)
+        self.assert_failed(self.fetch(raw=raw), 'Unsupported HTTP charset')
         raw.close.assert_called_once_with()
 
     def test_scan_returns_unmeasured_failure_instead_of_a_dependency_crash(self):

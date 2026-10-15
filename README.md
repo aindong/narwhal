@@ -240,6 +240,12 @@ to make an unsuccessful scan fail a CI quality gate. HTTP error statuses and
 bodies remain available for diagnostics; the `requests` path does not hide
 unrelated processing errors.
 
+An otherwise successful response with an unknown or non-text declared charset
+produces a bounded failed-fetch diagnostic rather than an assumed fallback
+encoding. Fix the server's `Content-Type` charset before treating that page as
+measured; supported text encodings and replacement of malformed bytes retain
+their existing behavior.
+
 Expected URL syntax, DNS and host-policy failures in `scan`, `audit`, `crawl`,
 `llms` and `sitemap` produce a bounded, single-line `ERROR: URL rejected: …`
 diagnostic with exit code **2**; no report is created or overwritten. Python

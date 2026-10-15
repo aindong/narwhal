@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Invalid response charset resilience:** unknown/non-text declared encodings
+  return bounded failed-fetch diagnostics instead of crashing the optional HTTP
+  path. Undecoded bodies are not measured or silently assigned a fallback
+  charset; supported encodings and existing byte replacement remain unchanged.
 - **Comparison/brief byte budgets:** CLI, Python and MCP callers can select the
   per-snapshot HTML limit (5MB default, 64KB–20MB bounds) and retry large-page
   coverage failures without bypassing eligibility checks. One limit covers all
