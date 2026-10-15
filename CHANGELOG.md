@@ -15,6 +15,13 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Served-HTML baselines use the same selected byte budget as rendered snapshots.
+  JS-dependence metrics require two eligible HTML inputs; unavailable, partial or
+  explicitly non-HTML baselines yield a visible unverified receipt, not invented
+  percentages or cached results. Known missing JS measurements block relevant
+  score/finding diffs, including crawl contributions, and compare/brief score
+  benchmarks; focused non-JS scores remain comparable. Primary coverage is kept
+  distinct from auxiliary baseline coverage. Legacy receipts are not inferred.
 - Rendered HTML snapshots now obey the primary HTML byte budget in UTF-8, with
   explicit truncation metadata and no broken final code point. Partial rendered
   snapshots do not produce JS-dependence measurements. Smaller complete snapshots,

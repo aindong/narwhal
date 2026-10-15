@@ -33,6 +33,30 @@ CATEGORY_LABELS = {
 TRUNCATED_HTML_ERROR = (
     "HTML response was truncated; complete HTML is required for comparisons and briefs."
 )
+UNVERIFIED_JS_COMPARISON_ERROR = (
+    "JS-dependence is unverified; complete paired HTML is required for page-score comparisons."
+)
+_JS_COMPARISON_PROBLEMS = {
+    "rendered_html_truncated": "rendered HTML was truncated",
+    "served_html_truncated": "served HTML was truncated",
+    "served_html_unavailable": "served HTML was unavailable",
+    "served_non_html": "the served baseline was not HTML",
+}
+
+
+def recorded_js_comparison_problem(meta, *, for_score=False):
+    """Describe a recorded missing JS measurement, without guessing legacy data."""
+    coverage = meta.get("coverage") if isinstance(meta, dict) else None
+    receipt = coverage.get("js_comparison") if isinstance(coverage, dict) else None
+    if not isinstance(receipt, dict) or receipt.get("status") != "unverified":
+        return None
+    if for_score:
+        scope = recorded_scan_scope(meta)
+        if scope is not None and not set(scope[0]) & {"technical", "geo"}:
+            return None
+    reason = receipt.get("reason")
+    return (_JS_COMPARISON_PROBLEMS.get(reason, "a required HTML snapshot was not measured")
+            if isinstance(reason, str) else "a required HTML snapshot was not measured")
 
 
 def recorded_response_truncated(meta):
@@ -178,6 +202,9 @@ class Report:
         coverage = self.meta.get("coverage")
         if isinstance(coverage, dict) and coverage.get("response_truncated"):
             note += " Response was truncated; findings use partial HTML coverage."
+        js_problem = recorded_js_comparison_problem(self.meta)
+        if js_problem:
+            note += f" JS-dependence was not measured: {js_problem}."
         settings = self.meta.get("scan_settings")
         if isinstance(settings, dict):
             if settings.get("image_checks") is False and "technical" in requested:

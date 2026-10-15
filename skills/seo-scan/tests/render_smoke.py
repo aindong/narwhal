@@ -38,6 +38,11 @@ document.getElementById('app').textContent = '😀'.repeat(20000);
 let heading = document.createElement('h1');
 heading.textContent = 'AFTER_BUDGET'; document.body.append(heading);
 </script></body></html>""".encode("utf-8")
+BASELINE_PAGE = ("""<!DOCTYPE html><html><head><title>Paired HTML fixture</title>
+<script>window.addEventListener('DOMContentLoaded',()=>document.getElementById('padding').remove());</script>
+</head><body><div id="padding">""" + " " * 120_000
+                 + '</div><h1>Always served heading</h1><p>' + 'word ' * 350
+                 + '</p></body></html>').encode('utf-8')
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -47,7 +52,8 @@ class _Handler(BaseHTTPRequestHandler):
         if self.path == "/spoofed":
             self.send_header("X-Narwhal-Truncated", "true")
         self.end_headers()
-        self.wfile.write(BUDGET_PAGE if self.path == "/budget" else
+        self.wfile.write(BASELINE_PAGE if self.path == "/baseline" else
+                         BUDGET_PAGE if self.path == "/budget" else
                          ACTIVATED_PAGE if self.path == "/activated" else PAGE)
 
     def log_message(self, *args):
@@ -73,6 +79,12 @@ def main() -> int:
         spoofed = scan.scan(url + "spoofed", render=True, allow_private=True,
                              timeout=30, max_bytes=64_000, only=["technical"],
                              ctx={}, check_images=False)
+        unverified = scan.scan(url + "baseline", render=True, allow_private=True,
+                                timeout=30, max_bytes=64_000, only=["technical"],
+                                ctx={}, check_images=False)
+        recovered = scan.scan(url + "baseline", render=True, allow_private=True,
+                               timeout=30, max_bytes=256_000, only=["technical"],
+                               ctx={}, check_images=False)
     finally:
         server.shutdown()
         server.server_close()
@@ -115,11 +127,21 @@ def main() -> int:
             or "js_dependence" not in spoofed.meta):
         print("FAIL: origin header forged partial DOM coverage or skipped a valid JS comparison.", file=sys.stderr)
         return 1
+    if (unverified.hard_fail or unverified.meta['coverage']['response_truncated']
+            or unverified.meta['coverage']['js_comparison'].get('reason') != 'served_html_truncated'
+            or 'js_dependence' in unverified.meta):
+        print('FAIL: truncated served HTML became JS-dependence evidence.', file=sys.stderr)
+        return 1
+    if (recovered.hard_fail or recovered.meta['coverage']['js_comparison']['status'] != 'measured'
+            or recovered.meta.get('js_dependence', {}).get('js_only_pct') != 0):
+        print('FAIL: larger paired budget did not restore the complete HTML comparison.', file=sys.stderr)
+        return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
     print(f"OK: rendered DOM captured the JS-injected marker ({MARKER}).")
     print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
     print("OK: rendered UTF-8 byte budget enforced; partial scan flagged without JS-dependence metrics.")
     print("OK: origin cannot forge the internally calculated truncation marker.")
+    print('OK: paired byte budget enforced; truncated baseline unverified; complete pair recovers 0% JS-only.')
     return 0
 
 

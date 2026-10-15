@@ -169,14 +169,31 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     # DOM, so nothing is measured and nothing is said (never guess).
     if resp.headers.get("x-narwhal-truncated") == "true":
         ctx.pop("jsdep", None)  # a cached value is not evidence for this partial snapshot
-    if (resp.rendered and not resp.error
-            and resp.headers.get("x-narwhal-truncated") != "true"):
-        raw_resp = http.fetch(url, allow_private=allow_private, timeout=timeout)
-        if raw_resp.ok:
-            dep = jsdiff.analyze(raw_resp.text, resp.text, resp.final_url or url)
-            ctx["jsdep"] = dep
-            report.meta["js_dependence"] = {
-                k: dep[k] for k in ("words_raw", "words_rendered", "js_only_pct")}
+    if resp.rendered and not resp.error:
+        ctx.pop("jsdep", None)
+        receipt = {"status": "unverified", "byte_limit": max_bytes}
+        report.meta["coverage"]["js_comparison"] = receipt
+        if resp.headers.get("x-narwhal-truncated") == "true":
+            receipt["reason"] = "rendered_html_truncated"
+        else:
+            try:
+                raw_resp = http.fetch(url, allow_private=allow_private, timeout=timeout,
+                                      max_bytes=max_bytes)
+            except (OSError, http.URLInputError):
+                raw_resp = None
+            if raw_resp is None or not raw_resp.ok or raw_resp.status != 200:
+                receipt["reason"] = "served_html_unavailable"
+            elif raw_resp.headers.get("x-narwhal-truncated") == "true":
+                receipt["reason"] = "served_html_truncated"
+            elif raw_resp.headers.get("content-type", "").split(";", 1)[0].strip().lower() not in (
+                    "", "text/html", "application/xhtml+xml"):
+                receipt["reason"] = "served_non_html"
+            else:
+                dep = jsdiff.analyze(raw_resp.text, resp.text, resp.final_url or url)
+                ctx["jsdep"] = dep
+                report.meta["js_dependence"] = {
+                    k: dep[k] for k in ("words_raw", "words_rendered", "js_only_pct")}
+                receipt["status"] = "measured"
 
     for name in selected:
         fn = AUDITORS.get(name)

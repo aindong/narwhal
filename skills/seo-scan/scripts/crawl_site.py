@@ -27,6 +27,7 @@ from lib import hreflang, http, htmlx, links, simhash, sitegraph  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
+from lib.report import recorded_js_comparison_problem  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
 import scan as scanner  # noqa: E402
 
@@ -256,6 +257,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             isinstance(coverage, dict) and coverage.get("response_truncated") is True)
         pages.append({"url": u, "score": rep.score(), "hard_fail": bool(rep.hard_fail),
                       "response_truncated": truncated,
+                      "js_comparison_unverified": bool(recorded_js_comparison_problem(rep.meta, for_score=True)),
                       "scan_settings": rep.meta.get("scan_settings", {}),
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
