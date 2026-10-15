@@ -635,6 +635,15 @@ pipe and loses only its final escaping backslash; other backslashes stay data.
 Unescaped pipes remain column separators. This does not add general Markdown
 backslash escapes or alter fenced/non-table text.
 
+Generated crawl **Weakest pages** and broken-link tables encode URL/error text
+as literal cells, so pipes do not create columns and Markdown-like URLs do not
+create links or emphasis. A versioned `<!-- narwhal: escaped-table-cells-v1 -->`
+comment immediately before these tables opts the branded renderer into ASCII
+punctuation unescaping for that table only. Other Markdown readers understand
+the standard backslash escapes directly. Legacy tables, ordinary text and code
+remain unchanged; line breaks in cell data become spaces, while JSON retains
+the original evidence. Other subreport sections are outside this table-only fix.
+
 Branded Markdown tables have padded cells, aligned column headers and row guides.
 Wide tables scroll within their own keyboard-focusable region on screen instead
 of squeezing columns or widening the page. Print/PDF input uses compact wrapping

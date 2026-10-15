@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import json
 import re
+import string
 from dataclasses import asdict, dataclass, field
 from typing import Optional
 
 from .guides import reference_url
 from . import sitemap as sitemaplib
 from .code_fences import closes_fence, markdown_lines, opening_fence
+from .markdown_text import TABLE_TEXT_MARKER
 
 REPORT_SCHEMA_VERSION = "2.0"
 
@@ -802,11 +804,13 @@ def _inline_emphasis(text: str) -> str:
     return re.sub(r"(?<!\w)_([^_]+)_(?!\w)", r"<em>\1</em>", out)
 
 
-def _inline_md(text: str) -> str:
+def _inline_md(text: str, unescape=False) -> str:
     """Render our limited inline Markdown, keeping code spans escaped/literal.
 
     Equal-length backtick runs delimit code on one input line. Protect spans
     before links/emphasis, then restore them without reinterpreting their body.
+    Only explicitly marked generated tables opt in to punctuation unescaping;
+    ordinary text, legacy tables and fenced/code-span contents stay unchanged.
     This is not a general Markdown parser (e.g. no multiline code spans).
     """
     out = _esc(text)
@@ -820,6 +824,12 @@ def _inline_md(text: str) -> str:
     chunks, code = [], []
     cursor = index = 0
     while index < len(runs):
+        preceding = runs[index].start()
+        while preceding and out[preceding - 1] == '\\':
+            preceding -= 1
+        if unescape and (runs[index].start() - preceding) % 2:
+            index += 1
+            continue  # escaped opening backtick; backslashes inside code stay literal
         end_index = following.get(index)
         if end_index is None:
             index += 1
@@ -834,6 +844,16 @@ def _inline_md(text: str) -> str:
         index = end_index + 1
     chunks.append(out[cursor:])
     out = ''.join(chunks)
+    escapes = []
+
+    def protect_escape(match):
+        """Protect escaped punctuation from links/emphasis outside code spans."""
+        token = f'<narwhal-escape-{len(escapes)}>'
+        escapes.append(match.group(1))
+        return token
+
+    if unescape:
+        out = re.sub(r'\\([' + re.escape(string.punctuation) + '])', protect_escape, out)
     links = []
 
     def protect_link(match):
@@ -845,13 +865,13 @@ def _inline_md(text: str) -> str:
 
     # Protect full links before emphasis. Like code tokens, raw-angle link
     # tokens cannot occur in escaped user input. Code may be a label, not an href.
-    out = re.sub(r"\[([^\]]+)\]\((https?://[^)\s<>]+)\)",
+    out = re.sub(r"\[([^\]]+)\]\((https?://(?:<narwhal-escape-\d+>|[^)\s<>])+)\)",
                  protect_link, out)
     out = _inline_emphasis(out)
     out = re.sub(r'<narwhal-link-(\d+)>',
                  lambda match: links[int(match.group(1))], out)
-    return re.sub(r'<narwhal-code-(\d+)>',
-                  lambda match: code[int(match.group(1))], out)
+    out = re.sub(r'<narwhal-code-(\d+)>', lambda match: code[int(match.group(1))], out)
+    return re.sub(r'<narwhal-escape-(\d+)>', lambda match: escapes[int(match.group(1))], out)
 
 
 def _table_cells(line: str) -> list:
@@ -930,25 +950,32 @@ def md_to_html(md: str) -> str:
             continue
 
         # Table: a header row followed by a |:--| separator row
+        if (stripped == TABLE_TEXT_MARKER and i + 2 < n
+                and lines[i + 1].strip().startswith('|')
+                and set(lines[i + 2].strip()) <= set('|:- ')
+                and '-' in lines[i + 2]):
+            i += 1  # opt-in applies only to the immediately following table
+            continue
         if (stripped.startswith("|") and i + 1 < n
                 and set(lines[i + 1].strip()) <= set("|:- ")
                 and "-" in lines[i + 1]):
             close_list(list_stack)
             headers = _table_cells(line)
             alignments = _table_alignment_classes(lines[i + 1])
+            unescape = i > 0 and lines[i - 1].strip() == TABLE_TEXT_MARKER
 
             def column_class(column):
                 """Use only a parsed static class; extra cells stay default left."""
                 return alignments[column] if column < len(alignments) else ''
 
             out.append('<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable report table"><table class="markdown"><thead><tr>'
-                       + "".join(f'<th scope="col"{column_class(column)}>{_inline_md(h)}</th>'
+                       + "".join(f'<th scope="col"{column_class(column)}>{_inline_md(h, unescape=unescape)}</th>'
                                  for column, h in enumerate(headers))
                        + "</tr></thead><tbody>")
             i += 2
             while i < n and lines[i].strip().startswith("|"):
                 cells = _table_cells(lines[i])
-                out.append("<tr>" + "".join(f'<td{column_class(column)}>{_inline_md(c)}</td>'
+                out.append("<tr>" + "".join(f'<td{column_class(column)}>{_inline_md(c, unescape=unescape)}</td>'
                                              for column, c in enumerate(cells))
                            + "</tr>")
                 i += 1

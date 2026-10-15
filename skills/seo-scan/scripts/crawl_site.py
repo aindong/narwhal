@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import hreflang, http, htmlx, links, simhash, sitegraph, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
+from lib.markdown_text import TABLE_TEXT_MARKER, table_text  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
@@ -458,9 +459,9 @@ def render_markdown(result: dict) -> str:
                   f"in {omission['affected_pages']} scanned page(s) were omitted from HTTP link collection. "
                   "These are source syntax issues, not network failures; they were not HTTP-checked.", ""]
     ranked = sorted(result["pages"], key=lambda p: p["score"])
-    lines += ["## Weakest pages", "", "| Score | URL |", "|:--:|:--|"]
+    lines += ["## Weakest pages", "", TABLE_TEXT_MARKER, "| Score | URL |", "|:--:|:--|"]
     for p in ranked[:10]:
-        lines.append(f"| {p['score']} | {p['url']} |")
+        lines.append(f"| {p['score']} | {table_text(p['url'])} |")
     lines.append("")
     recurring = sorted(result["recurring"].items(), key=lambda item: (
         SEVERITY.index(item[0][1]) if item[0][1] in SEVERITY else len(SEVERITY),
@@ -531,14 +532,14 @@ def render_markdown(result: dict) -> str:
                              + (' Malformed hrefs were omitted, not verified.' if omission else ''))
             lines.append("")
         else:
-            lines += ["| Status / request error | Type | Target URL | Linked from |",
+            lines += [TABLE_TEXT_MARKER, "| Status / request error | Type | Target URL | Linked from |",
                       "|:--:|:--|:--|:--|"]
             for b in broken:
                 status = b["status"] or (b["error"] or "unreachable")
                 kind = "internal" if b["internal"] else "external"
                 src = b["sources"][0]
                 more = f" (+{len(b['sources']) - 1})" if len(b["sources"]) > 1 else ""
-                lines.append(f"| {status} | {kind} | {b['url']} | {src}{more} |")
+                lines.append(f"| {table_text(status)} | {kind} | {table_text(b['url'])} | {table_text(src)}{more} |")
             lines.append("")
 
     dupes = result.get("duplicates")

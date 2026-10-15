@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Literal crawl table data:** weakest-page and broken-link tables encode
+  dynamic URL/error cells instead of interpreting them as Markdown. Table-local
+  opt-in preserves legacy rendering elsewhere, full JSON and scores; browser CI
+  checks desktop/mobile/print columns, literal text and table markup boundaries.
 - **Leaf-page indexing evidence:** crawl JSON retains HTTP/named-meta receipts
   per successfully scanned page; crawl/audit reports show bounded non-scoring
   observations with literal page/receipt text. Display caps preserve full JSON,

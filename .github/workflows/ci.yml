@@ -100,3 +100,5 @@ jobs:
         run: python skills/seo-scan/tests/render_smoke.py
       - name: Branded report table browser regression
         run: python skills/seo-scan/tests/report_table_smoke.py
+      - name: Literal crawl table browser regression
+        run: python skills/seo-scan/tests/crawl_table_smoke.py
