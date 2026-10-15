@@ -73,7 +73,12 @@ And yes, it works as a backronym too:
 The generic page robots-meta check combines all active `name="robots"` tags,
 recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
 mistake directive parameter values or substrings for restrictions. Its passing
-message is scoped to generic meta only; crawler-specific meta is not evaluated.
+message is scoped to generic meta only. A separate non-scoring observation covers
+documented `googlebot` and `googlebot-news` meta declarations of `noindex`,
+`nofollow` and `none`, retaining bounded active-tag positions in
+`meta.crawler_meta_robots`. It does not calculate effective cross-source policy,
+interpret other crawler names or preview/date rules, or recommend removing an
+intentional restriction. Unknown names are not assumed to be crawler policies.
 Absence of a generic meta restriction does not prove
 indexability or actual search inclusion.
 

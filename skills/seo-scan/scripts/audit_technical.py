@@ -180,6 +180,9 @@ def _generic_meta_robots(doc):
 
 
 def _robots_directives(doc, report):
+    named = indexing.crawler_meta(doc.meta)
+    if named:
+        report.meta['crawler_meta_robots'] = named
     robots, evidence = _generic_meta_robots(doc)
     if 'noindex' in robots:
         report.add(CAT, "critical", "Page is set to noindex",

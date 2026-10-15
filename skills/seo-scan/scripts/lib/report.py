@@ -127,6 +127,30 @@ def _http_robots_notes(meta):
     return result
 
 
+def _crawler_meta_notes(meta):
+    """Render only known, typed named-meta observations; never infer old data."""
+    receipt = meta.get('crawler_meta_robots') if isinstance(meta, dict) else None
+    if (not isinstance(receipt, dict) or type(receipt.get('version')) is not int
+            or receipt['version'] != 1 or receipt.get('basis') != 'active_document_meta'
+            or not isinstance(receipt.get('observations'), list)):
+        return []
+    notes = []
+    for item in receipt['observations']:
+        if not isinstance(item, dict) or item.get('agent') not in ('googlebot', 'googlebot-news'):
+            continue
+        directives, positions = item.get('directives'), item.get('tag_positions')
+        if (not isinstance(directives, list) or not directives
+                or any(value not in ('noindex', 'nofollow') for value in directives)
+                or not isinstance(positions, list) or not positions
+                or any(type(position) is not int or position < 1 for position in positions)):
+            continue
+        notes.append(f'{item["agent"]} declares {", ".join(sorted(set(directives)))} '
+                     f'in metadata tag position(s) {", ".join(str(n) for n in sorted(set(positions))[:2])}. '
+                     'Engine-specific declaration, not an all-crawler restriction.')
+    return (['Observed googlebot/googlebot-news meta only; other agents and preview/date rules are not evaluated here. '
+             'Review intended policy manually. This is not proof of live crawling or indexing.'] + notes[:2]) if notes else []
+
+
 def recorded_scan_scope(meta):
     """Validate recorded execution without inferring coverage from findings."""
     scope = meta.get("scan_scope") if isinstance(meta, dict) else None
@@ -407,6 +431,12 @@ class Report:
             lines += ['- ' + note for note in header_notes]
             lines.append('')
 
+        named_meta_notes = _crawler_meta_notes(self.meta)
+        if named_meta_notes:
+            lines += ['## Crawler-specific meta observations (not scored)', '']
+            lines += ['- ' + note for note in named_meta_notes]
+            lines.append('')
+
         # --- Passing checks ------------------------------------------------
         if buckets["good"]:
             lines.append("## Passing checks")
@@ -536,6 +566,12 @@ class Report:
         if header_notes:
             body.append('<section class="card"><h2>HTTP robots observations (not scored)</h2>'
                         + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in header_notes)
+                        + '</ul></section>')
+
+        named_meta_notes = _crawler_meta_notes(self.meta)
+        if named_meta_notes:
+            body.append('<section class="card"><h2>Crawler-specific meta observations (not scored)</h2>'
+                        + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in named_meta_notes)
                         + '</ul></section>')
 
         # Passing checks

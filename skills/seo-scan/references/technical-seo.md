@@ -35,6 +35,16 @@ The current deterministic page-meta check combines all active generic
 Crawler-specific meta is outside this check; a passing generic-meta observation
 is not proof of indexability or actual inclusion.
 
+A separate non-scoring observation recognizes the documented `googlebot` and
+`googlebot-news` HTML meta names (case-insensitive), exact `noindex`/`nofollow`
+and the `none` alias. Repeated active tags accumulate declared restrictions;
+later allowing tags do not erase earlier declarations. Additive
+`meta.crawler_meta_robots` records the checked agents, dated primary source and
+bounded active-metadata positions. Inert templates are not document policy.
+Other names, preview/date directives and effective policy across generic meta,
+named meta and HTTP headers are outside this observation. Review intended
+restrictions manually; they are not automatically scored or removed.
+
 A separate final HTML-response header check recognizes unprefixed `noindex`,
 `nofollow` and `none` in `X-Robots-Tag`. New header fields reset named-agent scope;
 named-crawler restrictions are displayed as non-scoring policy observations.

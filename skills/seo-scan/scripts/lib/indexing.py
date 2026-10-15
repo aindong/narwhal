@@ -4,6 +4,8 @@ import re
 
 _PREFIX = re.compile(r'^\s*([A-Za-z*][A-Za-z0-9_.\-*]*)\s*:\s*(.*)$')
 _PARAMETERS = {'max-snippet', 'max-image-preview', 'max-video-preview', 'unavailable_after'}
+META_CRAWLERS = ('googlebot', 'googlebot-news')
+META_SOURCE = 'https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag'
 
 
 def restriction_names(value):
@@ -21,6 +23,31 @@ def expand(names):
     if 'none' in names:
         rules.update(('noindex', 'nofollow'))
     return rules
+
+
+def crawler_meta(tags):
+    """Observe restrictions only for the two documented Google meta names.
+
+    Keep at most one positional witness per directive and agent. This is not an
+    effective-policy calculation, an all-crawler finding, or an index-state test.
+    """
+    observed = {}
+    for position, tag in enumerate(tags, 1):
+        agent = (tag.get('name') or '').lower()
+        if agent not in META_CRAWLERS:
+            continue
+        rules = expand(restriction_names(tag.get('content') or ''))
+        if rules:
+            witnesses = observed.setdefault(agent, {})
+            for rule in rules:
+                witnesses.setdefault(rule, position)
+    if not observed:
+        return None
+    return {'version': 1, 'basis': 'active_document_meta',
+            'checked_agents': list(META_CRAWLERS), 'source_checked': '2026-10-15', 'source': META_SOURCE,
+            'observations': [{'agent': agent, 'directives': sorted(witnesses),
+                              'tag_positions': sorted(set(witnesses.values()))}
+                             for agent, witnesses in sorted(observed.items())]}
 
 
 def http_robots(fields, basis):

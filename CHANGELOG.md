@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Documented `googlebot` and `googlebot-news` HTML meta restrictions now appear
+  as non-scoring report observations and additive `meta.crawler_meta_robots`
+  evidence. Active repeated tags accumulate exact noindex/nofollow/none rules;
+  template content, directive parameters and unsupported names cannot create
+  generic blocking findings. Scores/IDs are unchanged; this is not effective
+  cross-source policy, preview/date handling or proof of indexing.
 - Final HTML-response `X-Robots-Tag` restrictions are audited with separate
   header findings and manual hosting remediation. Repeated raw fields retain
   scope boundaries; named-crawler policies remain non-scoring notes with

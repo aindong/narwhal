@@ -71,6 +71,11 @@ class _Handler(BaseHTTPRequestHandler):
         if self.path == '/js-reload':
             self.wfile.write(b'<html><body><script>if(!sessionStorage.reloaded){sessionStorage.reloaded="1";setTimeout(()=>location.reload(),100)}</script>Reload</body></html>')
             return
+        if self.path == '/crawler-meta':
+            self.wfile.write(b'<html><head><meta name="googlebot" content="index"></head><body>'
+                             b'<template><meta name="googlebot-news" content="none"></template>'
+                             b'<script>document.querySelector("meta").content="noindex";</script></body></html>')
+            return
         self.wfile.write(BASELINE_PAGE if self.path == "/baseline" else
                          BUDGET_PAGE if self.path == "/budget" else
                          ACTIVATED_PAGE if self.path == "/activated" else PAGE)
@@ -111,6 +116,8 @@ def main() -> int:
                               timeout=30, only=['technical'], ctx={}, check_images=False)
         same_document = http.fetch(url + 'same-document', render=True, allow_private=True, timeout=30)
         reloaded = http.fetch(url + 'js-reload', render=True, allow_private=True, timeout=30)
+        crawler_meta = scan.scan(url + 'crawler-meta', render=True, allow_private=True,
+                                 timeout=30, only=['technical'], ctx={}, check_images=False)
     finally:
         server.shutdown()
         server.server_close()
@@ -164,6 +171,12 @@ def main() -> int:
         return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
     header_rules = {finding.rule_id for finding in header_scan.findings}
+    if (crawler_meta.hard_fail or not crawler_meta.rendered
+            or crawler_meta.meta.get('crawler_meta_robots', {}).get('observations') !=
+               [{'agent': 'googlebot', 'directives': ['noindex'], 'tag_positions': [1]}]
+            or any(f.rule_id == 'technical.page.is.set.to.noindex' for f in crawler_meta.findings)):
+        print('FAIL: rendered named-meta observation lost JS changes, template exclusion or crawler scope.', file=sys.stderr)
+        return 1
     if (redirected.error or not redirected.final_url.endswith('/http-robots')
             or redirected.robots_header_fields != ['none', 'googlebot: nofollow']):
         print('FAIL: ordinary HTTP redirect lost the final response header pairing.', file=sys.stderr)
@@ -192,6 +205,7 @@ def main() -> int:
     print('OK: paired byte budget enforced; truncated baseline unverified; complete pair recovers 0% JS-only.')
     print('OK: rendered HTTP robots declarations retained with browser-reported field provenance.')
     print('OK: JS document replacement fails explicitly; HTTP redirects and History API remain supported.')
+    print('OK: rendered Googlebot meta observed without generic scoring; inert named-meta template ignored.')
     return 0
 
 
