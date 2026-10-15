@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- An opt-in maintainer capture command freezes one scan's decoded response/DOM,
+  paired served input when available, response metadata and site context into a
+  fresh local review bundle. Existing files are never overwritten; manifests are
+  written last and byte-limit failures do not silently clip evidence. Pending
+  review compatibility, missing-network-evidence limits and sensitive-content
+  warnings are explicit. Ordinary scans retain nothing extra; findings, scoring
+  and report JSON are unchanged. Captures are not independent accuracy validation.
 - Native page-report score tables scroll within a labelled keyboard-focusable
   region on narrow screens, with readable area labels and accessible severity
   headers. This prevents the observed 320/360px page overflow and 390px card

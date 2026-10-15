@@ -851,6 +851,13 @@ counts describe annotation coverage, **not scanner accuracy**: historical
 reports without frozen page evidence stay explicitly report-only, and accuracy
 and recall remain unmeasured. Independent held-out validation is still needed.
 
+For new cases, the opt-in maintainer [capture workflow](docs/tuning/REVIEW.md#capture-new-scan-inputs-explicit-network-opt-in)
+preserves the same scan's decoded source/DOM, available response metadata and site
+context in a fresh local bundle. It does not re-fetch evidence, overwrite old
+captures, publish sensitive content or adjudicate findings. Missing network
+evidence and partial/error scans remain explicit; captured files are not proof
+of accuracy. Ordinary scans retain no additional raw-input handle.
+
 ## Reference guides
 
 Deep-dive reasoning behind each check lives in

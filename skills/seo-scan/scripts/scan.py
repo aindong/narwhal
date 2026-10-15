@@ -84,13 +84,17 @@ def gather_context(base: str, *, allow_private: bool, timeout: int) -> dict:
 
 def scan(url: str, *, render=False, allow_private=False, timeout=20,
          only=None, ctx=None, collect_links=False, collect_fingerprint=False,
-         config=None, check_images=True, max_bytes=5_000_000) -> Report:
+         config=None, check_images=True, max_bytes=5_000_000,
+         retain_evidence=False) -> Report:
     """Audit a single page. Pass ``ctx`` (from :func:`gather_context`) to reuse
     site-level signals across many pages — the crawler does this so robots.txt,
     sitemap, and llms.txt are fetched once per site rather than once per page.
     Set ``collect_links=True`` to record outbound links in ``report.meta['links']``
     (used by the crawler's broken-link checker). ``config`` (a Config) tunes
-    scoring weights, ignore rules, and check thresholds."""
+    scoring weights, ignore rules, and check thresholds. Opt-in
+    ``retain_evidence`` keeps response/context objects on the non-serialized
+    ``_capture_inputs`` handle for maintainer review captures. They can contain
+    sensitive source/headers; ordinary callers retain nothing extra."""
     config = config or configlib.Config()
     config, owned_rules = configlib.snapshot_rules(config)
     owned_context_rules = True
@@ -109,6 +113,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                     rendered=resp.rendered,
                     weights=dict(config.weights) if isinstance(config.weights, dict) else config.weights,
                     ignore=config.is_ignored)
+    if retain_evidence:
+        report._capture_inputs = {'primary_response': resp, 'site_context': None,
+                                  'served_response': None}
     report.meta["elapsed_ms"] = resp.elapsed_ms
     report.meta["redirects"] = resp.redirects
     report.meta["coverage"] = {
@@ -199,6 +206,8 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
             try:
                 raw_resp = http.fetch(url, allow_private=allow_private, timeout=timeout,
                                       max_bytes=max_bytes)
+                if retain_evidence:
+                    report._capture_inputs['served_response'] = raw_resp
             except (OSError, http.URLInputError):
                 raw_resp = None
             if raw_resp is None or not raw_resp.ok or raw_resp.status != 200:
@@ -214,6 +223,9 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                 report.meta["js_dependence"] = {
                     k: dep[k] for k in ("words_raw", "words_rendered", "js_only_pct")}
                 receipt["status"] = "measured"
+
+    if retain_evidence:
+        report._capture_inputs['site_context'] = ctx
 
     for name in selected:
         fn = AUDITORS.get(name)
