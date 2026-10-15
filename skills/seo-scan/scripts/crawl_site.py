@@ -180,8 +180,11 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
                 statuses[u] = (status, err)
 
     broken = []
+    successful = 0
     for u in targets:
         status, err = statuses[u]
+        if type(status) is int and 200 <= status < 300 and not err:
+            successful += 1
         if links.is_broken(status):
             broken.append({
                 "url": u,
@@ -193,7 +196,60 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
     broken.sort(key=lambda b: (not b["internal"], b["url"]))  # internal first
     return {"unique_links": len(order), "checked": len(targets),
             "skipped_over_cap": max(0, len(order) - len(targets)),
-            "broken": broken}
+            "broken": broken,
+            "coverage": {"basis": "head_responses", "scope": "checked_targets",
+                         "successful_2xx": successful, "broken": len(broken),
+                         "unverified": len(targets) - successful - len(broken)}}
+
+
+def _link_coverage(info):
+    receipt = info.get('coverage')
+    if (not isinstance(receipt, dict) or receipt.get('basis') != 'head_responses'
+            or receipt.get('scope') != 'checked_targets'):
+        return None
+    values = [receipt.get(key) for key in ('successful_2xx', 'broken', 'unverified')]
+    if (any(type(value) is not int or value < 0 for value in values)
+            or type(info.get('checked')) is not int or sum(values) != info['checked']
+            or receipt['broken'] != len(info.get('broken', []))):
+        return None
+    return receipt
+
+
+def _duplicate_coverage(result):
+    receipt = result.get('duplicate_coverage')
+    if (not isinstance(receipt, dict) or receipt.get('basis') != 'simhash_fingerprints'
+            or receipt.get('scope') != 'scanned_pages'):
+        return None
+    eligible, scanned = receipt.get('eligible_pages'), receipt.get('scanned_pages')
+    if (type(eligible) is not int or type(scanned) is not int
+            or type(result.get('pages_scanned')) is not int
+            or not 0 <= eligible <= scanned or scanned != result['pages_scanned']):
+        return None
+    return receipt
+
+
+def link_summary(info):
+    """Scoped observations for audit headlines; missing execution is not zero."""
+    if info is None:
+        return 'not run'
+    receipt = _link_coverage(info)
+    summary = f"{len(info.get('broken', []))} observed / {info.get('checked', 0)} checked"
+    if receipt is None:
+        return summary + ' (response coverage unrecorded)'
+    return summary + (f" ({receipt['unverified']} unverified)" if receipt['unverified'] else '')
+
+
+def duplicate_summary(result):
+    if result.get('duplicates') is None:
+        return 'not run'
+    receipt = _duplicate_coverage(result)
+    count = len(result['duplicates'])
+    if receipt is None:
+        return f'{count} observed (comparison coverage unrecorded)'
+    eligible = receipt['eligible_pages']
+    if eligible < 2:
+        return f'insufficient data ({eligible} eligible fingerprints)'
+    return f'{count} observed ({eligible} eligible fingerprints)'
 
 
 def summarize_ecommerce(pages: list) -> dict:
@@ -277,7 +333,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         pages_links[u] = rep.meta.get("links", [])
         if rep.meta.get("hreflang"):
             pages_hreflang[u] = rep.meta["hreflang"]
-        if detect_dupes and rep.meta.get("fingerprint"):
+        if detect_dupes and not rep.hard_fail and not truncated and rep.meta.get("fingerprint"):
             page_fps.append({"url": u, "fingerprint": rep.meta["fingerprint"],
                              "canonical": rep.meta.get("canonical")})
     avg = round(sum(p["score"] for p in pages) / len(pages), 1) if pages else 0
@@ -314,6 +370,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             concurrency=concurrency, max_links=max_links)
     if detect_dupes:
         result["duplicates"] = find_duplicates(page_fps, dup_threshold)
+        result['duplicate_coverage'] = {'basis': 'simhash_fingerprints', 'scope': 'scanned_pages',
+                                        'eligible_pages': len(page_fps), 'scanned_pages': len(pages)}
     return result
 
 
@@ -367,9 +425,20 @@ def render_markdown(result: dict) -> str:
                   + ")")
         lines.append(header)
         lines.append("")
+        receipt = _link_coverage(link_info)
+        if receipt is None:
+            lines += ['> HTTP response coverage was not recorded; reachability remains unverified.', '']
+        else:
+            lines += [f"{receipt['successful_2xx']} successful 2xx response(s); "
+                      f"{receipt['broken']} broken response(s); "
+                      f"{receipt['unverified']} response(s) leave reachability unverified. "
+                      'Counts cover HTTP-checked targets only, not all site links.', '']
         if not broken:
-            lines.append("No broken links found among HTTP-checked targets. Malformed hrefs were "
-                         "omitted, not verified." if omission else "No broken links found. 🟢")
+            if not link_info['checked']:
+                lines.append('No HTTP link targets were checked; reachability unverified.')
+            else:
+                lines.append('No broken links observed among HTTP-checked targets.'
+                             + (' Malformed hrefs were omitted, not verified.' if omission else ''))
             lines.append("")
         else:
             lines += ["| Status | Type | Broken URL | Linked from |",
@@ -387,8 +456,19 @@ def render_markdown(result: dict) -> str:
         problem = [c for c in dupes if not c["canonical_ok"]]
         lines.append(f"## Duplicate content ({len(dupes)} near-duplicate cluster(s))")
         lines.append("")
+        coverage = _duplicate_coverage(result)
+        if coverage is None:
+            lines += ['> Duplicate-comparison coverage was not recorded; absence of clusters is not a health verdict.', '']
+        else:
+            lines += [f"Comparison scope: {coverage['eligible_pages']} eligible page fingerprints "
+                      f"from {coverage['scanned_pages']} scanned pages; sampled pages only.", '']
         if not dupes:
-            lines.append("No near-duplicate pages detected. 🟢")
+            if coverage is None:
+                lines.append('No near-duplicate clusters reported; comparison coverage unverified.')
+            elif coverage['eligible_pages'] < 2:
+                lines.append('Duplicate comparison has insufficient data: fewer than two eligible fingerprints.')
+            else:
+                lines.append(f"No near-duplicate clusters detected among {coverage['eligible_pages']} eligible page fingerprints.")
             lines.append("")
         else:
             for i, c in enumerate(dupes, 1):
