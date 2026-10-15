@@ -28,6 +28,7 @@ class Tag:
     name: str
     attrs: dict = field(default_factory=dict)
     text: str = ""
+    image_alt_text: str = ""  # descendant image alternatives, not visible text
 
     def get(self, key: str, default=None):
         return self.attrs.get(key.lower(), default)
@@ -271,8 +272,19 @@ def _parse_bs4(html: str, base_url: str) -> Doc:
     for l in soup.find_all("link"):
         attrs = {k.lower(): _join(l, k) for k in l.attrs}
         doc.link_rels.append(Tag("link", attrs))
+    # Associate each image with its nearest anchor in one tree walk. Avoid an
+    # image search per link (and duplicate labels in malformed nested anchors).
+    owners, image_alts = {}, {}
+    for node in soup.descendants:
+        if not getattr(node, "name", None):
+            continue
+        owner = id(node) if node.name == "a" else owners.get(id(node.parent))
+        owners[id(node)] = owner
+        if node.name == "img" and owner is not None:
+            image_alts.setdefault(owner, []).append(_join(node, "alt"))
     for a in soup.find_all("a"):
-        doc.links.append(Tag("a", {k.lower(): v for k, v in a.attrs.items()}, collapse(a.get_text())))
+        doc.links.append(Tag("a", {k.lower(): v for k, v in a.attrs.items()}, collapse(a.get_text()),
+                             collapse(" ".join(image_alts.get(id(a), [])))))
     for lvl in range(1, 7):
         for h in soup.find_all(f"h{lvl}"):
             doc.headings.append((lvl, collapse(h.get_text())))
@@ -311,7 +323,8 @@ class _StdlibParser(HTMLParser):
     def __init__(self, base_url: str):
         super().__init__(convert_charrefs=True)
         self.doc = Doc(base_url=base_url)
-        self._captures = []        # stack of [kind, buffer, attrs]
+        self._captures = []        # stack of [kind, text buffer, attrs, image alts]
+        self._anchors = []         # references to open anchor captures
         self._ld_buf = None
         self._skip_depth = 0
         self._noscript_depth = 0   # separate channel, not silently skipped
@@ -328,8 +341,12 @@ class _StdlibParser(HTMLParser):
             self.doc.link_rels.append(Tag("link", a))
         elif tag == "img":
             self.doc.images.append(Tag("img", a))
+            if not self._skip_depth and self._anchors and a.get("alt"):
+                self._anchors[-1][3].append(a["alt"])
         elif tag in ("title", "a", "h1", "h2", "h3", "h4", "h5", "h6"):
-            self._captures.append([tag, [], a])
+            self._captures.append([tag, [], a, []])
+            if tag == "a":
+                self._anchors.append(self._captures[-1])
         elif tag == "script" and a.get("type") == "application/ld+json":
             self._ld_buf = []
         elif tag == "noscript":
@@ -345,12 +362,13 @@ class _StdlibParser(HTMLParser):
             self._noscript_depth -= 1
             return
         if self._captures and tag == self._captures[-1][0]:
-            kind, buf, attrs = self._captures.pop()
+            kind, buf, attrs, image_alts = self._captures.pop()
             text = collapse("".join(buf))
             if kind == "title":
                 self.doc.title = text
             elif kind == "a":
-                self.doc.links.append(Tag("a", attrs, text))
+                self._anchors.pop()
+                self.doc.links.append(Tag("a", attrs, text, collapse(" ".join(image_alts))))
             else:
                 self.doc.headings.append((int(kind[1]), text))
         elif tag == "script" and self._ld_buf is not None:

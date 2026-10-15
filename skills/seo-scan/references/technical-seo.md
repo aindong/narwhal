@@ -61,6 +61,17 @@ paths a caller checks; the GEO policy receipt still explicitly checks `/` only.
 ## Links
 - Descriptive anchor text (not "click here") helps users and passes clearer
   relevance signals.
+- The empty/generic anchor-text heuristics use text content first, descendant
+  image `alt` text when that is empty, then an anchor `title` fallback. Google
+  documents the image-alt and title fallbacks in its
+  [link best practices](https://developers.google.com/search/docs/crawling-indexing/links-crawlable#anchor-text-placement)
+  (checked 2026-10-15). Image alternatives stay separate from visible page text,
+  headings and word counts; blank/generic alternatives remain actionable.
+- A linked image's alternative should describe the destination/action, not just
+  its appearance; see [W3C functional images](https://www.w3.org/WAI/tutorials/images/functional/).
+  A title fallback is not a full accessibility fix. This source check does not
+  compute browser accessible names, CSS visibility, ARIA naming or the combined
+  name of mixed text/image content. Image-alt attribute checks stay independent.
 - Audit for broken internal links and long redirect chains; collapse chains to a
   single 301 to preserve equity and speed.
 
