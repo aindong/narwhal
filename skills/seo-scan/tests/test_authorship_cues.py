@@ -174,6 +174,59 @@ class TestAuthorshipObservations(unittest.TestCase):
         self.assertTrue(result['coverage']['normalized_fields_limited'])
         self.assertEqual('provided_text', result['candidates'][0]['kind'])
 
+    def test_normalized_attribute_values_are_bounded_before_normalization(self):
+        original_text = authorship._text
+        lengths = []
+        def bounded_text(value):
+            if isinstance(value, str):
+                lengths.append(len(value))
+                self.assertLessEqual(len(value), authorship.MAX_ATTRIBUTE_CHARS)
+            return original_text(value)
+        huge = 'Jane Doe ' + 'x' * 1_000_000
+        doc = SimpleNamespace(meta=[htmlx.Tag('meta', {'name': 'author', 'content': huge}),
+                                    htmlx.Tag('meta', {'name': 'author' + ' ' * 1_000_000,
+                                                      'content': 'Not an exact inspected selector'})],
+                              links=[htmlx.Tag('a', {'rel': 'author', 'href': huge})], link_rels=[])
+        with mock.patch.object(authorship, '_text', side_effect=bounded_text):
+            result = authorship.observe(doc)
+        self.assertEqual(2, len(result['candidates']))
+        self.assertTrue(all(c['truncated'] for c in result['candidates']))
+        self.assertTrue(result['coverage']['attribute_input_limited'])
+        self.assertEqual(authorship.MAX_ATTRIBUTE_CHARS, max(lengths))
+
+    def test_raw_attribute_clipping_is_retained_after_whitespace_normalization(self):
+        raw = 'Jane' + ' ' * authorship.MAX_ATTRIBUTE_CHARS + 'Doe'
+        result = observe('<meta name="author" content="' + raw + '">')
+        candidate, = result['candidates']
+        self.assertEqual('Jane', candidate['value'])
+        self.assertTrue(candidate['truncated'])
+        self.assertTrue(result['coverage']['attribute_input_limited'])
+
+    def test_rel_list_items_and_strings_cannot_create_a_cut_author_token(self):
+        doc = SimpleNamespace(meta=[], links=[htmlx.Tag('a', {'rel': [None] * 100_000 + ['author'],
+                                                            'href': '/not-inspected'})], link_rels=[])
+        result = authorship.observe(doc)
+        self.assertEqual([], result['candidates'])
+        self.assertTrue(result['coverage']['rel_items_limited'])
+        prefix = 'x' * (authorship.MAX_ATTRIBUTE_CHARS - len(' author'))
+        for rel in (prefix + ' author-profile', [prefix + ' author-profile']):
+            doc.links[0].attrs['rel'] = rel
+            result = authorship.observe(doc)
+            self.assertEqual([], result['candidates'])
+            self.assertTrue(result['coverage']['attribute_input_limited'])
+        doc.links[0].attrs['rel'] = 'author ' + 'x' * authorship.MAX_ATTRIBUTE_CHARS
+        self.assertEqual('/not-inspected', authorship.observe(doc)['candidates'][0]['value'])
+
+    def test_normalized_attrs_mapping_is_not_copied_or_unrelated_values_read(self):
+        class SelectedKeysOnly(dict):
+            def __iter__(self):
+                raise AssertionError('Do not copy the entire attrs mapping')
+            def keys(self):
+                raise AssertionError('Do not copy the entire attrs mapping')
+        attrs = SelectedKeysOnly(rel=['nofollow', 'author'], href='/writer')
+        doc = SimpleNamespace(meta=[], links=[htmlx.Tag('a', attrs)], link_rels=[])
+        self.assertEqual('/writer', authorship.observe(doc)['candidates'][0]['value'])
+
 
 class TestAttributionIntegration(unittest.TestCase):
     def test_nonarticle_without_cues_has_no_missing_finding_or_section(self):
@@ -265,6 +318,17 @@ class TestAttributionIntegration(unittest.TestCase):
         lines = authorship.evidence_lines({'authorship_cues': receipt})
         self.assertEqual('Author metadata: Jane ``` Doe', lines[0])
         self.assertIn('unchecked evidence remains unknown', lines[1])
+
+    def test_report_input_values_are_bounded_before_literal_rendering(self):
+        receipt = {'version': 1, 'interpretation': 'attribution_candidates_only',
+                   'candidates': [{'kind': 'author_meta', 'value': 'Jane' + ' ' * 1_000_000 + 'Doe'}]}
+        original_text = authorship._text
+        def bounded_text(value):
+            self.assertLessEqual(len(value), authorship.MAX_ATTRIBUTE_CHARS)
+            return original_text(value)
+        with mock.patch.object(authorship, '_text', side_effect=bounded_text):
+            lines = authorship.evidence_lines({'authorship_cues': receipt})
+        self.assertEqual(['Author metadata: Jane [value clipped]'], lines)
 
 
 if __name__ == '__main__':

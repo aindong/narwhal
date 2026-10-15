@@ -54,7 +54,12 @@ may remove a real header byline. A captured cue is not a verified writer.
   blocks longer than that are not candidates. Known source/depth/candidate limits
   are recorded. Programmatic Docs without source use normalized fields instead,
   at most 1,000 meta fields and 1,000 combined links, plus supplied leading text;
-  field-limit exhaustion is explicit. These are not total CPU/heap guarantees.
+  field-limit exhaustion is explicit. Declaration attributes are inspected only
+  through 4,096 raw characters per value, and normalized `rel` lists through 64
+  items, without joining the full list or copying unrelated attributes. Limits
+  retain unknown suffixes and mark clipped witnesses; cutting an attribute must
+  not turn a partial relation token into `author`. Human-report input values use
+  the same raw-character cap. These are not total CPU/heap guarantees.
 - Script/style/template/textarea/title, nav/footer/aside, `hidden` and
   `aria-hidden=true` contexts are excluded; noscript is inspected only when the
   Doc selected its fallback. This is a conservative stdlib projection, not a

@@ -14,6 +14,8 @@ MAX_VALUE_CHARS = 160
 MAX_CANDIDATES = 5
 MAX_DEPTH = 80
 MAX_NORMALIZED_FIELDS = 1000
+MAX_ATTRIBUTE_CHARS = 4096
+MAX_REL_ITEMS = 64
 _VOID = set('area base br col embed hr img input link meta param source track wbr'.split())
 _BLOCKS = {'p', 'div', 'header', 'address', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
 _SKIP = {'script', 'style', 'template', 'textarea', 'title', 'nav', 'footer', 'aside'}
@@ -69,9 +71,40 @@ class _Probe(HTMLParser):
         self.text_seen = 0
         self.noscript = noscript
         self.depth_limited = self.candidates_omitted = False
+        self.attribute_input_limited = self.rel_items_limited = False
+
+    def bounded_attribute(self, value):
+        """Bound raw strings before normalization; report uninspected suffixes."""
+        if not isinstance(value, str):
+            return '', False
+        limited = len(value) > MAX_ATTRIBUTE_CHARS
+        self.attribute_input_limited |= limited
+        return value[:MAX_ATTRIBUTE_CHARS], limited
+
+    def selector(self, value):
+        """A clipped name/property cannot establish an exact declaration name."""
+        prefix, limited = self.bounded_attribute(value)
+        return '' if limited else _text(prefix).lower()
+
+    def author_relation(self, value):
+        """Inspect bounded rel tokens without joining an arbitrary-size list."""
+        items = value if isinstance(value, list) else [value]
+        found = False
+        for index, item in enumerate(islice(items, MAX_REL_ITEMS + 1)):
+            if index == MAX_REL_ITEMS:
+                self.rel_items_limited = True
+                break
+            prefix, limited = self.bounded_attribute(item)
+            tokens = prefix.lower().split()
+            # Do not turn a cut `author-profile` token into exact `author`.
+            if limited and prefix and not prefix[-1].isspace():
+                tokens = tokens[:-1]
+            found |= 'author' in tokens
+        return found
 
     def add(self, kind, value):
-        value = _text(value)
+        prefix, input_limited = self.bounded_attribute(value)
+        value = _text(prefix)
         if not value:
             return
         key = kind, value[:MAX_VALUE_CHARS]
@@ -82,15 +115,15 @@ class _Probe(HTMLParser):
             return
         self.seen.add(key)
         self.candidates.append({'kind': kind, 'value': key[1],
-                                'truncated': len(value) > MAX_VALUE_CHARS})
+                                'truncated': input_limited or len(value) > MAX_VALUE_CHARS})
 
     def declaration(self, tag, attrs):
         if tag == 'meta':
-            if _text(attrs.get('name')).lower() == 'author':
+            if self.selector(attrs.get('name')) == 'author':
                 self.add('author_meta', attrs.get('content'))
-            if _text(attrs.get('property')).lower() == 'article:author':
+            if self.selector(attrs.get('property')) == 'article:author':
                 self.add('article_author_meta', attrs.get('content'))
-        if tag in {'a', 'area', 'link'} and 'author' in _text(attrs.get('rel')).lower().split():
+        if tag in {'a', 'area', 'link'} and self.author_relation(attrs.get('rel')):
             self.add('author_link', attrs.get('href'))
 
     def handle_starttag(self, tag, pairs):
@@ -194,9 +227,6 @@ def observe(doc, text=''):
         for tag in bounded_fields(chain(getattr(doc, 'links', []), getattr(doc, 'link_rels', []))):
             attrs = getattr(tag, 'attrs', {})
             if isinstance(attrs, dict):
-                attrs = dict(attrs)
-                if isinstance(attrs.get('rel'), list):
-                    attrs['rel'] = ' '.join(item for item in attrs['rel'] if isinstance(item, str))
                 probe.declaration('a', attrs)
         if isinstance(text, str):
             for line in text[:MAX_LEADING_TEXT].splitlines():
@@ -208,10 +238,13 @@ def observe(doc, text=''):
             'candidates': probe.candidates, 'limits_note': LIMITS_NOTE,
             'limits': {'source_characters': MAX_SOURCE_CHARS, 'leading_text_characters': MAX_LEADING_TEXT,
                        'value_characters': MAX_VALUE_CHARS, 'candidates': MAX_CANDIDATES, 'depth': MAX_DEPTH,
-                       'normalized_fields_per_group': MAX_NORMALIZED_FIELDS},
+                       'normalized_fields_per_group': MAX_NORMALIZED_FIELDS,
+                       'attribute_characters': MAX_ATTRIBUTE_CHARS, 'rel_items': MAX_REL_ITEMS},
             'coverage': {'source_truncated': source_truncated, 'depth_limited': probe.depth_limited,
                          'candidates_omitted': probe.candidates_omitted,
-                         'normalized_fields_limited': normalized_fields_limited}}
+                         'normalized_fields_limited': normalized_fields_limited,
+                         'attribute_input_limited': probe.attribute_input_limited,
+                         'rel_items_limited': probe.rel_items_limited}}
 
 
 def evidence_lines(meta):
@@ -226,10 +259,14 @@ def evidence_lines(meta):
         for item in candidates[:MAX_CANDIDATES]:
             if (isinstance(item, dict) and isinstance(item.get('kind'), str)
                     and item['kind'] in LABELS and isinstance(item.get('value'), str)):
-                value = _text(item['value'])[:MAX_VALUE_CHARS]
+                prefix = item['value'][:MAX_ATTRIBUTE_CHARS]
+                normalized = _text(prefix)
+                value = normalized[:MAX_VALUE_CHARS]
                 if value:
                     lines.append(LABELS[item['kind']] + ': ' + value
-                                 + (' [value clipped]' if item.get('truncated') is True else ''))
+                                 + (' [value clipped]' if item.get('truncated') is True
+                                    or len(item['value']) > MAX_ATTRIBUTE_CHARS
+                                    or len(normalized) > MAX_VALUE_CHARS else ''))
     if not lines and receipt.get('article_hint') is not True:
         return []
     if not lines:
@@ -237,6 +274,7 @@ def evidence_lines(meta):
     coverage = receipt.get('coverage')
     if isinstance(coverage, dict) and any(coverage.get(key) is True for key in
                                          ('source_truncated', 'depth_limited', 'candidates_omitted',
-                                          'normalized_fields_limited')):
-        lines.append('A source/depth/candidate/field limit was reached; unchecked evidence remains unknown.')
+                                          'normalized_fields_limited', 'attribute_input_limited',
+                                          'rel_items_limited')):
+        lines.append('A source/depth/candidate/field/attribute limit was reached; unchecked evidence remains unknown.')
     return lines

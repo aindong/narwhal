@@ -55,13 +55,17 @@
         "value_characters": 160,
         "candidates": 5,
         "depth": 80,
-        "normalized_fields_per_group": 1000
+        "normalized_fields_per_group": 1000,
+        "attribute_characters": 4096,
+        "rel_items": 64
       },
       "coverage": {
         "source_truncated": false,
         "depth_limited": false,
         "candidates_omitted": false,
-        "normalized_fields_limited": false
+        "normalized_fields_limited": false,
+        "attribute_input_limited": false,
+        "rel_items_limited": false
       },
       "article_hint": true
     },
