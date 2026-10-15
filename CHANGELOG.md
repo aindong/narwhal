@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- An offline maintainer review-pack utility inventories reported actionable
+  findings with source hashes and separate observation/priority/advice labels.
+  Stale snapshots, dropped/edited claims and confident labels without attached
+  evidence are rejected. The 15-case historical manifest remains explicitly
+  report-only and pending; review coverage never becomes an accuracy/recall claim.
 - Stdlib terminal HTTP-error responses retain the actual guarded destination
   and observed redirect chain instead of attributing the error to the starting
   URL. Failed-page reports and root-resource receipts now identify that response

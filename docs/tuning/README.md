@@ -26,6 +26,15 @@ Two principles keep the loop honest:
   deliberately full of excellent sites; when Narwhal flags them, Narwhal is
   usually what needs fixing.
 
+## Report-review readiness (Unreleased)
+
+The offline [review-pack workflow](REVIEW.md) inventories the historical corpus
+without treating reports as ground truth. It separates observation, priority
+and advice review, hashes local inputs and refuses stale/edited source data.
+All 15 legacy reports remain report-only, unadjudicated cases; no accuracy or
+recall metric is inferred. This is validation infrastructure, not a completed
+independent benchmark or proof of ranking gains.
+
 ## Rounds
 
 ### [2026-07 · Round 2](2026-07-round-2/RESULTS.md) — shipped in v1.25.0
