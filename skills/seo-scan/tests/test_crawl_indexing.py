@@ -61,6 +61,7 @@ class TestCrawlIndexing(unittest.TestCase):
         self.assertIn('not effective cross-source policy', text)
         self.assertIn('Partial snapshots', text)
         self.assertNotIn('Priority issues', text)
+        self.assertIn('- googlebot declares noindex', text)
 
     def test_header_generic_and_named_declarations_keep_distinct_scope(self):
         receipt = indexing.http_robots(['none', 'googlebot: nofollow'], 'response_header_fields')[0]

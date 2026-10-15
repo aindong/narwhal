@@ -413,11 +413,13 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     return result
 
 
-def _observation_literal(value, limit):
+def _observation_literal(value, limit, prose=False):
     """Keep bounded page/receipt text literal in Markdown and branded HTML."""
     value = ' '.join(str(value).split())
     if len(value) > limit:
         value = value[:limit] + '…'
+    if prose and re.fullmatch(r'''[A-Za-z0-9 .,:;/()'"%+!?-]*''', value) and '://' not in value:
+        return value  # readable prose with no Markdown/HTML syntax or autolinks
     delimiter = '`' * (1 + max((len(run) for run in re.findall(r'`+', value)), default=0))
     return delimiter + ' ' + value + ' ' + delimiter
 
@@ -486,7 +488,7 @@ def render_markdown(result: dict) -> str:
                   'Partial snapshots establish observed declarations only. Review intended policy manually.', '']
         for url, notes in observations[:10]:
             lines += ['### ' + _observation_literal(url, 600), '']
-            lines += ['- ' + _observation_literal(note, 600) for note in notes[:8]]
+            lines += ['- ' + _observation_literal(note, 600, prose=True) for note in notes[:8]]
             if len(notes) > 8:
                 lines.append(f'- {len(notes) - 8} more notes for this page are not displayed; inspect its JSON receipts.')
             lines.append('')
