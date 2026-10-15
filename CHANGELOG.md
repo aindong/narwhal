@@ -30,6 +30,12 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Image-only links with descriptive image alternatives, and otherwise-empty
+  links with title fallbacks, no longer receive the empty-anchor-text heuristic.
+  Both parser backends retain image alternatives separately from visible text;
+  blank/generic fallbacks and independent missing-alt checks remain active.
+  This is documented source fallback handling, not a full accessibility-name or
+  visibility computation. Existing finding identities and severities remain.
 - Robots full-URL matching retains semicolon path parameters, so path-specific
   exclusions and more-specific allowances agree with direct path checks.
   Queries, fragment exclusion and encoded reserved-delimiter distinctions remain.

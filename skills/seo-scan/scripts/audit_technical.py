@@ -231,16 +231,21 @@ def _links(doc, resp, report):
         href = a.get("href") or ""
         if not href or href.startswith("#") or href.startswith("javascript:"):
             continue
-        if not a.text:
+        # Google documents image alt text and an otherwise-empty anchor's title
+        # as source fallbacks. Keep them separate from visible/page text.
+        text = (htmlx.collapse(a.text) or htmlx.collapse(a.image_alt_text)
+                or htmlx.collapse(a.get("title")))
+        if not text:
             empty += 1
-        elif a.text.lower() in ("click here", "read more", "here", "link", "more"):
+        elif text.lower() in ("click here", "read more", "here", "link", "more"):
             generic += 1
         if urlparse(urljoin(resp.final_url or resp.url, href)).netloc not in ("", host):
             external += 1
     if empty:
         report.add(CAT, "low", "Links with no anchor text",
-                   f"{empty} <a> tags have empty visible text.",
-                   "Give links descriptive anchor text for users and crawlers.")
+                   f"{empty} <a> tags have no text, image alt text or title fallback.",
+                   "Give links descriptive text or meaningful image alt text. "
+                   "A title is only a fallback, not a full accessibility fix.")
     if generic:
         report.add(CAT, "low", "Generic anchor text",
                    f"{generic} links use phrases like 'click here'.",

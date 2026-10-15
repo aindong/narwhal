@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Source anchor-text fallbacks:** image-only alternatives and empty-anchor
+  titles no longer create false empty-link advice. Both parsers keep image alt
+  data out of page text/headings, and blank/generic labels remain flagged.
+  This is not browser accessibility-name or CSS visibility validation.
 - **Finding reference navigation:** page priority fixes and quick wins link to
   project-guide sections, also exposed as additive `reference_url` JSON metadata.
   Known rule IDs choose precise sections; unmapped rules get general built-in
