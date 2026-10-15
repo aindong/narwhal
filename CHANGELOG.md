@@ -25,6 +25,12 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Robots matching treats equivalent unreserved ASCII escapes and UTF-8 URI
+  spellings consistently, preventing encoded candidates from evading crawl
+  exclusions. Encoded reserved delimiters remain distinct, literal encoded
+  wildcard/end characters stay literal, and normalized equivalent rules retain
+  Allow-on-tie precedence. Path case, explicit robots overrides and existing
+  checked-path scopes are unchanged; no complete conformance claim is added.
 - AI-crawler scoring distinguishes documented search/retrieval agents from
   training/data-use choices, nonbinding user-fetch directives and unverified
   roles. The latter stay visible as non-scoring policy notes, not blanket

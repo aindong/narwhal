@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Robots URI comparison:** equivalent unreserved escapes and UTF-8 spellings
+  now match before crawl filtering. Reserved delimiters and literal encoded
+  operators remain distinct, with case sensitivity and normalized Allow ties
+  preserved. This changes comparison, not checked-path scope or explicit overrides.
 - **Role-aware crawler policies:** documented search/retrieval restrictions
   remain high findings; training/data-use, nonbinding user-fetch and unverified
   directives are non-scoring notes. Page metadata records dated sources and

@@ -29,6 +29,16 @@ check, plus what to do when the automated check isn't enough.
    a URL blocked in robots.txt can still be indexed without a snippet. Always
    reference the XML sitemap from robots.txt.
 
+The shared robots matcher normalizes valid percent-encoded unreserved ASCII and
+UTF-8 spellings before comparison, following the URI-comparison guidance in
+[RFC 9309 §2.2.2](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2.2).
+Encoded reserved delimiters stay distinct (`%2F` is not a path separator), and
+encoded literal `%2A` / `%24` do not become wildcard/end operators. Matching
+remains case-sensitive outside escape hex digits; equivalent normalized rules
+retain Allow-on-tie precedence. Query matching and full-URL fragment exclusion
+remain. This does not claim complete URL/robots conformance or change which
+paths a caller checks; the GEO policy receipt still explicitly checks `/` only.
+
 ## Mobile / rendering
 - `<meta name="viewport" content="width=device-width, initial-scale=1">` is
   mandatory under mobile-first indexing.
