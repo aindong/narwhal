@@ -56,6 +56,8 @@ class RobotsTxt:
         rt = cls()
         if not text:
             return rt
+        # UTF-8's optional file-start marker is not part of the first field.
+        text = text[1:] if text.startswith('\ufeff') else text
         current_agents: list = []
         last_was_rule = False
         for raw in text.splitlines():

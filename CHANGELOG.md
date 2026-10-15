@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- An optional initial UTF-8 BOM no longer hides the first robots.txt user-agent
+  group or Sitemap declaration. Crawl leaf filtering, GEO root-policy checks
+  and sitemap discovery now read the same directives as their unmarked forms;
+  literal markers inside paths and the explicit crawl-base override are unchanged.
 - Root llms.txt observations retain HTTP/type/completeness evidence rather than
   treating every nonempty response as publication or every failure as absence.
   HTML/soft-error/gated/empty/partial/truncated candidates stay unverified and
