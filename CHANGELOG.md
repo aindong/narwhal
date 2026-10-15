@@ -33,7 +33,11 @@ All notable changes to Narwhal are documented here. The format follows
 - Audit-based remediation plans no longer suggest diffing a page scan against
   an audit overall score. Local page checks use a separate artifact; final
   verification reruns an audit after deployment and asks callers to restore the
-  original settings and limits. Scan workflows and diff eligibility guards remain.
+  original settings and limits. Scan workflow semantics and diff eligibility guards remain.
+- Planner verification commands use literal POSIX-shell quoting and an explicit
+  option separator for report paths/URLs. Pasted dollar signs, substitutions and
+  apostrophes remain data; leading dashes cannot become CLI options. Templates
+  are labelled POSIX-specific and never executed by the read-only planner.
 - Raw sitemap fetches verify bounded HTTP gzip/deflate wire bodies before
   decoding, including on older optional transports. Short Content-Length and
   incomplete/corrupt compression trailers cannot expose a complete-looking XML

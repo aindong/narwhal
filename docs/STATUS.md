@@ -25,6 +25,8 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   from the final deployed audit/diff. Templates require the original settings and
   limits rather than inventing a replay; matching kinds alone does not establish
   comparable coverage. Scan plans and manual sitemap gap tasks are unchanged.
+  Verification templates quote paths/URLs as POSIX-shell literals and separate
+  data from options; they are not universal shell syntax or automatically run.
 - **HTTP compression evidence:** raw sitemap fetches acquire bounded wire bytes
   for gzip/deflate and require complete compression streams before decoding.
   Short wire lengths, missing/corrupt trailers and response decode overflow

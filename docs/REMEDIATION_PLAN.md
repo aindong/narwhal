@@ -45,6 +45,13 @@ remain manual verification tasks rather than source edits.
 Markdown audit plans expose the shared audit rerun and settings reminder before
 the action list; per-action JSON retains the complete ordered instructions.
 
+Command strings use **POSIX shell** quoting, not universal terminal syntax;
+adapt them for PowerShell/cmd. URLs and report paths are quoted as literal
+arguments, including dollar signs, command-substitution syntax and apostrophes.
+An explicit `--` separates options from data so a leading dash cannot become an
+option. Replace placeholders and insert original CLI options **before** `--`.
+Instruction text is not shell code, and the planner never executes a template.
+
 Restore the original configuration, rendering, access settings and crawl/link/
 sitemap limits before running an audit template. Reports do not record the full
 invocation, so the planner does not invent those options or grant private-host

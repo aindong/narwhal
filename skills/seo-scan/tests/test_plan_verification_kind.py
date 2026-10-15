@@ -29,15 +29,15 @@ class TestPlanVerificationKind(unittest.TestCase):
                                 report_source='audit-before.json')
         action = next(item for item in built['actions'] if item['artifact'] == 'title')
         commands = action['verification']
-        self.assertEqual(['narwhal', 'scan', '<local-preview-url>', '--allow-private',
-                          '--format', 'json', '-o', 'page-after.json'], shlex.split(commands[0]))
+        self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
+                          '-o', 'page-after.json', '--', '<local-preview-url>'], shlex.split(commands[0]))
         self.assertIn('page-level', commands[1])
         self.assertIn('do not compare', commands[1])
         self.assertIn('original audit configuration', commands[-3])
         self.assertIn('not record the complete invocation', commands[-3])
-        self.assertEqual(['narwhal', 'audit', built['target'], '--format', 'json',
-                          '-o', 'after.json'], shlex.split(commands[-2], comments=True))
-        self.assertEqual(['narwhal', 'diff', 'audit-before.json', 'after.json'],
+        self.assertEqual(['narwhal', 'audit', '--format', 'json', '-o', 'after.json',
+                          '--', built['target']], shlex.split(commands[-2], comments=True))
+        self.assertEqual(['narwhal', 'diff', '--', 'audit-before.json', 'after.json'],
                          shlex.split(commands[-1]))
         self.assertFalse(action['requires_deploy'])  # local page proof remains possible
 
@@ -55,7 +55,7 @@ class TestPlanVerificationKind(unittest.TestCase):
             commands = plan.verification_for(artifact, 'https://example.test', '<memory>', 'audit')
             self.assertIn('replace every TODO', commands[0])
             self.assertIn('-o page-after.json', commands[1])
-            self.assertEqual('narwhal diff before.json after.json', commands[-1])
+            self.assertEqual('narwhal diff -- before.json after.json', commands[-1])
 
     def test_scan_contract_does_not_change(self):
         for artifact in ('title', 'json_ld', 'sitemap', 'server_config'):

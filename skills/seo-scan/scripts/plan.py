@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -556,14 +557,14 @@ def safety_for(artifact: str) -> tuple:
 
 def verification_for(artifact: str, target: str, report_source: str,
                      report_kind: str = "scan") -> list:
+    """Human POSIX-shell templates; quote data and stop option interpretation."""
     before = ("before.json" if report_source.startswith("<") else
-              json.dumps(report_source))
+              shlex.quote(report_source))
     if report_kind == 'audit':
         commands = []
         if artifact not in ("robots_txt", "sitemap", "llms_txt", "server_config"):
             commands += [
-                'narwhal scan "<local-preview-url>" --allow-private '
-                '--format json -o page-after.json',
+                "narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'",
                 'The local scan verifies page-level changes only; do not compare '
                 'page-after.json with the audit baseline or treat it as deployed site verification.',
             ]
@@ -572,20 +573,19 @@ def verification_for(artifact: str, target: str, report_source: str,
             'crawl/link/sitemap limits before running this template; the report does '
             'not record the complete invocation. A matching report kind alone does '
             'not establish comparable coverage.',
-            f'narwhal audit {json.dumps(target)} --format json -o after.json  # run after deploy',
-            f'narwhal diff {before} after.json',
+            f'narwhal audit --format json -o after.json -- {shlex.quote(target)}  # run after deploy',
+            f'narwhal diff -- {before} after.json',
         ]
         if artifact in ("json_ld", "product_schema"):
             commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
         return commands
     if artifact in ("robots_txt", "sitemap", "llms_txt", "server_config"):
-        scan_target = json.dumps(target)
-        scan_command = f"narwhal scan {scan_target} --format json -o after.json  # run after deploy"
+        scan_target = shlex.quote(target)
+        scan_command = f"narwhal scan --format json -o after.json -- {scan_target}  # run after deploy"
     else:
-        scan_command = ('narwhal scan "<local-preview-url>" --allow-private '
-                        '--format json -o after.json')
+        scan_command = "narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'"
     commands = [scan_command,
-                f"narwhal diff {before} after.json"]
+                f"narwhal diff -- {before} after.json"]
     if artifact in ("json_ld", "product_schema"):
         commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
     return commands
@@ -737,6 +737,9 @@ def render_markdown(plan: dict) -> str:
         f"**Framework:** {f['name']} ({round(100 * f['confidence'])}% confidence)  ·  "
         f"**Actions:** {len(plan['actions'])}  ·  **Mapping coverage:** {round(100 * c['mapping_ratio'])}%",
         "", "_Read-only plan: inspect proposed owners and values before applying edits._", "",
+        'Command templates use POSIX shell quoting; adapt for PowerShell/cmd. '
+        'Replace placeholders and add original options before `--`; do not execute '
+        'instruction text as commands.', '',
     ]
     if plan.get('provenance', {}).get('report_kind') == 'audit':
         lines += ['## Audit verification', '',
