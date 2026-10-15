@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Native page-report HTML/PDF headlines describe medium/low findings or the
+  absence of flags instead of promoting a numeric band to an "Excellent"
+  quality verdict. Critical/high and unmeasured precedence stay intact; the
+  secondary band explicitly refers to reported findings, not page quality.
+  Scores, severity, JSON, Markdown and other report types are unchanged.
 - GEO question-heading, sentence-group size, statistic/citation and introductory
   term checks report literal cue counts and limitations, not semantic judgments
   or measured citation outcomes. Their editorial advisories are low priority,
