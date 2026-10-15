@@ -16,6 +16,7 @@ from typing import Optional
 from .guides import reference_url
 from . import sitemap as sitemaplib
 from . import llms_resource
+from . import authorship
 from .code_fences import closes_fence, markdown_lines, opening_fence
 from .markdown_text import TABLE_TEXT_MARKER
 
@@ -454,6 +455,11 @@ class Report:
             lines += ['- ' + note for note in named_meta_notes]
             lines.append('')
 
+        attribution = authorship.evidence_lines(self.meta)
+        if attribution:
+            lines += ['## Attribution cue evidence (not identity verification)', '',
+                      authorship.LIMITS_NOTE, '', '```text', *attribution, '```', '']
+
         # --- Passing checks ------------------------------------------------
         if buckets["good"]:
             lines.append("## Passing checks")
@@ -595,6 +601,12 @@ class Report:
             body.append('<section class="card"><h2>Crawler-specific meta observations (not scored)</h2>'
                         + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in named_meta_notes)
                         + '</ul></section>')
+
+        attribution = authorship.evidence_lines(self.meta)
+        if attribution:
+            body.append('<section class="card"><h2>Attribution cue evidence (not identity verification)</h2>'
+                        + '<p>' + _esc(authorship.LIMITS_NOTE) + '</p><pre><code>'
+                        + _esc('\n'.join(attribution)) + '</code></pre></section>')
 
         # Passing checks
         if buckets["good"]:

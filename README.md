@@ -77,6 +77,13 @@ conditional; configured ranges and matches are not engine requirements. Legacy
 rule IDs remain, but displayed titles change. Priority corrections can raise a
 score without changing a page. See the [check boundaries](skills/seo-scan/references/geo-llmo.md#text-cue-output-and-compatibility).
 
+Attribution checks capture bounded metadata, author-link and short leading
+byline-like **candidates**, not verified writers or expertise. Ordinary prose
+words and blank author metadata do not pass. Missing article cues prompt low
+contextual review, not an anonymity verdict; never invent people or credentials
+to close a finding. Scans and comparisons use the same observer, with JSON
+receipts and literal page-report witnesses. See [scope and limitations](skills/seo-scan/references/content-eeat.md#attribution-cues-not-identity-verification).
+
 Common-phrase checks are editorial review prompts, not AI-authorship detectors.
 Quoted examples may be appropriate for the audience; neither matches nor their
 absence establish originality, helpfulness or ranking impact. The four-distinct-phrase

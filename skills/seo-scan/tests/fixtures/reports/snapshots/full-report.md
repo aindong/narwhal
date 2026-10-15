@@ -1,16 +1,16 @@
 # SEO & GEO Audit — https://example.test/guides/answer-visibility
 
-**Health score: 79/100 (score band: good)**  ·  status 200
+**Health score: 81/100 (score band: good)**  ·  status 200
 
 Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO / LLMO. All four groups ran for this page, not a site-wide or exhaustive validation. Image resource checks were disabled. Findings use served HTML.
 
 | Critical | High | Medium | Low | Passed |
 |:--:|:--:|:--:|:--:|:--:|
-| 0 | 1 | 2 | 9 | 15 |
+| 0 | 1 | 1 | 10 | 15 |
 
 ## Summary
 
-**1 high, 2 medium issue(s) need attention in the completed checks, plus 9 quick win(s).** This page scores **79/100 (score band: good)**.
+**1 high, 1 medium issue(s) need attention in the completed checks, plus 10 quick win(s).** This page scores **81/100 (score band: good)**.
 
 **Top priorities:**
 - 🟠 Thin content (Content & E-E-A-T)
@@ -20,7 +20,7 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 | Area | Score | 🔴 | 🟠 | 🟡 | 🔵 | 🟢 |
 |:--|:--:|:--:|:--:|:--:|:--:|:--:|
 | Technical SEO | 96 | 0 | 0 | 1 | 1 | 8 |
-| Content & E-E-A-T | 87 | 0 | 1 | 1 | 4 | 2 |
+| Content & E-E-A-T | 89 | 0 | 1 | 0 | 5 | 2 |
 | Structured data | 98 | 0 | 0 | 0 | 2 | 1 |
 | GEO / LLMO | 98 | 0 | 0 | 0 | 2 | 4 |
 
@@ -40,17 +40,11 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 - **Fix:** Add descriptive alt text (empty alt="" only for decorative images).
 - [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#images)
 
-### 3. 🟡 No visible author/byline  
-*Content & E-E-A-T · medium*
-
-- **Observed:** No author meta tag or byline detected near the top.
-- **Fix:** Add a named author with credentials — a core E-E-A-T (experience/expertise) signal.
-- [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#experience--expertise)
-
 ## Quick wins
 
 - 🔵 **No compression header** — Enable gzip or Brotli compression to cut transfer size. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#http-hygiene)
 - 🔵 **Content is fairly hard to read** — Consider shorter sentences/simpler words unless the audience is specialist. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#readability)
+- 🔵 **Review article attribution cues** — Review the real byline, profile links and editorial ownership in context. Identify actual creators/reviewers where appropriate; do not invent people or credentials. Missing cues do not establish anonymity or poor quality. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#experience--expertise)
 - 🔵 **No visible date signal** — Expose a publish or last-updated date to signal freshness. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#freshness)
 - 🔵 **Incomplete Open Graph tags** — Add og:title, og:description and og:image for rich social and chat-app link previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata)
 - 🔵 **No Twitter/X card type** — Add twitter:card (e.g. summary_large_image) for X previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata)
@@ -62,6 +56,14 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 ## Root llms.txt response evidence
 
 Root llms.txt absent: the root request returned HTTP 404 or 410 (HTTP 404). Root /llms.txt request only; independent subpath files and rel=describedby discovery were not checked. Redirect destinations are recorded. This is not full proposal validation, linked-resource verification, engine adoption or evidence of ranking/citation impact.
+
+## Attribution cue evidence (not identity verification)
+
+Attribution candidates only: writer identity, rendered visibility, expertise, trust, author-link destinations and ranking impact are not verified. These bounded checks do not establish that attribution is absent.
+
+```text
+No candidate observed in the checked sources; attribution remains unverified.
+```
 
 ## Passing checks
 

@@ -5,12 +5,12 @@
   "final_url": "https://example.test/guides/answer-visibility",
   "status": 200,
   "rendered": false,
-  "score": 79,
+  "score": 81,
   "counts": {
     "critical": 0,
     "high": 1,
-    "medium": 2,
-    "low": 9,
+    "medium": 1,
+    "low": 10,
     "good": 15
   },
   "meta": {
@@ -42,6 +42,33 @@
       "rule_config": "73dd3ab00a8fb78cc6bd9fdde9742750180283543f2b1df87fe6b6a69a495887"
     },
     "extraction": "visible text",
+    "authorship_cues": {
+      "version": 1,
+      "interpretation": "attribution_candidates_only",
+      "basis": "bounded_document_cues",
+      "state": "no_candidate_observed",
+      "candidates": [],
+      "limits_note": "Attribution candidates only: writer identity, rendered visibility, expertise, trust, author-link destinations and ranking impact are not verified. These bounded checks do not establish that attribution is absent.",
+      "limits": {
+        "source_characters": 250000,
+        "leading_text_characters": 1500,
+        "value_characters": 160,
+        "candidates": 5,
+        "depth": 80,
+        "normalized_fields_per_group": 1000,
+        "attribute_characters": 4096,
+        "rel_items": 64
+      },
+      "coverage": {
+        "source_truncated": false,
+        "depth_limited": false,
+        "candidates_omitted": false,
+        "normalized_fields_limited": false,
+        "attribute_input_limited": false,
+        "rel_items_limited": false
+      },
+      "article_hint": true
+    },
     "structured_data": {
       "formats": [
         "jsonld"
@@ -396,10 +423,10 @@
     },
     {
       "category": "content",
-      "severity": "medium",
-      "title": "No visible author/byline",
-      "detail": "No author meta tag or byline detected near the top.",
-      "recommendation": "Add a named author with credentials — a core E-E-A-T (experience/expertise) signal.",
+      "severity": "low",
+      "title": "Review article attribution cues",
+      "detail": "No attribution candidate was observed in the bounded metadata, author-link and leading source-block checks. This does not prove anonymity.",
+      "recommendation": "Review the real byline, profile links and editorial ownership in context. Identify actual creators/reviewers where appropriate; do not invent people or credentials. Missing cues do not establish anonymity or poor quality.",
       "evidence": null,
       "rule_id": "content.no.visible.author.byline",
       "scope": "page",

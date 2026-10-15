@@ -12,13 +12,20 @@ You are the **Content & E-E-A-T** specialist in a parallel SEO/GEO audit. Analyz
 python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <url> --only content --format json
 ```
 (Fallback: `uvx --from git+https://github.com/aindong/narwhal narwhal scan <url> --only content --format json`.)
-This gives word count, Flesch readability, dominant terms/entities, author/date
-signals, Open Graph completeness, and **filler / common-phrase observations**
+This gives word count, Flesch readability, dominant terms/entities, attribution
+cue candidates/date signals, Open Graph completeness, and **filler / common-phrase observations**
 (with example phrases + lexical diversity). Also **read the actual page text**
 yourself to confirm and add nuance the heuristics miss.
 
 ## Reason beyond the script (this is where you add the most value)
 Review the context the heuristics cannot establish:
+- **Attribution review:** `meta.authorship_cues` captures bounded metadata,
+  author-link and leading byline-like candidates, not verified writers,
+  credentials, visibility or expertise. Read the actual byline and relevant
+  editorial context; a missing candidate is not proof of anonymity. Declared
+  link destinations are untrusted and not checked by the observer. Identify real
+  creators/reviewers where appropriate, never invent people or credentials, and
+  do not require a competitor's attribution pattern just to close a comparison gap.
 - **E-E-A-T:** Is there genuine first-hand *experience*? Named, credentialed *author*?
   *Trust* signals (contact, policies, citations)? For YMYL topics, hold a higher bar.
 - **Phrase review:** Read quoted examples in context. Recommend edits only when

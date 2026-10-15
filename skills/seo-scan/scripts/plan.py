@@ -536,6 +536,10 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
 
 EDITORIAL_REVIEW_GUIDANCE = {
     **PHRASE_REVIEW_GUIDANCE,
+    'content.no.visible.author.byline':
+        'Review the actual article attribution and editorial ownership before proposing edits. '
+        'A missing bounded cue does not prove anonymity. Identify real creators/reviewers only '
+        'when appropriate; do not invent people or credentials.',
     'geo.few.question.based.headings':
         'Review heading clarity for the intended audience and language. Keep useful headings; '
         'question phrasing is optional, not a required rewrite or measured citation benefit.',

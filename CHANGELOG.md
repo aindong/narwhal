@@ -12,6 +12,15 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Content scans and comparisons share bounded attribution-cue observations:
+  nonempty author metadata, declared author links and short leading byline-like
+  blocks, independent of main-content extraction. Bare prose words/blank metadata
+  no longer pass. JSON receipts and literal page-report witnesses state the
+  unverified identity/visibility/expertise scope. Missing article cues prompt low
+  contextual review, not an anonymity verdict or blanket author-addition advice. Stable rule IDs
+  and comparison `author_signal` remain; renamed title filters need review.
+  Priority/detection corrections can change tool scores without page changes;
+  current/legacy remediation plans keep edits conditional and review-required.
 - Native page-report HTML/PDF headlines describe medium/low findings or the
   absence of flags instead of promoting a numeric band to an "Excellent"
   quality verdict. Critical/high and unmeasured precedence stay intact; the
