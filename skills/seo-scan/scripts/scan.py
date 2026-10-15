@@ -148,7 +148,11 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     if alts:   # only when in use — keeps most reports free of empty keys
         report.meta["hreflang"] = alts
     if collect_links:
-        report.meta["links"] = links.extract_links(doc, resp.final_url or url)
+        link_diagnostics = {}
+        report.meta["links"] = links.extract_links(doc, resp.final_url or url,
+                                                   diagnostics=link_diagnostics)
+        if link_diagnostics:
+            report.meta["link_extraction"] = {**link_diagnostics, "basis": "url_syntax_only"}
     if collect_fingerprint:
         report.meta["fingerprint"] = simhash.simhash(doc.body_text)
         report.meta["canonical"] = doc.canonical()

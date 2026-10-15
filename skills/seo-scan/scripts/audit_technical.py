@@ -12,9 +12,11 @@ from urllib.parse import urljoin, urlparse
 try:
     from lib import htmlx
     from lib import jsdiff
+    from lib import links
 except ImportError:  # when imported as a package
     from .lib import htmlx  # type: ignore
     from .lib import jsdiff  # type: ignore
+    from .lib import links  # type: ignore
 
 CAT = "technical"
 
@@ -223,14 +225,17 @@ def _images(doc, report):
 
 
 def _links(doc, resp, report):
-    host = urlparse(resp.final_url or resp.url).netloc
     empty = 0
     generic = 0
-    external = 0
+    invalid = 0
     for a in doc.links:
         href = a.get("href") or ""
         if not href or href.startswith("#") or href.startswith("javascript:"):
             continue
+        try:
+            links.resolve_http_link(href, resp.final_url or resp.url)
+        except ValueError:
+            invalid += 1
         # Google documents image alt text and an otherwise-empty anchor's title
         # as source fallbacks. Keep them separate from visible/page text.
         text = (htmlx.collapse(a.text) or htmlx.collapse(a.image_alt_text)
@@ -239,8 +244,13 @@ def _links(doc, resp, report):
             empty += 1
         elif text.lower() in ("click here", "read more", "here", "link", "more"):
             generic += 1
-        if urlparse(urljoin(resp.final_url or resp.url, href)).netloc not in ("", host):
-            external += 1
+    if invalid:
+        report.add(CAT, "low", "Malformed HTTP link URLs",
+                   f"{invalid} <a> href value(s) have invalid HTTP URL syntax and are omitted "
+                   "from HTTP link collection and crawl discovery. No network failure is inferred.",
+                   "Correct the link host, IPv6 brackets or port, then re-scan. "
+                   "Syntax rejection does not establish whether a destination is reachable.",
+                   rule_id="technical.links.invalid.url")
     if empty:
         report.add(CAT, "low", "Links with no anchor text",
                    f"{empty} <a> tags have no text, image alt text or title fallback.",

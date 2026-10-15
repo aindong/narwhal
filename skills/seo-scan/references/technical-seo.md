@@ -72,6 +72,23 @@ paths a caller checks; the GEO policy receipt still explicitly checks `/` only.
   A title fallback is not a full accessibility fix. This source check does not
   compute browser accessible names, CSS visibility, ARIA naming or the combined
   name of mixed text/image content. Image-alt attribute checks stay independent.
+- Parser-recognized malformed HTTP anchor hrefs (such as invalid host brackets or
+  ports) produce a low source-syntax finding rather than aborting the page. They
+  are omitted from HTTP link collection and anchor-based crawl discovery; later
+  valid links remain available. Non-HTTP/fragment references are not mislabeled
+  as malformed HTTP URLs. This is not a complete URI validator or reachability
+  test: no DNS/HTTP request is made to validate syntax, and actual fetches retain
+  the existing host/redirect guards.
+- When links are collected, affected page JSON records `meta.link_extraction`
+  with `invalid_url_occurrences` and `basis: url_syntax_only`. Crawl JSON includes
+  per-page receipts and a sample rollup with `affected_pages`; visible crawl/audit
+  output explains the omissions even when link checks are off. Counts are href
+  occurrences in scanned pages, not unique targets or whole-site error counts.
+  Invalid source URLs are **not network-dead links** and are never assigned a
+  fabricated HTTP failure status. Only scalar counts are retained, not raw URLs
+  or potentially sensitive parser messages. Unaffected/legacy missing receipts
+  are not a promise of complete URL validation. Sitemap/XML and other URL-bearing
+  markup are outside this anchor-href check.
 - Audit for broken internal links and long redirect chains; collapse chains to a
   single 301 to preserve equity and speed.
 
