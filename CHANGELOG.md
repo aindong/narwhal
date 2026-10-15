@@ -20,6 +20,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Optional `requests` connection/TLS/timeout and interrupted-body failures now
+  return failed-fetch responses instead of aborting scans. Failed streams do
+  not expose a received prefix as usable HTML; acquired responses close even
+  when decoding or unexpected processing errors propagate. Successful fetches,
+  HTTP error status/body diagnostics, and SSRF checks are unchanged.
 - Served-HTML baselines use the same selected byte budget as rendered snapshots.
   JS-dependence metrics require two eligible HTML inputs; unavailable, partial or
   explicitly non-HTML baselines yield a visible unverified receipt, not invented

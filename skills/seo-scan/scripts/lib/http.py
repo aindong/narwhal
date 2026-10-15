@@ -241,24 +241,29 @@ def _fetch_requests(url, timeout, user_agent, max_bytes, allow_private=False) ->
             requests, "GET", url, timeout=timeout,
             headers={"User-Agent": user_agent, "Accept": "text/html,*/*"},
             allow_private=allow_private, stream=True)
-    except (requests.TooManyRedirects, SSRFError, ValueError) as exc:
+    except (requests.RequestException, SSRFError, ValueError) as exc:
         return Response(url, url, 0, {}, "", 0, error=str(exc))
-    raw, truncated = _limited_content(r, max_bytes)
-    encoding = r.encoding or "utf-8"
-    text = raw.decode(encoding, "replace")
-    headers = _origin_headers(r.headers)
-    if truncated:
-        headers["x-narwhal-truncated"] = "true"
-    r.close()
-    return Response(
-        url=url,
-        final_url=current,
-        status=r.status_code,
-        headers=headers,
-        text=text,
-        elapsed_ms=0,
-        redirects=redirects,
-    )
+    try:
+        raw, truncated = _limited_content(r, max_bytes)
+        encoding = r.encoding or "utf-8"
+        text = raw.decode(encoding, "replace")
+        headers = _origin_headers(r.headers)
+        if truncated:
+            headers["x-narwhal-truncated"] = "true"
+        return Response(
+            url=url,
+            final_url=current,
+            status=r.status_code,
+            headers=headers,
+            text=text,
+            elapsed_ms=0,
+            redirects=redirects,
+        )
+    except requests.RequestException as exc:
+        # A received prefix is not a usable page when the stream failed.
+        return Response(url, current, 0, {}, "", 0, redirects=redirects, error=str(exc))
+    finally:
+        r.close()
 
 
 def _fetch_urllib(url, timeout, user_agent, max_bytes, allow_private=False) -> Response:
