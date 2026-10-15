@@ -33,7 +33,7 @@ _SECTION_RULES = (
      'thin.content content.is.on.the.short.side link.hub.page.with.little.prose'),
     ('content', 'readability', 'content.is.fairly.hard.to.read content.is.very.hard.to.read'),
     ('content', 'topical-focus', 'body.may.not.reinforce.the.title.topic'),
-    ('content', 'filler--ai-writing-detection',
+    ('content', 'filler--phrase-review',
      'filler.padding.language some.filler.phrasing reads.as.ai.generated.generic '
      'some.generic.ai.sounding.phrasing repetitive.vocabulary'),
     ('content', 'experience--expertise', 'no.visible.author.byline'),

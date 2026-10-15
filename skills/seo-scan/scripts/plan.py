@@ -527,6 +527,13 @@ CHANGE_GUIDANCE = {
 }
 
 
+PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
+    ('content.reads.as.ai.generated.generic', 'content.some.generic.ai.sounding.phrasing'),
+    'Review the matched wording in context with the page owner. Keep useful wording; '
+    'edit only confirmed vague or unnecessary phrasing for the intended audience. '
+    'Phrase matches do not determine authorship, originality, helpfulness or ranking impact.')
+
+
 SITEMAP_VERIFICATION = {
     'technical.sitemap.discovery.unverified': (
         'Verify declared/common sitemap candidates, supported XML format and discovery limits manually. '
@@ -684,7 +691,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                                 'Correct the recorded sitemap URL/lastmod problems or failing sampled HTTP targets '
                                 'in the actual sitemap owner after verifying intended behavior.'
                                 if finding['rule_id'] == 'technical.sitemap.validation.issues'
-                                else CHANGE_GUIDANCE[artifact]),
+                                else PHRASE_REVIEW_GUIDANCE.get(finding['rule_id'], CHANGE_GUIDANCE[artifact])),
             "likely_files": owners,
             "verification": (list(verification[1]) if verification else
                              verification_for(artifact, normalized["target"], report_source,

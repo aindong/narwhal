@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Common-phrase matches are contextual, low-priority editorial review prompts,
+  not AI-authorship or helpful-content/ranking verdicts. Examples and limits
+  remain visible in compact reports; a low-match pass no longer certifies clean,
+  specific writing. Matching logic, helper keys and stable rule IDs remain;
+  four-plus-distinct-phrase priority changes from medium to low, so scores may rise without
+  any page change. Plans keep edits conditional. Update title-based ignore filters.
 - An offline maintainer review-pack utility inventories reported actionable
   findings with source hashes and separate observation/priority/advice labels.
   Stale snapshots, dropped/edited claims and confident labels without attached

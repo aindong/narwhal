@@ -61,7 +61,7 @@ class TestText(unittest.TestCase):
         self.assertEqual(textlib.top_keywords(""), [])
 
 class TestContentQuality(unittest.TestCase):
-    AI = ("In today's fast-paced world, it is worth noting that we must delve into "
+    PHRASES = ("In today's fast-paced world, it is worth noting that we must delve into "
           "the ever-evolving realm of marketing. When it comes to unlocking the "
           "potential of your brand, our cutting-edge seamless solutions play a "
           "crucial role. Needless to say, this is a testament to our game-changing "
@@ -71,8 +71,8 @@ class TestContentQuality(unittest.TestCase):
              "setting width and height cut the median to 1.9 seconds. Checkout pages "
              "improved less because a third-party script blocks the main thread. ") * 2
 
-    def test_flags_filler_and_ai(self):
-        r = cq.analyze(self.AI)
+    def test_counts_filler_and_common_phrases(self):
+        r = cq.analyze(self.PHRASES)
         self.assertGreater(r["filler_per_100w"], 1.0)
         self.assertGreaterEqual(r["ai_distinct"], 4)
         self.assertTrue(r["filler_examples"])
@@ -86,13 +86,14 @@ class TestContentQuality(unittest.TestCase):
         r = cq.analyze("Too short.")
         self.assertEqual(r["filler_per_100w"], 0.0)  # under 100 words -> not scored
 
-    def test_auditor_flags_ai_content(self):
+    def test_auditor_surfaces_phrases_for_review_not_authorship(self):
         import audit_content
         from lib.report import Report
         rep = Report("u")
-        audit_content._quality(self.AI, rep)
+        audit_content._quality(self.PHRASES, rep)
         titles = [f.title for f in rep.findings]
-        self.assertTrue(any("AI-generated" in t or "Filler" in t for t in titles))
+        self.assertIn("Common phrases worth reviewing", titles)
+        self.assertFalse(any("AI-generated" in t for t in titles))
 
 class TestSimhash(unittest.TestCase):
     # Realistic page-length, VARIED text (many unique shingles). SimHash is built

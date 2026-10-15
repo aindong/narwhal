@@ -73,7 +73,7 @@ Root llms.txt absent: the root request returned HTTP 404 or 410 (HTTP 404). Root
 - 🟢 **Responsive viewport declared**
 - 🟢 **robots.txt references a sitemap**
 - 🟢 **XML sitemap reachable**
-- 🟢 **Clean, specific writing** — low filler, diverse vocabulary (0.815)
+- 🟢 **Few configured style-pattern matches** — 0 filler matches; 0 distinct common-phrase matches; lexical diversity 0.815. This does not establish authorship, originality or content quality.
 - 🟢 **Dominant topics detected** — page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy
 - 🟢 **Structured data present** — Article
 - 🟢 **Question-based headings present** — 2/2 subheadings

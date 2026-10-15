@@ -70,6 +70,13 @@ And yes, it works as a backronym too:
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
+Common-phrase checks are editorial review prompts, not AI-authorship detectors.
+Quoted examples may be appropriate for the audience; neither matches nor their
+absence establish originality, helpfulness or ranking impact. The four-distinct-phrase
+advisory is now low priority (previously medium), so that score correction is not
+a page improvement. Stable rule IDs remain; update title-based ignore filters
+for the [revised labels and interpretation](skills/seo-scan/references/content-eeat.md#filler--phrase-review).
+
 Site-graph ranked lists use URL order to break equal inbound-link or depth
 ranks before display caps. For the same fixed sample, process hash seeds no
 longer change which tied pages enter the top-five JSON or top-three Markdown

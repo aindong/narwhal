@@ -38,7 +38,7 @@ def audit(doc, resp, report, ctx=None) -> None:
     # category, front pages), and byline checks misfire on non-articles.
     hub = htmlx.is_hub_page(doc)
     article = htmlx.looks_article(doc)
-    # Flesch and the filler/AI-pattern lists are English-calibrated. Running
+    # Flesch and the filler/common-phrase lists are English-calibrated. Running
     # them on a declared non-English page measures nothing real — skip them
     # (and claim nothing) rather than mislabel French prose "hard to read".
     english = not doc.lang or doc.lang.strip().lower().startswith("en")
@@ -134,7 +134,7 @@ def _keywords(doc, text, report):
 
 
 def _quality(text, report):
-    """Flag filler/padding language, AI-writing patterns, and low diversity."""
+    """Surface phrase matches for editorial review, not authorship detection."""
     q = content_quality.analyze(text)
     if q["word_count"] < 100:
         return  # too short to judge reliably
@@ -152,18 +152,28 @@ def _quality(text, report):
                    "Tighten wording; prefer specifics over padding.",
                    evidence="; ".join(q["filler_examples"]))
 
+    # Low-priority quick wins omit detail/evidence in compact reports. Keep the
+    # examples and interpretation boundary in the recommendation as well.
+    phrase_advice = (f"Example matches: {'; '.join(q['ai_examples'])}. Review in context. "
+                     "Edit only if wording is vague or unnecessary for the intended "
+                     "audience; keep useful wording. Matches do not determine "
+                     "authorship, originality, helpfulness or ranking impact.")
     if q["ai_distinct"] >= 4:
-        report.add(CAT, "medium", "Reads as AI-generated / generic",
-                   f"{q['ai_distinct']} distinct AI-writing patterns "
-                   f"({q['ai_pattern_count']} total).",
-                   "Rewrite in an original voice with first-hand specifics and "
-                   "examples — generic AI-sounding prose is a helpful-content risk.",
-                   evidence="; ".join(q["ai_examples"]))
+        report.add(CAT, "low", "Common phrases worth reviewing",
+                   f"{q['ai_distinct']} distinct configured phrase matches "
+                   f"({q['ai_pattern_count']} total). Phrase matches do not determine "
+                   "authorship, originality, helpfulness or ranking impact.",
+                   phrase_advice,
+                   evidence="; ".join(q["ai_examples"]),
+                   rule_id="content.reads.as.ai.generated.generic")
     elif q["ai_distinct"] >= 2:
-        report.add(CAT, "low", "Some generic/AI-sounding phrasing",
-                   f"{q['ai_distinct']} AI-writing patterns detected.",
-                   "Replace cliché phrasing with concrete, experience-backed detail.",
-                   evidence="; ".join(q["ai_examples"]))
+        report.add(CAT, "low", "Some common phrases worth reviewing",
+                   f"{q['ai_distinct']} distinct configured phrase matches "
+                   f"({q['ai_pattern_count']} total). Phrase matches do not determine "
+                   "authorship, originality, helpfulness or ranking impact.",
+                   phrase_advice,
+                   evidence="; ".join(q["ai_examples"]),
+                   rule_id="content.some.generic.ai.sounding.phrasing")
 
     if q["word_count"] >= 400 and q["lexical_diversity"] < 0.35:
         report.add(CAT, "low", "Repetitive vocabulary",
@@ -172,8 +182,11 @@ def _quality(text, report):
                    "spun content.")
     if (q["filler_per_100w"] < 1.0 and q["ai_distinct"] < 2
             and q["lexical_diversity"] >= 0.35):
-        report.ok(CAT, "Clean, specific writing",
-                  f"low filler, diverse vocabulary ({q['lexical_diversity']})")
+        report.add(CAT, "good", "Few configured style-pattern matches",
+                   f"{q['filler_count']} filler matches; {q['ai_distinct']} distinct "
+                   f"common-phrase matches; lexical diversity {q['lexical_diversity']}. "
+                   "This does not establish authorship, originality or content quality.",
+                   rule_id="content.clean.specific.writing")
 
 
 def _authorship(doc, text, report, article=False):
