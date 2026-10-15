@@ -29,6 +29,7 @@ class TestPlanMemoryBaseline(unittest.TestCase):
                         self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, steps[0])
                         self.assertIn('original input report JSON', steps[0])
                         self.assertIn('keeping all fields', steps[0])
+                        self.assertIn('distinct fresh verification output paths', steps[0])
                         self.assertIn('Do not overwrite files or substitute a new scan', steps[0])
                         self.assertIn('has not saved a baseline', steps[0])
                         self.assertEqual('narwhal diff -- before.json after.json', steps[-1])

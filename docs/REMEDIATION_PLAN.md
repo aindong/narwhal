@@ -54,8 +54,9 @@ Instruction text is not shell code, and the planner never executes a template.
 
 For in-memory/Python or parsed-object MCP inputs, no baseline file is created.
 Every diff-producing action first asks the caller to preserve the original report
-JSON, keeping all fields, at a fresh `before.json` or update the diff to its saved
-path. Do this before edits/reruns; never substitute a new scan or overwrite an
+JSON, keeping all fields, at a fresh `before.json` before edits/reruns. If using
+an existing saved report, update the diff baseline and choose distinct fresh
+verification output paths; never substitute a new scan or overwrite an
 existing file. Markdown surfaces the same prerequisite outside executable code.
 File-backed plans do not get this memory-only instruction. Manual verification-
 only and empty plans do not acquire an unrelated audit/diff workflow.

@@ -27,7 +27,8 @@ MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
 MEMORY_BASELINE_INSTRUCTION = (
     'Save the original input report JSON, keeping all fields, to a fresh before.json '
-    '(or update the diff to its existing saved path) before edits or reruns. '
+    'before edits or reruns. If using an existing saved report, point the diff at that '
+    'baseline and choose distinct fresh verification output paths. '
     'Do not overwrite files or substitute a new scan. This read-only plan has not saved a baseline.'
 )
 SKIP_DIRS = {
