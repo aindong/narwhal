@@ -142,6 +142,13 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Optional BeautifulSoup parsing preserves document heading order instead of
+  grouping headings by level. Heading-jump evidence and brief H2/H3 subtopics
+  now follow the selected parser's document order, matching the existing stdlib
+  behavior for the tested inputs. Counts, text normalization, rule IDs and
+  severity are unchanged; order-sensitive findings and scores can be corrected
+  without any page change. This does not promise malformed-HTML or visibility
+  parity between parsers, or independent SEO accuracy.
 - Generic robots-meta checks combine all active tags, recognize `none` as
   `noindex,nofollow`, and match exact names instead of substrings/parameter
   values. Standalone restrictions before a parameter are retained; later tags
