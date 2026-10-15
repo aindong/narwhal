@@ -719,18 +719,47 @@ def html_document(title: str, subtitle: str, body: str) -> str:
 
 
 def _inline_md(text: str) -> str:
-    """Inline Markdown -> HTML for the subset our renderers emit: `code`,
-    **bold**, and bare URLs. Input is escaped first, so this is XSS-safe."""
+    """Render our limited inline Markdown, keeping code spans escaped/literal.
+
+    Equal-length backtick runs delimit code on one input line. Protect spans
+    before links/emphasis, then restore them without reinterpreting their body.
+    This is not a general Markdown parser (e.g. no multiline code spans).
+    """
     import re
     out = _esc(text)
-    out = re.sub(r"`([^`]+)`", r"<code>\1</code>", out)
+    runs = list(re.finditer(r'`+', out))
+    following, last = {}, {}
+    for index in range(len(runs) - 1, -1, -1):
+        length = runs[index].end() - runs[index].start()
+        if length in last:
+            following[index] = last[length]
+        last[length] = index
+    chunks, code = [], []
+    cursor = index = 0
+    while index < len(runs):
+        end_index = following.get(index)
+        if end_index is None:
+            index += 1
+            continue
+        opening, closing = runs[index], runs[end_index]
+        chunks.append(out[cursor:opening.start()])
+        # Raw '<' cannot occur in escaped user input. These private structural
+        # tokens therefore cannot collide with user text or escaped lookalikes.
+        chunks.append(f'<narwhal-code-{len(code)}>')
+        code.append('<code>' + out[opening.end():closing.start()] + '</code>')
+        cursor = closing.end()
+        index = end_index + 1
+    chunks.append(out[cursor:])
+    out = ''.join(chunks)
     # [text](http…) links — before other spans; URL restricted to http(s).
-    out = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)",
+    # A protected code span may be a label, but never part of an href value.
+    out = re.sub(r"\[([^\]]+)\]\((https?://[^)\s<>]+)\)",
                  r'<a href="\2">\1</a>', out)
     out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
     # _italic_ — only at word boundaries so snake_case / paths aren't matched.
     out = re.sub(r"(?<!\w)_([^_]+)_(?!\w)", r"<em>\1</em>", out)
-    return out
+    return re.sub(r'<narwhal-code-(\d+)>',
+                  lambda match: code[int(match.group(1))], out)
 
 
 def md_to_html(md: str) -> str:

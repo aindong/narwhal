@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Inline code retains literal Markdown, links and escaped HTML rather than
+  formatting its contents. Equal-length backtick runs allow embedded shorter
+  runs; surrounding formatting still works. Code cannot become an href value,
+  and internal span protection cannot collide with user text. Single-line spans
+  retain inner whitespace; this remains a limited report Markdown subset.
 - In-memory/Python and parsed-object MCP plans explicitly require preserving the
   original report before verification diffs; read-only planning never saves it.
   Markdown keeps that prerequisite outside shell blocks. File-backed, measurement-
