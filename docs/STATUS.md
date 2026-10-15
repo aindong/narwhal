@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Fragment-free sitemap-file accounting:** literal `#fragment` aliases share
+  file attempts and child/traversal slots, including failed/cyclic references.
+  Valid siblings remain reachable within existing limits; pending-file counts
+  do not multiply aliases. Queries, encoded delimiters and page references are
+  unchanged. This is not general URI canonicalization or a wider fetch policy.
 - **Baseline-preserving verification names:** scan/audit output templates choose
   distinct names when the input basename collides with `after.json` or local
   `page-after.json`. JSON and Markdown share that choice; filesystem aliases are

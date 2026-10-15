@@ -321,6 +321,12 @@ anchor fallback and valid siblings within those limits. Already-visited entries
 are skipped without retaining entire parsed-file buffers. These are component
 budgets, not an aggregate audit/network/CPU/heap budget; validator traversal has
 its separately selected `--max-sitemaps` budget.
+Sitemap-file accounting drops literal `#fragment` values before deduplication,
+child-slot selection and traversal/remaining counts, matching HTTP's fragment-free
+request target. Aliases cannot repeatedly consume the same file budget or crowd
+out later siblings. Query strings, encoded `%23`, path spelling and page-location
+source values are not rewritten. This is not general URI canonicalization or
+permission to bypass source/fetch validation.
 HTTP `Content-Encoding: gzip`/`deflate` is checked separately from raw `.gz`
 files: the fetch budget bounds both encoded wire bytes and decoded response
 bytes. Short declared bodies, missing/corrupt compression trailers and decode

@@ -300,6 +300,15 @@ def loc_problem(loc: str, host: str = None):
 REFERENCE_KINDS = ('robots_directives', 'index_locations', 'page_locations')
 
 
+def file_url(url):
+    """Drop literal fragments for sitemap-file accounting, not URI canonicalization.
+
+    HTTP never sends a fragment. Preserve query strings, encoded delimiters and
+    path spelling; callers still validate source syntax and every actual fetch.
+    """
+    return url.split('#', 1)[0]
+
+
 def usable_locations(values, *, diagnostics=None, source='page_locations'):
     """Keep absolute HTTP source references; count rejections without I/O."""
     usable = []
