@@ -1,7 +1,11 @@
 """Rendered snapshots obey the primary HTML budget and report partial input."""
 
 import sys
+import io
+import types
 import unittest
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from unittest import mock
 
@@ -134,6 +138,51 @@ class TestRenderBudget(unittest.TestCase):
         self.assertEqual([False], observed)
         self.assertEqual({'jsdep': {'js_only_pct': 99}}, context)
         self.assertNotIn('js_dependence', report.meta)
+
+
+class TestOriginCoverageMarker(unittest.TestCase):
+    def headers(self):
+        headers = Message()
+        headers['Content-Type'] = 'text/html; charset=utf-8'
+        headers['X-Narwhal-Truncated'] = 'true'
+        return headers
+
+    def test_origin_header_filter_is_case_insensitive_and_non_mutating(self):
+        original = {'X-Narwhal-Truncated': 'true', 'Content-Type': 'text/html'}
+        self.assertEqual({'content-type': 'text/html'}, http._origin_headers(original))
+        self.assertEqual('true', original['X-Narwhal-Truncated'])
+
+    def test_requests_coverage_comes_from_byte_count_not_origin_marker(self):
+        fake_module = types.SimpleNamespace(TooManyRedirects=RuntimeError)
+        for body, expected in ((b'abc', False), (b'abcdefghi', True)):
+            with self.subTest(body=body):
+                response = mock.Mock(headers={'X-Narwhal-Truncated': 'true'},
+                                     encoding='utf-8', status_code=200)
+                response.iter_content.return_value = [body]
+                with mock.patch.dict(sys.modules, {'requests': fake_module}), \
+                        mock.patch.object(http, '_requests_safe', return_value=(response, URL, [])):
+                    result = http._fetch_requests(URL, 20, http.DEFAULT_UA, 8)
+                self.assertEqual(expected, result.headers.get('x-narwhal-truncated') == 'true')
+                self.assertLessEqual(len(result.text), 8)
+                response.close.assert_called_once()
+
+    def test_urllib_coverage_comes_from_byte_count_not_origin_marker(self):
+        for body, expected in ((b'abc', False), (b'abcdefghi', True)):
+            with self.subTest(body=body):
+                stream = mock.MagicMock(headers=self.headers(), status=200)
+                stream.__enter__.return_value = stream
+                stream.read.return_value = body
+                with mock.patch.object(http, '_urllib_safe_open', return_value=(stream, URL, [])):
+                    result = http._fetch_urllib(URL, 20, http.DEFAULT_UA, 8)
+                self.assertEqual(expected, result.headers.get('x-narwhal-truncated') == 'true')
+                self.assertLessEqual(len(result.text), 8)
+
+    def test_urllib_error_response_cannot_forge_coverage(self):
+        error = urllib.error.HTTPError(URL, 403, 'Forbidden', self.headers(), io.BytesIO(b'denied'))
+        with mock.patch.object(http, '_urllib_safe_open', side_effect=error):
+            result = http._fetch_urllib(URL, 20, http.DEFAULT_UA, 8)
+        self.assertEqual(403, result.status)
+        self.assertNotIn('x-narwhal-truncated', result.headers)
 
 
 if __name__ == '__main__':

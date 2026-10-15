@@ -44,6 +44,8 @@ class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
+        if self.path == "/spoofed":
+            self.send_header("X-Narwhal-Truncated", "true")
         self.end_headers()
         self.wfile.write(BUDGET_PAGE if self.path == "/budget" else
                          ACTIVATED_PAGE if self.path == "/activated" else PAGE)
@@ -66,6 +68,9 @@ def main() -> int:
         bounded = http.fetch(url + "budget", render=True, allow_private=True,
                              timeout=30, max_bytes=64_000)
         partial = scan.scan(url + "budget", render=True, allow_private=True,
+                             timeout=30, max_bytes=64_000, only=["technical"],
+                             ctx={}, check_images=False)
+        spoofed = scan.scan(url + "spoofed", render=True, allow_private=True,
                              timeout=30, max_bytes=64_000, only=["technical"],
                              ctx={}, check_images=False)
     finally:
@@ -105,10 +110,16 @@ def main() -> int:
             or not any(f.rule_id == "technical.response.truncated" for f in partial.findings)):
         print("FAIL: partial rendered snapshot lost coverage or produced a JS-dependence measurement.", file=sys.stderr)
         return 1
+    if (not spoofed.rendered or spoofed.hard_fail
+            or spoofed.meta["coverage"]["response_truncated"]
+            or "js_dependence" not in spoofed.meta):
+        print("FAIL: origin header forged partial DOM coverage or skipped a valid JS comparison.", file=sys.stderr)
+        return 1
     # The raw (unrendered) HTML says "loading…"; the rendered DOM must not.
     print(f"OK: rendered DOM captured the JS-injected marker ({MARKER}).")
     print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
     print("OK: rendered UTF-8 byte budget enforced; partial scan flagged without JS-dependence metrics.")
+    print("OK: origin cannot forge the internally calculated truncation marker.")
     return 0
 
 
