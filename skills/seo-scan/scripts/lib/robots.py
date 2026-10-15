@@ -16,7 +16,7 @@ Used by the GEO auditor (AI-crawler access) and the polite site crawler.
 from __future__ import annotations
 
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
 
 _UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
@@ -131,7 +131,8 @@ class RobotsTxt:
     @staticmethod
     def _path(url_or_path: str) -> str:
         if "://" in url_or_path or url_or_path.startswith("//"):
-            parts = urlparse(url_or_path)
+            # Semicolon parameters are path octets, not a component to discard.
+            parts = urlsplit(url_or_path)
             path = parts.path or "/"
             if parts.query:
                 path += "?" + parts.query

@@ -25,6 +25,9 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Robots full-URL matching retains semicolon path parameters, so path-specific
+  exclusions and more-specific allowances agree with direct path checks.
+  Queries, fragment exclusion and encoded reserved-delimiter distinctions remain.
 - Robots matching treats equivalent unreserved ASCII escapes and UTF-8 URI
   spellings consistently, preventing encoded candidates from evading crawl
   exclusions. Encoded reserved delimiters remain distinct, literal encoded
