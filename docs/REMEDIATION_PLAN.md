@@ -52,6 +52,14 @@ An explicit `--` separates options from data so a leading dash cannot become an
 option. Replace placeholders and insert original CLI options **before** `--`.
 Instruction text is not shell code, and the planner never executes a template.
 
+Known baseline basename collisions select alternate output names: `after.json`
+uses `after-2.json`, and an audit baseline named `page-after.json` uses
+`page-after-2.json` for its local page check. Commands, diff targets and Markdown
+use those same selections. Basename comparison is conservatively case-insensitive
+and recognizes either path separator without filesystem reads. This is not
+filesystem identity verification: choose fresh regular output paths and check
+symlink/hardlink aliases before running a template. Do not overwrite the baseline.
+
 Restore the original configuration, rendering, access settings and crawl/link/
 sitemap limits before running an audit template. Reports do not record the full
 invocation, so the planner does not invent those options or grant private-host

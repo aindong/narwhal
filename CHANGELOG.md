@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Planner verification templates avoid known baseline basename collisions for
+  both scan and audit workflows, including local page checks. Alternate output
+  names stay aligned with diff targets and Markdown, preserving an `after.json`
+  or `page-after.json` baseline instead of creating a self-comparison. File aliases
+  still require caller checks; the read-only planner does not inspect them.
 - Audit-based remediation plans no longer suggest diffing a page scan against
   an audit overall score. Local page checks use a separate artifact; final
   verification reruns an audit after deployment and asks callers to restore the
