@@ -11,6 +11,7 @@ import argparse
 from datetime import datetime
 from hashlib import sha256
 import json
+import math
 from pathlib import Path
 import re
 import sys
@@ -42,7 +43,13 @@ def _object(pairs):
 def _json(raw):
     def invalid_constant(value):
         raise ValueError('Nonfinite JSON number: ' + value)
-    return json.loads(raw.decode('utf-8'), object_pairs_hook=_object, parse_constant=invalid_constant)
+    def finite_float(value):
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError('Nonfinite JSON number')
+        return result
+    return json.loads(raw.decode('utf-8'), object_pairs_hook=_object,
+                      parse_constant=invalid_constant, parse_float=finite_float)
 
 
 def _same(left, right):
@@ -257,7 +264,7 @@ def main(argv=None):
             packet = _json(_read(Path(args.packet), MAX_PACKET_BYTES))
             result = summarize(args.manifest, packet)
         rendered = (markdown(result) if getattr(args, 'format', None) == 'markdown'
-                    else json.dumps(result, indent=2, ensure_ascii=not bool(args.output)) + '\n')
+                    else json.dumps(result, indent=2, ensure_ascii=not bool(args.output), allow_nan=False) + '\n')
         if len(rendered.encode('utf-8')) > MAX_PACKET_BYTES:
             raise ValueError('Output byte limit exceeded; split the corpus')
         if args.output:
