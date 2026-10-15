@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Literal fenced-code reports:** shared root-fence rules preserve escaped code
+  and exclude code comments from report-title extraction. Whitespace survives
+  documented indentation/newline normalization; long lines scroll on screen and
+  wrap for print/PDF input. No highlighting dependency or full Markdown claim.
 - **Fragment-free sitemap-file accounting:** literal `#fragment` aliases share
   file attempts and child/traversal slots, including failed/cyclic references.
   Valid siblings remain reachable within existing limits; pending-file counts

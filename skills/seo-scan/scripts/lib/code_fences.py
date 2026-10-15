@@ -5,6 +5,8 @@ from typing import NamedTuple, Optional
 
 
 class CodeFence(NamedTuple):
+    """Opening marker, indentation and a bounded, safe optional language label."""
+
     marker: str
     length: int
     indent: int

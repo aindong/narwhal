@@ -692,7 +692,7 @@ pre code{display:block;padding:0;background:transparent;border-radius:0;word-bre
 .m-lab{font-size:12px;color:var(--muted)}
 .foot{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 0}
 .foot a{color:var(--brand);text-decoration:none}
-@media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}}
+@media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}pre{white-space:pre-wrap;overflow:visible}pre code{overflow-wrap:break-word}}
 """
 
 
@@ -739,9 +739,8 @@ def _inline_md(text: str) -> str:
 def md_to_html(md: str) -> str:
     """Convert the limited Markdown our sub-reports emit (headings, tables,
     lists, blockquotes, root code fences, `---`, bold/code) into styled HTML. This is not a
-    general Markdown engine — it only needs to cover what crawl_site and
-    validate_sitemap produce, so the combined audit can render them as HTML
-    without duplicating their logic."""
+    general Markdown engine. Shared by sub-reports and the branded render CLI;
+    fenced content bypasses inline/block interpretation and stays escaped."""
     lines = markdown_lines(md)
     out, i, n = [], 0, len(lines)
 

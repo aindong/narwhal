@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Branded Markdown rendering preserves root fenced code as escaped literal
+  content, including whitespace, comments and Markdown-looking examples. Shared
+  fence rules keep code headings out of title extraction; screen blocks scroll
+  and print/PDF input wraps long lines. Existing non-code rendering and scan
+  scoring are unchanged; this is a limited subset, not a full Markdown engine.
 - Sitemap-file discovery/traversal deduplicates literal fragment aliases before
   counting attempts, child slots and remaining files. Repeated `file.xml#…`
   references no longer crowd valid siblings out of bounded samples or multiply
