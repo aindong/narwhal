@@ -60,6 +60,14 @@ the English-oriented basis/limits and four bounded count objects:
 Empty-input counts are observations, not passes. These receipts do not validate
 language understanding, paragraph semantics, source truth or engine behavior.
 
+`sentence_groups.word_min`/`word_max` retain plain integers and finite floats.
+Programmatic `Decimal`/`Fraction` values use JSON-safe `{kind, value}` descriptors
+with exact string representations; nonfinite floats use explicit descriptors
+rather than nonstandard JSON numbers. Other comparable numeric types use an
+`unrecorded_numeric_type` marker. The actual comparisons keep the original values:
+no float coercion rounds a threshold near an integer boundary. A serializable
+receipt is not validation of custom settings or a verified configuration snapshot.
+
 The matching algorithms, thresholds and legacy rule IDs remain stable. IDs with
 historical names such as `citable`, `evidence.signals` or `direct.answer` are
 machine identifiers, not semantic certification; read the counts and limits.

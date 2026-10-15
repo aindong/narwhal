@@ -1,6 +1,8 @@
 """GEO lexical counts must not masquerade as semantic or engine measurements."""
 
 import json
+from decimal import Decimal
+from fractions import Fraction
 from pathlib import Path
 import re
 import sys
@@ -163,6 +165,52 @@ class TestGeoTextCues(unittest.TestCase):
         self.assertEqual(0, receipt(report, 'question_headings')['examined'])
         self.assertEqual(0, receipt(report, 'sentence_groups')['examined'])
         self.assertEqual(0, receipt(report, 'intro_cues')['inspected_tokens'])
+
+    def test_decimal_bounds_serialize_exactly_without_rounding_comparisons(self):
+        markup = '<p>' + 'word ' * 40 + '</p>'
+        response = http.Response(URL, URL, 200, {'content-type': 'text/html'}, markup, 1)
+        for lower, expected in ((Decimal('40'), 1), (Decimal('40.000000000000000000000001'), 0)):
+            for source in ('context', 'config'):
+                with self.subTest(lower=lower, source=source):
+                    bounds = {'passage_min': lower, 'passage_max': Decimal('120')}
+                    options = ({'ctx': {'thresholds': bounds}} if source == 'context'
+                               else {'ctx': {}, 'config': Config({'thresholds': bounds})})
+                    with mock.patch.object(http, 'fetch', return_value=response), \
+                            mock.patch.object(htmlx, '_main_content', return_value=''):
+                        report = scan.scan(URL, only=['geo'], check_images=False, **options)
+                    data = json.loads(report.to_json())['meta']['geo_text_cues']['checks']['sentence_groups']
+                    self.assertEqual(expected, data['in_range'])
+                    self.assertEqual({'kind': 'decimal', 'value': str(lower)}, data['word_min'])
+                    self.assertEqual({'kind': 'decimal', 'value': '120'}, data['word_max'])
+                    self.assertNotIn('rule_config', report.meta['scan_settings'])
+
+    def test_fraction_and_nonfinite_float_bounds_have_json_safe_descriptors(self):
+        cases = ((Fraction(81, 2), {'kind': 'fraction', 'value': '81/2'}),
+                 (float('inf'), {'kind': 'nonfinite_float', 'value': 'inf'}),
+                 (float('-inf'), {'kind': 'nonfinite_float', 'value': '-inf'}),
+                 (float('nan'), {'kind': 'nonfinite_float', 'value': 'nan'}))
+        for lower, expected in cases:
+            with self.subTest(lower=lower):
+                report = run_helper('_passage_citability', '<p>' + 'word ' * 40 + '</p>',
+                                    th={'passage_min': lower, 'passage_max': 120})
+                def reject(value):
+                    self.fail('Nonfinite JSON literal emitted: ' + value)
+                data = json.loads(report.to_json(), parse_constant=reject)
+                self.assertEqual(expected, data['meta']['geo_text_cues']['checks']['sentence_groups']['word_min'])
+
+    def test_other_comparable_numeric_types_are_unrecorded_not_stringified_or_rejected(self):
+        class Bound:
+            def __le__(self, other):
+                return 40 <= other
+            def __ge__(self, other):
+                return 40 >= other
+            def __str__(self):
+                return '40'
+        report = run_helper('_passage_citability', '<p>' + 'word ' * 40 + '</p>',
+                            th={'passage_min': Bound(), 'passage_max': 120})
+        data = json.loads(report.to_json())['meta']['geo_text_cues']['checks']['sentence_groups']
+        self.assertEqual(1, data['in_range'])
+        self.assertEqual({'kind': 'unrecorded_numeric_type'}, data['word_min'])
 
     def test_receipt_itself_does_not_change_score_or_findings(self):
         report = Report(URL)
