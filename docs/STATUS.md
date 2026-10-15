@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Readable branded tables:** dedicated Markdown styles add padding, row guides
+  and aligned semantic headers. Wide tables scroll locally via mouse/keyboard;
+  print uses compact wrapping cells without focused-region outlines. Score tables
+  retain their separate styling. A dedicated browser regression is included in CI.
 - **Stable report-table cells:** escaped pipes stay inside their cells, including
   code examples; one optional outer delimiter no longer consumes empty edge
   cells. Odd/even backslash runs distinguish escaped pipes from separators.
