@@ -97,6 +97,26 @@ class TestSitemapFetchCompleteness(unittest.TestCase):
         self.assertIn('Incomplete response', error)
         self.assertTrue(response.closed)
 
+    def test_short_requests_body_below_limit_is_unverified_on_older_streams(self):
+        for encoding in (None, 'identity', ' Identity '):
+            response = requests_response([XML], length=len(XML) + 20)
+            if encoding is not None:
+                response.headers['content-encoding'] = encoding
+            with self.subTest(encoding=encoding):
+                body, error = fetch('requests', response, budget=len(XML) + 100)
+                self.assertIsNone(body)
+                self.assertIn('Incomplete response', error)
+                response.close.assert_called_once()
+
+    def test_encoded_or_transfer_decoded_lengths_are_not_compared_to_wire_length(self):
+        for header, value in (('content-encoding', 'gzip'), ('content-encoding', 'deflate'),
+                              ('transfer-encoding', 'chunked')):
+            response = requests_response([XML], length=len(XML) + 20)
+            response.headers[header] = value
+            with self.subTest(header=header, value=value):
+                self.assertEqual((XML, None), fetch('requests', response))
+                response.close.assert_called_once()
+
     def test_large_declared_lengths_do_not_crash_integer_conversion(self):
         for declared in ('9' * 10_000, '000' + str(len(XML) + 20)):
             with self.subTest(declared=declared[:20]):

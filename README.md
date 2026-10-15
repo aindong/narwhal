@@ -303,6 +303,10 @@ decoded limits describe different stages; neither is a total network/heap/CPU
 budget. Redirect/private-host checks remain active. Only expected transport
 failures become bounded notes; unexpected processing errors propagate after
 response cleanup.
+The explicit received-length check covers identity/unencoded, non-transfer-encoded
+requests bodies too, including older optional dependency versions that do not
+raise on a short stream. Decoded gzip/chunked sizes are not compared directly to
+wire Content-Length; this is not full transport/encoding conformance validation.
 `--max-sitemaps` bounds distinct file fetch attempts, including failures, recorded
 as `sitemaps_attempted`; it is not a redirect-hop or whole-network request budget.
 Remaining-file counts exclude already-visited and duplicate queued references.

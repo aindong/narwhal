@@ -458,7 +458,13 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
             if not 200 <= r.status_code < 300:
                 return None, f'HTTP {r.status_code}'
             raw, truncated = _limited_content(r, max_bytes)
-            return (None, limit_note) if truncated else (raw, None)
+            if truncated:
+                return None, limit_note
+            encoding = (r.headers.get('content-encoding') or 'identity').strip().lower()
+            if (encoding == 'identity' and not r.headers.get('transfer-encoding')
+                    and _declared_length_exceeds(r.headers.get('content-length'), len(raw))):
+                return None, 'Incomplete response body (Content-Length not satisfied).'
+            return raw, None
         except requests.RequestException as exc:
             return None, type(exc).__name__
         finally:
