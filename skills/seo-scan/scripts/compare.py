@@ -26,7 +26,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
-from lib import htmlx, structured_data  # noqa: E402
+from lib import authorship, htmlx, structured_data  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -62,6 +62,7 @@ def facts(report, doc) -> dict:
     kind = ("article" if htmlx.looks_article(doc)
             else "hub" if htmlx.is_hub_page(doc)
             else "home" if htmlx.is_homepage(doc) else "page")
+    attribution = authorship.observe(doc, text)
     return {
         "url": report.final_url or report.url,
         "rendered": report.rendered,
@@ -81,8 +82,8 @@ def facts(report, doc) -> dict:
                            for p in ("og:title", "og:description", "og:image")),
         "twitter_card": bool(doc.meta_by_name("twitter:card")),
         "canonical": bool(doc.canonical()),
-        "author_signal": bool(doc.meta_by_name("author")
-                              or doc.meta_by_property("article:author")),
+        "author_signal": bool(attribution['candidates']),
+        "authorship_cues": attribution,
         "date_signal": bool(doc.meta_by_property("article:published_time")
                             or doc.meta_by_name("date")),
         "stats_cites": len(audit_geo._STAT.findall(text))
@@ -98,7 +99,9 @@ _BOOL_GAPS = [
      "Add og:title, og:description, og:image for link previews."),
     ("twitter_card", "Twitter/X card", "Add <meta name=\"twitter:card\">."),
     ("canonical", "Canonical URL", "Add <link rel=\"canonical\">."),
-    ("author_signal", "Author metadata", "Add an author meta/byline (E-E-A-T)."),
+    ("author_signal", "Attribution cues",
+     "Review actual attribution and page intent; observed cue differences do not verify writers "
+     "or require matching a competitor. Do not invent people or credentials."),
     ("date_signal", "Publish/update date", "Expose a published/modified date."),
 ]
 
@@ -297,7 +300,7 @@ def render_markdown(r: dict) -> str:
         ("Open Graph complete", [_yn(c["og_complete"]) for c in cols]),
         ("Twitter card", [_yn(c["twitter_card"]) for c in cols]),
         ("Canonical", [_yn(c["canonical"]) for c in cols]),
-        ("Author signal", [_yn(c["author_signal"]) for c in cols]),
+        ("Attribution cues (not verified writers)", [_yn(c["author_signal"]) for c in cols]),
         ("Date signal", [_yn(c["date_signal"]) for c in cols]),
     ]
     lines += ["## Side by side", "", header, sep]

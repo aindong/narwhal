@@ -22,6 +22,13 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Bounded attribution candidates:** scan and comparison share nonempty author
+  metadata, author-link and short leading byline-like witnesses independent of
+  main-text extraction. Bare prose words/blank metadata no longer pass; source,
+  value, depth and candidate limits are explicit. JSON and literal page-report
+  evidence do not verify writers, visibility or expertise. Missing article cues
+  prompt low contextual review; legacy/current plans never demand invented people.
+  Stable IDs remain; score corrections do not demonstrate improved pages.
 - **Findings-first page headlines:** native page HTML/PDF heroes describe the
   highest reported priority or "No flagged findings", not a blanket grade.
   The secondary numeric band is explicitly not page quality. Critical/high and

@@ -267,13 +267,13 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         # non-article: no byline finding at all
         doc, resp, rep = self._scan_page("<p>" + "word " * 400 + "</p>")
         audit_content.audit(doc, resp, rep, {})
-        self.assertNotIn("No visible author/byline", {f.title for f in rep.findings})
-        # article: still flagged medium
+        self.assertNotIn("Review article attribution cues", {f.title for f in rep.findings})
+        # article: bounded attribution uncertainty is a low-priority review
         html = '<meta property="og:type" content="article"><p>' + "word " * 400 + "</p>"
         doc, resp, rep = self._scan_page(html)
         audit_content.audit(doc, resp, rep, {})
         sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("No visible author/byline"), "medium")
+        self.assertEqual(sev.get("Review article attribution cues"), "low")
 
     def test_geo_question_headings_low_on_non_article(self):
         html = "<h2>Pricing</h2><h2>Features</h2><h2>Customers</h2><h2>Docs</h2><h2>Blog</h2>"

@@ -14,10 +14,12 @@ try:
     from lib import text as textlib
     from lib import content_quality
     from lib import htmlx
+    from lib import authorship
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
     from .lib import content_quality  # type: ignore
     from .lib import htmlx  # type: ignore
+    from .lib import authorship  # type: ignore
 
 CAT = "content"
 
@@ -26,7 +28,6 @@ _DATE_HINT = re.compile(
     r"\b(20\d{2})\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}",
     re.I,
 )
-_AUTHOR_HINT = re.compile(r"\b(by|author|written by|reviewed by)\b", re.I)
 
 
 def audit(doc, resp, report, ctx=None) -> None:
@@ -190,17 +191,22 @@ def _quality(text, report):
 
 
 def _authorship(doc, text, report, article=False):
-    head = text[:1500]
-    has_author = bool(_AUTHOR_HINT.search(head)) or bool(
-        doc.meta_by_name("author") or doc.meta_by_property("article:author")
-    )
-    if has_author:
-        report.ok(CAT, "Authorship signal present")
+    receipt = authorship.observe(doc, text)
+    receipt['article_hint'] = bool(article)
+    report.meta['authorship_cues'] = receipt
+    if receipt['candidates']:
+        report.add(CAT, 'good', 'Attribution cue candidate observed',
+                   f"{len(receipt['candidates'])} captured metadata/link/byline candidate(s). "
+                   + authorship.LIMITS_NOTE,
+                   rule_id='content.authorship.signal.present')
     elif article:
-        report.add(CAT, "medium", "No visible author/byline",
-                   "No author meta tag or byline detected near the top.",
-                   "Add a named author with credentials — a core E-E-A-T "
-                   "(experience/expertise) signal.")
+        report.add(CAT, 'low', 'Review article attribution cues',
+                   'No attribution candidate was observed in the bounded metadata, author-link '
+                   'and leading source-block checks. This does not prove anonymity.',
+                   'Review the real byline, profile links and editorial ownership in context. '
+                   'Identify actual creators/reviewers where appropriate; do not invent people '
+                   'or credentials. Missing cues do not establish anonymity or poor quality.',
+                   rule_id='content.no.visible.author.byline')
     # Homepages, hubs, and product pages don't carry bylines — flagging them
     # there was noise, so non-article pages are simply not judged on this.
 
