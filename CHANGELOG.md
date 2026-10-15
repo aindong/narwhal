@@ -21,7 +21,8 @@ All notable changes to Narwhal are documented here. The format follows
   term checks report literal cue counts and limitations, not semantic judgments
   or measured citation outcomes. Their editorial advisories are low priority,
   including on articles; new count receipts and compact-report caveats preserve
-  uncertainty. Plans keep edits conditional. Algorithms, thresholds and rule IDs
+  uncertainty. Programmatic numeric bounds use JSON-safe receipts without
+  rounding their comparisons. Plans keep edits conditional. Algorithms, thresholds and rule IDs
   remain; priority corrections can raise scores without page changes. Review
   title-based ignore filters for the new labels.
 - Common-phrase matches are contextual, low-priority editorial review prompts,

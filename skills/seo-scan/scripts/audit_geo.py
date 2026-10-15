@@ -9,6 +9,9 @@ proof of search visibility or live crawler access.
 from __future__ import annotations
 
 import re
+import math
+from decimal import Decimal
+from fractions import Fraction
 
 try:
     from lib.robots import RobotsTxt
@@ -94,6 +97,22 @@ def _record_text_cue(report, name, counts):
     receipt['checks'][name] = counts
 
 
+def _bound_receipt(value):
+    """Serialize bounds without rounding or changing their comparison behavior."""
+    if type(value) is int:
+        return value
+    if type(value) is float:
+        return value if math.isfinite(value) else {'kind': 'nonfinite_float', 'value': str(value)}
+    if type(value) is Decimal:
+        return {'kind': 'decimal', 'value': str(value)}
+    if type(value) is Fraction:
+        return {'kind': 'fraction', 'value': str(value)}
+    # Other programmatic numeric types may support comparisons. Keep that
+    # behavior, but do not serialize the object, call its conversion hooks or
+    # imply an exact numeric snapshot that we cannot represent.
+    return {'kind': 'unrecorded_numeric_type'}
+
+
 def _question_headings(doc, report, article=False):
     subs = [t for lvl, t in doc.headings if lvl >= 2 and t]
     q = [t for t in subs if t.lower().split()[:1] and
@@ -143,7 +162,8 @@ def _passage_citability(doc, report, th=None):
         passages.append(count)
     citable = [p for p in passages if lo <= p <= hi]
     _record_text_cue(report, 'sentence_groups', {
-        'in_range': len(citable), 'examined': len(passages), 'word_min': lo, 'word_max': hi,
+        'in_range': len(citable), 'examined': len(passages),
+        'word_min': _bound_receipt(lo), 'word_max': _bound_receipt(hi),
         'advisory_below_fraction': 0.3,
         'match_rule': 'ascii_word_counts_in_accumulated_sentence_fragments',
     })
