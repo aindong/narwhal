@@ -352,12 +352,12 @@ def render_markdown(b: dict) -> str:
         lines += [f"_Grounded in **your real Search Console queries** "
                   f"(`{gsc.get('property', '?')}`, "
                   f"{w.get('start', '?')} → {w.get('end', '?')}) plus the "
-                  "compared pages' served HTML._", ""]
+                  "compared pages' HTML snapshots._", ""]
     elif gsc.get("found"):
         lines += [f"_Search Console is connected (`{gsc.get('property', '?')}`)"
                   " but has no striking-distance queries for this page yet — "
-                  "the plan below is grounded in the compared pages' served "
-                  "HTML. No queries are invented._", ""]
+                  "the plan below is grounded in the compared pages' HTML "
+                  "snapshots. No queries are invented._", ""]
     else:
         lines += ["_**Structure-only brief** — no Search Console data was "
                   "available"
@@ -369,6 +369,14 @@ def render_markdown(b: dict) -> str:
         detail = f" — {f['error']}" if f.get("error") else ""
         lines.append(f"_Skipped competitor: {f['url']}{detail}_")
     if b.get("failed"):
+        lines.append("")
+
+    pages = ([b["you"]] if b.get("you") else []) + b.get("competitors", [])
+    if pages:
+        lines += ["## Page snapshots", "", "| Page | HTML source |", "|:--|:--|"]
+        for page in pages:
+            label = page['url'].replace('|', '%7C').replace('\n', ' ').replace('\r', ' ')
+            lines.append(f"| {label} | {compare.html_source(page)} |")
         lines.append("")
 
     # Target queries (only ever real ones).
@@ -463,7 +471,7 @@ def render_markdown(b: dict) -> str:
 
     lines += ["_No search volumes are estimated or invented — any queries "
               "above are real Search Console data for your property. Page "
-              "gaps are on-page differences from served HTML — useful targets, "
+              "gaps are on-page differences from HTML snapshots — useful targets, "
               "not proof of why anyone ranks._"]
     return "\n".join(lines).rstrip() + "\n"
 

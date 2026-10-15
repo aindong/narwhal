@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Comparison snapshot provenance:** compare/brief facts preserve actual
+  rendering mode and display the HTML source per page, including mixed modes.
+  Legacy missing flags remain unknown; requested rendering is not substituted
+  for measured mode. Scores and synthesis are unchanged.
 - **Paired JS-comparison coverage:** rendered and served snapshots share the
   selected byte budget; invalid baseline inputs do not produce numeric JS-only
   measurements. Explicit unverified receipts surface in reports and protect
