@@ -14,6 +14,7 @@ from typing import Optional
 
 from .guides import reference_url
 from . import sitemap as sitemaplib
+from .code_fences import closes_fence, markdown_lines, opening_fence
 
 REPORT_SCHEMA_VERSION = "2.0"
 
@@ -682,6 +683,8 @@ border-radius:8px;padding:14px 16px;margin:0 0 12px}
 .k{display:inline-block;min-width:70px;font-weight:600;color:var(--muted);font-size:12px;
 text-transform:uppercase;letter-spacing:.03em}
 code{background:#f0f1f3;padding:1px 5px;border-radius:4px;font-size:12.5px;word-break:break-all}
+pre{background:#f0f1f3;border:1px solid var(--border);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre}
+pre code{display:block;padding:0;background:transparent;border-radius:0;word-break:normal;overflow-wrap:normal;white-space:inherit}
 .section{font-size:18px;margin:28px 0 14px;border:0;padding:0}
 .metrics{display:flex;flex-wrap:wrap;gap:18px 26px;margin-top:6px}
 .metric{display:flex;flex-direction:column}
@@ -689,7 +692,7 @@ code{background:#f0f1f3;padding:1px 5px;border-radius:4px;font-size:12.5px;word-
 .m-lab{font-size:12px;color:var(--muted)}
 .foot{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 0}
 .foot a{color:var(--brand);text-decoration:none}
-@media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}}
+@media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}pre{white-space:pre-wrap;overflow:visible}pre code{overflow-wrap:break-word}}
 """
 
 
@@ -735,11 +738,10 @@ def _inline_md(text: str) -> str:
 
 def md_to_html(md: str) -> str:
     """Convert the limited Markdown our sub-reports emit (headings, tables,
-    lists, blockquotes, `---`, bold/code) into styled HTML. This is not a
-    general Markdown engine — it only needs to cover what crawl_site and
-    validate_sitemap produce, so the combined audit can render them as HTML
-    without duplicating their logic."""
-    lines = md.splitlines()
+    lists, blockquotes, root code fences, `---`, bold/code) into styled HTML. This is not a
+    general Markdown engine. Shared by sub-reports and the branded render CLI;
+    fenced content bypasses inline/block interpretation and stays escaped."""
+    lines = markdown_lines(md)
     out, i, n = [], 0, len(lines)
 
     def close_list(stack):
@@ -750,6 +752,22 @@ def md_to_html(md: str) -> str:
     while i < n:
         line = lines[i]
         stripped = line.strip()
+
+        fence = opening_fence(line)
+        if fence:
+            close_list(list_stack)
+            code = []
+            i += 1
+            while i < n and not closes_fence(lines[i], fence):
+                content = lines[i]
+                indent = min(fence.indent, len(content) - len(content.lstrip(' ')))
+                code.append(content[indent:])
+                i += 1
+            literal = '\n'.join(code) + ('\n' if code else '')
+            language = f' class="language-{_esc(fence.language)}"' if fence.language else ''
+            out.append(f'<pre><code{language}>{_esc(literal)}</code></pre>')
+            i += 1  # consume a closing fence, or finish an unclosed block at EOF
+            continue
 
         # Table: a header row followed by a |:--| separator row
         if (stripped.startswith("|") and i + 1 < n

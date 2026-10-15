@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Branded Markdown rendering preserves root fenced code as escaped literal
+  content, including whitespace, comments and Markdown-looking examples. Shared
+  fence rules keep code headings out of title extraction; screen blocks scroll
+  and print/PDF input wraps long lines. Existing non-code rendering and scan
+  scoring are unchanged; this is a limited subset, not a full Markdown engine.
 - In-memory/Python and parsed-object MCP plans explicitly require preserving the
   original report before verification diffs; read-only planning never saves it.
   Markdown keeps that prerequisite outside shell blocks. File-backed, measurement-

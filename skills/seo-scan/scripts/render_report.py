@@ -25,13 +25,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import report as report_lib  # noqa: E402
 from lib.report import deliver  # noqa: E402
+from lib.code_fences import closes_fence, markdown_lines, opening_fence  # noqa: E402
 
 
 def _split_title(md: str):
     """Return (first-H1-text-or-None, body-without-that-H1). Prevents the report
     from showing the title twice — once in the branded header, once in the body."""
-    lines = md.splitlines()
+    lines = markdown_lines(md, terminal_empty=True)
+    fence = None
     for i, line in enumerate(lines):
+        if fence is not None:
+            if closes_fence(line, fence):
+                fence = None
+            continue
+        fence = opening_fence(line)
+        if fence is not None:
+            continue
         if line.startswith("# "):
             return line[2:].strip(), "\n".join(lines[:i] + lines[i + 1:])
     return None, md

@@ -21,6 +21,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Literal fenced-code reports:** shared root-fence rules preserve escaped code
+  and exclude code comments from report-title extraction. Whitespace survives
+  documented indentation/newline normalization; long lines scroll on screen and
+  wrap for print/PDF input. No highlighting dependency or full Markdown claim.
 - **In-memory verification prerequisite:** diff-producing plans ask callers to
   preserve the original input report, with all fields, before edits/reruns. The
   planner remains read-only; Markdown does not turn that instruction into shell

@@ -589,6 +589,15 @@ branded report:
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```
 
+The limited Markdown renderer preserves root fenced code (three or more matching
+backticks or tildes, up to three leading spaces) as escaped literal text. Code
+comments cannot become report titles, and Markdown inside a fence is not styled
+as headings/lists/links. Code keeps whitespace after opening-indent removal and
+CR/LF normalization; unclosed blocks extend to EOF. Screen blocks scroll for
+long lines, while print/PDF input wraps them. Language labels are optional and
+sanitized; there is no syntax-highlighting dependency or full CommonMark/nested-
+container support.
+
 To update later, run `/plugin marketplace update narwhal`; to remove, `/plugin
 uninstall narwhal@narwhal`. (The first `narwhal` is the marketplace, the second is
 the plugin.)
