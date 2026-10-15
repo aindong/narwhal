@@ -81,6 +81,15 @@ DOM's retained UTF-8 snapshot. Truncation is explicit, without a broken final co
 point; JS-dependence is not measured from that incomplete DOM. This is an analysis
 input limit, not a cap on Chromium's DOM memory or subresource network traffic.
 
+Rendered scans use the same selected byte budget for their served-HTML baseline.
+`meta.coverage.js_comparison` records `measured` or `unverified`, the byte limit,
+and an unverified reason. Missing, partial or explicitly non-HTML baselines do
+not yield numeric JS-dependence statistics. A complete rendered DOM is not
+relabelled as truncated when only its baseline is unavailable. Relevant
+technical/GEO score comparisons with a known unverified JS measurement are
+incomparable (`diff --fail-on-regression` exits 2); compare/brief skip those page
+scores with diagnostics. Legacy missing receipts remain unverified, not inferred.
+
 ## Multi-agent deep audit
 
 `/narwhal audit <site>` (in Claude Code) is more than a script — it's a

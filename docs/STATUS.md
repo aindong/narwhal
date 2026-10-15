@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Paired JS-comparison coverage:** rendered and served snapshots share the
+  selected byte budget; invalid baseline inputs do not produce numeric JS-only
+  measurements. Explicit unverified receipts surface in reports and protect
+  relevant diffs and comparison/brief scores, including crawled contributions.
+  Non-JS focused scores and legacy unknown receipts are not reclassified.
 - **Rendered HTML byte budgets:** serialized DOM snapshots obey the primary UTF-8
   byte limit and record partial coverage; incomplete DOMs are not JS-dependence
   measurements. This bounds retained analysis input, not browser memory or network
