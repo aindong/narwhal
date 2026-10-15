@@ -12,6 +12,8 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Optional
 
+from .guides import reference_url
+
 REPORT_SCHEMA_VERSION = "2.0"
 
 if __package__ and "." in __package__:
@@ -127,6 +129,11 @@ class Finding:
             base = self.title.split(" (")[0].strip().lower()
             slug = re.sub(r"[^a-z0-9]+", ".", base).strip(".")
             self.rule_id = f"{self.category}.{slug}"
+
+    @property
+    def reference_url(self):
+        """Guide context for a non-passing check, never a validity verdict."""
+        return None if self.severity == 'good' else reference_url(self.category, self.rule_id)
 
 
 @dataclass
@@ -257,7 +264,7 @@ class Report:
                 "score": self.score(),
                 "counts": self.counts(),
                 "meta": self.meta,
-                "findings": [asdict(f) for f in self.findings],
+                "findings": [_finding_dict(f) for f in self.findings],
             },
             indent=2,
             ensure_ascii=False,
@@ -332,6 +339,8 @@ class Report:
                     lines.append(f"- **Evidence:** `{_trim(f.evidence)}`")
                 if f.recommendation:
                     lines.append(f"- **Fix:** {f.recommendation}")
+                if f.reference_url:
+                    lines.append(f"- [Learn more]({f.reference_url})")
                 lines.append("")
 
         # --- Quick wins (low severity) -------------------------------------
@@ -340,7 +349,8 @@ class Report:
             lines.append("")
             for f in buckets["low"]:
                 fix = f" — {f.recommendation}" if f.recommendation else ""
-                lines.append(f"- 🔵 **{f.title}**{fix}")
+                guide = f" · [Learn more]({f.reference_url})" if f.reference_url else ""
+                lines.append(f"- 🔵 **{f.title}**{fix}{guide}")
             lines.append("")
 
         notes = _crawler_policy_notes(self.meta)
@@ -460,6 +470,7 @@ class Report:
             items = "".join(
                 f'<li>{_dot("low")} <strong>{_esc(f.title)}</strong>'
                 + (f' — {_esc(f.recommendation)}' if f.recommendation else "")
+                + (f' · <a class="reference-link" href="{_esc(f.reference_url)}">Learn more</a>' if f.reference_url else "")
                 + "</li>"
                 for f in buckets["low"])
             body.append(f'<section class="card"><h2>Quick wins</h2>'
@@ -570,6 +581,14 @@ def _score_header(score, grade, counts, status, rendered, score_label="Health sc
         '</div></header>')
 
 
+def _finding_dict(f):
+    """Preserve measured fields; reference navigation is additive JSON metadata."""
+    data = asdict(f)
+    if f.reference_url:
+        data['reference_url'] = f.reference_url
+    return data
+
+
 def _finding_card(n, f) -> str:
     color = _SEV_COLOR.get(f.severity, "#888")
     parts = [
@@ -585,6 +604,8 @@ def _finding_card(n, f) -> str:
         parts.append(f'<p><span class="k">Evidence</span> <code>{_esc(_trim(f.evidence))}</code></p>')
     if f.recommendation:
         parts.append(f'<p><span class="k">Fix</span> {_esc(f.recommendation)}</p>')
+    if f.reference_url:
+        parts.append(f'<p><a class="reference-link" href="{_esc(f.reference_url)}">Learn more</a></p>')
     parts.append("</div>")
     return "".join(parts)
 
@@ -638,6 +659,8 @@ border-radius:8px;padding:14px 16px;margin:0 0 12px}
 .tag{color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.02em}
 .f-cat{margin:2px 0 8px 24px}
 .finding p{margin:6px 0}
+.reference-link{color:#0f766e;text-underline-offset:2px}
+.reference-link:focus-visible{outline:2px solid #0f766e;outline-offset:3px;border-radius:2px}
 .k{display:inline-block;min-width:70px;font-weight:600;color:var(--muted);font-size:12px;
 text-transform:uppercase;letter-spacing:.03em}
 code{background:#f0f1f3;padding:1px 5px;border-radius:4px;font-size:12.5px;word-break:break-all}

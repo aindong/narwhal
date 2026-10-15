@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Finding reference navigation:** page priority fixes and quick wins link to
+  project-guide sections, also exposed as additive `reference_url` JSON metadata.
+  Known rule IDs choose precise sections; unmapped rules get general built-in
+  category context. No runtime guide fetches or scoring/identity changes; a
+  guide is context, not validation of heuristic findings.
 - **Robots path parameters:** full-URL checks retain semicolon path suffixes,
   preventing both missed exclusions and lost specific allowances. Query and
   fragment boundaries and encoded reserved distinctions remain unchanged.
