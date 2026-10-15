@@ -21,6 +21,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Evidence-aware sitemap planning:** recorded fetch/cap gaps and uncertain
+  sampled probes are manual verification actions, not sitemap creation/removal.
+  Unknown legacy notes remain unclassified; consistent current counters add scope,
+  not authenticated provenance. No source owner is guessed for uncertainty.
+  Actual source validation findings remain separate with targeted repair advice.
 - **Raw sitemap fetch evidence:** failed/non-success HTTP bodies and oversized
   response prefixes cannot certify XML extraction, even if a prefix looks
   complete. Both transports retain actual exact-limit success and bounded fetch

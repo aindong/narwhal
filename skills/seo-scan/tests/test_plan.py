@@ -164,7 +164,8 @@ class TestPlanContract(unittest.TestCase):
         actions = {action["rule_id"]: action for action in built["actions"]}
         self.assertEqual(7, actions["technical.missing.meta.description"]["occurrences"])
         self.assertEqual("site", actions["technical.no.responsive.viewport.tag"]["scope"])
-        self.assertEqual("sitemap", actions["technical.sitemap.validation.issues"]["artifact"])
+        self.assertEqual("sitemap", actions["technical.sitemap.validation.unverified"]["artifact"])
+        self.assertTrue(actions["technical.sitemap.validation.unverified"]["manual_action"])
 
     def test_deterministic_output(self):
         first = plan.build_plan(load_report(), str(FIXTURES / "astro"))

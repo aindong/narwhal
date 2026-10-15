@@ -3,6 +3,7 @@
 import copy
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -97,6 +98,19 @@ class TestPlanSitemapVerification(unittest.TestCase):
         self.assertEqual({NOTES}, set(output))
         self.assert_manual(output[NOTES])
 
+    def test_inconsistent_positive_gap_without_notes_is_not_silently_ignored(self):
+        output = actions(report(errors=[]))
+        self.assertEqual({NOTES}, set(output))
+        self.assert_manual(output[NOTES])
+
+    def test_existing_sitemap_source_is_not_assigned_to_a_fetch_gap(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'sitemap.xml'
+            source.write_text('<urlset/>', encoding='utf-8')
+            output = plan.build_plan(report(), directory)
+            self.assert_manual(output['actions'][0])
+            self.assertEqual('<urlset/>', source.read_text(encoding='utf-8'))
+
     def test_zero_attempts_with_explicit_cap_are_not_a_failed_fetch(self):
         output = actions(report(errors=['cap note'], fetch_failures=0,
                                 sitemaps_attempted=0, sitemaps_fetched=0, truncated=1))
@@ -124,7 +138,8 @@ class TestPlanSitemapVerification(unittest.TestCase):
 
     def test_failed_legacy_sample_keeps_observation_without_guessing_other_samples(self):
         sample = {'status': 0, 'error': 'timeout'}
-        data = report(errors=[], broken_sample=[sample])
+        data = report(errors=[], fetch_failures=0, sitemaps_attempted=1,
+                      sitemaps_fetched=1, broken_sample=[sample])
         data['sitemap'].pop('sample')
         self.assertEqual({SAMPLE}, set(actions(data)))
 
@@ -147,6 +162,23 @@ class TestPlanSitemapVerification(unittest.TestCase):
         self.assertEqual(before, data)
         self.assertEqual(first, second)
         self.assertIn('Manual / external', plan.render_markdown(first))
+
+    def test_verification_actions_do_not_enter_shared_source_edit_groups(self):
+        data = report(errors=['fetch', 'cap'], truncated=2, problems={'not-absolute': 1})
+        data['homepage']['findings'] = [{'category': 'technical', 'severity': 'medium',
+                                        'title': 'No robots.txt found',
+                                        'rule_id': 'technical.no.robots.txt.found'}]
+        output = plan.build_plan(data, str(ROOT))
+        self.assertTrue(output['groups'])
+        grouped = {rid for group in output['groups'] for rid in group['rule_ids']}
+        self.assertNotIn(FETCH, grouped)
+        self.assertNotIn(CAP, grouped)
+        self.assertIn(SOURCE, grouped)
+
+    def test_markdown_distinguishes_intentionally_unassigned_owners(self):
+        output = plan.render_markdown(plan.build_plan(report(), str(ROOT)))
+        self.assertIn('not assigned (verification only)', output)
+        self.assertNotIn('owner not located', output)
 
 
 if __name__ == '__main__':

@@ -318,6 +318,21 @@ responses leave reachability unverified, and skipped sampling says so explicitly
 Positive health wording applies only to the checks performed, not unsampled URLs
 or deployed indexing/search visibility.
 
+In remediation plans, sitemap fetch failures, traversal caps, XML extraction
+gaps and uncertain sampled responses become **manual verification**, not
+instructions to create or rewrite a sitemap. Current `2.0` report counters must
+be explicitly recorded and consistent for fetch/cap-specific context; missing,
+malformed or future-schema evidence leaves notes unclassified. Notes are not
+interpreted as commands or parsed for keywords. These actions have no guessed
+source files and do not assume deployment is required. They ask for deployed
+endpoint/status/limit checks, preserving private-host and budget boundaries.
+They are excluded from shared source-edit groups, and Markdown labels their
+owners deliberately unassigned for verification rather than missing.
+Actual URL/lastmod problems and confirmed failing HTTP samples retain separate
+source-repair advice. Gated/no-response/incomplete probes do not establish dead
+URLs. Counter checks establish schema/count consistency, not authenticated
+provenance or complete HTTP/XML conformance; planning remains read-only.
+
 Crawl JSON records HTTP link-response `coverage` (successful 2xx, broken and
 unverified checked targets, with no-response `request_failures` counted within
 unverified) and `duplicate_coverage` (eligible SimHash fingerprints

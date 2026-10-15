@@ -30,6 +30,11 @@ All notable changes to Narwhal are documented here. The format follows
   heuristic findings still need source verification.
 
 ### Fixed
+- Remediation plans separate sitemap fetch/traversal/sample coverage gaps from
+  recorded source defects. Uncertain and legacy-unclassified notes receive manual
+  verification without guessed source owners or sitemap-creation instructions;
+  consistent current counters add scoped fetch/cap context. Actual invalid URL/
+  lastmod and failing sampled HTTP findings retain targeted repair advice.
 - Raw sitemap fetches withhold failed HTTP bodies, oversized prefixes and known
   incomplete transfers consistently across requests/urllib. Exact-limit bodies
   remain valid; fetch failures are separate from XML extraction notes and cannot

@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import sitemap as sitemaplib  # noqa: E402
+from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
@@ -38,6 +38,65 @@ def _legacy_rule_id(finding: dict) -> str:
     title = str(finding.get("title", "")).split(" (")[0].strip().lower()
     slug = re.sub(r"[^a-z0-9]+", ".", title).strip(".")
     return f"{finding.get('category', 'unknown')}.{slug}"
+
+
+def _sitemap_note_findings(sitemap, schema_version):
+    """Separate recorded execution gaps from source invalidity; never parse note text."""
+    notes = sitemap.get('errors') or []
+    count = len(notes) if isinstance(notes, list) else 1
+    attempted, fetched, failed = (sitemap.get(key) for key in
+                                  ('sitemaps_attempted', 'sitemaps_fetched', 'fetch_failures'))
+    cap = sitemap.get('truncated', 0)
+    cap_valid = type(cap) is int and cap >= 0
+    known = (schema_version == '2.0' and isinstance(notes, list) and cap_valid
+             and all(type(value) is int and value >= 0 for value in (attempted, fetched, failed))
+             and attempted == fetched + failed and failed + bool(cap) <= count)
+    out = []
+
+    def add(suffix, title, detail, occurrences):
+        out.append({'category': 'technical', 'severity': 'low', 'scope': 'site',
+                    'rule_id': 'technical.sitemap.' + suffix, 'title': title,
+                    'detail': detail, 'occurrences': occurrences,
+                    'recommendation': 'Verify the recorded execution gap before making source changes.'})
+
+    classified = 0
+    if known and failed:
+        add('fetch.unverified', 'Sitemap fetching is unverified',
+            f'{failed} failed file fetch(es) in {attempted} recorded attempts; '
+            f'{fetched} returned complete bodies. This does not establish missing or invalid sitemap content.', failed)
+        classified += failed
+    if known and cap:
+        add('traversal.incomplete', 'Sitemap traversal is incomplete',
+            f'{cap} distinct sitemap file(s) remained outside the recorded attempt budget; URL totals are partial.', cap)
+        classified += 1
+    hint = any(type(value) is int and value > 0 for value in (failed, cap))
+    if count > classified or (hint and not out):
+        add('validation.unverified', 'Sitemap validation notes need manual verification',
+            'Sitemap notes are unclassified or execution counters are inconsistent/unrecorded. '
+            'Review the original report and endpoint; source invalidity is not established.',
+            max(1, count - classified))
+    return out
+
+
+def _sitemap_sample_evidence(sitemap):
+    """Keep actual failing HTTP responses distinct from uncertain/no-response probes."""
+    samples = sitemap.get('sample')
+    observed = list(samples) if isinstance(samples, list) else []
+    broken = sitemap.get('broken_sample') or []
+    for item in broken if isinstance(broken, list) else [broken]:
+        if item not in observed:
+            observed.append(item)
+    failures, unverified = [], 0
+    for item in observed:
+        status = item.get('status') if isinstance(item, dict) else None
+        error = item.get('error') if isinstance(item, dict) else None
+        if type(status) is int and not error and status > 0 and linkslib.is_broken(status):
+            failures.append(item)
+        elif type(status) is int and not error and 200 <= status < 300:
+            continue
+        else:
+            unverified += 1
+    return failures, unverified
 
 
 def normalize_report(data: dict) -> dict:
@@ -79,8 +138,10 @@ def normalize_report(data: dict) -> dict:
                 findings.append(finding)
                 seen[finding["rule_id"]] = finding
         sitemap = data.get("sitemap", {})
-        sitemap_issues = (list(sitemap.get("errors", []))
-                          + list(sitemap.get("broken_sample", [])))
+        findings.extend(_sitemap_note_findings(sitemap, data.get('schema_version')))
+        failed_samples, unverified_samples = _sitemap_sample_evidence(sitemap)
+        sitemap_issues = ([f'{len(failed_samples)} recorded failing sampled HTTP response(s)']
+                          if failed_samples else [])
         if sitemap.get("problems") or sitemap.get("invalid_lastmod"):
             sitemap_issues.append("invalid sitemap entries or lastmod values")
         if sitemap_issues and "technical.sitemap.validation.issues" not in seen:
@@ -90,6 +151,16 @@ def normalize_report(data: dict) -> dict:
                 "rule_id": "technical.sitemap.validation.issues",
                 "scope": "site", "detail": "; ".join(map(str, sitemap_issues[:5])),
                 "recommendation": "Fix the reported sitemap entries and validate again.",
+            })
+        if unverified_samples:
+            findings.append({
+                'category': 'technical', 'severity': 'low', 'scope': 'site',
+                'rule_id': 'technical.sitemap.sample.unverified',
+                'title': 'Sampled sitemap URL reachability is unverified',
+                'detail': f'{unverified_samples} recorded sample(s) lack a confirmed successful or failing HTTP response. '
+                          'Gated/no-response probes do not establish a dead URL.',
+                'recommendation': 'Verify endpoint access and request outcomes before editing sitemap locations.',
+                'occurrences': unverified_samples,
             })
         parse_coverage = sitemaplib.recorded_parse_coverage(sitemap.get('parse_coverage'),
                                                            sitemap.get('sitemaps_fetched'))
@@ -419,6 +490,37 @@ CHANGE_GUIDANCE = {
 }
 
 
+SITEMAP_VERIFICATION = {
+    'technical.sitemap.extraction.unverified': (
+        'Verify the fetched format and XML extraction coverage manually. '
+        'Do not rewrite a valid unsupported format merely to clear this note.',
+        ('Validate the source with a trusted XML/sitemap validator.',
+         'Re-run narwhal sitemap and confirm complete supported extraction before using URL totals.')),
+    'technical.sitemap.fetch.unverified': (
+        'Verify sitemap transport, HTTP status, response completeness and scan limits manually. '
+        'Do not create or rewrite a sitemap solely because fetching was unverified.',
+        ('Review the original fetch notes and intended endpoint/access policy.',
+         'Recheck the deployed endpoint with Narwhal sitemap/audit after resolving the verified fetch cause; '
+         'reverify after any deployment. Do not automatically grant private access or remove budgets.')),
+    'technical.sitemap.traversal.incomplete': (
+        'Review the scan budget and remaining-file count; rerun within a deliberate trusted limit. '
+        'Do not change sitemap source to clear a scan cap.',
+        ('Confirm the intended scan scope and a bounded file-attempt budget.',
+         'Rerun Narwhal sitemap/audit and review the remaining-file count before using site URL totals.')),
+    'technical.sitemap.validation.unverified': (
+        'Inspect unclassified sitemap notes and execution evidence manually. '
+        'Confirm what was measured before proposing source edits.',
+        ('Review the original report, endpoint and tool/version coverage.',
+         'Rerun supported sitemap verification on the deployed endpoint; verify source ownership only if a defect is established.')),
+    'technical.sitemap.sample.unverified': (
+        'Verify sampled endpoint access, HTTP/HEAD support and request outcomes manually. '
+        'Do not remove sitemap URLs solely on gated, incomplete or no-response probes.',
+        ('Review sampled status/error evidence and intended access policy.',
+         'Recheck sampled endpoints and deployed sitemap reachability after any confirmed fix; '
+         'do not equate gated/no-response results with dead URLs.')),
+}
+
+
 def safety_for(artifact: str) -> tuple:
     if artifact == "server_config":
         return "manual_external", True
@@ -470,14 +572,14 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
     actions = []
     mapped_named = 0
     for finding in normalized["findings"]:
-        verify_xml = finding['rule_id'] == 'technical.sitemap.extraction.unverified'
-        artifact = 'sitemap' if verify_xml else classify_artifact(finding)
+        verification = SITEMAP_VERIFICATION.get(finding['rule_id'])
+        artifact = 'sitemap' if verification else classify_artifact(finding)
         if artifact != "unknown":
             mapped_named += 1
         safety, requires_deploy = safety_for(artifact)
-        if verify_xml:
+        if verification:
             safety, requires_deploy = 'manual_external', False
-        owners = ([] if verify_xml else likely_files(root, inv["files"], framework["name"], artifact,
+        owners = ([] if verification else likely_files(root, inv["files"], framework["name"], artifact,
                                                      normalized["target"]))
         if not owners and safety != "manual_external":
             warnings.append(f"No likely source owner found for {finding['rule_id']}.")
@@ -491,13 +593,14 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "safety": safety,
             "requires_deploy": requires_deploy,
             "manual_action": safety == "manual_external",
-            "proposed_change": ('Verify the fetched format and XML extraction coverage manually. '
-                                'Do not rewrite a valid unsupported format merely to clear this note.'
-                                if verify_xml else CHANGE_GUIDANCE[artifact]),
+            "proposed_change": (verification[0] if verification else
+                                'Correct the recorded sitemap URL/lastmod problems or failing sampled HTTP targets '
+                                'in the actual sitemap owner after verifying intended behavior.'
+                                if finding['rule_id'] == 'technical.sitemap.validation.issues'
+                                else CHANGE_GUIDANCE[artifact]),
             "likely_files": owners,
-            "verification": (['Validate the source with a trusted XML/sitemap validator.',
-                              'Re-run narwhal sitemap and confirm complete supported extraction before using URL totals.']
-                             if verify_xml else verification_for(artifact, normalized["target"], report_source)),
+            "verification": (list(verification[1]) if verification else
+                             verification_for(artifact, normalized["target"], report_source)),
             "evidence": finding.get("evidence") or finding.get("detail") or "",
             "source_recommendation": finding.get("recommendation", ""),
             "confidence": finding.get("confidence", 1.0),
@@ -543,6 +646,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
 def _groups(actions: list) -> list:
     buckets = {}
     for action in actions:
+        if action['rule_id'] in SITEMAP_VERIFICATION:
+            continue  # verification tasks are not shared source/template edits
         key = action["artifact"]
         if key in HEAD_ARTIFACTS:
             key = "shared_head_metadata"
@@ -604,6 +709,8 @@ def render_markdown(plan: dict) -> str:
         lines += [f"## {label}", ""]
         for action in members:
             owners = ", ".join(f"`{x['path']}`" for x in action["likely_files"][:3]) or "owner not located"
+            if action['rule_id'] in SITEMAP_VERIFICATION:
+                owners = 'not assigned (verification only)'
             lines += [f"### {action['severity'].upper()} — {action['title']}", "",
                       f"- **Rule:** `{action['rule_id']}`",
                       f"- **Likely owner:** {owners}",
