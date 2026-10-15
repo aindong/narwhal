@@ -133,16 +133,16 @@ class TestCodeFences(unittest.TestCase):
         self.assertIn('<blockquote><strong>note</strong></blockquote>', html)
 
     def test_real_render_cli_preserves_title_code_and_pdf_input(self):
-        md = '```sh\n# code comment\nprintf "<tag> & **literal**"\n```\n\n# Actual title\n'
+        md = '```sh\n# code comment\nprintf "<tag> & **literal** café 🐳"\n```\n\n# Actual title\n'
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'report.md'
             target = Path(directory) / 'report.html'
-            source.write_text(md)
+            source.write_text(md, encoding='utf-8')
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(0, render_report.main([str(source), '-o', str(target)]))
-            html = target.read_text()
+            html = target.read_text(encoding='utf-8')
             self.assertIn('<title>Actual title', html)
-            self.assertEqual('# code comment\nprintf "<tag> & **literal**"\n', Parsed(html).blocks[0]['text'])
+            self.assertEqual('# code comment\nprintf "<tag> & **literal** café 🐳"\n', Parsed(html).blocks[0]['text'])
             with mock.patch.object(render_report, 'deliver', return_value=0) as deliver:
                 self.assertEqual(0, render_report.main([str(source), '--format', 'pdf', '-o', str(Path(directory) / 'report.pdf')]))
             self.assertEqual(html, deliver.call_args.args[2])
