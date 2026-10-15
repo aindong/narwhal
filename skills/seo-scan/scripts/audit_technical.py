@@ -157,20 +157,52 @@ def _canonical(doc, resp, report):
         report.ok(CAT, "Self-referencing canonical", can)
 
 
+def _generic_meta_robots(doc):
+    """Collect exact restriction names across active generic robots meta tags.
+
+    Parameter names/values are not standalone rules (e.g. image-preview:none),
+    but standalone names before a parameter remain observable.
+    Keep one bounded positional witness per recognized name, scanning every tag.
+    """
+    observed = {}
+    for position, meta in enumerate(doc.meta, 1):
+        if (meta.get('name') or '').lower() != 'robots':
+            continue
+        for segment in (meta.get('content') or '').lower().split(','):
+            if ':' in segment:
+                # Ignore the parameter name and remainder (which may be a date
+                # or free-form value), without losing preceding standalone names.
+                tokens = segment.split(':', 1)[0].split()[:-1]
+            else:
+                tokens = segment.split()
+            for token in tokens:
+                if token in ('noindex', 'nofollow', 'none'):
+                    observed.setdefault(token, position)
+    rules = set(observed)
+    if 'none' in rules:
+        rules.update(('noindex', 'nofollow'))
+    evidence = '; '.join(f'meta robots #{position}: {token}'
+                         for token, position in sorted(observed.items()))
+    return rules, evidence
+
+
 def _robots_directives(doc, report):
-    robots = (doc.meta_by_name("robots") or "").lower()
-    if "noindex" in robots:
+    robots, evidence = _generic_meta_robots(doc)
+    if 'noindex' in robots:
         report.add(CAT, "critical", "Page is set to noindex",
-                   "Meta robots contains 'noindex'.",
-                   "Remove 'noindex' if this page should rank.",
-                   evidence=robots)
-    if "nofollow" in robots:
+                   "Generic meta robots declares 'noindex' or its 'none' alias.",
+                   "Remove the restricting directive only if this page should appear in search results.",
+                   evidence=evidence)
+    if 'nofollow' in robots:
         report.add(CAT, "medium", "Page-level nofollow",
-                   "Meta robots contains 'nofollow'.",
-                   "Confirm you intend to drop all outbound link equity.",
-                   evidence=robots)
-    if "noindex" not in robots:
-        report.ok(CAT, "Page is indexable", "no meta-robots noindex")
+                   "Generic meta robots declares 'nofollow' or its 'none' alias.",
+                   "Review this directive if crawlers should follow page links; this check does not measure crawler behavior.",
+                   evidence=evidence)
+    if 'noindex' not in robots:
+        report.add(CAT, 'good', 'No generic meta noindex detected',
+                   'Generic meta robots check only; HTTP headers and crawler-specific directives are not evaluated. '
+                   'Absence is not proof of indexability.',
+                   rule_id='technical.page.is.indexable')
 
 
 def _viewport_lang(doc, report):

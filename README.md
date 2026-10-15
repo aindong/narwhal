@@ -70,6 +70,13 @@ And yes, it works as a backronym too:
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, depth, structure, evidence, social packaging (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
+The generic page robots-meta check combines all active `name="robots"` tags,
+recognizes exact `noindex`/`nofollow` names and the `none` alias, and does not
+mistake directive parameter values or substrings for restrictions. Its passing
+message is scoped to generic meta only: HTTP `X-Robots-Tag` and crawler-specific
+meta are not evaluated here. Absence of a generic meta restriction does not prove
+indexability or actual search inclusion.
+
 Page reports record `meta.ai_crawler_access`: dated agent roles, primary sources,
 and robots.txt root disallowance results at **`/` only**. Training/data-use choices,
 nonbinding user-fetch directives and unverified roles remain visible as

@@ -29,6 +29,15 @@ check, plus what to do when the automated check isn't enough.
    a URL blocked in robots.txt can still be indexed without a snippet. Always
    reference the XML sitemap from robots.txt.
 
+The current deterministic page-meta check combines all active generic
+`name="robots"` tags, matches exact restriction names and expands `none` to
+`noindex,nofollow`. It does not interpret parameter values as standalone rules.
+HTTP `X-Robots-Tag` and crawler-specific meta are outside this check; a passing
+generic-meta observation is not proof of indexability or actual inclusion.
+See [Google's primary specification](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag)
+for aliases, multiple tags, named agents and header rules. Engine behavior can
+differ; verify live indexing through the relevant external source when needed.
+
 The shared robots matcher normalizes valid percent-encoded unreserved ASCII and
 UTF-8 spellings before comparison, following the URI-comparison guidance in
 [RFC 9309 §2.2.2](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2.2).

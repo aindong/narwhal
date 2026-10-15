@@ -65,7 +65,7 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 - 🟢 **Meta description length is in range** — 92 characters
 - 🟢 **Exactly one H1** — Practical guide to answer-engine visibility
 - 🟢 **Self-referencing canonical** — https://example.test/guides/answer-visibility
-- 🟢 **Page is indexable** — no meta-robots noindex
+- 🟢 **No generic meta noindex detected** — Generic meta robots check only; HTTP headers and crawler-specific directives are not evaluated. Absence is not proof of indexability.
 - 🟢 **Responsive viewport declared**
 - 🟢 **robots.txt references a sitemap**
 - 🟢 **XML sitemap reachable**

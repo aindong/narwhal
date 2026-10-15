@@ -235,8 +235,8 @@
     {
       "category": "technical",
       "severity": "good",
-      "title": "Page is indexable",
-      "detail": "no meta-robots noindex",
+      "title": "No generic meta noindex detected",
+      "detail": "Generic meta robots check only; HTTP headers and crawler-specific directives are not evaluated. Absence is not proof of indexability.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "technical.page.is.indexable",
