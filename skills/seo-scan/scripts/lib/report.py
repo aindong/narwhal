@@ -19,6 +19,7 @@ from . import llms_resource
 from . import authorship
 from . import content_length
 from . import schema_coverage
+from . import date_cues
 from .code_fences import closes_fence, markdown_lines, opening_fence
 from .markdown_text import TABLE_TEXT_MARKER
 
@@ -497,6 +498,10 @@ class Report:
         if attribution:
             lines += ['## Attribution cue evidence (not identity verification)', '',
                       authorship.LIMITS_NOTE, '', '```text', *attribution, '```', '']
+        dates = date_cues.evidence_lines(self.meta)
+        if dates:
+            lines += ['## Date-cue evidence (not freshness verification)', '',
+                      date_cues.LIMITS, '', '```text', *dates, '```', '']
 
         # --- Passing checks ------------------------------------------------
         if buckets["good"]:
@@ -663,6 +668,11 @@ class Report:
             body.append('<section class="card"><h2>Attribution cue evidence (not identity verification)</h2>'
                         + '<p>' + _esc(authorship.LIMITS_NOTE) + '</p><pre><code>'
                         + _esc('\n'.join(attribution)) + '</code></pre></section>')
+        dates = date_cues.evidence_lines(self.meta)
+        if dates:
+            body.append('<section class="card"><h2>Date-cue evidence (not freshness verification)</h2>'
+                        + '<p>' + _esc(date_cues.LIMITS) + '</p><pre><code>'
+                        + _esc('\n'.join(dates)) + '</code></pre></section>')
 
         # Passing checks
         if buckets["good"]:

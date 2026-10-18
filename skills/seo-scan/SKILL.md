@@ -104,6 +104,12 @@ Known problems or missing receipts cannot certify schema absence. Keep observed
 types visible, inspect existing markup before adding/duplicating a candidate,
 and do not claim schema/overall score gains from unverified extraction. A
 `no_known_problem` receipt is not full conformance/eligibility or exhaustive coverage.
+`date_cues` records bounded metadata/selected-text candidates, not validated
+publication/update dates or freshness. Modified-only metadata counts; blank values
+and bare years alone do not. Review real page purpose and known dates when useful;
+never invent dates, relabel event dates or cosmetically refresh them to clear a
+finding. Compared candidates do not impose a date quota. See the
+[date-cue boundaries](references/content-eeat.md#date-cues-not-freshness-verification).
 
 **Build a data-driven content brief** (what to *write*, grounded in real data —
 no keyword APIs, no invented volumes):

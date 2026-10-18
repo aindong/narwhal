@@ -38,7 +38,7 @@ Observations below are bounded, whitespace-normalized previews of reported field
 - 🔵 **Review limited ASCII-token count** — Review whether the captured text serves the reader and page intent. Keep useful concise text; edit only confirmed coverage gaps. Do not pad content to reach a configured count. Ranking and citation impact are not measured. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#content-depth-not-word-count-for-its-own-sake) · **Observed (preview):** `146 matches of the configured ASCII-only pattern in selected extracted text (visible text). Below the configured lower bound. ASCII-pattern matches are not universal word counts or a measure of content depth, usefulness, ranking or AI citations. Configured bounds are editorial defaults, not engine requirements.`
 - 🔵 **Content is fairly hard to read** — Consider shorter sentences/simpler words unless the audience is specialist. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#readability) · **Observed (preview):** `Flesch reading ease 38.0 (difficult); ~grade 11.1.`
 - 🔵 **Review article attribution cues** — Review the real byline, profile links and editorial ownership in context. Identify actual creators/reviewers where appropriate; do not invent people or credentials. Missing cues do not establish anonymity or poor quality. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#experience--expertise) · **Observed (preview):** `No attribution candidate was observed in the bounded metadata, author-link and leading source-block checks. This does not prove anonymity.`
-- 🔵 **No visible date signal** — Expose a publish or last-updated date to signal freshness. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#freshness) · **Observed (preview):** `No published/modified date in metadata or near the top.`
+- 🔵 **Review article date cues** — Review actual page purpose and original date evidence. Add accurate publication/update information only when useful and known; do not invent dates, relabel events as publication or refresh a date without substantive change. Ranking/citation effects are not measured. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#date-cues-not-freshness-verification) · **Observed (preview):** `No candidate observed in the checked metadata and selected-text prefix. Date-related candidates only, not validated dates, publication/update ownership, rendered visibility, content freshness, accuracy or ranking/citation impact. Metadata values and English-month/ISO-like text patterns can be unrelated or invalid. Bare years alone are not publication evidence. Non-observation in these bounded chec…` (truncated; full value in JSON)
 - 🔵 **Incomplete Open Graph tags** — Add og:title, og:description and og:image for rich social and chat-app link previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata) · **Observed (preview):** `Missing: og:description, og:image.`
 - 🔵 **No Twitter/X card type** — Add twitter:card (e.g. summary_large_image) for X previews. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#social--preview-metadata) · **Observed (preview):** `Missing <meta name="twitter:card">.`
 - 🔵 **Article missing recommended properties** — Consider applicable, known author, datePublished, image values; do not invent authors or dates. Google Article markup has no required properties, and this is not an invalidity or eligibility verdict. Source: https://developers.google.com/search/docs/appearance/structured-data/article · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/schema.md) · **Observed (preview):** `Recommended fields absent or blank: author, datePublished, image.`
@@ -60,6 +60,16 @@ Attribution candidates only: writer identity, rendered visibility, expertise, tr
 
 ```text
 No candidate observed in the checked sources; attribution remains unverified.
+```
+
+## Date-cue evidence (not freshness verification)
+
+Date-related candidates only, not validated dates, publication/update ownership, rendered visibility, content freshness, accuracy or ranking/citation impact. Metadata values and English-month/ISO-like text patterns can be unrelated or invalid. Bare years alone are not publication evidence. Non-observation in these bounded checks does not establish that the page lacks dates; structured-data date graphs are not inspected.
+
+```text
+No candidate observed in the checked metadata and selected-text prefix; dates may exist elsewhere.
+Checked 4 normalized metadata field(s) and 1046 selected-text prefix code points (visible text).
+Year-pattern matches in selected prefix: 0 (not publication evidence on their own).
 ```
 
 ## Passing checks

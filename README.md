@@ -92,6 +92,13 @@ contextual review, not an anonymity verdict; never invent people or credentials
 to close a finding. Scans and comparisons use the same observer, with JSON
 receipts and literal page-report witnesses. See [scope and limitations](skills/seo-scan/references/content-eeat.md#attribution-cues-not-identity-verification).
 
+Date checks likewise record bounded metadata/selected-text **candidates**, not
+verified publication/update dates or freshness. Scans, comparisons and briefs use
+the same observer: modified-only metadata counts, blank metadata and a copyright
+year alone do not. A missing article cue invites conditional review, not invented
+dates or cosmetic refreshes; compared pages do not set a date quota. See
+[date-cue scope and compatibility](skills/seo-scan/references/content-eeat.md#date-cues-not-freshness-verification).
+
 Common-phrase checks are editorial review prompts, not AI-authorship detectors.
 Quoted examples may be appropriate for the audience; neither matches nor their
 absence establish originality, helpfulness or ranking impact. The four-distinct-phrase

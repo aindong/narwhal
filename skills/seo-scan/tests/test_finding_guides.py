@@ -23,7 +23,7 @@ class TestFindingGuides(unittest.TestCase):
         for output in (report.to_markdown(), report.to_html()):
             with self.subTest(format='html' if output.startswith('<') else 'markdown'):
                 self.assertIn(BASE + 'technical-seo.md#title--meta-description', output)
-                self.assertIn(BASE + 'content-eeat.md#freshness', output)
+                self.assertIn(BASE + 'content-eeat.md#date-cues-not-freshness-verification', output)
                 self.assertEqual(2, output.count('Learn more'))
 
     def test_json_links_are_additive_and_leave_score_and_identity_unchanged(self):

@@ -43,6 +43,7 @@ from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E40
 from lib import text as textlib  # noqa: E402
 from lib import length_observation, evidence_observation, question_observation  # noqa: E402
 from lib import schema_appearance, schema_coverage, subtopic_observation  # noqa: E402
+from lib import date_cues  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -422,7 +423,7 @@ def render_markdown(b: dict) -> str:
     if b.get("gaps") is not None:
         lines += ["## Gaps vs compared pages", ""]
         gaps = [g for g in b['gaps'] if g.get('what') not in
-                ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings') and not (
+                ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings', 'Publish/update date') and not (
                     g.get('what', '').startswith('Schema types:') and not schema_coverage.absence_review(b.get('you')))]
         if gaps:
             for g in gaps:
@@ -434,6 +435,8 @@ def render_markdown(b: dict) -> str:
                          else "No on-page feature gaps against the compared pages. 🟢")
         lines.append("")
 
+    lines += ['## Date-related candidates (not freshness)', '',
+              *date_cues.summary(b.get('you'), b.get('competitors', [])), '']
     lines += ['## Compared-heading candidates (review, not coverage gaps)', '', subtopic_observation.LIMITS, '']
     known_context = subtopic_observation.recorded(b.get('subtopic_review'), bool(b.get('you')))
     if not known_context:
@@ -503,7 +506,7 @@ def render_markdown(b: dict) -> str:
         lines.append("")
 
     leads = [lead for lead in b.get('leads', []) if lead.get('what') not in
-             ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings') and not (
+             ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings', 'Publish/update date') and not (
                  lead.get('what', '').startswith('Schema types only you have:')
                  and not all(schema_coverage.absence_review(facts) for facts in pages))]
     if leads:

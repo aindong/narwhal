@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Page scans, comparisons and briefs share bounded date-related candidates and
+  inspectable scope, not freshness/publication certificates. Modified metadata
+  counts consistently; blanks and bare years alone do not. Article reviews and
+  current/legacy plans keep dates conditional on real purpose/evidence; compared
+  pages no longer prescribe date gaps or cosmetic updates. Legacy IDs remain,
+  `date_signal` semantics are corrected, and old booleans do not backfill scope.
+  Score changes are calibration corrections, not measured SEO improvements.
 - Offline maintainer review packs can record one explicit adjudicator decision
   without hand-editing packet structure. Source bindings and full packets are
   validated before/after; existing decisions need explicit replacement into a

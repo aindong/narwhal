@@ -588,6 +588,11 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    'content.no.visible.date.signal':
+        'Review actual page purpose and original publication/update evidence. Add accurate date information '
+        'only when useful and known; preserve valid existing dates. Do not invent dates, relabel events '
+        'as publication or refresh a date without substantive change. Cue non-observation is not proof '
+        'of missing dates, stale content or ranking/citation impact.',
     'schema.invalid.json.ld':
         'Inspect the original JSON-LD block and repair verified JSON syntax errors only. '
         'An old unclassified processing failure is not proof of syntax invalidity; verify tool/parser '

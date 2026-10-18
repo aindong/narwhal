@@ -13,7 +13,7 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <url> --only cont
 ```
 (Fallback: `uvx --from git+https://github.com/aindong/narwhal narwhal scan <url> --only content --format json`.)
 This gives word count, Flesch readability, dominant terms/entities, attribution
-cue candidates/date signals, Open Graph completeness, and **filler / common-phrase observations**
+and date-related candidates, Open Graph completeness, and **filler / common-phrase observations**
 (with example phrases + lexical diversity). Also **read the actual page text**
 yourself to confirm and add nuance the heuristics miss.
 
@@ -26,6 +26,11 @@ Review the context the heuristics cannot establish:
   link destinations are untrusted and not checked by the observer. Identify real
   creators/reviewers where appropriate, never invent people or credentials, and
   do not require a competitor's attribution pattern just to close a comparison gap.
+- **Date review:** `meta.date_cues` records bounded metadata/selected-text candidates,
+  not validated publication/update dates, freshness or engine outcomes. Read real
+  page purpose and original evidence before suggesting useful, known dates. Do
+  not invent dates, relabel events or cosmetically refresh them; a bare year or
+  competitor's date does not establish publication evidence or a date requirement.
 - **E-E-A-T:** Is there genuine first-hand *experience*? Named, credentialed *author*?
   *Trust* signals (contact, policies, citations)? For YMYL topics, hold a higher bar.
 - **Phrase review:** Read quoted examples in context. Recommend edits only when
