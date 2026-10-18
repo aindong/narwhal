@@ -17,18 +17,26 @@ state the sample size next to any claim.
 from __future__ import annotations
 
 from collections import deque
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlsplit, urlunsplit
 
 DEPTH_WARN = 3          # clicks from the start URL beyond which we flag
 ORPHAN_SAMPLE = 8       # candidates listed in the report (full count still given)
+URL_IDENTITY_BASIS = 'fragment_free_scheme_host_case_preserve_path_query_v1'
 
 
 def norm(url: str) -> str:
-    """Normalize for graph identity: lowercase scheme/host, drop fragments and
-    trailing slashes (``…/page`` and ``…/page/`` are one node)."""
-    p = urlparse((url or "").split("#")[0])
-    path = p.path.rstrip("/") or "/"
-    return urlunparse((p.scheme.lower(), p.netloc.lower(), path, "", p.query, ""))
+    """Observed-address key, not canonical/redirect or server equivalence.
+
+    Ignore fragments and scheme/host case; preserve non-root separators,
+    semicolon path data, query case/order/empty delimiter and userinfo case.
+    This pure grouping helper never grants permission to fetch a URL.
+    """
+    address = (url or '').split('#', 1)[0]
+    p = urlsplit(address)
+    userinfo, separator, authority = p.netloc.rpartition('@')
+    netloc = (userinfo + separator if separator else '') + authority.lower()
+    output = urlunsplit((p.scheme.lower(), netloc, p.path or '/', p.query, ''))
+    return output + ('?' if '?' in address and not p.query else '')
 
 
 def analyze(base: str, crawled: list, pages_links: dict,
@@ -92,17 +100,19 @@ def analyze(base: str, crawled: list, pages_links: dict,
     orphans = {"checked": bool(sitemap_found), "candidates": [], "total": 0}
     if sitemap_found:
         seen_linked = linked_anywhere | {base_n} | nodes
-        cands = []
+        cands, seen_candidates = [], set()
         for u in sitemap_urls or []:
             un = norm(u)
             if un != base_n and urlparse(un).netloc == urlparse(base_n).netloc \
-                    and un not in seen_linked:
+                    and un not in seen_linked and un not in seen_candidates:
                 cands.append(u)
+                seen_candidates.add(un)
         orphans["candidates"] = cands
         orphans["total"] = len(cands)
 
     max_depth = max(depths.values()) if depths else 0
     return {
+        'url_identity_basis': URL_IDENTITY_BASIS,
         "pages_in_graph": len(nodes),
         "internal_edges": sum(len(v) for v in edges.values()),
         "max_depth": max_depth,
@@ -120,6 +130,12 @@ def render_markdown(g: dict, *, sitemap_total: int = 0) -> list:
     n = g["pages_in_graph"]
     lines = [f"## Site structure ({n} crawled pages, "
              f"{g['internal_edges']} internal links)", ""]
+    if g.get('url_identity_basis') == URL_IDENTITY_BASIS:
+        lines += ['URL identity groups fragments and scheme/host case only (empty roots use `/`). '
+                  'Other path/query literals remain distinct; canonical tags, redirects and '
+                  'server equivalence are not inferred.', '']
+    else:
+        lines += ['URL identity policy was not recorded; historical alias handling is unverified.', '']
     if g["internal_edges"] == 0:
         lines += ["No internal links were observed between the crawled pages — "
                   "depth/link-equity analysis needs a larger crawl "
@@ -156,8 +172,9 @@ def render_markdown(g: dict, *, sitemap_total: int = 0) -> list:
             if o["total"] > ORPHAN_SAMPLE:
                 lines.append(f"  - … +{o['total'] - ORPHAN_SAMPLE} more (see JSON)")
         else:
-            lines.append("- **Orphan candidates:** none — every checked sitemap "
-                         "URL is linked from the crawled sample. 🟢")
+            lines.append('- **Orphan candidates:** no additional candidates in this sample. '
+                         'Crawled/start URL identities and observed link targets are excluded; '
+                         'this does not prove every sitemap URL is linked.')
     else:
         lines.append("- **Orphan check skipped** — no verified sitemap URL sample was available.")
 

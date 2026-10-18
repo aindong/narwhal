@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Distinct crawl addresses:** discovery, graph nodes/orphans and hreflang no
+  longer merge non-root trailing/repeated slashes, path parameters or query
+  literals. Fragment aliases still group under a recorded graph policy; audit
+  diffs with missing/different policy cannot claim measured fixes. Counts and
+  fixed-cap samples can change, not page rules, fetch permissions or proof of
+  server equivalence/SEO gains. No-orphan output does not certify inbound links.
 - **Canonical component correctness:** page checks and duplicate clusters no
   longer collapse different schemes, query values or case-sensitive paths.
   Standard local normalizations, document bases and empty delimiters preserve
