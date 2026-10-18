@@ -157,6 +157,11 @@ def overall_score(data: dict) -> float:
     return min(data["page"].score(), data["site_result"]["avg_score"])
 
 
+def _schema_score_note(data: dict) -> str:
+    return (crawl_site.schema_extraction_note(data['site_result'])
+            or report_lib.recorded_schema_extraction_problem(data['page'].meta, for_score=True) or '')
+
+
 def render_markdown(data: dict) -> str:
     page = data["page"]
     site_res = data["site_result"]
@@ -196,6 +201,9 @@ def render_markdown(data: dict) -> str:
     ]
     for n, title, body in _extra_sections(data):
         header += ["", f"## {n}. {title}", "", body]
+    schema_note = _schema_score_note(data)
+    if schema_note:
+        header[5:5] = ['> ' + schema_note, '']
     return "\n".join(header).rstrip() + "\n"
 
 
@@ -250,7 +258,9 @@ def render_html(data: dict) -> str:
         + report_lib.md_to_html(body) + "</section>"
         for n, title, body in _extra_sections(data))
 
-    body = hero + homepage + sitewide + sitemap + extra_html
+    schema_note = _schema_score_note(data)
+    coverage = ('<section class="card"><p>' + report_lib._esc(schema_note) + '</p></section>') if schema_note else ''
+    body = hero + coverage + homepage + sitewide + sitemap + extra_html
     return report_lib.html_document("Narwhal Site Audit", data["site"], body)
 
 

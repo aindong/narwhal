@@ -97,6 +97,11 @@ and no eligible headings are not interpreted as a measured low fraction.
 schema.org validation or live eligibility. Retired Google appearances do not
 require deleting accurate semantic markup. Unlisted types are not certified
 eligible, and missing legacy snapshot provenance stays unverified.
+`schema_extraction` records supported-extractor errors/warning-detail counts.
+Known problems or missing receipts cannot certify schema absence. Keep observed
+types visible, inspect existing markup before adding/duplicating a candidate,
+and do not claim schema/overall score gains from unverified extraction. A
+`no_known_problem` receipt is not full conformance/eligibility or exhaustive coverage.
 
 **Build a data-driven content brief** (what to *write*, grounded in real data —
 no keyword APIs, no invented volumes):
@@ -281,6 +286,9 @@ Each report has a **0–100 health score** and findings bucketed by severity
 not absolute — always explain the *specific* fixes, not just the number. When a
 finding is a heuristic (readability, citability, entity clarity), say so; these
 flag pages worth a human look rather than issuing verdicts.
+Known structured-data extraction uncertainty also prevents page/audit diff
+improvement/resolution verdicts; the CI gate exits 2, including uncertain crawl
+contributions. Fix/verify extraction before treating missing findings as fixes.
 
 ## Deep audit (multi-agent)
 

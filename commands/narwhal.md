@@ -225,6 +225,11 @@ not inferred from source wording. Keep deliberate editorial formats separate.
 Google appearance notes. Retirement is not schema.org invalidity or a ranking
 penalty; unlisted types are not certified eligible. Missing snapshot provenance
 stays unverified. Keep accurate semantic markup when useful for its consumer.
+`schema_extraction` carries supported-extractor errors and retained warning-detail
+counts. Missing/uncertain coverage is not evidence that a schema type is absent;
+review existing markup before adding or duplicating a candidate. Observed types
+remain useful, but schema/overall score comparisons are unverified when extraction
+has known problems. Do not describe those scores as measured improvements.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:

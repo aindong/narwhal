@@ -73,6 +73,48 @@ Structured data must **match visible content**. Marking up a price, rating, or
 review that a user can't see on the page is a spam violation and can trigger a
 manual action. Never generate schema for content that isn't actually present.
 
+### Known extraction uncertainty
+
+`meta.structured_data.extraction_coverage` and comparison/brief facts
+`schema_extraction` record version 1, `supported_structured_data_extraction`
+basis, source basis (`document_html` or caller-provided Doc fields), JSON-LD
+block/processing-error counts and retained Microdata/RDFa warning-detail counts.
+Warning counts include omission notices, not a total of all underlying defects.
+Only typed markers, bounded integer counts and consistent status are recognized;
+missing/malformed/unsupported receipts stay unknown. No raw source/error text is
+newly copied. This is not a complete JSON-LD/RDFa processor, visibility/ownership
+check, schema.org validator or Google eligibility test.
+
+Any recorded processing error or warning leaves the supported extraction
+`unverified`. Zero such observations gives `no_known_problem`, **not** exhaustive
+extraction. Existing limits and matching algorithms stay in place. For example,
+Recipe markup after the 1,000th Microdata item may exist without being observed.
+The absence of that type in the facts cannot justify adding duplicate schema.
+
+Comparison `schema_comparison` records this uncertainty without changing raw
+types or scores. Absence-based schema gaps require an own-page receipt with no
+known problem; exclusivity leads require that on all compared pages. Positive
+types observed on a partial rival remain available as observations/candidates.
+Brief `existing_markup_status` distinguishes unverified own-page markup from a
+supported-subset non-observation, or `not_applicable` in topic mode. Candidates
+remain reviewable, but do not assume they are missing or invent content to add
+them. Renderers recheck page receipts rather than trust stale root/legacy flags.
+Known or missing coverage qualifies schema/overall comparison scores; other
+observed facts remain, without any new accuracy claim.
+
+Scans additionally record `scan_settings.schema_extraction_reviewed` only after
+schema execution and a recognized receipt. This is an extraction-problem flag,
+not a validity/eligibility certificate. Crawl pages preserve it and an explicit
+`schema_extraction_unverified` indicator (false alone does not certify legacy
+coverage). Page/audit diff gates with known uncertainty return incomparable,
+null score delta/regression, no resolution verdict and exit 2—even when both
+runs have the same uncertainty. Crawl contributions are included. Focused
+non-schema page comparisons are not blocked by unrelated schema metadata.
+Explicit legacy warning lists still need verification; absent old receipts do
+not invent either full coverage or new errors. Unsupported supplied receipts
+cannot certify comparability. Findings/IDs/score arithmetic stay unchanged;
+clearing an extraction warning is verification work, not a measured SEO gain.
+
 ## Common types and their required properties
 The auditor and `generate_schema.py` validate these:
 
