@@ -773,7 +773,8 @@ class TestCompare(unittest.TestCase):
         self.assertIn("Meta description", whats)
         self.assertTrue(any(w.startswith("Schema types:") and "FAQPage" in w
                         for w in whats))
-        self.assertIn("Content depth", whats)
+        self.assertNotIn("Content depth", whats)
+        self.assertEqual('observation_not_target', r['text_length']['interpretation'])
         self.assertIn("Question-based headings", whats)
         self.assertIn("Complete Open Graph tags", whats)
 

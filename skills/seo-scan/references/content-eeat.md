@@ -65,8 +65,39 @@ satisfaction, content depth, ranking or AI citation likelihood from a count.
   coverage is not automatically a comparison failure. Missing legacy flags stay
   unknown, not inferred from language; they do not certify full comparability.
 - This scopes the **page content auditor's length check** only. Readability,
-  keywords and comparison/brief length heuristics remain separate; this does not
-  validate their linguistic or content-depth assumptions.
+  keywords and the question/evidence/subtopic heuristics remain separate; this
+  does not validate their linguistic or content-depth assumptions.
+
+### Comparison and brief length observations
+
+- Comparison facts preserve their historical `words` scalar, calculated with
+  Python `str.split()` on selected extracted text. It counts whitespace-separated
+  tokens, **not linguistic words**; 6,000 unspaced Chinese code points can be one
+  token. This differs from the page auditor's ASCII-pattern count. Neither is a
+  multilingual word segmenter. Formatting and extraction can change either count.
+- Facts add a versioned `text_length` receipt with `basis=python_str_split`,
+  `whitespace_tokens`, Unicode `code_points`, and the extraction basis (capped at
+  160 code points with a clipping flag). No raw text is newly retained. A known
+  conflicting alias, unsupported marker or malformed count leaves the basis
+  unverified; the tool version alone never supplies missing provenance.
+- Comparison and brief roots add neutral `text_length` observations, including
+  hubs and zero counts. Missing own-page input in topic mode is `not_supplied`
+  with a null count, not zero. Known-basis compared pages supply a count range;
+  missing legacy measurements stay null/unrecorded. Reports label units and
+  limits rather than infer completeness, ranking or AI citation impact.
+- Length alone no longer produces a `Content depth` gap/lead or brief
+  `structure.target_words`/`your_words`. New reports omit those target fields;
+  other structure heuristics remain. Consumers should use literal observations,
+  not silently turn the longest page into a requirement. Deliberate user/editorial
+  length constraints may still be useful; keep them separate from measurements.
+- Rendering older compare/brief data does not mutate its JSON. Known legacy
+  depth verdicts are not repeated as advice; old target fields receive an
+  unrecorded-basis warning without rendering their values as requirements.
+  Bare legacy `words` values can be shown only as basis-unrecorded counts.
+- Compare's `content_length_reviewed` fact is read only from an explicit page
+  scan boolean (otherwise null). It labels page-threshold scope, not validity of
+  the whitespace count, content quality, or a pass/fail on linguistic coverage.
+  Scores and all unrelated fact measurements remain unchanged by this correction.
 
 ## Experience & expertise
 - Show first-hand experience: original photos, test results, "we measured…",

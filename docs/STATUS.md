@@ -22,13 +22,18 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Neutral comparative length:** compare/brief keep whitespace-token counts and
+  code-point/extraction receipts, not depth gaps/leads or automatic word targets.
+  Legacy aliases remain unchanged; missing bases stay unverified. Topic mode
+  does not invent an own-page zero. Explicit editorial goals stay separate from
+  measurements. Other heuristics and page scores are not validated or changed.
 - **Scoped page text-length cues:** historical ASCII matches no longer become
   a high "thin content" verdict or a content-depth certificate. Literal count/
   extraction/language receipts explain conservative uninterpreted coverage for
   non-English declarations or non-ASCII letters/marks. Applicable length reviews
   are low; current/legacy plans preserve useful concise text. Counts/defaults/IDs
   remain, while titles/priorities/scores can change. No multilingual segmentation,
-  ranking/citation validation or comparison/brief length correction is claimed.
+  ranking/citation validation or linguistic word counts are claimed.
 - **Inspectable quick wins:** low-priority page findings show safe reported-field
   previews rather than only titles/advice. Detail and evidence each have a
   400-character normalized preview with explicit truncation; full JSON is intact.

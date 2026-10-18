@@ -491,8 +491,8 @@ class TestBrief(unittest.TestCase):
         rival = self._pagedict(self.RIVAL_HTML, "https://rival.com/guide")
         b = brief.synthesize(you, [rival], self.GSC)
         self.assertEqual(b["grounding"], "queries+pages")
-        self.assertEqual(b["structure"]["target_words"],
-                         rival["facts"]["words"])
+        self.assertNotIn('target_words', b['structure'])
+        self.assertEqual(b['text_length']['compared'][0]['count'], rival['facts']['words'])
         self.assertIn("HowTo", [s["type"] for s in b["schema"]])
         md = brief.render_markdown(b)
         self.assertIn("your real Search Console queries", md)
