@@ -22,6 +22,13 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Document-order headings:** optional BeautifulSoup parsing no longer groups
+  heading levels before technical checks or brief subtopic extraction. The
+  selected parser's document order preserves actual skip-pair evidence and
+  sibling-section order. Text/counts, IDs and severity stay unchanged, while
+  order-sensitive findings/scores can change. Development-only frozen replays
+  inform this parser correction, not independent SEO validation; reserved
+  findings stay uninspected and cross-parser malformed-HTML parity is not claimed.
 - **Prospective acquisition cohort:** 50 candidate URLs are registered before
   scans, split into 30 development and 20 reserved cases across 25 declared site
   families. Conservative preflight/delay/deadline rules preserve failures rather

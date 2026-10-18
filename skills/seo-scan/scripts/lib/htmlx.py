@@ -44,7 +44,7 @@ class Doc:
     meta: list = field(default_factory=list)          # list[Tag]
     links: list = field(default_factory=list)          # list[Tag] (<a>)
     link_rels: list = field(default_factory=list)      # list[Tag] (<link>)
-    headings: list = field(default_factory=list)       # list[(level:int, text:str)]
+    headings: list = field(default_factory=list)       # document-order (level:int, text:str)
     images: list = field(default_factory=list)         # list[Tag]
     scripts_ld: list = field(default_factory=list)     # list[str] JSON-LD blobs
     lang: str = ""
@@ -285,9 +285,10 @@ def _parse_bs4(html: str, base_url: str) -> Doc:
     for a in soup.find_all("a"):
         doc.links.append(Tag("a", {k.lower(): v for k, v in a.attrs.items()}, collapse(a.get_text()),
                              collapse(" ".join(image_alts.get(id(a), [])))))
-    for lvl in range(1, 7):
-        for h in soup.find_all(f"h{lvl}"):
-            doc.headings.append((lvl, collapse(h.get_text())))
+    # Keep sibling/outline relationships: level buckets silently reorder H2/H3
+    # sections and can hide or invent heading jumps in downstream checks.
+    for h in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
+        doc.headings.append((int(h.name[1]), collapse(h.get_text())))
     for img in soup.find_all("img"):
         doc.images.append(Tag("img", {k.lower(): v for k, v in img.attrs.items()}))
     for s in soup.find_all("script", attrs={"type": "application/ld+json"}):
