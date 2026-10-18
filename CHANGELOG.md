@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Page and near-duplicate canonical checks share HTTP component comparison,
+  preserving scheme/path/query distinctions while handling standard URL
+  normalizations, relative bases and explicit empty delimiters locally.
+  Malformed candidates retain evidence and manual uncertainty across reports,
+  plans, comparisons and diff gates; no target fetch or selection proof.
+  Stable rule/cluster fields remain; corrected scores are not measured page gains.
 - Configured filler-list and vocabulary-ratio findings expose literal ASCII
   numerator/denominator counts and extraction basis as low contextual reviews,
   not padding or thin/spun-content verdicts. Matching/cutoffs/IDs remain; the

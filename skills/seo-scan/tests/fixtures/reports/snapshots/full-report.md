@@ -81,7 +81,7 @@ Year-pattern matches in selected prefix: 0 (not publication evidence on their ow
 - 🟢 **Title length is in range** — 43 characters
 - 🟢 **Meta description length is in range** — 92 characters
 - 🟢 **Exactly one H1** — Practical guide to answer-engine visibility
-- 🟢 **Self-referencing canonical** — https://example.test/guides/answer-visibility
+- 🟢 **Self-referencing canonical** — https://example.test/guides/answer-visibility. First parsed HTML canonical only; comparison normalizes scheme/host case, default ports, empty root paths, percent-encoded unreserved characters and dot segments. Other path/query case, separators and query/fragment presence remain distinct. No target fetch, redirect/content equivalence, HTTP canonical headers, conflict validation or search-engine-selected canonical is verified.
 - 🟢 **No generic meta noindex detected** — Generic meta robots observation only; it excludes HTTP headers and crawler-specific meta. Absence is not proof of indexability.
 - 🟢 **Responsive viewport declared**
 - 🟢 **robots.txt references a sitemap**

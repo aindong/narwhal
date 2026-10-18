@@ -105,12 +105,22 @@ absence establish originality, helpfulness or ranking impact. The four-distinct-
 advisory is now low priority (previously medium), so that score correction is not
 a page improvement. Stable rule IDs remain; update title-based ignore filters
 for the [revised labels and interpretation](skills/seo-scan/references/content-eeat.md#filler--phrase-review).
+
 Configured filler-list matches and vocabulary ratios are also low contextual
 reviews, with exact ASCII-pattern counts and extraction basis—not padding or
 thin/spun-content diagnoses. Keep useful quoted text and consistent terminology;
 do not substitute synonyms solely to change a count. Legacy rule IDs remain,
 but title-based ignore filters may need updating. Priority calibration is not a
 measured website improvement.
+
+Canonical comparisons preserve scheme, path/query case, separators and query/
+fragment distinctions rather than collapsing different targets. Limited standard
+normalizations and the first non-template href-bearing HTML base are handled
+locally, without target requests. Page checks and duplicate clusters share the
+same key; `canonical_ok` means matching supported target observations, not verified
+consolidation or a search-engine-selected canonical. Unsupported/malformed
+declarations stay manual and qualify scores/diffs/comparisons instead of becoming
+passes or absence fixes. See [comparison boundaries](skills/seo-scan/references/technical-seo.md#canonicalization).
 
 Page content-length checks report literal ASCII-pattern counts, not universal
 word counts or a thinness verdict. Declared non-English text or non-ASCII

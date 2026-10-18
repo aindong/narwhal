@@ -19,6 +19,7 @@ from . import llms_resource
 from . import authorship
 from . import content_length
 from . import schema_coverage
+from . import canonical
 from . import date_cues
 from . import readability_observation
 from .code_fences import closes_fence, markdown_lines, opening_fence
@@ -312,7 +313,8 @@ class Report:
         llms = recorded_llms_problem(self.meta)
         schema = recorded_schema_extraction_problem(self.meta, for_score=True)
         discovery_suffix = ((' ' + discovery if discovery else '') + (' ' + llms if llms else '')
-                            + (' ' + schema if schema else ''))
+                            + (' ' + schema if schema else '')
+                            + (' ' + canonical.ERROR if canonical.unverified(self.meta) else ''))
         if scope is None:
             if self.hard_fail:
                 return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded." + discovery_suffix

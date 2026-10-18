@@ -45,6 +45,12 @@
       "schema_extraction_reviewed": true
     },
     "extraction": "visible text",
+    "canonical_comparison": {
+      "version": 1,
+      "basis": "first_html_canonical_http_components_v1",
+      "status": "matches",
+      "differences": []
+    },
     "content_length": {
       "version": 1,
       "basis": "selected_extracted_text",
@@ -481,7 +487,7 @@
       "category": "technical",
       "severity": "good",
       "title": "Self-referencing canonical",
-      "detail": "https://example.test/guides/answer-visibility",
+      "detail": "https://example.test/guides/answer-visibility. First parsed HTML canonical only; comparison normalizes scheme/host case, default ports, empty root paths, percent-encoded unreserved characters and dot segments. Other path/query case, separators and query/fragment presence remain distinct. No target fetch, redirect/content equivalence, HTTP canonical headers, conflict validation or search-engine-selected canonical is verified.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "technical.self.referencing.canonical",

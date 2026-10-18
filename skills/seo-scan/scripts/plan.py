@@ -595,6 +595,11 @@ READABILITY_REVIEW_GUIDANCE = (
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    'technical.canonical.points.elsewhere':
+        'Review the original canonical, document base, final fetched URL and actual variants in context. '
+        'Preserve intended consolidation; edit only a verified wrong target. Do not force self-reference, '
+        'remove query parameters or merge distinct pages solely because component keys differ. '
+        'A local comparison does not establish target access/content or search-engine selection.',
     **dict.fromkeys(('content.filler.padding.language', 'content.some.filler.phrasing',
                      'content.repetitive.vocabulary'),
         'Review actual wording, quoted examples and audience needs in context. Keep useful phrasing and '
@@ -694,6 +699,11 @@ SITEMAP_VERIFICATION = {
 
 
 RESOURCE_VERIFICATION = dict(SITEMAP_VERIFICATION)
+RESOURCE_VERIFICATION['technical.canonical.comparison.unverified'] = (
+    'Inspect the original HTML canonical, document base and fetched URL before proposing edits. '
+    'Repair only confirmed defects; do not add duplicate markup or assume a selected canonical.',
+    ('Review the original declaration and supported local URL comparison scope; no target was fetched.',
+     'Re-scan after a verified correction; verify any deployed target and search-engine selection separately.'))
 RESOURCE_VERIFICATION['geo.llms.txt.availability.unverified'] = (
     'Verify the root endpoint response and intended file before proposing changes. '
     'Do not create or rewrite llms.txt solely because this observation was unverified.',
@@ -805,7 +815,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         verification = RESOURCE_VERIFICATION.get(finding['rule_id'])
         artifact = classify_artifact(finding)
         if verification:
-            artifact = ('server_rendering' if finding['rule_id'] in RENDER_VERIFICATION_RULES else
+            artifact = ('canonical' if finding['rule_id'] == 'technical.canonical.comparison.unverified' else
+                        'server_rendering' if finding['rule_id'] in RENDER_VERIFICATION_RULES else
                         'json_ld' if finding['rule_id'].startswith('schema.') else
                         'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap')
         if artifact != "unknown":

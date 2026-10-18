@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Canonical component correctness:** page checks and duplicate clusters no
+  longer collapse different schemes, query values or case-sensitive paths.
+  Standard local normalizations, document bases and empty delimiters preserve
+  intended equivalences; malformed targets stay manual/unverified instead of
+  passing or crashing. Known gaps qualify page/site comparisons and diff gates.
+  No target fetch, search-selected canonical proof or measured SEO gain is claimed.
 - **Contextual style counts:** filler-list and type/token flags carry exact
   ASCII-pattern counts and extraction basis, not padding or thin/spun diagnoses.
   Current/legacy plans preserve useful quotes and consistent terms rather than
