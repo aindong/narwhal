@@ -12,7 +12,7 @@ You are the **Content & E-E-A-T** specialist in a parallel SEO/GEO audit. Analyz
 python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" <url> --only content --format json
 ```
 (Fallback: `uvx --from git+https://github.com/aindong/narwhal narwhal scan <url> --only content --format json`.)
-This gives word count, Flesch readability, dominant terms/entities, attribution
+This gives scoped text/formula counts, frequent ASCII terms, entity candidates, attribution
 and date-related candidates, Open Graph completeness, and **filler / common-phrase observations**
 (with example phrases + lexical diversity). Also **read the actual page text**
 yourself to confirm and add nuance the heuristics miss.
@@ -36,6 +36,11 @@ Review the context the heuristics cannot establish:
   or AI citability. Unsupported language/text scope stays unassessed. Preserve
   useful concise/specialist text and necessary precision; simplify only when
   useful for actual readers, not to satisfy a formula or word-count target.
+- **Lexical-focus review:** `meta.lexical_focus` records top-eight frequency and
+  exact title/first-H1 overlap, not dominant topics or semantic relevance. A term
+  can occur outside the cutoff; synonyms can be missed and incidental words can
+  match. Read actual purpose/wording before edits; do not stuff keywords or force
+  literal overlap to satisfy the heuristic or promise ranking/citation gains.
 - **E-E-A-T:** Is there genuine first-hand *experience*? Named, credentialed *author*?
   *Trust* signals (contact, policies, citations)? For YMYL topics, hold a higher bar.
 - **Phrase review:** Read quoted examples in context. Recommend edits only when

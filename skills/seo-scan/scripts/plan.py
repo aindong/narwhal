@@ -595,6 +595,11 @@ READABILITY_REVIEW_GUIDANCE = (
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    'content.body.may.not.reinforce.the.title.topic':
+        'Review actual page purpose and wording, including synonyms, the top-8 lexical cutoff and extraction. '
+        'Edit only confirmed misleading labels or missing useful content; keep accurate wording. Do not stuff '
+        'keywords or rewrite solely to force literal overlap. Frequency does not establish semantic relevance '
+        'or ranking/AI-citation impact.',
     **dict.fromkeys(READABILITY_REVIEW_RULES, READABILITY_REVIEW_GUIDANCE),
     'content.no.visible.date.signal':
         'Review actual page purpose and original publication/update evidence. Add accurate date information '
@@ -956,6 +961,10 @@ def render_markdown(plan: dict) -> str:
                 display_title = 'Review recorded readability formula finding'
                 scope_lines.append('- **Priority scope:** Input report priority retained, not verified readability risk. '
                                    'Original title and priority remain in JSON; review actual readers and text.')
+            if action['rule_id'] == 'content.body.may.not.reinforce.the.title.topic':
+                display_title = 'Review recorded lexical-focus observation'
+                scope_lines.append('- **Observation scope:** Input label/priority retained in JSON, not a verified '
+                                   'semantic gap. Review actual page purpose and wording.')
             if action['rule_id'] in SCHEMA_VERIFICATION_RULES:
                 scope_label = ('Page report' if action.get('scope') == 'page' else
                                'Site sample/rollup' if action.get('scope') == 'site' else 'Unrecorded scope')

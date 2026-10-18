@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Inspectable lexical focus:** exact top-eight ASCII frequency/title-first-H1
+  overlap has bounded witnesses and cutoff/tie/filter provenance, not dominant-
+  topic or semantic-relevance certification. Counts/selection/priorities/scores
+  remain; current/legacy guidance avoids forced overlap and keyword stuffing.
+  Missing receipts remain unrecorded; no independent SEO accuracy is claimed.
 - **Compact native measurement evidence:** page/audit HTML keeps counts and
   uncertainty visible while detailed lexical/attribution/date receipts expand by
   mouse or keyboard. Priority/resource warnings stay outside; print/PDF includes

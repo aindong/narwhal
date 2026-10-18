@@ -92,7 +92,7 @@ def reading_ease_label(score) -> str:
 
 
 def top_keywords(text: str, n: int = 10) -> list:
-    """Most frequent meaningful unigrams as ``[(term, count)]``."""
+    """Frequent ASCII-pattern unigrams after the built-in filter, not topics."""
     toks = [w.lower() for w in words(text)
             if len(w) >= 3 and w.lower() not in STOPWORDS]
     return Counter(toks).most_common(n)

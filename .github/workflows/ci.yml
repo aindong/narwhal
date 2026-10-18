@@ -138,3 +138,5 @@ jobs:
         run: python skills/seo-scan/tests/readability_observation_smoke.py
       - name: Native measurement disclosure browser regression
         run: python skills/seo-scan/tests/measurement_disclosure_smoke.py
+      - name: Scoped lexical-focus browser regression
+        run: python skills/seo-scan/tests/lexical_focus_smoke.py

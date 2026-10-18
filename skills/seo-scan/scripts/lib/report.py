@@ -925,7 +925,7 @@ border-radius:8px;padding:14px 16px;margin:0 0 12px}
 .f-head{display:flex;align-items:center;gap:10px}
 .f-num{font-weight:700;color:var(--muted)}
 .f-title{font-weight:600;flex:1}
-.finding p,.clean li{overflow-wrap:anywhere}
+.finding p,li{overflow-wrap:anywhere}
 .tag{color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.02em}
 .f-cat{margin:2px 0 8px 24px}
 .finding p{margin:6px 0}

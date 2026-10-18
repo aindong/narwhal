@@ -322,6 +322,13 @@ only where useful for the actual audience, not to meet a universal score/word qu
 Current/legacy plans use the same conditional review. Known changes in recorded
 `readability_reviewed` scope make page/audit/crawl diffs incomparable, not fixes;
 missing legacy scope stays unknown. See `references/content-eeat.md#readability`.
+`meta.lexical_focus` records top-eight ASCII-term frequency and exact title/first-H1
+overlap, not dominant topics or semantic coverage. Cutoffs/ties, synonyms,
+inflections and extraction can hide matches; incidental overlap is not relevance.
+Review actual page purpose/wording and edit only confirmed misleading labels or
+missing useful content, without keyword stuffing or forced overlap. Legacy IDs
+remain; missing receipts do not supply measured scope. See
+`references/content-eeat.md#topical-focus` for witnesses, limits and compatibility.
 
 ## Deep audit (multi-agent)
 
