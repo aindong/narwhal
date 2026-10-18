@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Low-priority page findings retain bounded, whitespace-normalized previews of
+  their reported observation/evidence in Markdown and native HTML/PDF input.
+  Markup stays literal, clipped fields are labelled and full values remain in
+  unchanged JSON. Previews help inspect findings; they do not independently
+  verify them. Scores, severity, IDs and recommendations are unchanged.
 - User-facing and tuning documentation distinguish observed findings, priority
   revisions, scanner-score changes and actual website outcomes. Historical score
   tables are retained without treating familiar sites, passing tests or agent

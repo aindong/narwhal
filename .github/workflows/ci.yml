@@ -110,3 +110,5 @@ jobs:
         run: python skills/seo-scan/tests/native_score_table_smoke.py
       - name: Same-run rendered review capture
         run: python skills/seo-scan/tests/review_capture_smoke.py
+      - name: Literal quick-win preview browser regression
+        run: python skills/seo-scan/tests/quick_win_preview_smoke.py
