@@ -316,10 +316,13 @@ Keep accurate wording; do not stuff keywords or rewrite solely to force overlap.
 <a id="filler--ai-writing-detection"></a>
 
 ## Filler & phrase review
-- The content auditor flags **filler/padding phrases** ("in today's fast-paced
+- The content auditor observes **configured phrase matches** ("in today's fast-paced
   world", "when it comes to", "needless to say"…) and **configured common phrases**
   ("it's worth noting", "delve into", "a testament to", "unlock the potential"…),
-  plus low **lexical diversity** (repetitive vocabulary), with example matches.
+  plus the rounded distinct/total ratio of lowercased ASCII-pattern matches.
+  It reports exact numerator/denominator counts, extraction basis and bounded
+  phrase examples. These are not linguistic word counts or diagnoses of padding,
+  thinness or spun content. Quoted examples and repeated technical terms may be useful.
 - A match is a prompt for **editorial review**, not evidence of AI authorship,
   poor quality, unoriginality or a search penalty. Even literal subject words
   such as "tapestry" can match. Read the context and intended audience before
@@ -327,11 +330,17 @@ Keep accurate wording; do not stuff keywords or rewrite solely to force overlap.
 - Two or more distinct common-phrase matches produce a low-priority advisory;
   four or more no longer become a medium-priority authorship/ranking warning.
   The thresholds are unvalidated editorial defaults, not measured SEO risk.
+- The historical filler-list rate/count and vocabulary-ratio cutoffs keep their
+  matching behavior and IDs, but all are low-priority contextual reviews. A rate
+  flag no longer earns a medium penalty; this is calibration, not a page gain.
+  Preserve consistent terminology; do not swap synonyms or add content solely
+  to change a ratio. Doubling identical text keeps its distinct vocabulary while
+  doubling the denominator, illustrating why the ratio is not a quality verdict.
 - An absence of these matches does not prove originality, helpfulness or human
   authorship either. Vocabulary variety is a count, not an assessment of truth.
 - Historical `ai_*` helper keys and finding rule IDs remain for compatibility,
   not as detector claims. Displayed titles have changed, so update title-based
-  `[ignore].titles` filters if they used the previous AI-sounding labels.
+  `[ignore].titles` filters if they used previous AI-sounding, filler or repetition labels.
   A score change caused by the priority correction is not a page improvement.
 - Google's [guidance on generative AI content](https://developers.google.com/search/docs/fundamentals/using-gen-ai-content)
   emphasizes accuracy, quality, relevance and value for users, rather than these

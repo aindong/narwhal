@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Configured filler-list and vocabulary-ratio findings expose literal ASCII
+  numerator/denominator counts and extraction basis as low contextual reviews,
+  not padding or thin/spun-content verdicts. Matching/cutoffs/IDs remain; the
+  rate flag's medium-to-low correction can change scores, not measured SEO.
+  Current/legacy plans preserve useful phrasing and consistent terminology.
 - Native page/audit and Markdown-derived reports size header/footer logos with
   explicit CSS (46px/16px) and align the footer mark inline with its credit.
   WeasyPrint no longer falls back to the embedded image's 128px intrinsic size.
