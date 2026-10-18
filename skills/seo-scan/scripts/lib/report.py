@@ -20,6 +20,7 @@ from . import authorship
 from . import content_length
 from . import schema_coverage
 from . import date_cues
+from . import readability_observation
 from .code_fences import closes_fence, markdown_lines, opening_fence
 from .markdown_text import TABLE_TEXT_MARKER
 
@@ -494,6 +495,10 @@ class Report:
         if length_note:
             lines += ['## Text-length observation (not content quality)', '', length_note, '']
 
+        reading_note = readability_observation.note(self.meta)
+        if reading_note:
+            lines += ['## Readability formula observation (not comprehension)', '', reading_note, '']
+
         attribution = authorship.evidence_lines(self.meta)
         if attribution:
             lines += ['## Attribution cue evidence (not identity verification)', '',
@@ -662,6 +667,11 @@ class Report:
         if length_note:
             body.append('<section class="card"><h2>Text-length observation (not content quality)</h2><p>'
                         + _esc(length_note) + '</p></section>')
+
+        reading_note = readability_observation.note(self.meta)
+        if reading_note:
+            body.append('<section class="card"><h2>Readability formula observation (not comprehension)</h2><p>'
+                        + _esc(reading_note) + '</p></section>')
 
         attribution = authorship.evidence_lines(self.meta)
         if attribution:

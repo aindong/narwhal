@@ -313,6 +313,15 @@ numeric/Unicode handling or node-processing failures are verification-only, not
 proof of invalid source or engine rejection. `jsonld_error_stages` records actual
 runtime counts; missing legacy stages stay unclassified. Verify before rewriting
 data, and do not increase global parser/body limits just to clear a note.
+`meta.readability` exposes historical ASCII-token, punctuation-fragment and
+vowel-group inputs with English-oriented Flesch/FK formula estimates, not actual
+comprehension, school grade or engine citability. Non-English declarations,
+non-ASCII letters/marks, hub hints and unusable inputs leave interpretation
+unassessed. Keep useful concise/specialist text and necessary precision; simplify
+only where useful for the actual audience, not to meet a universal score/word quota.
+Current/legacy plans use the same conditional review. Known changes in recorded
+`readability_reviewed` scope make page/audit/crawl diffs incomparable, not fixes;
+missing legacy scope stays unknown. See `references/content-eeat.md#readability`.
 
 ## Deep audit (multi-agent)
 

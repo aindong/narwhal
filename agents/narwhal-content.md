@@ -31,6 +31,11 @@ Review the context the heuristics cannot establish:
   page purpose and original evidence before suggesting useful, known dates. Do
   not invent dates, relabel events or cosmetically refresh them; a bare year or
   competitor's date does not establish publication evidence or a date requirement.
+- **Readability review:** inspect `meta.readability` formula inputs and scope,
+  not just Flesch/FK estimates. They do not measure comprehension, school grade
+  or AI citability. Unsupported language/text scope stays unassessed. Preserve
+  useful concise/specialist text and necessary precision; simplify only when
+  useful for actual readers, not to satisfy a formula or word-count target.
 - **E-E-A-T:** Is there genuine first-hand *experience*? Named, credentialed *author*?
   *Trust* signals (contact, policies, citations)? For YMYL topics, hold a higher bar.
 - **Phrase review:** Read quoted examples in context. Recommend edits only when
@@ -59,8 +64,8 @@ Review the context the heuristics cannot establish:
 ## Reference
 - Google's helpful-content stance: reward original, experience-backed, useful content.
   AI assistance isn't penalized; low-quality unoriginal content is.
-- Readability: 70+ easy · 50–70 moderate · 30–50 difficult · <30 very difficult
-  (match to audience — specialist content can be denser).
+- Readability: English-oriented formula estimates are contextual observations,
+  not reader tests or universal targets; inspect counts, limits and actual text.
 
 ## Output to the orchestrator
 - **Content score:** X/100

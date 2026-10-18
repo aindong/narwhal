@@ -587,7 +587,15 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
     'Phrase matches do not determine authorship, originality, helpfulness or ranking impact.')
 
 
+READABILITY_REVIEW_RULES = {'content.content.is.very.hard.to.read', 'content.content.is.fairly.hard.to.read'}
+READABILITY_REVIEW_GUIDANCE = (
+    'Review actual audience, language and captured prose. Simplify only where useful; preserve necessary '
+    'technical terms, factual precision and useful concise text. Do not pad or rewrite solely to reach '
+    'a formula target. Formula estimates do not establish reader comprehension or ranking/citation impact.')
+
+
 EDITORIAL_REVIEW_GUIDANCE = {
+    **dict.fromkeys(READABILITY_REVIEW_RULES, READABILITY_REVIEW_GUIDANCE),
     'content.no.visible.date.signal':
         'Review actual page purpose and original publication/update evidence. Add accurate date information '
         'only when useful and known; preserve valid existing dates. Do not invent dates, relabel events '
@@ -943,11 +951,16 @@ def render_markdown(plan: dict) -> str:
             if action['rule_id'] in RESOURCE_VERIFICATION:
                 owners = 'not assigned (verification only)'
             scope_lines = []
+            display_title = action['title']
+            if action['rule_id'] in READABILITY_REVIEW_RULES:
+                display_title = 'Review recorded readability formula finding'
+                scope_lines.append('- **Priority scope:** Input report priority retained, not verified readability risk. '
+                                   'Original title and priority remain in JSON; review actual readers and text.')
             if action['rule_id'] in SCHEMA_VERIFICATION_RULES:
                 scope_label = ('Page report' if action.get('scope') == 'page' else
                                'Site sample/rollup' if action.get('scope') == 'site' else 'Unrecorded scope')
                 scope_lines = [f'- **Verification scope:** {scope_label}']
-            lines += [f"### {action['severity'].upper()} — {action['title']}", "",
+            lines += [f"### {action['severity'].upper()} — {display_title}", "",
                       f"- **Rule:** `{action['rule_id']}`",
                       *scope_lines,
                       f"- **Likely owner:** {owners}",

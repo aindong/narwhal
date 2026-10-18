@@ -134,3 +134,5 @@ jobs:
         run: python skills/seo-scan/tests/rendered_text_evidence_smoke.py
       - name: Scoped date-cue browser regression
         run: python skills/seo-scan/tests/date_cues_smoke.py
+      - name: Scoped readability-formula browser regression
+        run: python skills/seo-scan/tests/readability_observation_smoke.py

@@ -14,6 +14,7 @@ try:
     from lib import authorship
     from lib import content_length
     from lib import date_cues
+    from lib import readability_observation
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
     from .lib import content_quality  # type: ignore
@@ -21,6 +22,7 @@ except ImportError:  # when imported as a package
     from .lib import authorship  # type: ignore
     from .lib import content_length  # type: ignore
     from .lib import date_cues  # type: ignore
+    from .lib import readability_observation  # type: ignore
 
 CAT = "content"
 
@@ -43,8 +45,8 @@ def audit(doc, resp, report, ctx=None) -> None:
     receipt = content_length.observe(text, language=doc.lang, basis=doc.extraction, thresholds=th)
     report.meta['content_length'] = receipt
     _word_count(receipt, report, hub=hub)
+    _readability(text, report, hub=hub, article=article, language=doc.lang, basis=doc.extraction)
     if english:
-        _readability(text, report, hub=hub, article=article)
         _quality(text, report)
     _keywords(doc, text, report)
     _authorship(doc, text, report, article=article)
@@ -79,31 +81,26 @@ def _word_count(receipt, report, hub=False):
                    observed + content_length.LIMITS, rule_id='content.sufficient.content.depth')
 
 
-def _readability(text, report, hub=False, article=False):
-    if hub:
-        return  # Flesch over nav/link fragments measures nothing real
-    fre = textlib.flesch_reading_ease(text)
-    if fre is None:
+def _readability(text, report, hub=False, article=False, *, language='', basis='visible text'):
+    receipt = readability_observation.observe(text, language=language, basis=basis, hub=hub)
+    report.meta['readability'] = receipt
+    if receipt['formula_status'] != 'computed':
         return
-    grade = textlib.flesch_kincaid_grade(text)
-    label = textlib.reading_ease_label(fre)
-    detail = f"Flesch reading ease {fre} ({label}); ~grade {grade}"
+    fre, grade = receipt['flesch_reading_ease'], receipt['flesch_kincaid_grade']
+    detail = (f'Flesch reading ease estimate {fre}; FK grade formula estimate {grade}. '
+              + readability_observation.LIMITS)
+    advice = ('Review actual audience, language and the captured prose in context. Simplify only where useful; '
+              'preserve necessary technical terms, factual precision and useful concise text. Do not pad or '
+              'rewrite solely to reach a formula target. Reader comprehension and engine outcomes are unmeasured.')
     if fre < 30:
-        # Dense terse fragments on marketing/home pages score badly without
-        # being a real reading problem — medium is reserved for articles.
-        report.add(CAT, "medium" if article else "low",
-                   "Content is very hard to read",
-                   detail + ".",
-                   "Shorten sentences and prefer plainer words. Dense prose is "
-                   "harder for readers and for AI engines to quote cleanly."
-                   + ("" if article else " (Weighs most on article pages.)"))
+        report.add(CAT, 'low', 'Review below-30 readability formula estimate', detail, advice,
+                   rule_id='content.content.is.very.hard.to.read')
     elif fre < 50:
-        report.add(CAT, "low", "Content is fairly hard to read",
-                   detail + ".",
-                   "Consider shorter sentences/simpler words unless the audience "
-                   "is specialist.")
+        report.add(CAT, 'low', 'Review below-50 readability formula estimate', detail, advice,
+                   rule_id='content.content.is.fairly.hard.to.read')
     else:
-        report.ok(CAT, "Readable prose", detail)
+        report.add(CAT, 'good', 'No below-range readability formula flag', detail,
+                   rule_id='content.readable.prose')
 
 
 def _keywords(doc, text, report):

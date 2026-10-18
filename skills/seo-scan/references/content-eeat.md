@@ -215,13 +215,51 @@ measure engine interpretation, freshness, accuracy or ranking/citation impact.
   date findings can change tool scores without any page or measured SEO gain.
 
 ## Readability
-- Aim for scannable prose: short paragraphs, ~15–20 words/sentence average,
-  descriptive subheads, lists where appropriate.
-- The auditor reports a **Flesch Reading Ease** score and an approximate
-  **Flesch–Kincaid grade level**: 70+ is easy, 50–70 moderate, 30–50 difficult,
-  <30 very difficult. Match the target to your audience — general-audience content
-  should usually land 50+; specialist/technical content can be denser.
-- Readable content is also more *quotable* — see `geo-llmo.md`.
+
+Review actual readers and prose in context. Clear headings, paragraphs or lists
+may help, but necessary technical terms, factual precision and useful concise text
+can stay. Do not pad or rewrite solely to reach a formula target. Narwhal does not
+measure comprehension, verified school grade, accessibility or engine citability
+from a formula; no universal score or minimum word count is established.
+
+- `meta.readability` records the historical ASCII pattern `[A-Za-z][A-Za-z'\-]*`
+  (including single-letter matches), nonempty fragments split by `[.!?]+`, and
+  vowel-group syllable estimates with the existing trailing silent-e adjustment.
+  These are not multilingual words, verified sentences or validated syllables.
+  Short samples, abbreviations, headings, code and specialist terms can distort
+  the result. Extraction basis and declared language are clipped at 160/80 code
+  points with flags; raw text is not newly retained. Bounds are receipt limits,
+  not whole-run resource budgets or language detection.
+- Eligible samples retain exactly the existing one-decimal formulas:
+  `206.835 - 1.015 * matches/fragments - 84.6 * syllables/matches` (Flesch)
+  and `0.39 * matches/fragments + 11.8 * syllables/matches - 15.59` (FK).
+  Values are not clamped to 0–100 or school-grade ranges. Historical helper
+  APIs/numeric results stay available; page estimates explicitly stay heuristic.
+- Non-English declarations, any non-ASCII letters/combining marks, link-hub hints
+  or unusable inputs leave formula interpretation withheld, with null estimates
+  and literal counts/reasons. This conservative scope can omit English text with
+  accents; it does not identify languages, certify English or repair segmentation.
+  Missing legacy receipts do not establish inputs, coverage or comprehension.
+- Historical below-30/below-50 cutoffs remain contextual editorial bands, not
+  engine requirements. Both advisories are low priority; the article below-30
+  advisory is no longer medium. A passing observation is not a readability
+  certificate. Rule IDs `content.content.is.very.hard.to.read`,
+  `content.content.is.fairly.hard.to.read` and `content.readable.prose` remain;
+  review title/severity-based filters. Scores can change from calibration without
+  improved pages or measured SEO gains. Current/legacy plans preserve precision
+  and conditional audience review, not automatic simplification or padding.
+  Human plans label these as recorded formula reviews rather than repeat legacy
+  comprehension verdicts; original titles/priorities remain unchanged in JSON,
+  with retained input priority explicitly not a verified readability risk.
+- Page Markdown/native HTML/PDF show validated counts, estimates and static
+  limits without interpreting arbitrary source labels as markup. Scans record
+  an explicit `scan_settings.readability_reviewed` boolean. Known coverage changes
+  prevent page/audit/crawl diffs from claiming fixes or score improvement; the
+  CI gate exits 2. Matching uninterpreted scope is not automatically incomparable,
+  and missing legacy flags are not inferred. Comparison facts/table expose only
+  the explicit page-review flag, not a guess from formulas or legacy prose.
+  Other text/phrase checks remain
+  separate and are not newly validated by this change.
 
 ## Topical focus
 - The auditor extracts the page's most frequent terms and phrases (its "dominant

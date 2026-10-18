@@ -41,6 +41,7 @@
       "image_checks": false,
       "rule_config": "73dd3ab00a8fb78cc6bd9fdde9742750180283543f2b1df87fe6b6a69a495887",
       "content_length_reviewed": true,
+      "readability_reviewed": true,
       "schema_extraction_reviewed": true
     },
     "extraction": "visible text",
@@ -63,6 +64,28 @@
         "short_content": 600
       },
       "limits": "ASCII-pattern matches are not universal word counts or a measure of content depth, usefulness, ranking or AI citations. Configured bounds are editorial defaults, not engine requirements."
+    },
+    "readability": {
+      "version": 1,
+      "basis": "selected_text_ascii_english_formula",
+      "word_pattern": "[A-Za-z][A-Za-z'\\-]*",
+      "sentence_pattern": "[.!?]+",
+      "syllable_basis": "vowel_groups_with_silent_e_adjustment",
+      "source_basis": "visible text",
+      "source_basis_clipped": false,
+      "declared_language": "en",
+      "declared_language_clipped": false,
+      "text_characters": 1046,
+      "non_ascii_letters_or_marks": 0,
+      "link_hub_hint": false,
+      "ascii_pattern_matches": 153,
+      "sentence_fragments": 12,
+      "estimated_syllables": 282,
+      "flesch_reading_ease": 38.0,
+      "flesch_kincaid_grade": 11.1,
+      "formula_status": "computed",
+      "uninterpreted_reasons": [],
+      "limits": "English-oriented heuristic formula estimates, not measured reader comprehension, a verified school grade, content quality or ranking/AI-citation impact. ASCII-pattern matches are not multilingual words; punctuation fragments are not verified sentences and vowel-group estimates are not validated syllables. Short samples, headings, abbreviations, code and specialist vocabulary can distort results. Review actual audience and text; no universal formula target or minimum word count is established."
     },
     "authorship_cues": {
       "version": 1,
@@ -452,9 +475,9 @@
     {
       "category": "content",
       "severity": "low",
-      "title": "Content is fairly hard to read",
-      "detail": "Flesch reading ease 38.0 (difficult); ~grade 11.1.",
-      "recommendation": "Consider shorter sentences/simpler words unless the audience is specialist.",
+      "title": "Review below-50 readability formula estimate",
+      "detail": "Flesch reading ease estimate 38.0; FK grade formula estimate 11.1. English-oriented heuristic formula estimates, not measured reader comprehension, a verified school grade, content quality or ranking/AI-citation impact. ASCII-pattern matches are not multilingual words; punctuation fragments are not verified sentences and vowel-group estimates are not validated syllables. Short samples, headings, abbreviations, code and specialist vocabulary can distort results. Review actual audience and text; no universal formula target or minimum word count is established.",
+      "recommendation": "Review actual audience, language and the captured prose in context. Simplify only where useful; preserve necessary technical terms, factual precision and useful concise text. Do not pad or rewrite solely to reach a formula target. Reader comprehension and engine outcomes are unmeasured.",
       "evidence": null,
       "rule_id": "content.content.is.fairly.hard.to.read",
       "scope": "page",

@@ -337,7 +337,7 @@ class TestRound2Tuning(unittest.TestCase):
         self.assertNotIn("Clean, specific writing", titles)             # no claim
         self.assertNotIn("Filler / padding language", titles)
 
-    def test_very_hard_readability_low_on_non_article(self):
+    def test_below_range_readability_is_low_contextual_review_on_both_page_types(self):
         # dense fragments; guarantee non-hub (few links) and non-article
         dense = ("Infrastructure orchestration automation transformation "
                  "internationalization decentralization synchronization "
@@ -346,16 +346,16 @@ class TestRound2Tuning(unittest.TestCase):
         rep = Report("u")
         resp = http.Response("u", "u", 200, {}, "", 1)
         audit_content.audit(doc, resp, rep, {})
-        sev = {f.title: f.severity for f in rep.findings}
-        if "Content is very hard to read" in sev:                       # Flesch<30
-            self.assertEqual(sev["Content is very hard to read"], "low")
+        matches = [f for f in rep.findings if f.rule_id == 'content.content.is.very.hard.to.read']
+        self.assertEqual(1,len(matches))
+        self.assertEqual('low', matches[0].severity)
         art = htmlx.parse('<meta property="og:type" content="article">'
                           f"<p>{dense}</p>", base_url="https://x.com/post")
         rep2 = Report("u")
         audit_content.audit(art, resp, rep2, {})
-        sev2 = {f.title: f.severity for f in rep2.findings}
-        if "Content is very hard to read" in sev2:
-            self.assertEqual(sev2["Content is very hard to read"], "medium")
+        matches = [f for f in rep2.findings if f.rule_id == 'content.content.is.very.hard.to.read']
+        self.assertEqual(1,len(matches))
+        self.assertEqual('low', matches[0].severity)
 
     def test_heavy_image_with_srcset_is_fallback_weight_low(self):
         # srcset means browsers fetch smaller variants — the raw-src weight is
