@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-15 · latest release **1.30.19**_
+_Last updated: 2026-10-19 · latest release **1.30.19**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Inspectable quick wins:** low-priority page findings show safe reported-field
+  previews rather than only titles/advice. Detail and evidence each have a
+  400-character normalized preview with explicit truncation; full JSON is intact.
+  Native HTML/PDF input and Markdown retain literal markup/backticks and readable
+  mobile/print wrapping. No new measurements, verification, scores or advice.
+  Markdown-rendered report H1 URLs wrap rather than overflow narrow screens.
 - **Evidence-scoped tuning guidance:** the README and tuning workflow distinguish
   rule/prompt development from model training, tests from accuracy, and tool-score
   corrections from website improvements. Detection and priority revisions can

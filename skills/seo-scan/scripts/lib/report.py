@@ -38,6 +38,12 @@ CATEGORY_LABELS = {
     "geo": "GEO / LLMO",
 }
 
+_QUICK_PREVIEW_LIMIT = 400
+_QUICK_PREVIEW_NOTE = (
+    'Observations below are bounded, whitespace-normalized previews of reported fields, '
+    'not independent verification. Full fields remain in JSON.'
+)
+
 TRUNCATED_HTML_ERROR = (
     "HTML response was truncated; complete HTML is required for comparisons and briefs."
 )
@@ -423,10 +429,17 @@ class Report:
         if buckets["low"]:
             lines.append("## Quick wins")
             lines.append("")
-            for f in buckets["low"]:
+            quick = [(f, _quick_win_previews(f)) for f in buckets["low"]]
+            if any(previews for _, previews in quick):
+                lines += [_QUICK_PREVIEW_NOTE, '']
+            for f, previews in quick:
                 fix = f" — {f.recommendation}" if f.recommendation else ""
                 guide = f" · [Learn more]({f.reference_url})" if f.reference_url else ""
-                lines.append(f"- 🔵 **{f.title}**{fix}{guide}")
+                observations = ''.join(
+                    f' · **{label} (preview):** {_literal_preview_code(text)}'
+                    + (' (truncated; full value in JSON)' if clipped else '')
+                    for label, text, clipped in previews)
+                lines.append(f"- 🔵 **{f.title}**{fix}{guide}{observations}")
             lines.append("")
 
         notes = _crawler_policy_notes(self.meta)
@@ -569,14 +582,22 @@ class Report:
 
         # Quick wins
         if buckets["low"]:
-            items = "".join(
-                f'<li>{_dot("low")} <strong>{_esc(f.title)}</strong>'
-                + (f' — {_esc(f.recommendation)}' if f.recommendation else "")
-                + (f' · <a class="reference-link" href="{_esc(f.reference_url)}">Learn more</a>' if f.reference_url else "")
-                + "</li>"
-                for f in buckets["low"])
+            quick = [(f, _quick_win_previews(f)) for f in buckets["low"]]
+            items = []
+            for f, previews in quick:
+                observations = ''.join(
+                    f'<span class="quick-preview"><strong>{label} (preview):</strong> '
+                    f'<code>{_esc(text)}</code>'
+                    + (' <span class="muted">(truncated; full value in JSON)</span>' if clipped else '')
+                    + '</span>' for label, text, clipped in previews)
+                items.append(f'<li>{_dot("low")} <strong>{_esc(f.title)}</strong>'
+                             + (f' — {_esc(f.recommendation)}' if f.recommendation else '')
+                             + (f' · <a class="reference-link" href="{_esc(f.reference_url)}">Learn more</a>' if f.reference_url else '')
+                             + observations + '</li>')
+            note = (f'<p class="muted">{_QUICK_PREVIEW_NOTE}</p>'
+                    if any(previews for _, previews in quick) else '')
             body.append(f'<section class="card"><h2>Quick wins</h2>'
-                        f'<ul class="clean">{items}</ul></section>')
+                        + note + f'<ul class="clean">{"".join(items)}</ul></section>')
 
         notes = _crawler_policy_notes(self.meta)
         if notes:
@@ -627,6 +648,29 @@ class Report:
 
 
 # --- HTML helpers (shared by Report.to_html and audit.render_html) --------
+
+def _quick_win_previews(finding):
+    """Return bounded display copies; original reported fields remain untouched."""
+    previews = []
+    for label, value in (('Observed', finding.detail), ('Evidence', finding.evidence)):
+        if value is None:
+            continue
+        text = ' '.join(str(value).split())
+        if text:
+            clipped = len(text) > _QUICK_PREVIEW_LIMIT
+            previews.append((label, text[:_QUICK_PREVIEW_LIMIT] + ('…' if clipped else ''), clipped))
+    return previews
+
+
+def _literal_preview_code(text):
+    """Protect a single-line preview from Markdown/link/fence interpretation."""
+    longest = max((len(run) for run in re.findall(r'`+', text)), default=0)
+    marker = '`' * (longest + 1)
+    # Padding separates boundary backticks from the enclosing delimiter. It is
+    # layout only; the normalized preview and full source remain distinct.
+    padding = ' ' if text.startswith('`') or text.endswith('`') else ''
+    return marker + padding + text + padding + marker
+
 
 def _esc(text) -> str:
     return (str(text).replace("&", "&amp;").replace("<", "&lt;")
@@ -748,7 +792,7 @@ _HTML_CSS = """
 body{margin:0;padding:32px 20px;background:var(--bg);color:var(--fg);
 font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .wrap{max-width:820px;margin:0 auto}
-h1{font-size:22px;margin:0 0 2px}
+h1{font-size:22px;margin:0 0 2px;overflow-wrap:anywhere}
 h2{font-size:16px;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .sub{color:var(--muted);margin:0 0 24px;word-break:break-all}
 .brand{display:flex;align-items:center;gap:16px;margin:0 0 24px}
@@ -803,6 +847,7 @@ border-radius:8px;padding:14px 16px;margin:0 0 12px}
 .finding p{margin:6px 0}
 .reference-link{color:#0f766e;text-underline-offset:2px}
 .reference-link:focus-visible{outline:2px solid #0f766e;outline-offset:3px;border-radius:2px}
+.quick-preview{display:block;margin:6px 0 0;overflow-wrap:anywhere}
 .k{display:inline-block;min-width:70px;font-weight:600;color:var(--muted);font-size:12px;
 text-transform:uppercase;letter-spacing:.03em}
 code{background:#f0f1f3;padding:1px 5px;border-radius:4px;font-size:12.5px;word-break:break-all}
