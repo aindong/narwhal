@@ -30,8 +30,8 @@ title_min     = 15    # shorter titles are flagged "very short"
 title_max     = 65    # longer titles are flagged as possibly truncated
 meta_desc_min = 70
 meta_desc_max = 165
-thin_content  = 300   # fewer words than this = "thin content"
-short_content = 600   # between thin and this = "on the short side"
+thin_content  = 300   # contextual ASCII-pattern review, not an SEO word target
+short_content = 600   # upper bound; unsupported language/characters stay uninterpreted
 passage_min   = 40    # GEO citable-passage word range (lower bound)
 passage_max   = 120   # GEO citable-passage word range (upper bound)
 

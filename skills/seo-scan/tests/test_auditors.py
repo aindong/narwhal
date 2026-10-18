@@ -249,19 +249,20 @@ class TestPageTypeAwareChecks(unittest.TestCase):
         sev = {f.title: f.severity for f in rep.findings}
         self.assertEqual(sev.get("Title is very short"), "high")
 
-    def test_hub_page_thin_content_is_low(self):
+    def test_hub_ascii_length_review_is_low(self):
         links = "".join(f'<a href="/{i}">interesting story {i}</a> ' for i in range(30))
         doc, resp, rep = self._scan_page(f"<body>{links}</body>")
         audit_content.audit(doc, resp, rep, {})
         sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("Link-hub page with little prose"), "low")
+        self.assertEqual(sev.get("Review limited ASCII-token count on a hub"), "low")
         self.assertNotIn("Thin content", sev)
 
-    def test_prose_page_thin_content_still_high(self):
+    def test_prose_ascii_length_review_is_low_not_a_thinness_verdict(self):
         doc, resp, rep = self._scan_page("<p>just a few words here</p>")
         audit_content.audit(doc, resp, rep, {})
         sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("Thin content"), "high")
+        self.assertEqual(sev.get("Review limited ASCII-token count"), "low")
+        self.assertNotIn("Thin content", sev)
 
     def test_byline_only_flagged_on_articles(self):
         # non-article: no byline finding at all

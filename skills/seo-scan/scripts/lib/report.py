@@ -17,6 +17,7 @@ from .guides import reference_url
 from . import sitemap as sitemaplib
 from . import llms_resource
 from . import authorship
+from . import content_length
 from .code_fences import closes_fence, markdown_lines, opening_fence
 from .markdown_text import TABLE_TEXT_MARKER
 
@@ -468,6 +469,10 @@ class Report:
             lines += ['- ' + note for note in named_meta_notes]
             lines.append('')
 
+        length_note = content_length.note(self.meta)
+        if length_note:
+            lines += ['## Text-length observation (not content quality)', '', length_note, '']
+
         attribution = authorship.evidence_lines(self.meta)
         if attribution:
             lines += ['## Attribution cue evidence (not identity verification)', '',
@@ -627,6 +632,11 @@ class Report:
             body.append('<section class="card"><h2>Crawler-specific meta observations (not scored)</h2>'
                         + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in named_meta_notes)
                         + '</ul></section>')
+
+        length_note = content_length.note(self.meta)
+        if length_note:
+            body.append('<section class="card"><h2>Text-length observation (not content quality)</h2><p>'
+                        + _esc(length_note) + '</p></section>')
 
         attribution = authorship.evidence_lines(self.meta)
         if attribution:

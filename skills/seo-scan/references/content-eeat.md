@@ -15,12 +15,58 @@ basis was used. Page-type detection (hub/listing vs article) further scopes the
 checks so link-dominated index pages aren't judged as thin articles.
 
 ## Content depth (not word count for its own sake)
-- < ~300 words of main text usually reads as thin — it rarely satisfies intent
-  and is seldom cited by AI answers. The fix is *coverage*, not padding.
-- Depth means answering the obvious follow-up questions, covering edge cases, and
-  including specifics (numbers, examples, steps) a generalist couldn't fake.
-- Match length to intent: a definition page can be short; a "best X for Y" guide
-  usually can't.
+
+Read the page in context: useful coverage depends on its purpose and readers,
+not a fixed length. Google's [SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide)
+states that content length alone does not determine ranking and supplies no
+minimum/maximum word-count target. Narwhal does not measure usefulness, intent
+satisfaction, content depth, ranking or AI citation likelihood from a count.
+
+### Page text-length observation
+
+- `meta.content_length` records the selected extracted text's Python-string
+  length (Unicode code points), historical ASCII-pattern match count, count of
+  non-ASCII letters/combining marks, extraction basis, declared language, actual
+  configured bounds and whether threshold review was interpreted. It does not
+  retain raw text. Language/basis strings are capped at 80/160 code points with
+  clipping flags; these are receipt display limits, not total CPU/heap budgets.
+  Finite built-in int/float bounds stay numeric; Decimal/Fraction bounds use
+  exact tagged strings, non-finite floats are tagged and unknown custom numeric
+  types stay unrecorded. Raw comparison behavior is not rounded; recording a
+  bound is not configuration validation.
+- The preserved pattern is `[A-Za-z][A-Za-z'-]+`. It excludes single-letter
+  words and non-ASCII letters and can split accented words. Its matches are
+  **not universal word counts**. No language is inferred, no dictionary is loaded
+  and no Unicode word segmentation runs. Non-ASCII coverage uses the running
+  Python's Unicode letter/mark categories, not a language detector or a Unicode
+  segmentation conformance claim. [Unicode's segmentation guidance](https://www.unicode.org/reports/tr29/)
+  explains why languages such as Chinese/Japanese need tailored word boundaries;
+  replacing the regex with a whitespace split would not solve that problem.
+- Threshold review is not applied to declared non-English languages or selected
+  text containing non-ASCII letters/marks, even when `lang=en` or absent. This is
+  a conservative coverage rule, not language detection. Even one accented letter
+  leaves this check uninterpreted. Counts and the reason remain visible as a
+  non-scoring observation; there is no invented zero-word defect or depth pass.
+- English/English-subtag or undeclared text without non-ASCII letters/marks may
+  receive a **low-priority contextual review** below the configured bounds.
+  `thin_content`/`short_content` remain 300/600 by default, with the original
+  comparison order and numeric behavior. They are unvalidated editorial defaults,
+  not SEO targets. Keep useful concise text; edit only confirmed coverage gaps.
+  A non-flagged count is not a content-depth or quality certificate.
+- Historical IDs `content.thin.content`, `content.content.is.on.the.short.side`,
+  `content.link.hub.page.with.little.prose` and `content.sufficient.content.depth`
+  remain for interpreted checks. New titles require reviewing title-based ignore
+  filters. At default weights, the high→low correction raises a score by five points;
+  an uninterpreted check emits no length finding. Neither is an improved page.
+  Current and legacy remediation plans keep edits conditional, not word padding.
+- Current scans record `scan_settings.content_length_reviewed`. A known change
+  in threshold coverage prevents a page/audit diff from claiming score improvement
+  or issue resolution, including for common crawl URLs. Matching uninterpreted
+  coverage is not automatically a comparison failure. Missing legacy flags stay
+  unknown, not inferred from language; they do not certify full comparability.
+- This scopes the **page content auditor's length check** only. Readability,
+  keywords and comparison/brief length heuristics remain separate; this does not
+  validate their linguistic or content-depth assumptions.
 
 ## Experience & expertise
 - Show first-hand experience: original photos, test results, "we measured…",

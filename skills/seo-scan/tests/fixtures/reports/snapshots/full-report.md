@@ -1,39 +1,29 @@
 # SEO & GEO Audit — https://example.test/guides/answer-visibility
 
-**Health score: 81/100 (score band: good)**  ·  status 200
+**Health score: 86/100 (score band: good)**  ·  status 200
 
 Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO / LLMO. All four groups ran for this page, not a site-wide or exhaustive validation. Image resource checks were disabled. Findings use served HTML.
 
 | Critical | High | Medium | Low | Passed |
 |:--:|:--:|:--:|:--:|:--:|
-| 0 | 1 | 1 | 10 | 15 |
+| 0 | 0 | 1 | 11 | 15 |
 
 ## Summary
 
-**1 high, 1 medium issue(s) need attention in the completed checks, plus 10 quick win(s).** This page scores **81/100 (score band: good)**.
-
-**Top priorities:**
-- 🟠 Thin content (Content & E-E-A-T)
+**1 medium issue(s) need attention in the completed checks, plus 11 quick win(s).** This page scores **86/100 (score band: good)**.
 
 ## Breakdown by area
 
 | Area | Score | 🔴 | 🟠 | 🟡 | 🔵 | 🟢 |
 |:--|:--:|:--:|:--:|:--:|:--:|:--:|
 | Technical SEO | 96 | 0 | 0 | 1 | 1 | 8 |
-| Content & E-E-A-T | 89 | 0 | 1 | 0 | 5 | 2 |
+| Content & E-E-A-T | 94 | 0 | 0 | 0 | 6 | 2 |
 | Structured data | 98 | 0 | 0 | 0 | 2 | 1 |
 | GEO / LLMO | 98 | 0 | 0 | 0 | 2 | 4 |
 
 ## Priority fixes
 
-### 1. 🟠 Thin content  
-*Content & E-E-A-T · high*
-
-- **Observed:** ~146 words of main text (measured on visible text).
-- **Fix:** Expand to cover the topic fully; thin pages struggle to rank and are rarely cited by AI answers.
-- [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#content-depth-not-word-count-for-its-own-sake)
-
-### 2. 🟡 Images missing alt text  
+### 1. 🟡 Images missing alt text  
 *Technical SEO · medium*
 
 - **Observed:** 1 of 1 <img> tags have no alt attribute.
@@ -45,6 +35,7 @@ Checked auditor groups: Technical SEO; Content & E-E-A-T; Structured data; GEO /
 Observations below are bounded, whitespace-normalized previews of reported fields, not independent verification. Full fields remain in JSON.
 
 - 🔵 **No compression header** — Enable gzip or Brotli compression to cut transfer size. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/technical-seo.md#http-hygiene) · **Observed (preview):** `Response has no Content-Encoding (gzip/br).`
+- 🔵 **Review limited ASCII-token count** — Review whether the captured text serves the reader and page intent. Keep useful concise text; edit only confirmed coverage gaps. Do not pad content to reach a configured count. Ranking and citation impact are not measured. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#content-depth-not-word-count-for-its-own-sake) · **Observed (preview):** `146 matches of the configured ASCII-only pattern in selected extracted text (visible text). Below the configured lower bound. ASCII-pattern matches are not universal word counts or a measure of content depth, usefulness, ranking or AI citations. Configured bounds are editorial defaults, not engine requirements.`
 - 🔵 **Content is fairly hard to read** — Consider shorter sentences/simpler words unless the audience is specialist. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#readability) · **Observed (preview):** `Flesch reading ease 38.0 (difficult); ~grade 11.1.`
 - 🔵 **Review article attribution cues** — Review the real byline, profile links and editorial ownership in context. Identify actual creators/reviewers where appropriate; do not invent people or credentials. Missing cues do not establish anonymity or poor quality. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#experience--expertise) · **Observed (preview):** `No attribution candidate was observed in the bounded metadata, author-link and leading source-block checks. This does not prove anonymity.`
 - 🔵 **No visible date signal** — Expose a publish or last-updated date to signal freshness. · [Learn more](https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#freshness) · **Observed (preview):** `No published/modified date in metadata or near the top.`
@@ -58,6 +49,10 @@ Observations below are bounded, whitespace-normalized previews of reported field
 ## Root llms.txt response evidence
 
 Root llms.txt absent: the root request returned HTTP 404 or 410 (HTTP 404). Root /llms.txt request only; independent subpath files and rel=describedby discovery were not checked. Redirect destinations are recorded. This is not full proposal validation, linked-resource verification, engine adoption or evidence of ranking/citation impact.
+
+## Text-length observation (not content quality)
+
+Reported selected text: 1046 Unicode code points; 146 ASCII-pattern matches; 0 non-ASCII letter/mark code points. Threshold review uses the configured ASCII-pattern counts only. ASCII-pattern matches are not universal word counts or a measure of content depth, usefulness, ranking or AI citations. Configured bounds are editorial defaults, not engine requirements. Extraction basis and configured bounds are recorded in JSON.
 
 ## Attribution cue evidence (not identity verification)
 

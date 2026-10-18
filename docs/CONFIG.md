@@ -90,8 +90,8 @@ The numbers behind individual checks.
 | `title_max` | 65 | above → "title may be truncated" |
 | `meta_desc_min` | 70 | below → "meta description short" |
 | `meta_desc_max` | 165 | above → "meta description truncated" |
-| `thin_content` | 300 | below → "thin content" |
-| `short_content` | 600 | thin…this → "on the short side" |
+| `thin_content` | 300 | lower bound for contextual ASCII-token review, not a word-count/SEO target |
+| `short_content` | 600 | upper bound for the same review; language/character coverage can leave it uninterpreted |
 | `passage_min` | 40 | GEO synthetic sentence-group lower bound (ASCII-word matches; not an engine requirement) |
 | `passage_max` | 120 | GEO synthetic sentence-group upper bound (ASCII-word matches; not a citability measurement) |
 

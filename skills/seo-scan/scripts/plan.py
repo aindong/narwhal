@@ -536,6 +536,12 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
 
 EDITORIAL_REVIEW_GUIDANCE = {
     **PHRASE_REVIEW_GUIDANCE,
+    **dict.fromkeys(('content.thin.content', 'content.content.is.on.the.short.side',
+                     'content.link.hub.page.with.little.prose'),
+        'Review actual extracted text, language/tokenizer coverage and reader intent before proposing edits. '
+        'A low ASCII-pattern count does not establish thinness or missing useful content. '
+        'Keep useful concise text; do not pad content to meet a configured count. '
+        'Edit only confirmed coverage gaps; ranking and citation impact are not measured.'),
     'content.no.visible.author.byline':
         'Review the actual article attribution and editorial ownership before proposing edits. '
         'A missing bounded cue does not prove anonymity. Identify real creators/reviewers only '

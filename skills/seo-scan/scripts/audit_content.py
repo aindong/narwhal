@@ -1,9 +1,8 @@
 """Content quality & E-E-A-T auditor.
 
-Approximates the signals Google's Search Quality Rater Guidelines reward:
-sufficient main content, readability, evidence of experience/authorship, and
-freshness. These are heuristics, not verdicts — they surface pages that read as
-thin, anonymous, or hard to parse.
+Observes extracted-text counts, English-oriented readability/style patterns,
+attribution/date candidates and social metadata. These are scoped heuristics,
+not measurements of content depth, expertise, quality or search outcomes.
 """
 
 from __future__ import annotations
@@ -15,15 +14,17 @@ try:
     from lib import content_quality
     from lib import htmlx
     from lib import authorship
+    from lib import content_length
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
     from .lib import content_quality  # type: ignore
     from .lib import htmlx  # type: ignore
     from .lib import authorship  # type: ignore
+    from .lib import content_length  # type: ignore
 
 CAT = "content"
 
-_WORD = re.compile(r"[A-Za-z][A-Za-z'-]+")
+_WORD = content_length.WORD_PATTERN  # historical private matcher alias
 _DATE_HINT = re.compile(
     r"\b(20\d{2})\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}",
     re.I,
@@ -32,8 +33,6 @@ _DATE_HINT = re.compile(
 
 def audit(doc, resp, report, ctx=None) -> None:
     text = doc.body_text or ""
-    words = _WORD.findall(text)
-    wc = len(words)
 
     # Page-type awareness: prose checks misfire on link-hub pages (index,
     # category, front pages), and byline checks misfire on non-articles.
@@ -45,7 +44,9 @@ def audit(doc, resp, report, ctx=None) -> None:
     english = not doc.lang or doc.lang.strip().lower().startswith("en")
 
     th = (ctx or {}).get("thresholds", {})
-    _word_count(wc, report, th, hub=hub, basis=doc.extraction)
+    receipt = content_length.observe(text, language=doc.lang, basis=doc.extraction, thresholds=th)
+    report.meta['content_length'] = receipt
+    _word_count(receipt, report, hub=hub)
     if english:
         _readability(text, report, hub=hub, article=article)
         _quality(text, report)
@@ -55,30 +56,31 @@ def audit(doc, resp, report, ctx=None) -> None:
     _og_social(doc, report)
 
 
-def _word_count(wc, report, th=None, hub=False, basis="visible text"):
-    th = th or {}
-    thin, short = th.get("thin_content", 300), th.get("short_content", 600)
-    if wc < thin:
+def _word_count(receipt, report, hub=False):
+    """Keep length cues contextual; a count cannot certify thinness or depth."""
+    status = receipt['threshold_status']
+    if status == 'uninterpreted':
+        return  # no false zero-word defect or passing depth claim
+    observed = (f"{receipt['ascii_pattern_matches']} matches of the configured ASCII-only pattern "
+                f"in selected extracted text ({receipt['source_basis']}). ")
+    advice = ('Review whether the captured text serves the reader and page intent. Keep useful '
+              'concise text; edit only confirmed coverage gaps. Do not pad content to reach '
+              'a configured count. Ranking and citation impact are not measured.')
+    if status == 'below_lower':
+        detail = observed + 'Below the configured lower bound. ' + content_length.LIMITS
         if hub:
-            # An index/listing page is *supposed* to be mostly links — "thin
-            # content, high" on the HN front page or a docs index is a category
-            # error, not an insight.
-            report.add(CAT, "low", "Link-hub page with little prose",
-                       f"~{wc} words of prose; the page is mostly links "
-                       "(listing/index).",
-                       "Fine for a hub. If this page should rank on its own "
-                       "merits, add an intro paragraph that frames the list.")
+            report.add(CAT, 'low', 'Review limited ASCII-token count on a hub', detail,
+                       advice, rule_id='content.link.hub.page.with.little.prose')
         else:
-            report.add(CAT, "high", "Thin content",
-                       f"~{wc} words of main text (measured on {basis}).",
-                       "Expand to cover the topic fully; thin pages struggle to rank "
-                       "and are rarely cited by AI answers.")
-    elif wc < short:
-        report.add(CAT, "low", "Content is on the short side",
-                   f"~{wc} words (measured on {basis}).",
-                   "Consider deepening coverage if this is a primary landing page.")
+            report.add(CAT, 'low', 'Review limited ASCII-token count', detail,
+                       advice, rule_id='content.thin.content')
+    elif status == 'below_upper':
+        report.add(CAT, 'low', 'Review ASCII-token count in the configured middle range',
+                   observed + content_length.LIMITS, advice,
+                   rule_id='content.content.is.on.the.short.side')
     else:
-        report.ok(CAT, "Sufficient content depth", f"~{wc} words ({basis})")
+        report.add(CAT, 'good', 'No below-range ASCII-token flag',
+                   observed + content_length.LIMITS, rule_id='content.sufficient.content.depth')
 
 
 def _readability(text, report, hub=False, article=False):
@@ -153,8 +155,8 @@ def _quality(text, report):
                    "Tighten wording; prefer specifics over padding.",
                    evidence="; ".join(q["filler_examples"]))
 
-    # Low-priority quick wins omit detail/evidence in compact reports. Keep the
-    # examples and interpretation boundary in the recommendation as well.
+    # Keep examples/limits in advice too: legacy/third-party compact renderers
+    # may omit the reported detail and evidence previews.
     phrase_advice = (f"Example matches: {'; '.join(q['ai_examples'])}. Review in context. "
                      "Edit only if wording is vague or unnecessary for the intended "
                      "audience; keep useful wording. Matches do not determine "

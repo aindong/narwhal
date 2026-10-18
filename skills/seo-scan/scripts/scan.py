@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import hreflang, http, htmlx, images, jsdiff, links, simhash, sitemap as sm  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery  # noqa: E402
 from lib import config as configlib  # noqa: E402
-from lib import llms_resource  # noqa: E402
+from lib import llms_resource, content_length  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib.report import Report, below_threshold, deliver  # noqa: E402
 
@@ -232,6 +232,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         if fn:
             fn(doc, resp, report, ctx)
             report.meta["scan_scope"]["completed"].append(name)
+
+    if content_length.note(report.meta) is not None:
+        report.meta['scan_settings']['content_length_reviewed'] = (
+            report.meta['content_length']['threshold_status'] != 'uninterpreted')
 
     # Image weight/format + og:image checks: a few HEADs and one ranged GET per
     # page, so they're on for single-page scans but skipped during crawls
