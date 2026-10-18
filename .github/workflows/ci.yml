@@ -114,3 +114,5 @@ jobs:
         run: python skills/seo-scan/tests/quick_win_preview_smoke.py
       - name: Scoped content-length browser regression
         run: python skills/seo-scan/tests/content_length_smoke.py
+      - name: Neutral comparative-length browser regression
+        run: python skills/seo-scan/tests/comparative_length_smoke.py

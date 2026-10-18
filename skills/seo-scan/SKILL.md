@@ -79,10 +79,12 @@ competitor pages; same auditors run on each, then a gap analysis):
 python scripts/compare.py https://you.com/page https://rival.com/page
 ```
 Reports a scoreboard, a side-by-side fact table, **"Gaps to close"** (what they
-have that you don't: schema types, meta strategy, depth, question headings,
+have that you don't: schema types, meta strategy, question headings,
 evidence, social packaging) and **"Where you lead"**. Honesty rule: it compares
-served HTML only — never claim a gap explains rankings, and no rank/keyword data
-is used or implied.
+the recorded HTML snapshots (served or rendered, as labelled) — never claim a
+gap explains rankings. Text length is a neutral whitespace-token observation,
+not a depth gap/lead or writing target. Legacy `words` values without a recorded
+basis stay unverified. No rank/keyword data is used or implied.
 
 **Build a data-driven content brief** (what to *write*, grounded in real data —
 no keyword APIs, no invented volumes):
@@ -95,8 +97,12 @@ demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **missing subtopics** (competitor H2/H3
 sections whose topic words don't appear in your text), **questions to answer**
 (their question headings + your question-shaped queries), schema suggestions,
-and structure targets (depth/evidence benchmarks vs the compared pages, hub
-pages excluded). `--topic` mode plans a page that doesn't exist yet from
+and structure heuristics (question/evidence comparisons on non-hubs).
+`text_length` contains neutral length observations, including hubs; do not infer
+a word target or missing coverage from length alone. Keep explicit user/editorial
+length constraints separate from measured observations.
+`target_words`/`your_words` are no longer generated. `--topic` mode
+plans a page that doesn't exist yet from
 competitor pages only (add `--gsc-site <your-site>` to fold in real adjacent
 queries). Without GSC credentials it produces a clearly labeled
 **structure-only** brief — target queries are omitted, never invented.
@@ -232,7 +238,7 @@ same look as the scan/audit reports.
 | Auditor | Focus |
 |---|---|
 | `technical` | title/meta, headings, canonical, robots directives, viewport, hreflang, images, links, HTTP hygiene, robots.txt, sitemap |
-| `content` | word count / thin content, readability, author & date (E-E-A-T), Open Graph/Twitter cards |
+| `content` | scoped text-length/readability cues, attribution/date candidates, Open Graph/Twitter cards |
 | `schema` | JSON-LD detection, required/recommended property validation, deprecated rich-result types |
 | `geo` | question-based headings, citable passage structure, evidence density, direct-answer intro, `llms.txt`, **AI-crawler access** |
 

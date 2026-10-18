@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Comparisons and briefs keep literal whitespace-token/code-point receipts, not
+  content-depth gaps/leads or automatically inferred word targets. Historical
+  `words` counts stay unchanged with explicit units; briefs stop generating
+  `structure.target_words`/`your_words`. Missing legacy bases stay unverified and
+  old length verdicts are not re-rendered as recommendations. Explicit editorial
+  goals remain separate; other heuristics and page scores are unchanged.
 - The page content auditor labels its historical ASCII-pattern count accurately
   instead of certifying thinness/depth. Non-English declarations or non-ASCII
   letters/marks leave length-threshold review uninterpreted, with typed counts

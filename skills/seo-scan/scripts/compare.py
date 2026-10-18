@@ -4,7 +4,7 @@
 Auditing one page answers "what's wrong here?"; the question users actually ask
 is relative: *why does that page outrank mine?* This tool scans YOUR page and
 1–3 competitor pages with the same auditors, extracts comparable facts from each
-(schema types, meta strategy, depth, structure, evidence, social packaging), and
+(schema types, meta strategy, structure, evidence, social packaging), and
 reports the **gaps** — what they have that you don't — plus where you lead.
 
 Local-first like everything else: it only fetches the pages you name (SSRF-safe,
@@ -26,7 +26,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
-from lib import authorship, htmlx, structured_data  # noqa: E402
+from lib import authorship, htmlx, structured_data, length_observation  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -63,6 +63,9 @@ def facts(report, doc) -> dict:
             else "hub" if htmlx.is_hub_page(doc)
             else "home" if htmlx.is_homepage(doc) else "page")
     attribution = authorship.observe(doc, text)
+    length = length_observation.observe(text, doc.extraction)
+    settings = report.meta.get('scan_settings', {})
+    reviewed = settings.get('content_length_reviewed') if isinstance(settings, dict) else None
     return {
         "url": report.final_url or report.url,
         "rendered": report.rendered,
@@ -72,7 +75,9 @@ def facts(report, doc) -> dict:
         "title": doc.title,
         "title_len": len(doc.title or ""),
         "meta_desc_len": len(desc),
-        "words": len(text.split()),
+        "words": length['whitespace_tokens'],  # legacy alias, not a linguistic word count
+        "text_length": length,
+        "content_length_reviewed": reviewed if type(reviewed) is bool else None,
         "extraction": doc.extraction,
         "h1": any(lvl == 1 for lvl, _ in doc.headings),
         "headings": len(doc.headings),
@@ -144,24 +149,6 @@ def gap_analysis(you: dict, rivals: list) -> dict:
         leads.append({"what": f"Schema types only you have: {', '.join(sorted(extra))}",
                       "detail": ""})
 
-    # Depth: a rival with substantially deeper prose (both non-hub pages).
-    if you["page_kind"] != "hub":
-        non_hub = [r for r in rivals if r["page_kind"] != "hub"]
-        deeper = [r for r in non_hub
-                  if r["words"] >= max(300, int(you["words"] * 1.5))]
-        if deeper:
-            gaps.append({
-                "what": "Content depth",
-                "who": [r["url"] for r in deeper],
-                "action": f"They run {max(r['words'] for r in deeper)} words to "
-                          f"your {you['words']} — cover the missing subtopics, "
-                          "don't pad."})
-        elif non_hub and all(you["words"] >= max(300, int(r["words"] * 1.5))
-                             for r in non_hub):
-            leads.append({"what": "Content depth",
-                          "detail": f"{you['words']} words vs at most "
-                                    f"{max(r['words'] for r in non_hub)}"})
-
     # Question-shaped headings (AI-answer matching).
     ahead = [r for r in rivals if r["question_ratio"] >= 0.2]
     if you["question_ratio"] < 0.2 and ahead:
@@ -176,7 +163,8 @@ def gap_analysis(you: dict, rivals: list) -> dict:
                      "action": "Add concrete numbers and cited sources — AI answers "
                                "attribute evidence-backed pages."})
 
-    return {"gaps": gaps, "leads": leads}
+    return {"gaps": gaps, "leads": leads,
+            "text_length": length_observation.comparison(you, rivals)}
 
 
 def run(urls: list, *, timeout=20, allow_private=False, render=False,
@@ -292,7 +280,11 @@ def render_markdown(r: dict) -> str:
         ("Title length", [str(c["title_len"]) for c in cols]),
         ("Meta description", [f"{c['meta_desc_len']} ch" if c["meta_desc_len"]
                               else "—" for c in cols]),
-        ("Words", [str(c["words"]) for c in cols]),
+        ("Extracted-text count", [length_observation.cell(c) for c in cols]),
+        ("Selected text (code points)", [length_observation.cell(c, code_points=True) for c in cols]),
+        ("Page length-threshold review", [
+            'Reviewed' if c.get('content_length_reviewed') is True else
+            'Uninterpreted' if c.get('content_length_reviewed') is False else 'Unrecorded' for c in cols]),
         ("H1", [_yn(c["h1"]) for c in cols]),
         ("Question headings", [f"{int(c['question_ratio'] * 100)}%" for c in cols]),
         ("Stats/citations", [str(c["stats_cites"]) for c in cols]),
@@ -307,18 +299,27 @@ def render_markdown(r: dict) -> str:
     lines += [f"| {label} | " + " | ".join(vals) + " |" for label, vals in rows]
     lines.append("")
 
+    length = (r['text_length'] if 'text_length' in r else
+              length_observation.comparison(you, rivals))
+    lines += ['## Extracted-text length (not a target)', '',
+              *length_observation.summary(length), '']
+    gaps = [g for g in r['gaps'] if g.get('what') != 'Content depth']
+    leads = [g for g in r['leads'] if g.get('what') != 'Content depth']
+    if len(gaps) != len(r['gaps']) or len(leads) != len(r['leads']):
+        lines += ['A legacy content-depth gap/lead is not repeated as a recommendation; '
+                  'length alone does not establish content depth.', '']
     lines += ["## Gaps to close (they have it — you don't)", ""]
-    if r["gaps"]:
-        for g in r["gaps"]:
+    if gaps:
+        for g in gaps:
             who = ", ".join(_short(w, 30) for w in g["who"])
             lines.append(f"- **{g['what']}** — seen on {who}. {g['action']}")
     else:
         lines.append("No feature gaps detected against these competitors. 🟢")
     lines.append("")
 
-    if r["leads"]:
+    if leads:
         lines += ["## Where you lead", ""]
-        for l in r["leads"]:
+        for l in leads:
             detail = f" — {l['detail']}" if l["detail"] else ""
             lines.append(f"- 🟢 **{l['what']}**{detail}")
         lines.append("")

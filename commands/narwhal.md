@@ -206,7 +206,12 @@ positionals, and add `--gsc-site <their-site>` when the user has GSC connected
 so the topic is grounded in real adjacent queries. The JSON contains: real
 striking-distance queries for the page (or a `found: false` GSC block), CTR
 laggard / decay / cannibalization status, competitor gaps, missing subtopics,
-questions to answer, schema suggestions, and structure targets.
+questions to answer, schema suggestions, and structure heuristics. `text_length`
+is a neutral observation of whitespace-token counts, not a word target or proof
+of depth. Do not infer missing coverage or a writing target from length alone.
+Keep explicit user/editorial length constraints separate from the observations.
+Older `target_words`/`your_words` values have an unrecorded measurement basis;
+they do not establish measured word-count requirements.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:
