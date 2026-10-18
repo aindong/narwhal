@@ -20,7 +20,10 @@ def cases():
          '```text\n# fake heading\n```'),
         ('bounded', 'x' * 400 + 'HIDDEN_DETAIL', 'y' * 400 + 'HIDDEN_EVIDENCE'),
         ('backticks', '`' * 400 + 'HIDDEN_DETAIL', '~~~~\r\nLiteral fence candidate')):
-        report = Report('https://example.test/' + name, fetched_status=200)
+        # The Markdown report includes its URL in an H1. Keep an unbroken long
+        # path so wrapping is tested independently of platform font metrics.
+        url = 'https://example.test/' + ('x' * 180 if name == 'bounded' else name)
+        report = Report(url, fetched_status=200)
         report.add('technical', 'low', 'Synthetic preview check', detail,
                    'Review this fixture only.', evidence=evidence)
         expected = [' '.join(value.split())[:400] + ('…' if len(' '.join(value.split())) > 400 else '')

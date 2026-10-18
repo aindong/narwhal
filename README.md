@@ -100,9 +100,9 @@ a page improvement. Stable rule IDs remain; update title-based ignore filters
 for the [revised labels and interpretation](skills/seo-scan/references/content-eeat.md#filler--phrase-review).
 
 Page-report **Quick wins** include reported observation/evidence previews, not
-only advice. Each field is whitespace-normalized and limited to 400 characters;
-truncation is labelled and full fields remain in JSON. Markdown/native HTML/PDF
-input keeps preview markup literal. These are scanner-reported fields, not
+only advice. Each field shows its first 400 whitespace-normalized characters,
+plus an omission marker when clipped. Full fields remain in JSON.
+Markdown/native HTML/PDF input keeps preview markup literal. These are scanner-reported fields, not
 independent verification or proof that an edit is appropriate. Scores, severity,
 IDs and recommendations are unchanged.
 

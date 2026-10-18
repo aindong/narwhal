@@ -792,7 +792,7 @@ _HTML_CSS = """
 body{margin:0;padding:32px 20px;background:var(--bg);color:var(--fg);
 font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .wrap{max-width:820px;margin:0 auto}
-h1{font-size:22px;margin:0 0 2px}
+h1{font-size:22px;margin:0 0 2px;overflow-wrap:anywhere}
 h2{font-size:16px;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .sub{color:var(--muted);margin:0 0 24px;word-break:break-all}
 .brand{display:flex;align-items:center;gap:16px;margin:0 0 24px}
