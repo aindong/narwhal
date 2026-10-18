@@ -184,8 +184,10 @@ changing delivery; preserve useful client interaction and valid metadata/markup.
 counts, signed `net_token_delta`, `positive_net_increase_percent` and exact
 `selected_text_equal` for the selected extracted strings. Metadata contains
 counts/scopes, not copied source text. Equality is limited to those extracted
-strings, not all page content or CSS visibility. Empty pairs certify no content
-and produce low verification-only `technical.rendered.text.unobserved`, not a
+strings, not all page content or CSS visibility. An empty pair establishes only
+that neither extraction selected text; it does not establish that the page lacks
+other content. Empty pairs produce low verification-only
+`technical.rendered.text.unobserved`, not a
 passing severity or the legacy server-rendering ID. Plans assign no source owner
 or content/SSR rewrite to this observation.
 Equal or shorter counts can accompany a complete replacement, so those cases
