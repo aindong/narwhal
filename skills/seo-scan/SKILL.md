@@ -111,14 +111,20 @@ python scripts/brief.py --topic "widget calibration" https://rival.com/guide
 ```
 Combines the page's own **striking-distance GSC queries** (positions 8–20 —
 demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
-the **competitor gap analysis**, **missing subtopics** (competitor H2/H3
-sections whose topic words don't appear in your text), **question-shaped candidates**
+the **competitor gap analysis**, **compared-heading review candidates** (a lexical
+H2/H3 term filter, not verified missing semantic coverage), **question-shaped candidates**
 (compared headings + your recorded question-shaped queries, distinguished by
 `source_kind`; legacy missing kinds stay unverified), schema suggestions,
 and a question-heading structure heuristic on non-hubs.
 Review candidates for actual relevance and coverage; neither compared headings
 nor a structure flag require rewriting headings or forcing a first-sentence answer.
 Keep deliberate user/editorial format choices separate from measured cues.
+The legacy `missing_subtopics` field keeps review candidates, not absence verdicts.
+`subtopic_review` and per-candidate `term_match` record the ASCII/English prefix-term
+basis and exact counts/cutoff. Synonyms can be missed and unrelated words can match;
+compared headings do not prove section content. Topic mode has no own-page matches.
+Missing/malformed legacy receipts stay unrecorded; inspect relevance and existing
+coverage before recommending sections, without overriding explicit editorial choices.
 `text_length` contains neutral length observations, including hubs; do not infer
 a word target or missing coverage from length alone. Keep explicit user/editorial
 length constraints separate from measured observations. Citation/statistic cues

@@ -124,3 +124,5 @@ jobs:
         run: python skills/seo-scan/tests/schema_appearance_smoke.py
       - name: Schema-extraction coverage browser regression
         run: python skills/seo-scan/tests/schema_coverage_smoke.py
+      - name: Compared-heading review browser regression
+        run: python skills/seo-scan/tests/subtopic_observation_smoke.py

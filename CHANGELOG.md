@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Brief subtopic suggestions are labelled compared-heading review candidates,
+  not verified missing content. Typed term-match receipts expose exact counts and
+  the existing lexical cutoff; synonym misses, unrelated word matches and topic/
+  legacy limitations are explicit. Candidate selection/order, facts and scores
+  remain unchanged; no semantic coverage, query demand or ranking claim is added.
 - Known structured-data extraction errors/limits no longer become schema-absence
   gaps or exclusivity leads in comparisons. Typed coverage receipts keep observed
   types and scores while qualifying schema/overall comparisons; semantic brief

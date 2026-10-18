@@ -205,7 +205,7 @@ If `$2` is a topic (not a URL), use `--topic "$2"` with the competitor URLs as
 positionals, and add `--gsc-site <their-site>` when the user has GSC connected
 so the topic is grounded in real adjacent queries. The JSON contains: real
 striking-distance queries for the page (or a `found: false` GSC block), CTR
-laggard / decay / cannibalization status, competitor gaps, missing subtopics,
+laggard / decay / cannibalization status, competitor gaps, heading-review candidates,
 questions to answer, schema suggestions, and structure heuristics. `text_length`
 is a neutral observation of whitespace-token counts, not a word target or proof
 of depth. Do not infer missing coverage or a writing target from length alone.
@@ -230,6 +230,11 @@ counts. Missing/uncertain coverage is not evidence that a schema type is absent;
 review existing markup before adding or duplicating a candidate. Observed types
 remain useful, but schema/overall score comparisons are unverified when extraction
 has known problems. Do not describe those scores as measured improvements.
+Legacy `missing_subtopics` candidates are not verified missing semantic content.
+`subtopic_review`/candidate `term_match` describe an ASCII/English prefix-term filter,
+not section-content understanding or query demand. Review synonyms, context and
+existing coverage before proposing sections; topic mode has no own page to assess.
+Missing or unsupported receipts do not establish measured term counts or gaps.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:

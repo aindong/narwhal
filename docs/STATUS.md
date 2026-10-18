@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Compared-heading review candidates:** briefs preserve the historical
+  `missing_subtopics` candidate list but no longer call lexical non-matches missing
+  semantic content. Basis/count receipts explain the ASCII/English prefix heuristic,
+  topic mode and legacy uncertainty. Selection/order/facts/scores are unchanged;
+  candidates require contextual editorial review, not automatic section additions.
 - **Schema extraction uncertainty:** supported-extractor error/warning-detail
   receipts prevent false schema absence/exclusivity claims and qualify schema/
   overall comparison scores. Brief candidates preserve positive observations

@@ -48,7 +48,7 @@ class TestBriefGrounding(unittest.TestCase):
 
     def test_topic_subtopics_describe_compared_pages_not_ranking_winners(self):
         output = brief.render_markdown(self.data(topic=True))
-        self.assertIn('## Subtopics the compared pages cover', output)
+        self.assertIn('## Compared-heading candidates (review, not coverage gaps)', output)
         self.assertIn('Structure-only brief', output)
         self.assert_no_winners(output)
 

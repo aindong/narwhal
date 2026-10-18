@@ -181,7 +181,11 @@ def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
         max_bytes: HTML bytes retained per page/snapshot (64KB–20MB; default 5MB).
 
     Returns target queries (real GSC data only — never invented), competitor
-    gaps, missing subtopics, questions to answer, schema and structure targets.
+    gaps, compared-heading review candidates (legacy ``missing_subtopics``),
+    question-shaped candidates, semantic schema candidates and structure reviews.
+    Term-match receipts explain a lexical heuristic, not missing semantic content,
+    required sections, query demand or ranking gaps. Topic mode has no own-page
+    match measurement; legacy missing receipts remain unrecorded.
     """
     import brief as brief_mod
     max_bytes = max(64_000, min(int(max_bytes), 20_000_000))

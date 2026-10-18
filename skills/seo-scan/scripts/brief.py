@@ -10,10 +10,10 @@ volumes:
     satisfy — plus CTR-laggard / decay status for the page.
   - **Compared pages** (compare, #21): scan 1-3 supplied competitor pages
     with the same auditors and report on-page gaps, not verified ranking wins.
-  - **Missing subtopics**: competitor H2/H3 sections whose topic words don't
-    appear anywhere in your page text — coverage to add, not padding.
-  - **Questions to answer**: competitors' question-shaped headings you don't
-    cover, plus your own question-shaped striking queries.
+  - **Heading-review candidates**: compared H2/H3 labels below a lexical
+    term-match cutoff, not verified missing semantic coverage or required sections.
+  - **Question-shaped candidates**: compared headings selected by that filter,
+    plus your own recorded question-shaped striking queries; review relevance.
 
 Honesty rules: without GSC credentials this degrades to a clearly labeled
 **structure-only** brief (no target queries are invented). Gaps are on-page
@@ -42,7 +42,7 @@ from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_disc
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
 from lib import length_observation, evidence_observation, question_observation  # noqa: E402
-from lib import schema_appearance, schema_coverage  # noqa: E402
+from lib import schema_appearance, schema_coverage, subtopic_observation  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -129,12 +129,12 @@ def topic_queries(gsc: dict, topic: str, *, top: int = 15) -> list:
 # ---------------------------------------------------------------- coverage
 
 def subtopic_gaps(you: dict, rivals: list) -> list:
-    """Competitor H2/H3 sections your page text doesn't cover.
+    """Compared H2/H3 labels below a lexical match cutoff, not semantic gaps.
 
     ``you``/``rivals`` are page dicts: ``{"url", "headings": [(lvl, text)],
     "text": body_text}``; ``you`` may be None (topic mode → every substantive
-    rival section is a subtopic to cover). A rival heading counts as *covered*
-    when at least half of its meaningful terms appear in your page text. Pure."""
+    rival heading is a candidate to review). A label is filtered out when at
+    least half its eligible terms match own-page inputs. Pure; not coverage proof."""
     have = _terms(you["text"]) | {t for _, h in you["headings"] for t in _terms(h)} \
         if you else set()
     out, seen = [], set()
@@ -150,18 +150,20 @@ def subtopic_gaps(you: dict, rivals: list) -> list:
             # ("Tools", "Company"), not subtopics — unless question-shaped.
             if len(terms) < 2 and not _is_question(h):
                 continue
-            covered = _overlap(terms, have) >= max(1, (len(terms) + 1) // 2) \
-                if you else False
-            if not covered:
+            matched = _overlap(terms, have) if you else None
+            at_cutoff = matched >= max(1, (len(terms) + 1) // 2) if you else False
+            if not at_cutoff:
                 seen.add(norm)
                 out.append({"heading": h.strip(), "who": r["url"],
-                            "question": _is_question(h)})
+                            "question": _is_question(h),
+                            'term_match': subtopic_observation.observe(h.strip(), lvl, len(terms), matched, bool(you))})
     return out
 
 
 def questions_to_answer(subtopics: list, striking: list) -> list:
-    """Question-shaped work items: rival question headings you don't cover
-    plus your own question-shaped striking queries. Deduped by terms. Pure."""
+    """Review candidates from filtered compared headings and recorded queries.
+
+    Deduped by terms; heading non-matches do not prove missing coverage. Pure."""
     out, seen = [], []
     for s in subtopics:
         if s["question"]:
@@ -251,6 +253,7 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
             brief["leads"] = ga["leads"]
     subtopics = subtopic_gaps(you, rivals)
     brief["missing_subtopics"] = subtopics
+    brief['subtopic_review'] = subtopic_observation.context(bool(you))
     brief["questions"] = questions_to_answer(subtopics, striking)
     brief["schema"] = schema_suggestions(you, rivals, brief["questions"])
     brief["structure"] = structure_targets(you, rivals)
@@ -431,14 +434,18 @@ def render_markdown(b: dict) -> str:
                          else "No on-page feature gaps against the compared pages. 🟢")
         lines.append("")
 
+    lines += ['## Compared-heading candidates (review, not coverage gaps)', '', subtopic_observation.LIMITS, '']
+    known_context = subtopic_observation.recorded(b.get('subtopic_review'), bool(b.get('you')))
+    if not known_context:
+        lines += ['Legacy candidate-selection basis is unrecorded or unsupported; no semantic absence is inferred.', '']
     if b["missing_subtopics"]:
-        title = ("Subtopics the compared pages cover"
-                 if not b.get("you") else
-                 "Missing subtopics — sections they have, your text doesn't")
-        lines += [f"## {title}", ""]
         for s in b["missing_subtopics"]:
             lines.append(f"- **{s['heading']}** (on {_short(s['who'], 30)})")
+            lines.append('  ' + subtopic_observation.candidate_note(s, bool(b.get('you')), known_context))
         lines.append("")
+    else:
+        lines += [('No additional candidates from this recorded filter' if known_context else 'No candidate records supplied')
+                  + '; this does not establish complete topic coverage.', '']
 
     if b["questions"]:
         lines += ["## Question-shaped candidates to review", ""]
