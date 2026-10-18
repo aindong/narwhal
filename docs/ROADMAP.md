@@ -139,8 +139,8 @@ without breaking local-first (nothing below needs a paid API).
 
 ### P2 — the strategy loop, done our way
 - ✅ **Content-brief flow** — `narwhal brief` / `/narwhal brief`: briefs
-  grounded in real GSC striking-distance queries + the compare gap, missing
-  subtopics, questions to answer, schema + structure targets; `--topic` mode
+  grounded in real GSC striking-distance queries + the compare gap, heading-review
+  candidates (not semantic coverage gaps), question/schema/structure reviews; `--topic` mode
   for new pages; MCP `content_brief`; honest structure-only degradation.
   — [#26](https://github.com/aindong/narwhal/issues/26)
 - ✅ **E-commerce checks** — evidence-gated Product/Offer completeness,

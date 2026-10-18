@@ -76,7 +76,7 @@ And yes, it works as a backronym too:
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, structure, social packaging, with separate neutral length and statistic/citation-pattern observations (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
-| **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
+| **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, heading-review candidates, questions to review, schema and structure candidates. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
 GEO text-cue checks expose literal counts and limits in `meta.geo_text_cues`.
 English-oriented patterns do not measure answer accuracy, actual paragraphs,
@@ -137,6 +137,14 @@ These distinguish retired Google appearances from useful schema.org semantics;
 generation/types remain available. Missing or unsupported legacy snapshots stay
 unverified, and no listed retirement notice is **not** an eligibility certificate.
 No policy sources are fetched at scan/render time. See [scope and compatibility](skills/seo-scan/references/schema.md#comparison-and-brief-appearance-context).
+
+Brief `missing_subtopics` is a preserved candidate field, not verified missing
+semantic content. New `subtopic_review` and per-candidate `term_match` receipts
+explain the ASCII/English prefix-term basis and exact match counts/cutoff. Synonyms
+can be missed and unrelated word occurrences can match. Compared H2/H3 labels do
+not establish their section content, query demand or ranking gaps. Topic mode has
+no own-page match measurement; legacy missing receipts stay unrecorded. Review
+relevance and existing coverage before adding sections, preserving editorial choices.
 
 Known structured-data extraction problems are not evidence that markup is absent.
 `schema_extraction` facts and page `meta.structured_data.extraction_coverage`
