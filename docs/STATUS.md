@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Explicit review recording:** the offline maintainer utility records one
+  operator-supplied decision into a new, validated packet, preserving evidence,
+  inventory, originals and other reviewers. Replacement is explicit, not merged
+  optimistically; file outputs request owner-only access. This eases review,
+  without authenticating identities or measuring accuracy/recall.
 - **Served/rendered text evidence:** exact selected-text equality and signed
   whitespace-token deltas replace false SSR passes on equal/shorter replacements.
   Legacy aliases stay compatible, not JS-only shares; text/metadata differences

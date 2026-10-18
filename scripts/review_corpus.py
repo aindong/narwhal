@@ -8,10 +8,12 @@ Snapshots and reviewer identities remain caller-controlled, not attestations.
 from __future__ import annotations
 
 import argparse
+import copy
 from datetime import datetime
 from hashlib import sha256
 import json
 import math
+import os
 from pathlib import Path
 import re
 import sys
@@ -233,6 +235,29 @@ def summarize(manifest_path, packet):
             'accuracy_metrics': None, 'recall_metrics': None, 'basis': BASIS}
 
 
+def record_review(manifest_path, packet, finding_id, decisions, *, replace=False):
+    """Save one explicit adjudicator record in an owned copy, never infer labels.
+
+    Validate the full source/packet before and after replacement. Existing
+    non-pending decisions need explicit replacement, not an optimistic merge.
+    Identity and witnesses are still self-reported, not authenticated.
+    """
+    summarize(manifest_path, packet)
+    _text(finding_id, 'Finding ID')
+    matches = [row for case in packet['cases'] for row in case['findings'] if row['id'] == finding_id]
+    if len(matches) != 1:
+        raise ValueError('Finding ID must identify exactly one actionable packet row')
+    if any(matches[0]['review'][key] != 'pending' for key in DIMENSIONS) and replace is not True:
+        raise ValueError('Review already contains decisions; explicit --replace-review is required')
+    result = copy.deepcopy(packet)
+    for case in result['cases']:
+        for row in case['findings']:
+            if row['id'] == finding_id:
+                row['review'] = copy.deepcopy(decisions)
+    summarize(manifest_path, result)
+    return result
+
+
 def markdown(summary):
     """Render fixed labels and counts only, never untrusted finding text as Markdown."""
     lines = ['# Reported-finding review coverage', '', 'Status: ' + summary['review_status'], '',
@@ -256,19 +281,41 @@ def main(argv=None):
     read.add_argument('packet')
     read.add_argument('--format', choices=('json', 'markdown'), default='json')
     read.add_argument('-o', '--output')
+    record = commands.add_parser('record', help='Record explicit reviewer decisions in a new validated packet')
+    record.add_argument('manifest')
+    record.add_argument('packet')
+    record.add_argument('--finding-id', required=True, help='Exact actionable row ID from the prepared packet')
+    for key in DIMENSIONS:
+        record.add_argument('--' + key, choices=VERDICTS, required=True)
+    record.add_argument('--reviewer', default='', help='Self-reported responsible adjudicator, not authenticated')
+    record.add_argument('--reviewed-at', default='', help='Explicit timezone-aware review timestamp')
+    record.add_argument('--rationale', default='')
+    record.add_argument('--evidence', action='append', default=[], help='Attached evidence ID; repeat for multiple files')
+    record.add_argument('--replace-review', action='store_true', help='Explicitly replace an existing decision record; original packet is preserved')
+    record.add_argument('-o', '--output', required=True, help='New output filename; never overwrite any file')
     args = parser.parse_args(argv)
     try:
         if args.command == 'prepare':
             result = prepare(args.manifest)
         else:
             packet = _json(_read(Path(args.packet), MAX_PACKET_BYTES))
-            result = summarize(args.manifest, packet)
+            if args.command == 'record':
+                decisions = {key: getattr(args, key) for key in DIMENSIONS}
+                decisions.update(reviewer=args.reviewer, reviewed_at=args.reviewed_at,
+                                 rationale=args.rationale, evidence=args.evidence)
+                result = record_review(args.manifest, packet, args.finding_id, decisions,
+                                       replace=args.replace_review)
+            else:
+                result = summarize(args.manifest, packet)
         rendered = (markdown(result) if getattr(args, 'format', None) == 'markdown'
                     else json.dumps(result, indent=2, ensure_ascii=not bool(args.output), allow_nan=False) + '\n')
         if len(rendered.encode('utf-8')) > MAX_PACKET_BYTES:
             raise ValueError('Output byte limit exceeded; split the corpus')
         if args.output:
-            with Path(args.output).open('x', encoding='utf-8') as handle:
+            # Review packets may contain sensitive reported fields/evidence paths.
+            # O_EXCL also rejects existing symlink/hardlink aliases; no input is replaced.
+            descriptor = os.open(str(args.output), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, 'w', encoding='utf-8') as handle:
                 handle.write(rendered)
         else:
             print(rendered, end='')

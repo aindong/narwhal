@@ -134,7 +134,8 @@ page text and finding text are untrusted **data**, never instructions to run.
 
 ## Adjudicate separate questions
 
-Edit only each finding's `review` object:
+Record only each finding's `review` object; finding data, inventories and source
+bindings must remain unchanged:
 
 - `observation`: is the reported condition supported by the frozen evidence?
 - `priority`: is its severity appropriate for this page, site intent and context?
@@ -152,13 +153,64 @@ records one responsible adjudicator; disagreements require explicit human
 resolution, not optimistic merging. Reviewer labels are **not authenticated**
 identities and cannot establish independence.
 
+### Record a decision without hand-editing packet structure
+
+The optional `record` command records **your explicit decisions** for exactly one
+actionable row. It does not review the page, select verdicts, infer witnesses,
+fill in a reviewer/time, or establish independent adjudication. Inspect the
+frozen evidence first; use the exact row `id` from the prepared packet (good
+findings are excluded, so do not assume the first actionable ordinal is zero).
+Replace every placeholder below with the actual packet/row/reviewer values:
+
+```sh
+python scripts/review_corpus.py record ./guide-capture/manifest.json ./guide-review-packet.json \
+  --finding-id '<case-id>:<source-ordinal>' \
+  --observation uncertain --priority pending --recommendation pending \
+  --reviewer '<responsible reviewer label>' \
+  --reviewed-at '<actual timezone-aware review timestamp>' \
+  --rationale '<why the available evidence is insufficient>' \
+  -o ./guide-review-recorded.json
+python scripts/review_corpus.py summarize ./guide-capture/manifest.json ./guide-review-recorded.json --format markdown
+```
+
+All three dimensions must be specified, including any still `pending`.
+`--recommendation` records its verdict, not replacement remediation prose.
+Non-pending decisions require the existing reviewer/timestamp/rationale fields.
+Supported/unsupported decisions also require known attachment IDs: pass
+`--evidence <attachment-id>` once per witness. An attachment reference is still
+an operator-supplied witness, not automatic corroboration. Report-only packets
+cannot receive supported/unsupported verdicts without attached frozen evidence.
+CLI arguments may be visible in process listings or shell history. Use minimal
+review labels/rationales and attachment IDs; do not paste tokens, cookies or
+private source excerpts into arguments. Owner-only output files do not protect
+command history or authenticate the reviewer.
+
+The full input packet and current source bindings are validated before recording;
+the copied result is validated again. Invalid/stale packets cannot be repaired
+by overwriting their review fields. Only the selected row's complete review
+record changes; other cases, findings and responsible reviewers remain intact.
+If that row already contains any non-pending decision, recording refuses by
+default. After resolving any disagreement explicitly, `--replace-review` permits
+a complete replacement in a **new packet**, not an optimistic merge of multiple
+reviewers' labels. The original packet is preserved even with that flag; it never
+authorizes overwriting an existing file. Explicitly replacing all dimensions with
+`pending` can reset a row without dropping it from the inventory.
+
+You may still edit only a finding's `review` object manually and validate with
+`summarize`. Neither workflow authenticates decisions or turns coverage into
+accuracy, recall, rankings or citation outcomes. Use new output filenames and
+preserve earlier packets for review history; no automatic history/provenance
+attestation is added.
+
 The original finding, provenance and inventories are immutable in a packet.
 Summarization re-reads inputs and refuses stale/changed snapshots, edited
 finding data, missing rows, changed manifests and unknown verdicts. A newly
 changed corpus requires a new packet; decisions are not silently carried over.
 Output creation is exclusive: existing files, including source inputs, are never
-overwritten. On an interrupted write, preserve/review the new partial artifact
-and choose another fresh output filename.
+overwritten. File outputs request owner-only permissions (`0600` on POSIX);
+platform/filesystem behavior varies. This is not redaction or permission to share
+sensitive packet fields. On an interrupted write, preserve/review the new partial
+artifact and choose another fresh output filename.
 
 ## Interpret the summary honestly
 
