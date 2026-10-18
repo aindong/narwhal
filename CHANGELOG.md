@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Comparison and brief reports carry the page auditor's dated Google rich-result
+  retirement context, including source links and scope for observed/suggested
+  schema types. Semantic candidates/generation remain available; retired Google
+  appearances are not schema.org invalidity or ranking penalties, and unlisted
+  types are not certified eligible. Missing legacy provenance stays unverified.
+  Page findings/scores/status dates and type/candidate sets remain unchanged;
+  no runtime policy fetch or new required dependencies.
 - Compare/brief question-heading heuristics use exact recorded counts rather
   than the preserved two-decimal `question_ratio`. An 8/41 fraction no longer
   becomes 20%; no eligible headings or legacy missing counts stay unassessed.

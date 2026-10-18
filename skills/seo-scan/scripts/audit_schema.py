@@ -8,30 +8,17 @@ page that clearly should carry markup (article, product, org) has none.
 from __future__ import annotations
 
 try:
-    from lib import ecommerce, htmlx, microdata, structured_data
+    from lib import ecommerce, htmlx, microdata, structured_data, schema_appearance
 except ImportError:  # when imported as a package
-    from .lib import ecommerce, htmlx, microdata, structured_data  # type: ignore
+    from .lib import ecommerce, htmlx, microdata, structured_data, schema_appearance  # type: ignore
 
 CAT = "schema"
 
-# Google Search appearance status, not schema.org validity or a ranking verdict.
-# A dated offline snapshot: never fetch these sources during a scan.
-FEATURE_STATUS_CHECKED = "2026-10-12"
-DEPRECATED = {
-    "HowTo": "HowTo rich results were retired from Google Search in September 2023.",
-    "FAQPage": "FAQ rich results stopped appearing in Google Search on May 7, 2026; the former government/health restriction is no longer current.",
-    "SpecialAnnouncement": "SpecialAnnouncement rich-result support was retired from Google Search in 2025.",
-    "ClaimReview": "ClaimReview rich-result support was retired from Google Search in 2025. The markup remains supported by Google's Fact Check Explorer tool.",
-}
-DEPRECATED_SOURCES = {
-    "HowTo": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
-    "FAQPage": "https://developers.google.com/search/updates",
-    "SpecialAnnouncement": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
-    "ClaimReview": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
-}
-DEPRECATED_ADDITIONAL_SOURCES = {
-    "ClaimReview": ["https://developers.google.com/search/docs/appearance/structured-data/factcheck"],
-}
+# Preserve existing module names while sharing one dated, offline snapshot.
+FEATURE_STATUS_CHECKED = schema_appearance.FEATURE_STATUS_CHECKED
+DEPRECATED = schema_appearance.DEPRECATED
+DEPRECATED_SOURCES = schema_appearance.DEPRECATED_SOURCES
+DEPRECATED_ADDITIONAL_SOURCES = schema_appearance.DEPRECATED_ADDITIONAL_SOURCES
 
 # Minimal required-property expectations per common type.
 REQUIRED = {
@@ -175,10 +162,7 @@ def _feature_notice(typ, report):
     additional = DEPRECATED_ADDITIONAL_SOURCES.get(typ, [])
     notices = report.meta.setdefault("structured_data", {}).setdefault("google_rich_result_notices", [])
     if not any(notice["type"] == typ for notice in notices):
-        notices.append({"type": typ, "status": "retired",
-                        "scope": "Google Search rich-result appearance, not schema.org validity or ranking",
-                        "checked_on": FEATURE_STATUS_CHECKED, "source": source,
-                        "additional_sources": list(additional)})
+        notices.append(schema_appearance.notice(typ))
     # Config ignores use title substrings, not rule IDs. Honor the old title
     # as well as the new presentation; factual provenance remains available.
     if report.ignore and report.ignore(CAT, f"Deprecated rich-result type: {typ}"):

@@ -42,6 +42,7 @@ from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_disc
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
 from lib import length_observation, evidence_observation, question_observation  # noqa: E402
+from lib import schema_appearance  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -193,6 +194,8 @@ def schema_suggestions(you: dict | None, rivals: list, questions: list) -> list:
         out.append({"type": "FAQPage",
                     "reason": "the brief includes questions to answer",
                     "who": []})
+    for candidate in out:
+        candidate['google_search_appearance'] = schema_appearance.observe([candidate['type']])
     return out
 
 
@@ -467,13 +470,14 @@ def render_markdown(b: dict) -> str:
                       'It is not a requirement to rewrite headings or proof of real query demand.', '']
 
     if b["schema"]:
-        lines += ["## Schema to add", ""]
+        lines += ["## Semantic schema candidates (review)", '', schema_appearance.LIMITS, '']
         for s in b["schema"]:
             who = (" (seen on " + ", ".join(_short(w, 30) for w in s["who"]) + ")"
                    if s["who"] else "")
             lines.append(f"- **{s['type']}** — {s['reason']}{who}. Generate it: "
                          f"`narwhal schema {s['type']}`; only add types that "
-                         "match the page's real entity.")
+                         "match the page's real visible content and intended consumer.")
+            lines += ['  ' + line for line in schema_appearance.lines(s.get('google_search_appearance'), [s['type']])]
         lines.append("")
 
     leads = [lead for lead in b.get('leads', []) if lead.get('what') not in

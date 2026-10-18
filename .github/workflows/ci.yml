@@ -120,3 +120,5 @@ jobs:
         run: python skills/seo-scan/tests/comparative_evidence_smoke.py
       - name: Exact question-cue browser regression
         run: python skills/seo-scan/tests/question_observation_smoke.py
+      - name: Dated schema-appearance browser regression
+        run: python skills/seo-scan/tests/schema_appearance_smoke.py
