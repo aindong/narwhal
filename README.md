@@ -10,7 +10,7 @@
 <p align="center"><strong>Local-first SEO &amp; GEO/LLMO scanning — as an agent skill.</strong></p>
 
 <p align="center">
-  Audit any page or site for search rankings <em>and</em> AI-answer visibility
+  Inspect pages and sites for SEO <em>and</em> AI-answer visibility signals
   <br>(ChatGPT · Claude · Perplexity · Google AI Overviews) — straight from your coding agent.
 </p>
 
@@ -33,8 +33,16 @@ an agent skill: use it from Claude Code via
 [`SKILL.md`](skills/seo-scan/SKILL.md), or from any agent that reads
 [`AGENTS.md`](AGENTS.md) — Codex, Cursor, OpenCode, and friends.
 
-No accounts, no API keys, nothing phones home. It runs on a bare Python install
-and gets sharper when optional parsing/rendering libraries are present.
+Default scans need no accounts or API keys and send no telemetry. They fetch the
+requested site and related audit resources; external data integrations are
+opt-in. Narwhal runs on a bare Python install, with additional extraction and
+rendering paths available through optional libraries.
+
+Use Narwhal as an **audit assistant, not a final SEO verdict**. Check findings
+against their evidence and your site's intent before changing anything. Its
+score summarizes reported findings, not page quality or measured ranking/AI
+citation performance. Passing tests do not establish real-world accuracy; see
+[how to interpret scores and verification](docs/tuning/README.md#how-to-interpret-scores-and-verification).
 
 ## Why "Narwhal"?
 
@@ -807,9 +815,10 @@ both current major lines.
 
 ## Design principles
 
-- **Local-only by default.** No external services are called. Optional API
-  integrations (PageSpeed/CrUX, SERP data) are intentionally *not* on the default
-  path — the scan is honest about what it can and can't measure locally.
+- **Local-first, with explicit network use.** Default scans fetch the requested
+  site and related audit resources and write reports locally; they are not
+  offline scans. External data integrations (such as GSC or PageSpeed/CrUX) are
+  opt-in, and scans send no telemetry.
 - **Graceful degradation.** Works with only the Python standard library; uses
   `requests`, `beautifulsoup4`/`lxml`, `trafilatura`, and `playwright`
   automatically when installed.
@@ -818,19 +827,23 @@ both current major lines.
 - **Fix-first output.** Reports lead with the highest-severity, highest-leverage
   changes — not a data dump.
 
-## Tuned against the real web (and we publish the evidence)
+<a id="tuned-against-the-real-web-and-we-publish-the-evidence"></a>
 
-Narwhal's checks and specialist agents are trained in the open: we periodically
-**sweep a diverse batch of real, public sites, hunt our own false positives, fix
-them at the root cause, and commit the before/after scan snapshots** to
-[`docs/tuning/`](docs/tuning/README.md) so you can audit the auditor.
+## Real-site tuning and its limits
 
-The rule that keeps it honest: **a score never improves by loosening a check** —
-only by removing findings that were *wrong*, each with a named root cause and a
-regression test. In the [2026-07 round](docs/tuning/2026-07-round-1/RESULTS.md)
-that meant fixing a parser bug that reported false "No H1" on most real blogs,
-counting anchor text as content (link-hubs aren't "thin"), and teaching every
-check **page-type awareness** (a homepage isn't judged like an article):
+Narwhal's deterministic checks are revised and specialist prompts refined using
+maintainer investigations of public pages. Historical before/after report
+snapshots are committed in [`docs/tuning/`](docs/tuning/README.md); new sensitive
+source captures stay private. This is rule/prompt development, not model
+training or an independently validated benchmark.
+
+**A correction can raise or lower a tool score without improving or worsening
+the page.** We fix extraction/detection errors and revise priority or advice
+when their scope was overstated, documenting the reason and testing the affected
+behavior. We do not target higher scores or assume a familiar site's findings
+must be wrong. Historical work included fixing lost nested-link heading text,
+counting anchor text as content, and making checks page-type-aware. The following
+are historical **tool-score changes**, not demonstrated website improvements:
 
 | Site (page type) | Before | After |
 |:--|--:|--:|
@@ -839,11 +852,11 @@ check **page-type awareness** (a homepage isn't judged like an article):
 | docs.python.org (docs index) | 75 | **86** |
 | theverge.com (news publisher) | 71 | **80** |
 
-The multi-agent specialists are graded the same way — run live on real sites,
-their reasoning scored, and the best behaviors encoded back into their prompts as
-*Judgment rules* (classify the page type first, sample a real article, respect a
-site's deliberate AI-crawler opt-outs). Full methodology and raw data:
-[docs/tuning](docs/tuning/README.md).
+Historical specialist runs informed *Judgment rules* such as classifying the
+page type, sampling an article and respecting deliberate AI-crawler opt-outs.
+Those qualitative maintainer observations are not independent expert grading
+or proof that every agent follows the prompts. See the
+[methodology and historical reports](docs/tuning/README.md).
 
 The offline maintainer [review-pack workflow](docs/tuning/REVIEW.md) separates
 observation, priority and advice review against local snapshot versions. Its

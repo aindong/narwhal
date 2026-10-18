@@ -1,30 +1,54 @@
 # How Narwhal is tuned
 
-Narwhal's checks and specialist agents aren't written once and trusted forever —
-they're **tuned against the real web**, and the evidence is committed here so you
-can audit the auditor. Each round follows the same loop:
+Narwhal's deterministic checks and specialist prompts are revised through
+maintainer investigation, not model training. Historical report snapshots are
+committed here; new sensitive source captures stay private. Neither is a
+completed independent accuracy benchmark. The development loop is:
 
 ```
-1. SWEEP     scan a diverse batch of real, public sites (JSON snapshots saved)
-2. DIFF      read every critical/high/medium finding looking for false positives
-             — a well-run site scoring poorly is a smell in OUR tool, not theirs
-3. FIX       repair the root cause in the deterministic scripts
-             (parser/extraction/check logic), never by hiding findings
-4. PROVE     re-scan the same sites; every score change must come from removing
-             *wrong* findings, with a regression test locking each one in
-5. GRADE     run the actual specialist agents on live sites and grade their
-             reasoning — do they correct the script, or parrot it?
-6. ENCODE    turn what the good runs did into permanent "Judgment rules" in
-             the agents/narwhal-*.md prompts
+1. FREEZE    declare sampling/settings and preserve available inputs with limits;
+             keep reserved evaluation findings out of development tuning
+2. INSPECT   check observations, priority and advice separately against evidence;
+             investigate reported issues and missed issues, not just low scores
+3. FIX       name the root cause in extraction, detection, priority or advice;
+             do not suppress findings merely to improve a score
+4. VERIFY    test controlled regressions and replay frozen development inputs;
+             explain changed findings/scores, including new findings and drops
+5. REVIEW    inspect specialist reasoning against evidence, not agreement with
+             the scripts; self-review is not independent adjudication
+6. REFINE    revise check logic or agent prompts and document behavior/limits;
+             a prompt instruction is not proof of agent compliance
 ```
 
-Two principles keep the loop honest:
+Two principles guide development:
 
-- **Never loosen a check to make a score go up.** A fix must explain *why the
-  finding was wrong* (a parser bug, a page-type mismatch) and carry a test.
-- **The sites aren't the patients — Narwhal is.** The tuning corpus is
-  deliberately full of excellent sites; when Narwhal flags them, Narwhal is
-  usually what needs fixing.
+- **Correctness, not score direction.** A fix needs a reason and regression
+  evidence. Detection corrections can add or remove findings; justified priority
+  changes can change scores while leaving the observed page fact unchanged.
+- **Reputation is not ground truth.** A familiar site can have real issues and
+  an unfamiliar site can be sound. Check the captured evidence and owner intent;
+  do not infer a false positive or endorse advice from the site's name or score.
+
+## How to interpret scores and verification
+
+| Evidence | What it supports | What it does not establish |
+|---|---|---|
+| Passing regression tests / CI | Tested behavior under the recorded fixtures and environments | Real-world false-positive rate, recall or SEO outcomes |
+| Before/after frozen development replay | How a scanner change affects the same retained inputs | Better pages, independent validation or complete network evidence |
+| Higher/lower Narwhal score | A change in reported weighted findings | Page quality, ranking changes or AI citation likelihood |
+| Review labels or specialist agreement | Recorded opinions against the attached evidence | Reviewer independence, missed-issue coverage or correctness by consensus |
+
+Use findings as investigation prompts: inspect the source/response/DOM evidence,
+check whether the recommendation fits the page and owner's intent, then verify
+an actual edit with comparable scans. Keep scanner version, settings and
+coverage comparable; if the scanner changed, distinguish tool corrections from
+website changes. Heuristic editorial advice needs human judgment. A clean
+report means no flagged findings in the measured scope, not a certified site.
+
+Historical reports below have no attached frozen page inputs, so they cannot
+isolate all live-page or environment differences. Their narrative labels and
+agent observations are maintainer interpretations, not independent adjudication.
+The score tables are preserved as history, not accuracy measurements.
 
 ## Report-review readiness (Unreleased)
 
@@ -91,7 +115,8 @@ personal blog (jvns.ca), wiki (Wikipedia), link-hub (Hacker News).
 | Byline demanded on shop/home pages | Same | Article-only check |
 | GEO checks firing on ~90% of sites | Question-headings/evidence checks weren't article-weighted | Article-scoped severity |
 
-**Score corrections** (wrong findings removed — checks not loosened):
+**Historical tool-score changes** (extraction/detection and priority revisions,
+not demonstrated website improvements):
 jvns.ca **62 → 79** · Hacker News **52 → 66** · docs.python.org **75 → 86** ·
 The Verge **71 → 80** · Vercel **83 → 89** · full table + per-site diffs in
 [RESULTS.md](2026-07-round-1/RESULTS.md), raw JSON snapshots in
