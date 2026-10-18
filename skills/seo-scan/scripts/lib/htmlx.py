@@ -16,6 +16,7 @@ from urllib.parse import urljoin
 
 from .template_source import document_source
 from . import rdfa as _rdfa  # initialize before crawl workers; extraction stays lazy
+from . import canonical as _canonical
 
 WS = re.compile(r"\s+")
 
@@ -56,6 +57,7 @@ class Doc:
     _microdata_cache: object = field(default=None, init=False, repr=False)
     _rdfa_cache: object = field(default=None, init=False, repr=False)
     _merchant_cache: object = field(default=None, init=False, repr=False)
+    _canonical_base_cache: object = field(default=None, init=False, repr=False)
 
     @property
     def document_html(self) -> str:
@@ -140,9 +142,14 @@ class Doc:
         return [l for l in self.link_rels if rel in (l.get("rel") or "").lower().split()]
 
     def canonical(self) -> Optional[str]:
+        """First HTML candidate, locally resolved; presence does not prove validity."""
         links = self.links_by_rel("canonical")
         href = links[0].get("href") if links else None
-        return urljoin(self.base_url, href) if href else None
+        if not href:
+            return None
+        if self._canonical_base_cache is None:
+            self._canonical_base_cache = (_canonical.first_base(self.document_html),)
+        return _canonical.resolve(self.base_url, href, self._canonical_base_cache[0])
 
 
 def link_text_share(doc: "Doc") -> float:

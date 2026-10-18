@@ -30,6 +30,7 @@ from lib import config as configlib  # noqa: E402
 from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
 from lib import question_observation, schema_appearance, schema_coverage  # noqa: E402
 from lib import date_cues  # noqa: E402
+from lib import canonical  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -95,7 +96,8 @@ def facts(report, doc) -> dict:
         "og_complete": all(doc.meta_by_property(p)
                            for p in ("og:title", "og:description", "og:image")),
         "twitter_card": bool(doc.meta_by_name("twitter:card")),
-        "canonical": bool(doc.canonical()),
+        "canonical": bool(doc.canonical()),  # first candidate presence, not validity/selection
+        'canonical_comparison': report.meta.get('canonical_comparison'),
         "author_signal": bool(attribution['candidates']),
         "authorship_cues": attribution,
         "date_signal": bool(dates['candidates']),  # candidate presence, never verified freshness
@@ -212,6 +214,10 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
             failed.append({'url': u, 'status': rep.fetched_status,
                            'llms_txt_unverified': True, 'error': UNVERIFIED_LLMS_ERROR})
             continue
+        if canonical.unverified(rep.meta):
+            failed.append({'url': u, 'status': rep.fetched_status,
+                           'canonical_comparison_unverified': True, 'error': canonical.ERROR})
+            continue
         results.append(facts(rep, doc))
         if index == 0:
             target = results[-1]
@@ -253,6 +259,8 @@ def _score_cell(facts, value):
     state = schema_coverage.fact_state(facts)
     suffix = (' (schema extraction unverified)' if state == 'unverified' else
               ' (schema coverage unrecorded)' if state == 'unknown' else '')
+    if canonical.unverified(facts):
+        suffix += ' (canonical comparison unverified)'
     return str(value) + suffix
 
 

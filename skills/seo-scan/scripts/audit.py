@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
 from lib import report as report_lib  # noqa: E402
+from lib import canonical  # noqa: E402
 from lib.report import below_threshold, deliver  # noqa: E402
 import scan as scanner  # noqa: E402
 import crawl_site  # noqa: E402
@@ -158,8 +159,11 @@ def overall_score(data: dict) -> float:
 
 
 def _schema_score_note(data: dict) -> str:
-    return (crawl_site.schema_extraction_note(data['site_result'])
-            or report_lib.recorded_schema_extraction_problem(data['page'].meta, for_score=True) or '')
+    schema = (crawl_site.schema_extraction_note(data['site_result'])
+              or report_lib.recorded_schema_extraction_problem(data['page'].meta, for_score=True) or '')
+    canonical_note = (crawl_site.canonical_comparison_note(data['site_result'])
+                      or (canonical.ERROR if canonical.unverified(data['page'].meta) else ''))
+    return ' '.join(note for note in (schema, canonical_note) if note)
 
 
 def render_markdown(data: dict) -> str:

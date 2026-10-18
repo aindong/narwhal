@@ -15,12 +15,14 @@ try:
     from lib import links
     from lib import sitemap as sm
     from lib import indexing
+    from lib import canonical
 except ImportError:  # when imported as a package
     from .lib import htmlx  # type: ignore
     from .lib import jsdiff  # type: ignore
     from .lib import links  # type: ignore
     from .lib import sitemap as sm  # type: ignore
     from .lib import indexing  # type: ignore
+    from .lib import canonical  # type: ignore
 
 CAT = "technical"
 
@@ -144,20 +146,32 @@ def _headings(doc, report):
 
 
 def _canonical(doc, resp, report):
+    final = resp.final_url or resp.url
+    receipt = canonical.observe(doc, final)
+    report.meta['canonical_comparison'] = receipt
     can = doc.canonical()
-    if not can:
+    if receipt['status'] == 'missing':
         report.add(CAT, "medium", "No canonical URL",
                    "No <link rel=\"canonical\"> present.",
                    "Add a self-referencing canonical to consolidate signals.")
         return
-    final = resp.final_url or resp.url
-    if _norm(can) != _norm(final):
+    if receipt['status'] == 'unverified':
+        report.add(CAT, 'low', 'Review unverified canonical comparison',
+                   'A first HTML canonical declaration was observed, but a candidate/comparison URL '
+                   'was empty, malformed or outside supported HTTP comparison. ' + canonical.LIMITS,
+                   'Inspect the original declaration, HTML base and fetched URL before editing. '
+                   'Repair only confirmed source defects; do not add a duplicate canonical or assume '
+                   'the target is missing, reachable or selected by a search engine.', evidence=can or '',
+                   rule_id='technical.canonical.comparison.unverified')
+    elif receipt['status'] == 'differs':
         report.add(CAT, "low", "Canonical points elsewhere",
-                   f"Canonical is {can} but page URL is {final}.",
-                   "Confirm this is intentional (cross-domain/variant canonical).",
+                   f"Canonical is {can} but fetched URL is {final}. Differing components: "
+                   + ', '.join(receipt['differences']) + '. ' + canonical.LIMITS,
+                   'Confirm this is intentional (cross-domain/variant canonical). Preserve valid '
+                   'consolidation; edit only a verified wrong target. Search-engine selection is unmeasured.',
                    evidence=can)
     else:
-        report.ok(CAT, "Self-referencing canonical", can)
+        report.ok(CAT, 'Self-referencing canonical', str(can) + '. ' + canonical.LIMITS)
 
 
 def _generic_meta_robots(doc):
@@ -380,6 +394,6 @@ def _sitemap(ctx, report):
                    "Publish an XML sitemap and submit it in Search Console.")
 
 
-def _norm(url: str) -> str:
-    p = urlparse(url)
-    return f"{p.netloc}{p.path}".rstrip("/").lower()
+def _norm(url: str):
+    """Compatibility alias for the shared, local component-comparison key."""
+    return canonical.key(url)

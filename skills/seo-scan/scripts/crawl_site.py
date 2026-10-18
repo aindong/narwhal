@@ -31,6 +31,7 @@ from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib import llms_resource  # noqa: E402
+from lib import canonical  # noqa: E402
 from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery, MAX_INDEX_CHILDREN  # noqa: E402
 from lib.robots import RobotsTxt  # noqa: E402
@@ -38,18 +39,16 @@ import scan as scanner  # noqa: E402
 
 
 def _norm_canonical(url):
-    if not url:
-        return None
-    p = urlparse(url)
-    return f"{p.netloc}{p.path}".rstrip("/").lower()
+    return canonical.key(url)
 
 
 def find_duplicates(page_fps: list, threshold_pct: float) -> list:
-    """Cluster near-duplicate pages and check their canonicalization.
+    """Cluster near-duplicate pages and compare their first canonical targets.
 
     ``page_fps`` is a list of ``{url, fingerprint, canonical}``. Returns clusters
     with the minimum pairwise similarity and whether the near-dupes point to a
-    single, consistent canonical (``canonical_ok``).
+    single supported component key (``canonical_ok``). This does not verify
+    consolidation, target access/content or a search engine's selected URL.
     """
     items = [(i, p["fingerprint"]) for i, p in enumerate(page_fps)
              if p.get("fingerprint")]
@@ -59,7 +58,7 @@ def find_duplicates(page_fps: list, threshold_pct: float) -> list:
         sims = [simhash.similarity(pages[a]["fingerprint"], pages[b]["fingerprint"])
                 for a in range(len(pages)) for b in range(a + 1, len(pages))]
         canon_targets = {_norm_canonical(p["canonical"]) for p in pages}
-        canonical_ok = all(p["canonical"] for p in pages) and len(canon_targets) == 1
+        canonical_ok = None not in canon_targets and len(canon_targets) == 1
         clusters.append({
             "urls": [p["url"] for p in pages],
             "canonicals": [p["canonical"] for p in pages],
@@ -358,6 +357,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "sitemap_discovery_unverified": bool(recorded_sitemap_discovery_problem(rep.meta, for_score=True)),
                       "llms_txt_unverified": bool(recorded_llms_problem(rep.meta, for_score=True)),
                       'schema_extraction_unverified': bool(recorded_schema_extraction_problem(rep.meta, for_score=True)),
+                      'canonical_comparison_unverified': canonical.unverified(rep.meta),
                       "scan_settings": rep.meta.get("scan_settings", {}),
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
@@ -460,6 +460,14 @@ def schema_extraction_note(result: dict) -> str:
             'Raw scores are retained, not proof of improvement.')
 
 
+def canonical_comparison_note(result: dict) -> str:
+    """Qualify the site average only for explicitly recorded comparison gaps."""
+    affected = sum(1 for page in result.get('pages', []) if isinstance(page, dict)
+                   and page.get('canonical_comparison_unverified') is True)
+    return (f'HTML canonical comparison needs verification on {affected} scanned page(s); '
+            'technical/overall score comparisons, including the site average, are unverified.') if affected else ''
+
+
 def render_markdown(result: dict) -> str:
     skipped = result.get("skipped_robots", 0)
     skip_note = f"  ·  {skipped} skipped (robots.txt)" if skipped else ""
@@ -469,6 +477,9 @@ def render_markdown(result: dict) -> str:
     schema_note = schema_extraction_note(result)
     if schema_note:
         lines += ['> ' + schema_note, '']
+    canonical_note = canonical_comparison_note(result)
+    if canonical_note:
+        lines += ['> ' + canonical_note, '']
     sitemap_note = sm.reference_note(result.get('sitemap_references'))
     if sitemap_note:
         lines += ['> ' + sitemap_note, '']
@@ -588,8 +599,8 @@ def render_markdown(result: dict) -> str:
             lines.append("")
         else:
             for i, c in enumerate(dupes, 1):
-                flag = "✅ canonical consistent" if c["canonical_ok"] \
-                    else "⚠️ missing/inconsistent canonical"
+                flag = 'matching canonical target observations' if c['canonical_ok'] \
+                    else 'review canonical targets (missing, different or unassessed)'
                 lines.append(f"**Cluster {i}** — ~{c['min_similarity']}% similar · {flag}")
                 for url, can in zip(c["urls"], c["canonicals"]):
                     canon = f" → canonical: {can}" if can else " → no canonical"
@@ -597,8 +608,9 @@ def render_markdown(result: dict) -> str:
                 lines.append("")
             if problem:
                 lines.append(f"> {len(problem)} cluster(s) of near-duplicate pages "
-                             "lack a single consistent canonical — pick one URL per "
-                             "cluster and point the rest at it with rel=canonical.")
+                             'need canonical-target review. Inspect actual duplication, variants and intended '
+                             'consolidation before editing; preserve intentional distinct pages. Matching '
+                             'component keys do not verify target access, equivalent content or search-engine selection.')
                 lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 

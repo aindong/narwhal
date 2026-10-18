@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib import canonical  # noqa: E402
 
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -85,12 +86,16 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + ' audit contains unverified sitemap availability; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get('llms_txt_unverified') is True for page in pages):
             reasons.append(label + ' audit contains unverified root llms.txt availability; its overall score is not comparable.')
+        if isinstance(pages, list) and any(isinstance(page, dict) and page.get('canonical_comparison_unverified') is True for page in pages):
+            reasons.append(label + ' audit contains an unverified HTML canonical comparison; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and (
                 page.get('schema_extraction_unverified') is True or recorded_schema_extraction_problem(
                     {'scan_settings': page.get('scan_settings')}, for_score=True)) for page in pages):
             reasons.append(label + ' audit contains unverified structured-data extraction; its overall score is not comparable.')
         meta = item["meta"] if isinstance(item["meta"], dict) else {}
         coverage = meta.get("coverage")
+        if canonical.unverified(meta):
+            reasons.append(label + ' report has an unverified HTML canonical comparison; technical/overall score comparison is unverified.')
         js_problem = recorded_js_comparison_problem(meta, for_score=True)
         if js_problem:
             reasons.append(label + " report did not measure JS-dependence: " + js_problem + ".")
@@ -138,7 +143,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction gaps and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction/HTML canonical comparison gaps and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 

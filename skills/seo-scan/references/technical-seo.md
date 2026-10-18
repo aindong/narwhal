@@ -22,6 +22,42 @@ check, plus what to do when the automated check isn't enough.
 - A canonical pointing elsewhere is a deliberate signal ("this is a duplicate of
   X"). Flag unexpected cross-URL canonicals — a wrong one can deindex a page.
 
+Narwhal compares the **first parsed HTML declaration** against the final fetched
+URL. Relative references use the first non-template href-bearing HTML base, or
+the fetched document URL. Comparison is local: no canonical target request, DNS
+lookup or new fetch permission is made.
+
+- Scheme/host case, default HTTP(S) ports, empty root paths, percent-encoded
+  unreserved characters/hex case and complete dot segments normalize. Other
+  path/query case, non-root trailing/repeated separators, query order, reserved
+  escapes and explicit query/fragment delimiters remain distinct.
+- Literal non-ASCII path/query/fragment text maps to UTF-8 percent bytes before
+  comparison, avoiding false differences against transport-encoded URLs.
+  Non-ASCII hosts (including percent-encoded high bytes) remain unverified;
+  this does not implement IDNA or Unicode-form normalization.
+- A match is a **component observation**, not validated target content/access,
+  redirect equivalence, canonical conflicts or Google's selected canonical.
+  HTTP canonical headers, full URI/IRI conformance and IDNA/alternate numeric
+  host aliases are outside this comparison. Fragment equality is not a claim
+  that a search engine supports fragment canonicals.
+- Missing declarations retain the existing rule. Observed but empty, malformed
+  or unsupported candidates get manual-only verification, not duplicate markup
+  generation or a false passing/absence result. Known uncertainty qualifies
+  page/site scores and prevents diff fix claims/CI gates and comparative verdicts.
+  Missing legacy receipts are unrecorded, not certified.
+- Near-duplicate clusters share the same component key. The historical JSON
+  `canonical_ok` means all observed candidates have one supported key; it does
+  not prove consolidation. Review real duplication and intended variants before
+  editing, and preserve useful distinct pages. Detector corrections can raise or
+  lower tool scores without changing a website or measuring SEO improvement.
+
+Sources: [RFC 3986 comparison/normalization](https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2),
+[HTTP(S) URI normalization](https://www.rfc-editor.org/rfc/rfc9110.html#section-4.2.3)
+[literal Unicode to URI byte mapping](https://www.rfc-editor.org/rfc/rfc3987.html#section-3.1)
+and [Google's canonical guidance](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)
+(checked 2026-10-19). The latter treats declarations as signals and discourages
+fragment canonicals; a local match does not verify Google's choice.
+
 ## Robots directives (two layers)
 1. `<meta name="robots">` / `X-Robots-Tag` header — page-level. `noindex` here is
    the single most common cause of "my page vanished."
