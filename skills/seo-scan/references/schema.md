@@ -167,6 +167,32 @@ markup or the separately [supported Course list feature](https://developers.goog
 `sameAs` on Organization/Person (linking to Wikipedia, LinkedIn, official
 socials) is *not* deprecated; accurate identity links can clarify the entity.
 
+### Comparison and brief appearance context
+
+Page scans, comparison facts and brief candidates share one offline retirement
+snapshot (the existing checked date stays 2026-10-12, not a live check).
+`facts.schema_search_features` records version 1, `dated_google_retirement_snapshot`
+basis, `checked_on`, source-backed `notices` and limits for observed schema types.
+The type list, page findings/IDs/scores and existing note metadata stay unchanged.
+The snapshot is not a complete Google feature registry: an empty notice list
+does not certify support, validity, eligibility, a ranking gain or AI citations.
+
+Brief candidates add per-type `google_search_appearance` records, including a
+planned FAQPage candidate. Candidates and `narwhal schema` generation remain
+available for semantic use; they are not automatic instructions to add markup
+or invent visible content. Retain accurate data where useful for its consumer.
+Comparison schema differences now make this review conditional and show dated
+Google notes separately, rather than leaving the existing page notices behind.
+
+Renderers recognize the dated marker and canonical notices/primary links only
+when consistent with the supplied type list. Missing, malformed, conflicting or
+unsupported legacy snapshots remain unrecorded; tool versions/type names do not
+backfill old provenance. Static limits are rendered instead of arbitrary supplied
+policy text/URLs. Known notices are limited to four kinds and human notes to 100
+compared pages; these are note bounds, not total input/CPU/heap budgets. Rendering
+does not mutate supplied JSON or fetch policy/linked resources. Sources and status
+fields describe the snapshot, not an independent audit of the page's correctness.
+
 ## Product and merchant-listing checks
 
 All normalized document consumers use a cached stdlib source projection that

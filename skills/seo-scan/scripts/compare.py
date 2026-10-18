@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
 from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
-from lib import question_observation  # noqa: E402
+from lib import question_observation, schema_appearance  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -66,6 +66,7 @@ def facts(report, doc) -> dict:
                                             len(audit_geo._CITE_HINT.findall(text)), doc.extraction)
     settings = report.meta.get('scan_settings', {})
     reviewed = settings.get('content_length_reviewed') if isinstance(settings, dict) else None
+    schema_types = _schema_types(doc)
     return {
         "url": report.final_url or report.url,
         "rendered": report.rendered,
@@ -83,7 +84,8 @@ def facts(report, doc) -> dict:
         "headings": len(doc.headings),
         "question_ratio": round(question_observation.fraction(questions), 2),  # legacy rounded alias
         "question_cues": questions,
-        "schema_types": _schema_types(doc),
+        "schema_types": schema_types,
+        'schema_search_features': schema_appearance.observe(schema_types),
         "og_complete": all(doc.meta_by_property(p)
                            for p in ("og:title", "og:description", "og:image")),
         "twitter_card": bool(doc.meta_by_name("twitter:card")),
@@ -142,9 +144,10 @@ def gap_analysis(you: dict, rivals: list) -> dict:
     if missing:
         gaps.append({"what": "Schema types: " + ", ".join(sorted(missing)),
                      "who": sorted({u for who in missing.values() for u in who}),
-                     "action": "Add the ones that match this page's real entity "
-                               "(generate with `narwhal schema <Type>`); some may "
-                               "belong nested inside your existing markup."})
+                     "action": "Review these types; add only those matching real visible content and the intended consumer "
+                               "(generate with `narwhal schema <Type>`). Review the dated Google "
+                               "appearance notes separately; presence is not proof of eligibility "
+                               "or ranking benefit. Some types belong nested in existing markup."})
     extra = yours - {t for r in rivals for t in r["schema_types"]}
     if extra and rivals:
         leads.append({"what": f"Schema types only you have: {', '.join(sorted(extra))}",
@@ -302,6 +305,8 @@ def render_markdown(r: dict) -> str:
               *evidence_observation.summary(you, rivals), '']
     lines += ['## Question-heading cues (contextual review)', '',
               *question_observation.summary(you, rivals), '']
+    lines += ['## Google schema appearances (dated snapshot)', '',
+              *schema_appearance.summary(you, rivals), '']
     unsupported = {'Content depth', 'Evidence density (stats/citations)', 'Question-based headings'}
     gaps = [g for g in r['gaps'] if g.get('what') not in unsupported]
     leads = [g for g in r['leads'] if g.get('what') not in unsupported]

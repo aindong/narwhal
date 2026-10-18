@@ -93,6 +93,10 @@ Question-heading differences are optional contextual reviews using exact
 heuristic does not establish real queries or engine matching; keep useful
 descriptive headings and use questions only when helpful. Missing counts/basis
 and no eligible headings are not interpreted as a measured low fraction.
+`schema_search_features` carries a dated Google retirement snapshot; it is not
+schema.org validation or live eligibility. Retired Google appearances do not
+require deleting accurate semantic markup. Unlisted types are not certified
+eligible, and missing legacy snapshot provenance stays unverified.
 
 **Build a data-driven content brief** (what to *write*, grounded in real data —
 no keyword APIs, no invented volumes):
@@ -121,6 +125,10 @@ plans a page that doesn't exist yet from
 competitor pages only (add `--gsc-site <your-site>` to fold in real adjacent
 queries). Without GSC credentials it produces a clearly labeled
 **structure-only** brief — target queries are omitted, never invented.
+Schema candidates carry `google_search_appearance` notes from that same dated
+snapshot. Keep semantic generators available, but add only actual visible
+content for the intended consumer; a competitor's type or a question candidate
+does not establish validity, eligibility or ranking/citation gains.
 `/narwhal brief` layers an editorial synthesis (outline, metadata drafts) on
 top of this data.
 

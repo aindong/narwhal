@@ -221,6 +221,10 @@ is a legacy alias, not a decision input. The one-in-five review heuristic is not
 query demand or an engine requirement. Question candidates distinguish
 `source_kind=compared_heading` from `gsc_query`; missing kinds stay unverified,
 not inferred from source wording. Keep deliberate editorial formats separate.
+`schema_search_features` and candidate `google_search_appearance` retain dated
+Google appearance notes. Retirement is not schema.org invalidity or a ranking
+penalty; unlisted types are not certified eligible. Missing snapshot provenance
+stays unverified. Keep accurate semantic markup when useful for its consumer.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:
@@ -238,8 +242,10 @@ Write a brief a writer can execute without further research:
   context, with real, checkable source types. Cue counts alone do not establish
   a gap or quota; don't invent figures/citations. Keep explicit editorial source
   requirements separate from the measured patterns.
-- **Schema to add** — from the JSON, with the `narwhal schema <Type>` command
-  for each; only types matching the page's real entity.
+- **Semantic schema candidates** — from the JSON, with `narwhal schema <Type>`
+  for each and its dated Google appearance notes. Add only markup matching real
+  visible content and its intended consumer; do not promise Google appearances
+  or remove accurate semantic markup solely because a feature was retired.
 - **Metadata** — a draft title (≤60 chars) and meta description (140–160
   chars) targeting the top query; if the page is a CTR laggard, say the
   rewrite is the priority fix.

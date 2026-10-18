@@ -130,6 +130,14 @@ optional, not proof of real query demand or engine matching. Brief question
 candidates label `source_kind` as `compared_heading` or `gsc_query`; older missing
 kinds are not inferred from source strings. See [exact-count boundaries](skills/seo-scan/references/geo-llmo.md#exact-heading-cues-in-comparisons-and-briefs).
 
+Compare facts retain `schema_search_features`, the same dated Google retirement
+snapshot used by page scans. Brief semantic schema candidates carry per-type
+`google_search_appearance` notes, including automatically suggested FAQPage.
+These distinguish retired Google appearances from useful schema.org semantics;
+generation/types remain available. Missing or unsupported legacy snapshots stay
+unverified, and no listed retirement notice is **not** an eligibility certificate.
+No policy sources are fetched at scan/render time. See [scope and compatibility](skills/seo-scan/references/schema.md#comparison-and-brief-appearance-context).
+
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,
 plus an omission marker when clipped. Full fields remain in JSON.

@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Schema appearance context downstream:** comparisons and semantic brief
+  candidates carry the same dated Google retirement notices as page scans.
+  Source links/limits distinguish a retired display from schema.org validity or
+  usefulness for other consumers. Generators/types stay available; unlisted types
+  and legacy snapshots are not certified eligible. No page-score/policy-date change.
 - **Exact comparative question cues:** literal heading counts, not rounded ratio
   aliases, drive optional one-in-five reviews. Missing bases/no eligible headings
   stay unassessed. Candidate provenance distinguishes compared headings from
