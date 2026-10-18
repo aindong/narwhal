@@ -85,7 +85,7 @@ def main(argv=None):
                     assert 'Ranking and citation impact are not measured' in text, name
                     assert ('recorded range' in text) == known, name
                     assert 'deepest compared page' not in text and 'EXPAND_TO_TARGET' not in text, name
-                    assert 'Your page: 0' not in text, name
+                    assert 'Your page: 0 whitespace tokens' not in text, name
                     assert not page.locator('img[src*="evil.test"]').count(), name
                     if not known:
                         assert 'unrecorded' in text, name

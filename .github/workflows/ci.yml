@@ -116,3 +116,5 @@ jobs:
         run: python skills/seo-scan/tests/content_length_smoke.py
       - name: Neutral comparative-length browser regression
         run: python skills/seo-scan/tests/comparative_length_smoke.py
+      - name: Neutral evidence-cue browser regression
+        run: python skills/seo-scan/tests/comparative_evidence_smoke.py

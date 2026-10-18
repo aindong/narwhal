@@ -212,6 +212,10 @@ of depth. Do not infer missing coverage or a writing target from length alone.
 Keep explicit user/editorial length constraints separate from the observations.
 Older `target_words`/`your_words` values have an unrecorded measurement basis;
 they do not establish measured word-count requirements.
+`evidence_cues` records statistic/citation-pattern matches, not verified sources
+or factual support. Do not infer an evidence gap or source quota from these counts.
+Old `evidence_target`/`your_evidence` fields are unverified, not source requirements;
+review actual claims and sources without inventing statistics/citations.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:
@@ -224,8 +228,10 @@ Write a brief a writer can execute without further research:
   missing subtopics and answers the questions list (question-shaped headings
   where natural). Under each heading, one line on what to say — including a
   direct first-sentence answer for citability.
-- **Evidence to include** — the kind of stats/sources that close the evidence
-  gap (name real, checkable source types; don't fabricate figures).
+- **Claims & sources to review** — identify actual claims needing support in
+  context, with real, checkable source types. Cue counts alone do not establish
+  a gap or quota; don't invent figures/citations. Keep explicit editorial source
+  requirements separate from the measured patterns.
 - **Schema to add** — from the JSON, with the `narwhal schema <Type>` command
   for each; only types matching the page's real entity.
 - **Metadata** — a draft title (≤60 chars) and meta description (140–160

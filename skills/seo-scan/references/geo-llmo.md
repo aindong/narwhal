@@ -78,6 +78,32 @@ Displayed labels have changed: update title-based `[ignore].titles` filters.
 The planner keeps new and legacy cue-rule edits conditional on contextual review.
 Crawler, `llms.txt`, rendering and entity checks are separate and unchanged.
 
+### Comparison and brief cue observations
+
+Comparison facts preserve `stats_cites`, the sum of these same two regex match
+counts, and add a versioned `evidence_cues` receipt. Its basis
+`audit_geo_stat_and_cite_hint_v1` identifies the unchanged patterns;
+`statistic_matches`, `citation_cue_matches` and `total_matches` distinguish their
+units. `source_validity_checked` is explicitly false. Extraction basis is clipped
+at 160 code points with a flag; no raw text is newly retained. These limits are
+not total resource bounds or source-verification claims.
+
+A linked reference may have zero matches; repeated words such as "report" may
+have many without naming any source. Neither direction establishes evidence
+quality. Comparison no longer creates an `Evidence density (stats/citations)`
+gap, and briefs no longer generate `structure.evidence_target`/`your_evidence`,
+including the previous zero-count target in topic mode. Counts remain neutral
+observations across page kinds, including hubs; no own page is invented in topic
+mode. Deliberate editorial source requirements are separate from these counts.
+
+Rendering new facts shows actual units and limits. Missing/malformed receipts,
+unknown markers and conflicting aliases remain basis-unrecorded; tool versions
+do not backfill missing provenance. Rendering legacy data does not mutate its
+JSON or repeat known old evidence-density verdicts/targets as advice. Real
+claims and sources need contextual review, not a quota or fabricated citations.
+Scores, page-auditor receipts and other measurements stay unchanged by this
+comparison/brief correction. Question and subtopic heuristics remain unvalidated.
+
 ### 5. Entity clarity
 Keep the `<title>`, `<h1>`, and opening aligned on one clear subject entity, and
 declare the publishing entity with `Organization`/`Person` schema + `sameAs`

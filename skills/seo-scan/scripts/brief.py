@@ -41,7 +41,7 @@ from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_pr
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
-from lib import length_observation  # noqa: E402
+from lib import length_observation, evidence_observation  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -197,17 +197,13 @@ def schema_suggestions(you: dict | None, rivals: list, questions: list) -> list:
 
 
 def structure_targets(you: dict | None, rivals: list) -> dict:
-    """Existing question/evidence heuristics on non-hubs, not length targets."""
+    """Existing question-heading heuristic on non-hubs, not length/evidence targets."""
     t: dict = {}
     content = [r["facts"] for r in rivals if r["facts"]["page_kind"] != "hub"]
     if content:
         qr = max(f["question_ratio"] for f in content)
         if qr >= 0.2 and (you is None or you["facts"]["question_ratio"] < 0.2):
             t["question_headings"] = True
-        ev = max(f["stats_cites"] for f in content)
-        if you is None or ev >= max(3, you["facts"]["stats_cites"] * 2):
-            t["evidence_target"] = ev
-            t["your_evidence"] = you["facts"]["stats_cites"] if you else 0
     return t
 
 
@@ -242,8 +238,8 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
         brief["competitors"] = [r["facts"] for r in rivals]
         if you:
             ga = compare.gap_analysis(you["facts"], [r["facts"] for r in rivals])
-            # Question/evidence heuristics appear under structure targets;
-            # keep the legacy depth label out of this list too.
+            # Questions appear under structure targets; legacy length/evidence
+            # verdicts are not recommendations either.
             structural = {"Content depth", "Question-based headings",
                           "Evidence density (stats/citations)"}
             brief["gaps"] = [g for g in ga["gaps"] if g["what"] not in structural]
@@ -414,7 +410,8 @@ def render_markdown(b: dict) -> str:
 
     if b.get("gaps") is not None:
         lines += ["## Gaps vs compared pages", ""]
-        gaps = [g for g in b['gaps'] if g.get('what') != 'Content depth']
+        gaps = [g for g in b['gaps'] if g.get('what') not in
+                ('Content depth', 'Evidence density (stats/citations)')]
         if gaps:
             for g in gaps:
                 who = ", ".join(_short(w, 30) for w in g["who"])
@@ -448,17 +445,18 @@ def render_markdown(b: dict) -> str:
         lines += ['Legacy length-target fields have an unrecorded measurement basis. '
                   'They do not establish a measured word-count requirement. Keep deliberate '
                   'user/editorial length goals separate from these observations.', '']
-    if st.get('question_headings') or 'evidence_target' in st:
+    lines += ['## Statistics/citation cues (not verified evidence)', '',
+              *evidence_observation.summary(b.get('you'), b.get('competitors', [])), '']
+    if 'evidence_target' in st or 'your_evidence' in st:
+        lines += ['Legacy evidence-target fields have an unrecorded measurement basis. '
+                  'They do not establish verified evidence or a required source count. '
+                  'Review real claims and sources; do not invent statistics or citations.', '']
+    if st.get('question_headings'):
         lines += ["## Structure targets", ""]
         if st.get("question_headings"):
             lines.append("- **Question-shaped H2/H3s:** the compared pages "
                          "phrase key headings as the questions users ask — "
                          "do the same where it's natural.")
-        if "evidence_target" in st:
-            lines.append(f"- **Evidence:** they carry ~{st['evidence_target']} "
-                         "stats/citations"
-                         + (f" to your {st['your_evidence']}" if b.get("you") else "")
-                         + " — add concrete numbers with named sources.")
         lines.append("")
 
     if b["schema"]:
@@ -471,7 +469,8 @@ def render_markdown(b: dict) -> str:
                          "match the page's real entity.")
         lines.append("")
 
-    leads = [lead for lead in b.get('leads', []) if lead.get('what') != 'Content depth']
+    leads = [lead for lead in b.get('leads', []) if lead.get('what') not in
+             ('Content depth', 'Evidence density (stats/citations)')]
     if leads:
         lines += ["## Keep (where you already lead)", ""]
         for l in leads:

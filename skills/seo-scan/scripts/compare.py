@@ -4,12 +4,13 @@
 Auditing one page answers "what's wrong here?"; the question users actually ask
 is relative: *why does that page outrank mine?* This tool scans YOUR page and
 1–3 competitor pages with the same auditors, extracts comparable facts from each
-(schema types, meta strategy, structure, evidence, social packaging), and
-reports the **gaps** — what they have that you don't — plus where you lead.
+(schema types, meta strategy, structure, social packaging), and reports the
+**gaps** — what they have that you don't — plus where you lead. Length and
+statistic/citation-pattern counts are separate, neutral observations.
 
-Local-first like everything else: it only fetches the pages you name (SSRF-safe,
-robots-respecting fetch), no rank/keyword APIs, no fabricated search volumes. It
-compares on-page reality, and says so.
+Local-first: it fetches supplied pages and related site resources with SSRF
+guards, no rank/keyword APIs and no fabricated search volumes. On-page
+differences do not establish why anyone ranks.
 
 Usage:
     narwhal compare https://you.com/page https://rival.com/page
@@ -26,7 +27,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
-from lib import authorship, htmlx, structured_data, length_observation  # noqa: E402
+from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -64,6 +65,8 @@ def facts(report, doc) -> dict:
             else "home" if htmlx.is_homepage(doc) else "page")
     attribution = authorship.observe(doc, text)
     length = length_observation.observe(text, doc.extraction)
+    evidence = evidence_observation.observe(len(audit_geo._STAT.findall(text)),
+                                            len(audit_geo._CITE_HINT.findall(text)), doc.extraction)
     settings = report.meta.get('scan_settings', {})
     reviewed = settings.get('content_length_reviewed') if isinstance(settings, dict) else None
     return {
@@ -91,8 +94,8 @@ def facts(report, doc) -> dict:
         "authorship_cues": attribution,
         "date_signal": bool(doc.meta_by_property("article:published_time")
                             or doc.meta_by_name("date")),
-        "stats_cites": len(audit_geo._STAT.findall(text))
-                       + len(audit_geo._CITE_HINT.findall(text)),
+        "stats_cites": evidence['total_matches'],  # legacy alias; not verified sources
+        "evidence_cues": evidence,
     }
 
 
@@ -154,14 +157,6 @@ def gap_analysis(you: dict, rivals: list) -> dict:
     if you["question_ratio"] < 0.2 and ahead:
         gaps.append({"what": "Question-based headings", "who": [r["url"] for r in ahead],
                      "action": "Rephrase key H2/H3s as the questions users ask."})
-
-    # Evidence density.
-    evd = [r for r in rivals if r["stats_cites"] >= max(3, you["stats_cites"] * 2)]
-    if evd:
-        gaps.append({"what": "Evidence density (stats/citations)",
-                     "who": [r["url"] for r in evd],
-                     "action": "Add concrete numbers and cited sources — AI answers "
-                               "attribute evidence-backed pages."})
 
     return {"gaps": gaps, "leads": leads,
             "text_length": length_observation.comparison(you, rivals)}
@@ -287,7 +282,7 @@ def render_markdown(r: dict) -> str:
             'Uninterpreted' if c.get('content_length_reviewed') is False else 'Unrecorded' for c in cols]),
         ("H1", [_yn(c["h1"]) for c in cols]),
         ("Question headings", [f"{int(c['question_ratio'] * 100)}%" for c in cols]),
-        ("Stats/citations", [str(c["stats_cites"]) for c in cols]),
+        ("Statistics/citation pattern matches", [evidence_observation.cell(c) for c in cols]),
         ("Schema types", [str(len(c["schema_types"])) or "0" for c in cols]),
         ("Open Graph complete", [_yn(c["og_complete"]) for c in cols]),
         ("Twitter card", [_yn(c["twitter_card"]) for c in cols]),
@@ -303,11 +298,14 @@ def render_markdown(r: dict) -> str:
               length_observation.comparison(you, rivals))
     lines += ['## Extracted-text length (not a target)', '',
               *length_observation.summary(length), '']
-    gaps = [g for g in r['gaps'] if g.get('what') != 'Content depth']
-    leads = [g for g in r['leads'] if g.get('what') != 'Content depth']
+    lines += ['## Statistics/citation cues (not verified evidence)', '',
+              *evidence_observation.summary(you, rivals), '']
+    unsupported = {'Content depth', 'Evidence density (stats/citations)'}
+    gaps = [g for g in r['gaps'] if g.get('what') not in unsupported]
+    leads = [g for g in r['leads'] if g.get('what') not in unsupported]
     if len(gaps) != len(r['gaps']) or len(leads) != len(r['leads']):
-        lines += ['A legacy content-depth gap/lead is not repeated as a recommendation; '
-                  'length alone does not establish content depth.', '']
+        lines += ['A legacy content-depth gap/lead or evidence-density verdict is not repeated '
+                  'as a recommendation; counts alone do not establish content depth or factual support.', '']
     lines += ["## Gaps to close (they have it — you don't)", ""]
     if gaps:
         for g in gaps:
