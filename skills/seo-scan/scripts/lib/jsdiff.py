@@ -95,11 +95,16 @@ def text_observation(dep):
 
 
 def _text_detail(obs):
+    if not obs['served_tokens'] and not obs['rendered_tokens']:
+        state = 'No selected text was observed in either snapshot. '
+    elif obs['selected_text_equal']:
+        state = 'Selected extracted text matches in this pair. '
+    else:
+        state = 'Selected extracted text differs in this pair. '
     return (f"{obs['served_tokens']} served vs {obs['rendered_tokens']} rendered whitespace tokens; "
             f"net change {obs['net_token_delta']:+d}; positive net increase / rendered count "
             f"{obs['positive_net_increase_percent']}%. "
-            + ('Selected extracted text matches in this pair. ' if obs['selected_text_equal']
-               else 'Selected extracted text differs in this pair. ') + TEXT_LIMITS)
+            + state + TEXT_LIMITS)
 
 
 def technical_findings(dep: dict, report) -> None:
@@ -120,10 +125,12 @@ def technical_findings(dep: dict, report) -> None:
         else:
             title, rule = 'Review served/rendered text difference', 'technical.rendered.text.changed'
         report.add(cat, 'low', title, _text_detail(obs), TEXT_REVIEW, rule_id=rule)
+    elif not obs['served_tokens']:
+        report.add(cat, 'low', 'No selected text observed in either snapshot', _text_detail(obs),
+                   TEXT_REVIEW, rule_id='technical.rendered.text.unobserved')
     else:
-        title = ('Selected extracted text matches in paired snapshots' if obs['served_tokens']
-                 else 'No selected text observed in either snapshot')
-        report.add(cat, 'good', title, _text_detail(obs), rule_id='technical.content.is.server.rendered')
+        report.add(cat, 'good', 'Selected extracted text matches in paired snapshots',
+                   _text_detail(obs), rule_id='technical.content.is.server.rendered')
 
     m = dep.get('meta_js_only')
     m = m if isinstance(m, dict) else {}
