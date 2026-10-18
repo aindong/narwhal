@@ -41,7 +41,9 @@ class TestBriefGrounding(unittest.TestCase):
     def test_own_page_headings_and_structure_describe_compared_pages(self):
         output = brief.render_markdown(self.data())
         self.assertIn('## Gaps vs compared pages', output)
-        self.assertIn('**Question-shaped H2/H3s:** the compared pages', output)
+        self.assertIn('1/2 heading-pattern matches', output)
+        self.assertIn('Compared-page heading; not verified query data', output)
+        self.assertNotIn('## Structure review (optional)', output)  # own page has no eligible headings
         self.assert_no_winners(output)
 
     def test_topic_subtopics_describe_compared_pages_not_ranking_winners(self):

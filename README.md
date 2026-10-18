@@ -122,6 +122,14 @@ brief `evidence_target`/`your_evidence` fields are no longer generated. Missing
 legacy bases stay unverified. Review actual claims and relevant sources rather
 than add numbers to satisfy a count. See [cue boundaries](skills/seo-scan/references/geo-llmo.md#comparison-and-brief-cue-observations).
 
+Question-heading comparisons retain the legacy rounded `question_ratio` but use
+explicit `question_cues` counts for one-in-five heuristic decisions. Thus 8/41
+is not treated as 20%. Counts/basis missing from older reports stay unverified,
+and no eligible headings is not an assessed zero fraction. Questions remain
+optional, not proof of real query demand or engine matching. Brief question
+candidates label `source_kind` as `compared_heading` or `gsc_query`; older missing
+kinds are not inferred from source strings. See [exact-count boundaries](skills/seo-scan/references/geo-llmo.md#exact-heading-cues-in-comparisons-and-briefs).
+
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,
 plus an omission marker when clipped. Full fields remain in JSON.

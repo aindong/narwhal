@@ -118,3 +118,5 @@ jobs:
         run: python skills/seo-scan/tests/comparative_length_smoke.py
       - name: Neutral evidence-cue browser regression
         run: python skills/seo-scan/tests/comparative_evidence_smoke.py
+      - name: Exact question-cue browser regression
+        run: python skills/seo-scan/tests/question_observation_smoke.py

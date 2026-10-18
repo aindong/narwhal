@@ -775,7 +775,7 @@ class TestCompare(unittest.TestCase):
                         for w in whats))
         self.assertNotIn("Content depth", whats)
         self.assertEqual('observation_not_target', r['text_length']['interpretation'])
-        self.assertIn("Question-based headings", whats)
+        self.assertIn("Question-heading cue difference (review)", whats)
         self.assertIn("Complete Open Graph tags", whats)
 
     def test_gap_analysis_reports_your_leads(self):

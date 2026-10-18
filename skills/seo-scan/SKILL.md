@@ -88,6 +88,11 @@ basis stay unverified. No rank/keyword data is used or implied.
 Statistic/citation-pattern counts are likewise observations, not verified sources
 or evidence-density gaps. `evidence_cues` explains the basis and unchecked source
 validity; legacy `stats_cites` alone does not supply a measurement basis.
+Question-heading differences are optional contextual reviews using exact
+`question_cues` counts, not the preserved rounded `question_ratio`. The one-in-five
+heuristic does not establish real queries or engine matching; keep useful
+descriptive headings and use questions only when helpful. Missing counts/basis
+and no eligible headings are not interpreted as a measured low fraction.
 
 **Build a data-driven content brief** (what to *write*, grounded in real data —
 no keyword APIs, no invented volumes):
@@ -98,9 +103,13 @@ python scripts/brief.py --topic "widget calibration" https://rival.com/guide
 Combines the page's own **striking-distance GSC queries** (positions 8–20 —
 demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **missing subtopics** (competitor H2/H3
-sections whose topic words don't appear in your text), **questions to answer**
-(their question headings + your question-shaped queries), schema suggestions,
+sections whose topic words don't appear in your text), **question-shaped candidates**
+(compared headings + your recorded question-shaped queries, distinguished by
+`source_kind`; legacy missing kinds stay unverified), schema suggestions,
 and a question-heading structure heuristic on non-hubs.
+Review candidates for actual relevance and coverage; neither compared headings
+nor a structure flag require rewriting headings or forcing a first-sentence answer.
+Keep deliberate user/editorial format choices separate from measured cues.
 `text_length` contains neutral length observations, including hubs; do not infer
 a word target or missing coverage from length alone. Keep explicit user/editorial
 length constraints separate from measured observations. Citation/statistic cues

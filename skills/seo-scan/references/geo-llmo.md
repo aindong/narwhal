@@ -104,6 +104,41 @@ claims and sources need contextual review, not a quota or fabricated citations.
 Scores, page-auditor receipts and other measurements stay unchanged by this
 comparison/brief correction. Question and subtopic heuristics remain unvalidated.
 
+### Exact heading cues in comparisons and briefs
+
+Facts preserve the historical `question_ratio` rounded to two decimal places,
+and add versioned `question_cues` with `matched`/`examined` counts, basis
+`english_first_token_or_terminal_ascii_question_mark` and `editorial_review_only`
+interpretation. The matching algorithm over nonempty parsed level>=2 heading
+text is unchanged; these are lexical cues, not language understanding or queries.
+Reports show exact fractions, not a rounded percentage presented as measurement.
+
+One-in-five comparison/brief review decisions use integer counts (`matched * 5
+>= examined`), not the rounded alias. For example, 8/41 is below the heuristic
+although its legacy alias is 0.2. Zero eligible headings is unassessed, not an
+assessed low fraction. Missing, malformed, unknown or conflicting count receipts
+stay unverified; a tool version or old ratio cannot invent exact counts/basis.
+Brief structure comparisons still exclude hubs, but their counts remain visible.
+
+`Question-heading cue difference (review)` replaces the categorical old gap
+label/advice. A current `structure.question_headings=true` is only an optional
+review heuristic. Legacy flags are rechecked against known counts; old
+question-heading prescriptions are not re-rendered as rewrite instructions.
+Keep useful descriptive headings; questions are optional for the actual audience.
+There is no measured ranking, citation or engine-matching effect from this flag.
+
+Brief question candidates keep their historical text/source and deduplication,
+adding `source_kind=compared_heading` or `gsc_query`. A compared heading is not
+verified query demand. A GSC label records the supplied query origin, not a new
+independent API validation or intent classification. Missing legacy kinds stay
+unrecorded, even if the old source string mentions impressions. Deduplicated
+queries remain available in the GSC block; a retained compared-heading candidate
+is not relabelled as a measured query. Review relevance/coverage and add a concise
+answer only when useful, without forcing a first-sentence answer for citations.
+
+The page auditor, matching patterns, page scores, other fact values and schema/
+subtopic heuristics are unchanged and not newly validated by this correction.
+
 ### 5. Entity clarity
 Keep the `<title>`, `<h1>`, and opening aligned on one clear subject entity, and
 declare the publishing entity with `Organization`/`Person` schema + `sameAs`
