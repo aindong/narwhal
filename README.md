@@ -815,9 +815,10 @@ both current major lines.
 
 ## Design principles
 
-- **Local-only by default.** No external services are called. Optional API
-  integrations (PageSpeed/CrUX, SERP data) are intentionally *not* on the default
-  path — the scan is honest about what it can and can't measure locally.
+- **Local-first, with explicit network use.** Default scans fetch the requested
+  site and related audit resources and write reports locally; they are not
+  offline scans. External data integrations (such as GSC or PageSpeed/CrUX) are
+  opt-in, and scans send no telemetry.
 - **Graceful degradation.** Works with only the Python standard library; uses
   `requests`, `beautifulsoup4`/`lxml`, `trafilatura`, and `playwright`
   automatically when installed.
