@@ -134,6 +134,10 @@ Remediation plans create a non-scoring `schema.extraction.unverified` manual
 verification action from explicit metadata, known extraction-error IDs or crawl
 uncertainty when no explicit extraction-verification task already covers it.
 This survives ignored findings without duplicating the existing warning tasks.
+Homepage and crawl coverage are considered separately: a task in one scope does
+not silently cover an unverified other scope. A shared explicit warning coalesces
+to a site task; a metadata-only catch-all names the remaining scope(s).
+Human plans show each schema-verification task's page or site-sample scope.
 Extraction notes have no assigned
 source owner, source-generation command, deploy requirement or grouped-template
 edit. Older contradictory absence advice is withheld for the uncertain scope;

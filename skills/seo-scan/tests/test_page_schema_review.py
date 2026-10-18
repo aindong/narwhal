@@ -197,6 +197,53 @@ class TestPageSchemaReview(unittest.TestCase):
         result = plan.build_plan(value, str(FIXTURE))
         self.assertNotIn('schema.no.structured.data', {a['rule_id'] for a in result['actions']})
 
+    def test_homepage_warning_does_not_hide_metadata_only_uncertain_leaf(self):
+        value = {'homepage': payload(partial()), 'site': URL,
+                 'crawl': {'pages': [{'schema_extraction_unverified': True}], 'recurring': []}, 'sitemap': {}}
+        result = plan.build_plan(value, str(FIXTURE))
+        actions = {a['rule_id']: a for a in result['actions']}
+        self.assertEqual('page', actions['schema.microdata.extraction']['scope'])
+        self.assertEqual('site', actions['schema.extraction.unverified']['scope'])
+        self.assertIn('crawl sample/rollup', actions['schema.extraction.unverified']['evidence'])
+        text = plan.render_markdown(result)
+        self.assertIn('Verification scope:** Page report', text)
+        self.assertIn('Verification scope:** Site sample/rollup', text)
+
+    def test_rollup_warning_does_not_hide_metadata_only_uncertain_homepage(self):
+        value = {'homepage': payload(partial(ignore=lambda *args: True)), 'site': URL,
+                 'crawl': {'recurring': [finding('schema.rdfa.extraction')]}, 'sitemap': {}}
+        result = plan.build_plan(value, str(FIXTURE))
+        actions = {a['rule_id']: a for a in result['actions']}
+        self.assertEqual('site', actions['schema.rdfa.extraction']['scope'])
+        self.assertEqual('page', actions['schema.extraction.unverified']['scope'])
+        self.assertIn('page report', actions['schema.extraction.unverified']['evidence'])
+
+    def test_same_explicit_warning_in_both_scopes_coalesces_to_one_site_task(self):
+        warning = finding('schema.microdata.extraction')
+        warning['count'] = 3
+        value = {'homepage': payload(partial()), 'site': URL,
+                 'crawl': {'recurring': [warning]}, 'sitemap': {}}
+        result = plan.build_plan(value, str(FIXTURE))
+        action, = result['actions']
+        self.assertEqual('schema.microdata.extraction', action['rule_id'])
+        self.assertEqual(('site', 3), (action['scope'], action['occurrences']))
+
+    def test_metadata_only_uncertainty_in_both_scopes_needs_one_task_covering_both(self):
+        value = {'homepage': payload(partial(ignore=lambda *args: True)), 'site': URL,
+                 'crawl': {'pages': [{'schema_extraction_unverified': True}]}, 'sitemap': {}}
+        result = plan.build_plan(value, str(FIXTURE))
+        action, = result['actions']
+        self.assertEqual(('schema.extraction.unverified', 'site'), (action['rule_id'], action['scope']))
+        self.assertIn('page report and crawl sample/rollup', action['evidence'])
+
+    def test_unsupported_supplied_verification_scope_is_not_rendered_or_coerced(self):
+        item = finding('schema.rdfa.extraction')
+        item['scope'] = ['<img src="https://evil.test/pixel">']
+        result = plan.build_plan({'url': URL, 'findings': [item]}, str(FIXTURE))
+        text = plan.render_markdown(result)
+        self.assertIn('Verification scope:** Unrecorded scope', text)
+        self.assertNotIn('evil.test', text)
+
     def test_clean_homepage_unknown_crawl_flags_do_not_invent_extraction_failures(self):
         for flag in (None, False, 0, 1, 'true'):
             value = {'homepage': payload(page(THING)), 'site': URL,

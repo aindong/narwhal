@@ -42,6 +42,7 @@ SCHEMA_ABSENCE_RULES = frozenset(('schema.no.structured.data',
     'schema.ecommerce.product.missing'))
 SCHEMA_EXTRACTION_RULES = frozenset(('schema.microdata.extraction', 'schema.rdfa.extraction',
     'schema.ecommerce.source.extraction', 'schema.invalid.json.ld', 'schema.extraction.unverified'))
+SCHEMA_VERIFICATION_RULES = SCHEMA_EXTRACTION_RULES - {'schema.invalid.json.ld'}
 
 
 def _schema_uncertain(meta, findings):
@@ -144,9 +145,11 @@ def normalize_report(data: dict) -> dict:
         findings.append(finding)
     page_meta = page.get('meta')
     schema_page_uncertain = _schema_uncertain(page_meta, findings)
+    schema_page_verification = any(f['rule_id'] in SCHEMA_VERIFICATION_RULES for f in findings)
     if schema_page_uncertain:
         findings = [f for f in findings if f['rule_id'] not in SCHEMA_ABSENCE_RULES]
     schema_crawl_uncertain = False
+    schema_crawl_verification = False
     llms_metadata = [page_meta]
     if kind == 'audit':
         llms_metadata.append(data.get('crawl'))
@@ -184,12 +187,16 @@ def normalize_report(data: dict) -> dict:
                 continue
             finding = dict(raw)
             finding["rule_id"] = _legacy_rule_id(finding)
+            if finding['rule_id'] in SCHEMA_VERIFICATION_RULES:
+                schema_crawl_verification = True
             if schema_crawl_uncertain and finding['rule_id'] in SCHEMA_ABSENCE_RULES:
                 continue  # aggregate occurrences cannot locate an absence in the verified portion
             finding["scope"] = "site"
             finding["occurrences"] = int(finding.get("count", 1))
             if finding["rule_id"] in seen:
                 seen[finding["rule_id"]]["occurrences"] = finding["occurrences"]
+                if finding['rule_id'] in SCHEMA_VERIFICATION_RULES:
+                    seen[finding['rule_id']]['scope'] = 'site'
             else:
                 findings.append(finding)
                 seen[finding["rule_id"]] = finding
@@ -230,14 +237,17 @@ def normalize_report(data: dict) -> dict:
                                   'Unsupported formats are not necessarily invalid.',
                 'occurrences': parse_coverage['unverified_files'],
             })
-    if (schema_page_uncertain or schema_crawl_uncertain) and not any(
-            f['rule_id'] in SCHEMA_EXTRACTION_RULES - {'schema.invalid.json.ld'} for f in findings):
+    schema_page_pending = schema_page_uncertain and not schema_page_verification
+    schema_crawl_pending = schema_crawl_uncertain and not schema_crawl_verification
+    if schema_page_pending or schema_crawl_pending:
+        pending_scope = ('page report and crawl sample/rollup' if schema_page_pending and schema_crawl_pending else
+                         'crawl sample/rollup' if schema_crawl_pending else 'page report')
         findings.append({'category': 'schema', 'severity': 'low',
-                         'scope': 'site' if schema_crawl_uncertain else 'page',
+                         'scope': 'site' if schema_crawl_pending else 'page',
                          'rule_id': 'schema.extraction.unverified',
                          'title': 'Structured-data extraction needs manual verification',
                          'detail': 'Known structured-data extraction uncertainty was recorded in the '
-                                   + ('crawl sample/rollup' if schema_crawl_uncertain else 'page report')
+                                   + pending_scope
                                    + '; non-observed types are not evidence of missing markup. '
                                    'Existing syntax/property findings remain reviewable.'})
     if llms_uncertain:
@@ -653,8 +663,7 @@ RESOURCE_VERIFICATION['geo.llms.txt.availability.unverified'] = (
     'Do not create or rewrite llms.txt solely because this observation was unverified.',
     ('Review the recorded HTTP status, media type and completeness; retain access/SSRF/body limits.',
      'Re-scan the deployed root endpoint after resolving a verified cause; subpath files and engine behavior remain separate checks.'))
-for _rule in ('schema.microdata.extraction', 'schema.rdfa.extraction',
-              'schema.ecommerce.source.extraction', 'schema.extraction.unverified'):
+for _rule in sorted(SCHEMA_VERIFICATION_RULES):
     RESOURCE_VERIFICATION[_rule] = (
         'Verify the original structured data and supported extraction scope before proposing source changes. '
         'Do not add or duplicate markup, rewrite valid unsupported data, or increase limits automatically to clear this note.',
@@ -907,8 +916,14 @@ def render_markdown(plan: dict) -> str:
             owners = ", ".join(f"`{x['path']}`" for x in action["likely_files"][:3]) or "owner not located"
             if action['rule_id'] in RESOURCE_VERIFICATION:
                 owners = 'not assigned (verification only)'
+            scope_lines = []
+            if action['rule_id'] in SCHEMA_VERIFICATION_RULES:
+                scope_label = ('Page report' if action.get('scope') == 'page' else
+                               'Site sample/rollup' if action.get('scope') == 'site' else 'Unrecorded scope')
+                scope_lines = [f'- **Verification scope:** {scope_label}']
             lines += [f"### {action['severity'].upper()} — {action['title']}", "",
                       f"- **Rule:** `{action['rule_id']}`",
+                      *scope_lines,
                       f"- **Likely owner:** {owners}",
                       f"- **Change:** {action['proposed_change']}",
                       f"- **Verify:** `{action['verification'][-1]}`", ""]
