@@ -107,6 +107,13 @@ def _escapes(value):
     return _PCT.sub(replace, value)
 
 
+def _utf8(value):
+    """Map literal non-ASCII component text to UTF-8 percent bytes, not IDNA/NFC."""
+    return re.sub(r'[^\x00-\x7f]+',
+                  lambda match: ''.join('%%%02X' % byte for byte in match.group().encode('utf-8')),
+                  value)
+
+
 def _path(value):
     """Remove complete dot segments without collapsing repeated separators."""
     segments = []
@@ -136,18 +143,21 @@ def key(url):
         parts = urlsplit(url)
         if parts.scheme not in ('http', 'https') or not parts.hostname or parts.username is not None:
             return None
+        if not parts.hostname.isascii() or any(int(match.group(1), 16) >= 128 for match in _PCT.finditer(parts.hostname)):
+            return None  # Unicode/IDNA host aliases are outside this comparison
         suffix = parts.netloc.partition(']')[2] if parts.netloc.startswith('[') else parts.netloc.partition(':')[2]
         raw_port = suffix[1:] if parts.netloc.startswith('[') and suffix.startswith(':') else suffix
         if raw_port and not re.fullmatch(r'[0-9]+', raw_port):
             return None
         port = parts.port
-    except ValueError:
+        path, query, fragment = (_utf8(part) for part in (parts.path or '/', parts.query, parts.fragment))
+    except (ValueError, UnicodeEncodeError):
         return None
     default = 443 if parts.scheme == 'https' else 80
     return (parts.scheme.lower(), _escapes(parts.hostname).lower(), default if port is None else port,
-            _path(_escapes(parts.path or '/')),
-            ('?' in url.split('#', 1)[0], _escapes(parts.query)),
-            ('#' in url, _escapes(parts.fragment)))
+            _path(_escapes(path)),
+            ('?' in url.split('#', 1)[0], _escapes(query)),
+            ('#' in url, _escapes(fragment)))
 
 
 def observe(doc, final_url):

@@ -31,6 +31,10 @@ lookup or new fetch permission is made.
   unreserved characters/hex case and complete dot segments normalize. Other
   path/query case, non-root trailing/repeated separators, query order, reserved
   escapes and explicit query/fragment delimiters remain distinct.
+- Literal non-ASCII path/query/fragment text maps to UTF-8 percent bytes before
+  comparison, avoiding false differences against transport-encoded URLs.
+  Non-ASCII hosts (including percent-encoded high bytes) remain unverified;
+  this does not implement IDNA or Unicode-form normalization.
 - A match is a **component observation**, not validated target content/access,
   redirect equivalence, canonical conflicts or Google's selected canonical.
   HTTP canonical headers, full URI/IRI conformance and IDNA/alternate numeric
@@ -49,6 +53,7 @@ lookup or new fetch permission is made.
 
 Sources: [RFC 3986 comparison/normalization](https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2),
 [HTTP(S) URI normalization](https://www.rfc-editor.org/rfc/rfc9110.html#section-4.2.3)
+[literal Unicode to URI byte mapping](https://www.rfc-editor.org/rfc/rfc3987.html#section-3.1)
 and [Google's canonical guidance](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)
 (checked 2026-10-19). The latter treats declarations as signals and discourages
 fragment canonicals; a local match does not verify Google's choice.

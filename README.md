@@ -121,6 +121,8 @@ same key; `canonical_ok` means matching supported target observations, not verif
 consolidation or a search-engine-selected canonical. Unsupported/malformed
 declarations stay manual and qualify scores/diffs/comparisons instead of becoming
 passes or absence fixes. See [comparison boundaries](skills/seo-scan/references/technical-seo.md#canonicalization).
+Literal Unicode path/query/fragment text and its UTF-8 percent encoding compare
+consistently; non-ASCII hostname/IDNA comparisons remain unverified.
 
 Page content-length checks report literal ASCII-pattern counts, not universal
 word counts or a thinness verdict. Declared non-English text or non-ASCII

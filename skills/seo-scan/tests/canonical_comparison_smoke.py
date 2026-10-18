@@ -21,9 +21,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.artifacts: args.artifacts.mkdir(parents=True, exist_ok=True)
     docs = []
-    for name, href in (('same', URL), ('different', URL + '?item=two'),
+    for name, href in (('same', URL), ('unicode', 'https://example.test/café'), ('different', URL + '?item=two'),
                        ('unknown', 'https://['), ('literal', '/other?x=&lt;script&gt;window.canonicalProbe=1&lt;/script&gt;')):
-        doc, report = measured(href)
+        doc, report = measured(href, 'https://example.test/caf%C3%A9' if name == 'unicode' else URL)
         original = report.to_json()
         docs += [(name, report.to_html()),
                  (name + '-markdown', html_document('Canonical QA', '', md_to_html(report.to_markdown())))]
@@ -51,6 +51,8 @@ def main(argv=None):
                     page.emulate_media(media=media); page.set_viewport_size({'width': width, 'height': 1000})
                     text = page.inner_text('body')
                     if name.startswith('same'): assert 'Self-referencing canonical' in text, name
+                    if name.startswith('unicode'):
+                        assert 'Self-referencing canonical' in text and 'café' in text, name
                     if name.startswith('different'):
                         assert 'Canonical points elsewhere' in text and 'query' in text, name
                     if name.startswith(('unknown', 'literal')):

@@ -52,6 +52,9 @@ DISTINCT = [
     ('https://example.test/p;one', 'https://example.test/p;two'),
 ]
 EQUIVALENT = [
+    ('https://example.test/caf%C3%A9', 'https://example.test/café'),
+    ('https://example.test/p?x=%E9%9B%AA', 'https://example.test/p?x=雪'),
+    ('https://example.test/p#%F0%9F%90%B3', 'https://example.test/p#🐳'),
     ('https://example.test/p', 'HTTPS://EXAMPLE.TEST:443/p'),
     ('http://example.test/p', 'http://example.test:80/p'),
     ('https://example.test', 'https://example.test/'),
@@ -186,6 +189,18 @@ class TestCanonicalComparison(unittest.TestCase):
     def test_unknown_receipt_is_not_invented_from_legacy_or_boolean_version(self):
         self.assertFalse(canonical.unverified({}))
         self.assertFalse(canonical.unverified({'canonical_comparison': {'version': True, 'basis': canonical.BASIS, 'status': 'unverified', 'differences': []}}))
+
+    def test_unicode_hosts_and_unencodable_component_text_are_unverified(self):
+        for href in ('https://éxample.test/guide', 'https://%C3%A9xample.test/guide',
+                     'https://example.test/\ud800'):
+            self.assertIsNone(canonical.key(href))
+            doc, report = measured(href)
+            self.assertTrue(canonical.unverified(report.meta))
+
+    def test_utf8_mapping_does_not_normalize_unicode_forms_or_decode_reserved_delimiters(self):
+        self.assertNotEqual(canonical.key('https://example.test/café'), canonical.key('https://example.test/cafe\u0301'))
+        self.assertNotEqual(canonical.key('https://example.test/雪%2F山'), canonical.key('https://example.test/雪/山'))
+        self.assertNotEqual(canonical.key('https://example.test/café'), canonical.key('https://example.test/caf%E9'))
 
     def test_control_repair_and_non_ascii_ports_do_not_create_version_dependent_matches(self):
         for href in ('https://example.test/\nguide', 'https://example.test/\x7fguide',
