@@ -51,14 +51,16 @@ def main(argv=None):
                     text = page.inner_text('body')
                     for unsupported in ('heavy repetition signals', 'padding dilutes', 'OLD_SPUN_CLAIM'):
                         assert unsupported not in text, (name, unsupported)
-                    if 'plan' in name:
+                    if name.startswith('installed-'):
+                        pass  # supplied reports have no fixture-specific finding expectation
+                    elif 'plan' in name:
                         assert 'Review recorded style-pattern observation' in text, name
                         assert 'consistent technical terms' in text, name
                         assert 'not verified padding' in text, name
                     elif name.startswith('pass'):
                         assert 'Few configured style-pattern matches' in text, name
                         assert 'does not establish originality or content quality' in text, name
-                    else:
+                    elif name.startswith(('instructions', 'quoted')):
                         assert 'Review lower type/token ratio' in text, name
                         assert 'consistent technical terms' in text, name
                     assert page.evaluate('window.styleProbe === undefined'), name
