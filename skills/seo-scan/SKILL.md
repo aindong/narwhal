@@ -53,11 +53,13 @@ python scripts/scan.py https://example.com/page
 ```
 
 Useful flags:
-- `--render` — render JavaScript with Playwright (for SPAs / client-rendered
-  pages). Also measures **JS dependence**: the served HTML is diffed against
-  the rendered DOM — % of content that is JS-only, headings that appear only
-  post-JS, and client-injected metadata (title/description/canonical/JSON-LD).
-  Heavy JS dependence is flagged in technical + GEO (AI fetchers don't run JS).
+- `--render` — render JavaScript with Playwright and compare paired served/
+  rendered snapshots: selected-text equality, whitespace-token deltas, headings
+  and metadata presence/block counts. `js_dependence.text_comparison` records
+  scope; legacy `js_only_pct` is a positive net count delta, not JS-only content.
+  Equal counts can hide replacement text. Review differences manually before
+  SSR/metadata edits; do not infer JS causation, crawler access or citation impact.
+  Missing legacy receipts do not certify content parity or server rendering.
 - `--format json|html|pdf` — machine-readable JSON, a self-contained styled HTML
   report, or PDF (needs WeasyPrint; falls back to HTML). Use `-o <file>` to save.
   `html`/`pdf` also work on `audit.py` for a shareable, stakeholder-ready report.

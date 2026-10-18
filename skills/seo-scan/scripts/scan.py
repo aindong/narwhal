@@ -222,6 +222,8 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                 ctx["jsdep"] = dep
                 report.meta["js_dependence"] = {
                     k: dep[k] for k in ("words_raw", "words_rendered", "js_only_pct")}
+                if isinstance(dep.get('text_comparison'), dict):
+                    report.meta['js_dependence']['text_comparison'] = dict(dep['text_comparison'])
                 receipt["status"] = "measured"
 
     if retain_evidence:

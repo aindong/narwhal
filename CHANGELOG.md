@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Served/rendered text comparisons now record selected-text equality, extraction
+  bases and signed whitespace-token deltas instead of certifying server rendering
+  from equal counts. Legacy numeric aliases remain, but net increases and metadata/
+  block-count differences are low manual reviews, not JS-only shares, authenticated
+  injection or AI-access verdicts. Plans verify before assigning SSR/markup edits.
+  Priority/score corrections are not measured SEO gains; fetch/render/body guards
+  and partial-pair diff gates remain intact. Review title/severity-based filters.
 - JSON-LD errors distinguish decoder-reported syntax defects from tool decoding/
   node-processing failures. Actual syntax errors retain their high rule/repair
   path; recursion/numeric/Unicode handling gaps are low manual verification notes,

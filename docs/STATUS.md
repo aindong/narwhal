@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Served/rendered text evidence:** exact selected-text equality and signed
+  whitespace-token deltas replace false SSR passes on equal/shorter replacements.
+  Legacy aliases stay compatible, not JS-only shares; text/metadata differences
+  are low manual reviews with no presumed SSR/markup edit or AI-access outcome.
+  Extraction/paired-request limits and missing legacy bases remain explicit.
 - **JSON-LD failure stages:** syntax defects retain high repair findings while
   tool decoder/node-processing failures get low, manual-only verification notes.
   Runtime stage counts do not certify syntax/conformance, validity or engine

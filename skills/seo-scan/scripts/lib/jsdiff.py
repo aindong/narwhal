@@ -1,22 +1,29 @@
-"""Raw-vs-rendered content diff: how much of the page needs JavaScript?
+"""Observe paired served/rendered snapshots without certifying JS causation.
 
-Content that only exists after JS execution is invisible to crawlers that don't
-render (most AI answer-engine fetchers, many search crawlers on their first
-pass). When a scan runs with ``--render``, we have both documents anyway — the
-served HTML and the rendered DOM — so we can measure the dependence instead of
-guessing: word-count delta, headings that only exist post-JS, and head metadata
-(title/description/canonical/JSON-LD) injected client-side.
-
-Pure computation on two parsed documents; no network, fully offline-testable.
+Counts compare selected extracted text, not the share of content requiring JS.
+Separate responses, extraction choices and page state can differ. Computation
+is offline and does not measure crawler behavior, visibility or indexability.
 """
 
 from __future__ import annotations
 
 from . import htmlx
 
-# Share of the rendered text that is JS-only before each severity fires.
+# Historical positive net-count bands, not measured shares of JS-only content.
 PCT_HIGH = 30
 PCT_MEDIUM = 10
+TEXT_LIMITS = (
+    'Selected extracted text only, not full-page content or rendered visibility. '
+    'Net token-count change is not a share of JS-only content or proof of JavaScript causation, '
+    'server rendering, crawler access, indexing or citation impact. Separate responses/page state '
+    'and extraction can differ; equal counts do not establish equal text.'
+)
+TEXT_REVIEW = (
+    'Inspect the paired original HTML/DOM, extraction scope and intended page state. '
+    'Verify whether essential content is unavailable in the intended served response before '
+    'proposing SSR/prerendering; preserve useful client behavior. Do not rewrite source or '
+    'claim crawler/ranking/citation effects from counts alone.'
+)
 
 
 def analyze(raw_html: str, rendered_html: str, base_url: str = "") -> dict:
@@ -47,57 +54,103 @@ def analyze(raw_html: str, rendered_html: str, base_url: str = "") -> dict:
         "js_only_headings": js_headings[:10],
         "js_only_heading_count": len(js_headings),
         "meta_js_only": meta_js_only,
+        'text_comparison': {
+            'version': 1, 'basis': 'selected_extracted_text_pair', 'unit': 'whitespace_tokens',
+            'served_extraction': raw.extraction, 'rendered_extraction': ren.extraction,
+            'served_tokens': raw_words, 'rendered_tokens': ren_words,
+            'net_token_delta': ren_words - raw_words,
+            'positive_net_increase_percent': js_pct,
+            'selected_text_equal': (raw.body_text or '') == (ren.body_text or ''),
+            'limits': TEXT_LIMITS,
+        },
     }
 
 
-def technical_findings(dep: dict, report) -> None:
-    """Emit technical findings from a jsdiff result (tiered by JS-only share)."""
-    cat = "technical"
-    pct = dep["js_only_pct"]
-    detail = (f"{dep['words_raw']} words served vs {dep['words_rendered']} after "
-              f"JavaScript — {pct}% of the content is JS-only.")
-    evidence = "; ".join(dep["js_only_headings"][:4]) or None
-    if pct >= PCT_HIGH:
-        report.add(cat, "high", "Most content requires JavaScript",
-                   detail,
-                   "Server-render or pre-render the main content (SSR/SSG). "
-                   "Crawlers that don't execute JS — including most AI answer-"
-                   "engine fetchers — see the served HTML only.",
-                   evidence=evidence)
-    elif pct >= PCT_MEDIUM:
-        report.add(cat, "medium", "Significant content requires JavaScript",
-                   detail,
-                   "Consider server-rendering the affected sections; verify what "
-                   "non-JS crawlers see.", evidence=evidence)
-    else:
-        report.ok(cat, "Content is server-rendered",
-                  f"only {pct}% of text is JS-only")
+def text_observation(dep):
+    """Accept only coherent supported receipts; legacy counts are not parity proof."""
+    if not isinstance(dep, dict):
+        return None
+    obs = dep.get('text_comparison')
+    if not isinstance(obs, dict) or type(obs.get('version')) is not int or obs['version'] != 1:
+        return None
+    if obs.get('basis') != 'selected_extracted_text_pair' or obs.get('unit') != 'whitespace_tokens':
+        return None
+    for key in ('served_extraction', 'rendered_extraction'):
+        if type(obs.get(key)) is not str or not obs[key].strip() or len(obs[key]) > 160:
+            return None
+    for key in ('served_tokens', 'rendered_tokens', 'positive_net_increase_percent'):
+        if type(obs.get(key)) is not int or not 0 <= obs[key] <= 2 ** 53 - 1:
+            return None
+    raw, rendered = obs['served_tokens'], obs['rendered_tokens']
+    pct = round(100 * (rendered - raw) / rendered) if rendered > raw else 0
+    if (type(obs.get('net_token_delta')) is not int or obs['net_token_delta'] != rendered - raw
+            or obs['positive_net_increase_percent'] != pct
+            or type(obs.get('selected_text_equal')) is not bool
+            or (obs['selected_text_equal'] and raw != rendered)):
+        return None
+    for key, value in (('words_raw', raw), ('words_rendered', rendered), ('js_only_pct', pct)):
+        if type(dep.get(key)) is not int or dep[key] != value:
+            return None
+    return obs
 
-    m = dep["meta_js_only"]
+
+def _text_detail(obs):
+    return (f"{obs['served_tokens']} served vs {obs['rendered_tokens']} rendered whitespace tokens; "
+            f"net change {obs['net_token_delta']:+d}; positive net increase / rendered count "
+            f"{obs['positive_net_increase_percent']}%. "
+            + ('Selected extracted text matches in this pair. ' if obs['selected_text_equal']
+               else 'Selected extracted text differs in this pair. ') + TEXT_LIMITS)
+
+
+def technical_findings(dep: dict, report) -> None:
+    """Report scoped differences, including equal-count replacements, for review."""
+    cat = "technical"
+    obs = text_observation(dep)
+    if obs is None:
+        report.add(cat, 'low', 'Rendered-text comparison needs verification',
+                   'A supported coherent text-pair receipt was not recorded. Legacy counts/labels '
+                   'do not establish content parity, JS-only content or server rendering.',
+                   TEXT_REVIEW, rule_id='technical.rendered.text.comparison.unverified')
+    elif not obs['selected_text_equal']:
+        pct = obs['positive_net_increase_percent']
+        if pct >= PCT_HIGH:
+            title, rule = 'Review large rendered-text count increase', 'technical.most.content.requires.javascript'
+        elif pct >= PCT_MEDIUM:
+            title, rule = 'Review rendered-text count increase', 'technical.significant.content.requires.javascript'
+        else:
+            title, rule = 'Review served/rendered text difference', 'technical.rendered.text.changed'
+        report.add(cat, 'low', title, _text_detail(obs), TEXT_REVIEW, rule_id=rule)
+    else:
+        title = ('Selected extracted text matches in paired snapshots' if obs['served_tokens']
+                 else 'No selected text observed in either snapshot')
+        report.add(cat, 'good', title, _text_detail(obs), rule_id='technical.content.is.server.rendered')
+
+    m = dep.get('meta_js_only')
+    m = m if isinstance(m, dict) else {}
     js_meta = [name for name, only in
-               (("title", m["title"]), ("meta description", m["description"]),
-                ("canonical", m["canonical"])) if only]
+               (("title", m.get("title")), ("meta description", m.get("description")),
+                ("canonical", m.get("canonical"))) if only is True]
     if js_meta:
-        report.add(cat, "high", "Head metadata injected by JavaScript",
-                   f"Only present after rendering: {', '.join(js_meta)}.",
-                   "Emit title/description/canonical in the served HTML — "
-                   "indexing pipelines may read them before (or without) "
-                   "rendering.")
-    if m["jsonld"]:
-        report.add(cat, "medium", "JSON-LD injected by JavaScript",
-                   "Structured data appears only in the rendered DOM (e.g. via a "
-                   "tag manager).",
-                   "Move JSON-LD into the served HTML; Google usually processes "
-                   "rendered JSON-LD, but other consumers and AI fetchers often "
-                   "don't.")
+        report.add(cat, 'low', 'Review head metadata observed only in rendered snapshot',
+                   f"Present in rendered metadata but not the served snapshot: {', '.join(js_meta)}. "
+                   'This observes the paired snapshots, not JavaScript causation or engine processing.',
+                   'Inspect intended responses and metadata ownership. Emit essential metadata in served HTML '
+                   'only if a real consumer need/source defect is confirmed; indexing behavior remains unverified.',
+                   rule_id='technical.head.metadata.injected.by.javascript')
+    if m.get('jsonld') is True:
+        report.add(cat, 'low', 'Review increased JSON-LD block count in rendered snapshot',
+                   'More JSON-LD script blocks were counted in the rendered snapshot than in served HTML. '
+                   'Some may already exist in served HTML; block counts do not prove injection, validity, '
+                   'semantic differences or engine behavior.',
+                   'Inspect both snapshots and existing supported markup before changing delivery. '
+                   'Preserve valid semantic data and do not duplicate or move markup solely to clear this note.',
+                   rule_id='technical.json.ld.injected.by.javascript')
 
 
 def geo_finding(dep: dict, report) -> None:
-    """One GEO-side finding when the page is heavily JS-dependent."""
-    if dep["js_only_pct"] >= PCT_HIGH:
-        report.add("geo", "high", "AI answer engines may not see this content",
-                   f"{dep['js_only_pct']}% of the text exists only after "
-                   "JavaScript runs.",
-                   "Most AI fetchers (and citation crawlers) read the served "
-                   "HTML without executing JS — server-render the content you "
-                   "want quoted.")
+    """Keep a large-count consumer review without asserting AI access failure."""
+    obs = text_observation(dep)
+    if obs is not None and obs['positive_net_increase_percent'] >= PCT_HIGH:
+        report.add('geo', 'low', 'Review served-text availability for intended consumers',
+                   _text_detail(obs), TEXT_REVIEW,
+                   rule_id='geo.ai.answer.engines.may.not.see.this.content')

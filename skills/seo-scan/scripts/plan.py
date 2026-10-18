@@ -45,6 +45,11 @@ SCHEMA_EXTRACTION_RULES = frozenset(('schema.microdata.extraction', 'schema.rdfa
     'schema.ecommerce.source.extraction', 'schema.invalid.json.ld', 'schema.extraction.unverified',
     'schema.jsonld.processing.unverified'))
 SCHEMA_VERIFICATION_RULES = SCHEMA_EXTRACTION_RULES - {'schema.invalid.json.ld'}
+RENDER_VERIFICATION_RULES = frozenset((
+    'technical.most.content.requires.javascript', 'technical.significant.content.requires.javascript',
+    'technical.rendered.text.changed', 'technical.rendered.text.comparison.unverified',
+    'technical.head.metadata.injected.by.javascript', 'technical.json.ld.injected.by.javascript',
+    'geo.ai.answer.engines.may.not.see.this.content'))
 
 
 def _schema_uncertain(meta, findings):
@@ -676,6 +681,14 @@ for _rule in sorted(SCHEMA_VERIFICATION_RULES):
         ('Review original HTML, retained extraction warnings and intended entity/consumer; preserve SSRF and body/parser limits.',
          'Validate supported/unsupported markup with an appropriate validator and re-scan before treating missing findings as fixes. '
          'Syntax/property defects actually observed may still be repaired after confirming their source.'))
+for _rule in sorted(RENDER_VERIFICATION_RULES):
+    RESOURCE_VERIFICATION[_rule] = (
+        'Inspect paired served HTML/rendered DOM, extraction scope and intended page state before proposing source edits. '
+        'Counts and legacy JS-only labels do not establish causation, SSR requirements or crawler/citation impact. '
+        'Preserve useful client behavior and valid metadata/markup; change delivery only after verifying a real need.',
+        ('Review both original snapshots and any missing/partial baseline; equal counts do not establish equal text.',
+         'Re-scan with --render after a verified fix, retaining existing private-host/body/render guards. '
+         'Do not treat a count/score change alone as an SEO improvement.'))
 
 
 def safety_for(artifact: str) -> tuple:
@@ -767,7 +780,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         verification = RESOURCE_VERIFICATION.get(finding['rule_id'])
         artifact = classify_artifact(finding)
         if verification:
-            artifact = ('json_ld' if finding['rule_id'].startswith('schema.') else
+            artifact = ('server_rendering' if finding['rule_id'] in RENDER_VERIFICATION_RULES else
+                        'json_ld' if finding['rule_id'].startswith('schema.') else
                         'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap')
         if artifact != "unknown":
             mapped_named += 1

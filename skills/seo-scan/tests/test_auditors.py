@@ -632,21 +632,21 @@ class TestJsDependence(unittest.TestCase):
         rep = Report("u")
         jsdiff.technical_findings(
             jsdiff.analyze(self.RAW, self.RENDERED, "u"), rep)
-        sev = {f.title: f.severity for f in rep.findings}
-        self.assertEqual(sev.get("Most content requires JavaScript"), "high")
-        self.assertEqual(sev.get("Head metadata injected by JavaScript"), "high")
-        self.assertEqual(sev.get("JSON-LD injected by JavaScript"), "medium")
+        sev = {f.rule_id: f.severity for f in rep.findings}
+        self.assertEqual(sev.get('technical.most.content.requires.javascript'), 'low')
+        self.assertEqual(sev.get('technical.head.metadata.injected.by.javascript'), 'low')
+        self.assertEqual(sev.get('technical.json.ld.injected.by.javascript'), 'low')
         # low-JS page -> passing note instead
         rep2 = Report("u")
         jsdiff.technical_findings(jsdiff.analyze(self.RAW, self.RAW, "u"), rep2)
-        self.assertIn("Content is server-rendered",
+        self.assertIn('Selected extracted text matches in paired snapshots',
                       {f.title for f in rep2.findings})
 
     def test_geo_finding_only_when_heavy(self):
         from lib import jsdiff
         rep = Report("u")
         jsdiff.geo_finding(jsdiff.analyze(self.RAW, self.RENDERED, "u"), rep)
-        self.assertIn("AI answer engines may not see this content",
+        self.assertIn('Review served-text availability for intended consumers',
                       {f.title for f in rep.findings})
         rep2 = Report("u")
         jsdiff.geo_finding(jsdiff.analyze(self.RAW, self.RAW, "u"), rep2)
