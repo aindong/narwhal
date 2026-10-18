@@ -30,7 +30,7 @@ or how citable a page is for ChatGPT / Claude / Perplexity / Google AI Overviews
 | `python gsc.py <url>` | Real Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — opt-in OAuth (`GSC_ACCESS_TOKEN`, or one-time `gsc.py --auth`) |
 | `python audit.py <url> --gsc` | Fold the GSC data into the audit report/JSON (degrades to a note without credentials) |
 | `narwhal mcp` (needs `pip install "narwhal-seo[mcp]"`) | Run as an MCP server, including bounded `plan_remediation` over stdio |
-| `python scan.py <url> --render` | Render JS (SPAs) via Playwright; also diffs raw vs rendered → JS-dependence findings (% JS-only content, client-injected metadata) |
+| `python scan.py <url> --render` | Render JS via Playwright; compare selected-text equality/token deltas and metadata in paired snapshots (not JS-only share or proof of crawler behavior); verify differences before source edits |
 | `python scan.py <url> --only technical,geo` | Run a subset of auditors |
 | (scan default) | Image weight/format checks + og:image validation (HEAD-only + one ranged GET); `--no-image-checks` to skip |
 | (schema default) | JSON-LD, Microdata and bounded schema.org RDFa; Product/Offer completeness, variants, stale validity, and evidence-gated visible price/currency/stock/SKU/brand mismatches |

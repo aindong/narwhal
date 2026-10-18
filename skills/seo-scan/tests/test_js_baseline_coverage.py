@@ -73,7 +73,7 @@ class TestJsBaselineCoverage(unittest.TestCase):
     def test_complete_pair_keeps_normal_numeric_measurements(self):
         report, _ = scanned(response())
         expected = scan.jsdiff.analyze(HTML, HTML, URL)
-        self.assertEqual({key: expected[key] for key in ('words_raw', 'words_rendered', 'js_only_pct')},
+        self.assertEqual({key: expected[key] for key in ('words_raw', 'words_rendered', 'js_only_pct', 'text_comparison')},
                          report.meta['js_dependence'])
         self.assertEqual(0, report.meta['js_dependence']['js_only_pct'])
         self.assertEqual({'status': 'measured', 'byte_limit': 64_000},

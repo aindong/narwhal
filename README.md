@@ -395,11 +395,16 @@ reported findings, not page quality. Scores, severity and machine-readable data
 are unchanged; absent flags do not certify unchecked or unmeasured conditions.
 
 ### Useful flags (`scan.py`)
-- `--render` — render JavaScript via Playwright (for SPAs), and **measure JS
-  dependence**: the served HTML is diffed against the rendered DOM — "X% of
-  your content is JS-only" (with the missing headings as evidence), plus
-  client-injected title/description/canonical/JSON-LD. Crawlers that don't run
-  JS (most AI fetchers) never see that content. Needs
+- `--render` — render JavaScript via Playwright (for SPAs) and compare the
+  **paired served/rendered snapshots**: selected extracted-text equality,
+  whitespace-token deltas, heading nonmatches and metadata presence/block counts.
+  `js_dependence.text_comparison` records each extraction basis and signed delta.
+  Legacy `words_raw`, `words_rendered` and `js_only_pct` numbers remain compatible;
+  `js_only_pct` is only a positive net token-count increase / rendered count,
+  not the percentage of content requiring JS. Equal/shorter counts can hide
+  complete text replacements. Differences prompt low, manual verification before
+  SSR/metadata rewrites; neither equality nor a delta measures crawler access,
+  indexing or citation effects. See [scope and legacy limits](skills/seo-scan/references/technical-seo.md#js-dependence-raw-vs-rendered). Needs
   `pip install playwright` then `python -m playwright install chromium`. If the
   browser isn't installed you get a clear one-line fix, not a stack trace; a
   render that can't run reports an honest error rather than silently falling back

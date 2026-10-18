@@ -130,3 +130,5 @@ jobs:
         run: python skills/seo-scan/tests/page_schema_review_smoke.py
       - name: JSON-LD syntax and processing browser regression
         run: python skills/seo-scan/tests/jsonld_error_stages_smoke.py
+      - name: Paired rendered-text evidence browser regression
+        run: python skills/seo-scan/tests/rendered_text_evidence_smoke.py

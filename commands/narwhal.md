@@ -238,6 +238,11 @@ Distinguish decoder syntax errors from `schema.jsonld.processing.unverified`:
 tool limits/processing gaps require verification, not automatic source rewriting
 or claims of engine rejection. `jsonld_error_stages` is runtime scope, not full
 validation; absent legacy stages cannot be reconstructed from labels/messages.
+For rendered pairs, `js_only_pct` is a legacy positive net token-count delta,
+not a JS-only content share. Review `js_dependence.text_comparison` scope and
+selected-text equality: equal/shorter counts can hide replacements. Confirm a
+real delivery need before SSR/metadata edits; missing legacy bases, crawler
+access and citation effects remain unverified.
 Legacy `missing_subtopics` candidates are not verified missing semantic content.
 `subtopic_review`/candidate `term_match` describe an ASCII/English prefix-term filter,
 not section-content understanding or query demand. Review synonyms, context and

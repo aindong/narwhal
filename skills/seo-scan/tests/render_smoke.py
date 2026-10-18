@@ -202,7 +202,7 @@ def main() -> int:
     print("OK: inert template Product ignored; JS-activated Product detected exactly once.")
     print("OK: rendered UTF-8 byte budget enforced; partial scan flagged without JS-dependence metrics.")
     print("OK: origin cannot forge the internally calculated truncation marker.")
-    print('OK: paired byte budget enforced; truncated baseline unverified; complete pair recovers 0% JS-only.')
+    print('OK: paired byte budget enforced; truncated baseline unverified; complete pair recovers zero positive token-count delta.')
     print('OK: rendered HTTP robots declarations retained with browser-reported field provenance.')
     print('OK: JS document replacement fails explicitly; HTTP redirects and History API remain supported.')
     print('OK: rendered Googlebot meta observed without generic scoring; inert named-meta template ignored.')

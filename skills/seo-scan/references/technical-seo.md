@@ -173,14 +173,49 @@ errors still propagate through their existing boundaries.
 
 ## JS dependence (raw vs rendered)
 When a scan runs with `--render`, Narwhal diffs the **served HTML** against the
-**rendered DOM**: word-count delta (the JS-only share of the content), headings
-that only exist post-JS, and head metadata (title/description/canonical/JSON-LD)
-injected client-side. Thresholds: ≥30% JS-only → high, ≥10% → medium. Why it
-matters: crawlers that don't execute JavaScript — most AI answer-engine fetchers,
-and indexing pipelines before their render pass — see only the served HTML.
-Client-injected metadata is especially risky: it may be read never or late.
-Without Playwright there is no rendered DOM, so the check stays silent (never
-guessed).
+**rendered DOM**. This is a paired-snapshot observation, not measured JavaScript
+causation, server-rendering completeness or crawler/indexing/citation behavior.
+The two requests can differ in timing/page state, and each parser selects text
+independently. Inspect both original snapshots and intended behavior before
+changing delivery; preserve useful client interaction and valid metadata/markup.
+
+`meta.js_dependence.text_comparison` version 1, basis
+`selected_extracted_text_pair`, records each extraction basis, whitespace-token
+counts, signed `net_token_delta`, `positive_net_increase_percent` and exact
+`selected_text_equal` for the selected extracted strings. Metadata contains
+counts/scopes, not copied source text. Equality is limited to those extracted
+strings, not all page content or CSS visibility. An empty pair establishes only
+that neither extraction selected text; it does not establish that the page lacks
+other content. Empty pairs produce low verification-only
+`technical.rendered.text.unobserved`, not a
+passing severity or the legacy server-rendering ID. Plans assign no source owner
+or content/SSR rewrite to this observation.
+Equal or shorter counts can accompany a complete replacement, so those cases
+never receive a server-rendering pass when the selected strings differ.
+
+Compatibility fields `words_raw` / `words_rendered` retain whitespace-token
+counts; `js_only_pct` retains `round(100 * max(rendered - served, 0) / rendered)`
+(zero if rendered count is zero). It is **not** a share of unique/JS-only content.
+Historical 30%/10% positive-increase bands retain their rule IDs for filters,
+but now prompt low-priority review, not high/medium content-availability verdicts.
+The GEO-side large-count review likewise does not assert AI-access failure.
+These priority/score changes are calibration corrections, not SEO improvements.
+
+Heading nonmatch/count aliases remain compatible, not proof that sections are
+missing from served content. Head-metadata presence differences are snapshot
+observations, not authenticated injection events. A higher JSON-LD block count
+does not mean all markup was absent in served HTML or establish semantic changes,
+validity or eligibility. Corresponding findings are low contextual reviews.
+
+Current and known legacy render-difference plans are manual verification tasks:
+no source owner, SSR/JSON-LD generation, deploy requirement or grouped-template
+edit. Old counts/labels without a supported coherent receipt are not backfilled
+as text equality or server-rendering proof. Typed count consistency is not
+evidence authentication. Unknown/malformed/stale receipts stay unverified.
+
+Without a rendered DOM no pair is measured. Existing completeness and private-host
+guards remain: partial/missing/non-HTML paired snapshots produce no text-comparison
+receipt, and known comparison coverage failures retain incomparable diff gates.
 
 ## Image weight, formats, and og:image
 Single-page scans HEAD-check up to 10 page images (headers only — never full
