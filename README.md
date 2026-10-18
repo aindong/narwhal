@@ -75,7 +75,7 @@ And yes, it works as a backronym too:
 | **GEO / LLMO** | contextual review of question-heading, sentence-group, statistic/citation and intro cues—not measured citability—plus `llms.txt` and role-aware **search/retrieval robots policies**, with separate non-scoring training/data-use notes |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
-| **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, structure, evidence, social packaging, with separate neutral text-length observations (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
+| **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, structure, social packaging, with separate neutral length and statistic/citation-pattern observations (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, missing subtopics, questions to answer, schema and structure targets. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
 GEO text-cue checks expose literal counts and limits in `meta.geo_text_cues`.
@@ -113,6 +113,14 @@ content-depth gaps/leads or automatic writing targets. JSON keeps the historical
 `structure.target_words`/`your_words`. Legacy values without a recognized basis
 stay unverified. Explicit user/editorial length goals remain separate. See
 [comparison and brief compatibility](skills/seo-scan/references/content-eeat.md#comparison-and-brief-length-observations).
+
+Comparison/brief `stats_cites` values are retained lexical match counts, not
+verified sources or evidence quality. New `evidence_cues` receipts split statistic
+patterns from English-oriented citation cues and explicitly leave source validity
+unchecked. They do not produce evidence-density gaps or automatic source quotas;
+brief `evidence_target`/`your_evidence` fields are no longer generated. Missing
+legacy bases stay unverified. Review actual claims and relevant sources rather
+than add numbers to satisfy a count. See [cue boundaries](skills/seo-scan/references/geo-llmo.md#comparison-and-brief-cue-observations).
 
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,

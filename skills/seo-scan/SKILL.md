@@ -80,11 +80,14 @@ python scripts/compare.py https://you.com/page https://rival.com/page
 ```
 Reports a scoreboard, a side-by-side fact table, **"Gaps to close"** (what they
 have that you don't: schema types, meta strategy, question headings,
-evidence, social packaging) and **"Where you lead"**. Honesty rule: it compares
+social packaging) and **"Where you lead"**. Honesty rule: it compares
 the recorded HTML snapshots (served or rendered, as labelled) — never claim a
 gap explains rankings. Text length is a neutral whitespace-token observation,
 not a depth gap/lead or writing target. Legacy `words` values without a recorded
 basis stay unverified. No rank/keyword data is used or implied.
+Statistic/citation-pattern counts are likewise observations, not verified sources
+or evidence-density gaps. `evidence_cues` explains the basis and unchecked source
+validity; legacy `stats_cites` alone does not supply a measurement basis.
 
 **Build a data-driven content brief** (what to *write*, grounded in real data —
 no keyword APIs, no invented volumes):
@@ -97,11 +100,14 @@ demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **missing subtopics** (competitor H2/H3
 sections whose topic words don't appear in your text), **questions to answer**
 (their question headings + your question-shaped queries), schema suggestions,
-and structure heuristics (question/evidence comparisons on non-hubs).
+and a question-heading structure heuristic on non-hubs.
 `text_length` contains neutral length observations, including hubs; do not infer
 a word target or missing coverage from length alone. Keep explicit user/editorial
-length constraints separate from measured observations.
-`target_words`/`your_words` are no longer generated. `--topic` mode
+length constraints separate from measured observations. Citation/statistic cues
+do not establish factual support or a source quota; review real claims and
+sources without inventing numbers/citations to satisfy counts.
+`target_words`/`your_words` and `evidence_target`/`your_evidence` are no longer
+generated. `--topic` mode
 plans a page that doesn't exist yet from
 competitor pages only (add `--gsc-site <your-site>` to fold in real adjacent
 queries). Without GSC credentials it produces a clearly labeled
@@ -240,7 +246,7 @@ same look as the scan/audit reports.
 | `technical` | title/meta, headings, canonical, robots directives, viewport, hreflang, images, links, HTTP hygiene, robots.txt, sitemap |
 | `content` | scoped text-length/readability cues, attribution/date candidates, Open Graph/Twitter cards |
 | `schema` | JSON-LD detection, required/recommended property validation, deprecated rich-result types |
-| `geo` | question-based headings, citable passage structure, evidence density, direct-answer intro, `llms.txt`, **AI-crawler access** |
+| `geo` | contextual question-heading, synthetic sentence-group, statistic/citation and intro cues; `llms.txt`, role-aware **AI-crawler policies** |
 
 Deep-dive guidance (heuristics, thresholds, and the *why* behind each check) lives
 in `references/` — read the relevant file when the user asks for detail or wants to

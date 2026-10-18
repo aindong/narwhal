@@ -65,7 +65,7 @@ satisfaction, content depth, ranking or AI citation likelihood from a count.
   coverage is not automatically a comparison failure. Missing legacy flags stay
   unknown, not inferred from language; they do not certify full comparability.
 - This scopes the **page content auditor's length check** only. Readability,
-  keywords and the question/evidence/subtopic heuristics remain separate; this
+  keywords and the question/subtopic heuristics remain separate; this
   does not validate their linguistic or content-depth assumptions.
 
 ### Comparison and brief length observations

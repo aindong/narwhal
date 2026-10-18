@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Neutral comparative evidence cues:** existing statistic/citation-pattern
+  counts gain split-count/basis receipts with source validity unchecked, not
+  evidence-density gaps or automatic source quotas. Zero/topic/hub observations
+  remain counts; legacy bases stay unverified. Patterns/page scores are unchanged.
+  This corrects interpretation, not factual support or independent SEO accuracy.
 - **Neutral comparative length:** compare/brief keep whitespace-token counts and
   code-point/extraction receipts, not depth gaps/leads or automatic word targets.
   Legacy aliases remain unchanged; missing bases stay unverified. Topic mode
