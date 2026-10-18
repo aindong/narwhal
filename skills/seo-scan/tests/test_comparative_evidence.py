@@ -105,6 +105,29 @@ class TestComparativeEvidence(unittest.TestCase):
         self.assertIs(True, receipt['source_basis_clipped'])
         self.assertNotIn('text', receipt)
 
+    def test_missing_extraction_provenance_stays_unrecorded(self):
+        for key in ('source_basis', 'source_basis_clipped'):
+            facts = copy.deepcopy(self.labels['facts'])
+            del facts['evidence_cues'][key]
+            with self.subTest(missing=key):
+                self.assertIsNone(evidence_observation.recorded(facts))
+                self.assertEqual('6 (basis unrecorded)', evidence_observation.cell(facts))
+                self.assertIn('no recorded cue measurements', ' '.join(evidence_observation.summary(None, [facts])))
+
+    def test_malformed_extraction_labels_and_non_boolean_clipping_stay_unrecorded(self):
+        for key, bad in (('source_basis', None), ('source_basis', ''), ('source_basis', ' \t'),
+                          ('source_basis', []), ('source_basis', 'x' * 161),
+                          ('source_basis_clipped', None), ('source_basis_clipped', 'false'),
+                          ('source_basis_clipped', 0), ('source_basis_clipped', 1)):
+            facts = copy.deepcopy(self.labels['facts'])
+            facts['evidence_cues'][key] = bad
+            with self.subTest(key=key, bad=bad):
+                self.assertIsNone(evidence_observation.recorded(facts))
+        for label, clipped in (('visible text', False), ('x' * 160, True)):
+            facts = {'stats_cites': 0, 'evidence_cues': evidence_observation.observe(0, 0, label)}
+            facts['evidence_cues']['source_basis_clipped'] = clipped
+            self.assertIsNotNone(evidence_observation.recorded(facts))
+
     def test_summary_never_renders_untrusted_receipt_fields(self):
         facts = copy.deepcopy(self.labels['facts'])
         for key in ('source_basis', 'limits'):

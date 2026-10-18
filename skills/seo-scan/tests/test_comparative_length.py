@@ -95,6 +95,29 @@ class TestComparativeLength(unittest.TestCase):
         self.assertEqual('999 (basis unrecorded)', length_observation.cell(facts))
         self.assertEqual('Unrecorded', length_observation.cell(facts, code_points=True))
 
+    def test_missing_extraction_provenance_does_not_validate_length_receipts(self):
+        for key in ('source_basis', 'source_basis_clipped'):
+            facts = copy.deepcopy(self.rival['facts'])
+            del facts['text_length'][key]
+            self.assertIsNone(length_observation.recorded(facts))
+            self.assertEqual('600 (basis unrecorded)', length_observation.cell(facts))
+            value = length_observation.comparison(None, [facts])
+            self.assertEqual('unrecorded', value['compared'][0]['status'])
+
+    def test_malformed_extraction_labels_and_clipping_flags_stay_unrecorded(self):
+        for key, bad in (('source_basis', None), ('source_basis', ''), ('source_basis', ' \t'),
+                          ('source_basis', []), ('source_basis', 'x' * 161),
+                          ('source_basis_clipped', None), ('source_basis_clipped', 'false'),
+                          ('source_basis_clipped', 0), ('source_basis_clipped', 1)):
+            facts = copy.deepcopy(self.rival['facts'])
+            facts['text_length'][key] = bad
+            with self.subTest(key=key, bad=bad):
+                self.assertIsNone(length_observation.recorded(facts))
+        for label, clipped in (('visible text', False), ('x' * 160, True)):
+            facts = {'words': 1, 'text_length': length_observation.observe('Guide', label)}
+            facts['text_length']['source_basis_clipped'] = clipped
+            self.assertIsNotNone(length_observation.recorded(facts))
+
     def test_zero_is_recorded_and_not_confused_with_a_missing_measurement(self):
         empty = page('https://empty.test/', '')
         value = length_observation.comparison(empty['facts'], [empty['facts']])

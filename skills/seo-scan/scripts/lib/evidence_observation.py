@@ -28,6 +28,8 @@ def recorded(facts):
     if (not isinstance(value, dict) or type(value.get('version')) is not int
             or value['version'] != 1 or value.get('basis') != 'audit_geo_stat_and_cite_hint_v1'
             or value.get('source_validity_checked') is not False
+            or type(value.get('source_basis')) is not str or len(value['source_basis']) > 160
+            or not value['source_basis'].strip() or type(value.get('source_basis_clipped')) is not bool
             or not all(_count(value.get(key)) for key in
                        ('statistic_matches', 'citation_cue_matches', 'total_matches'))
             or value['total_matches'] != value['statistic_matches'] + value['citation_cue_matches']):
