@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Inspectable readability formulas:** historical lexical/fragment/syllable
+  counts and exact Flesch/FK estimates remain, not comprehension, school-grade or
+  AI-citability certificates. Unsupported scope stays unassessed; low contextual
+  reviews and current/legacy plans preserve precision and useful concise text.
+  Known scope changes guard diff claims. Calibration changes do not measure SEO.
 - **Scoped date candidates:** page/compare/brief share bounded metadata and
   selected-text observations, not validated publication dates or freshness.
   Modified-only metadata counts, blanks/year-only text do not; conditional

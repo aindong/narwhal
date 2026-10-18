@@ -1,8 +1,7 @@
 """Lightweight text analysis: readability + keyword/entity extraction.
 
-Pure, dependency-free heuristics used by the content auditor. Nothing here is
-exact linguistics — the goal is directional signals: is this hard to read, and
-what is it actually about?
+Pure, dependency-free heuristics used by the content auditor. Formula estimates
+and lexical patterns are not comprehension tests or semantic understanding.
 """
 
 from __future__ import annotations
@@ -60,20 +59,24 @@ def syllables(word: str) -> int:
     return max(1, count)
 
 
-def flesch_reading_ease(text: str):
+def readability_measures(text: str):
+    """Return historical formula inputs/estimates, not reader comprehension."""
     w, s = words(text), sentences(text)
-    if not w or not s:
-        return None
     syl = sum(syllables(x) for x in w)
-    return round(206.835 - 1.015 * (len(w) / len(s)) - 84.6 * (syl / len(w)), 1)
+    result = {'ascii_pattern_matches': len(w), 'sentence_fragments': len(s),
+              'estimated_syllables': syl, 'flesch_reading_ease': None, 'flesch_kincaid_grade': None}
+    if w and s:
+        result['flesch_reading_ease'] = round(206.835 - 1.015 * (len(w) / len(s)) - 84.6 * (syl / len(w)), 1)
+        result['flesch_kincaid_grade'] = round(0.39 * (len(w) / len(s)) + 11.8 * (syl / len(w)) - 15.59, 1)
+    return result
+
+
+def flesch_reading_ease(text: str):
+    return readability_measures(text)['flesch_reading_ease']
 
 
 def flesch_kincaid_grade(text: str):
-    w, s = words(text), sentences(text)
-    if not w or not s:
-        return None
-    syl = sum(syllables(x) for x in w)
-    return round(0.39 * (len(w) / len(s)) + 11.8 * (syl / len(w)) - 15.59, 1)
+    return readability_measures(text)['flesch_kincaid_grade']
 
 
 def reading_ease_label(score) -> str:

@@ -112,6 +112,7 @@ def _comparison(o: dict, n: dict) -> dict:
                        ("rendered", "Actual rendered/raw mode"),
                        ("image_checks", "Image-check setting"),
                        ("content_length_reviewed", "Content-length threshold coverage"),
+                       ('readability_reviewed', 'Readability formula coverage'),
                        ('schema_extraction_reviewed', 'Schema-extraction coverage'),
                        ("rule_config", "Rule/scoring configuration")):
         if all(key in item for item in settings) and settings[0][key] != settings[1][key]:
@@ -123,7 +124,7 @@ def _comparison(o: dict, n: dict) -> dict:
                 if len(values) > 1:
                     reasons.append(f"{label} crawl contains contradictory {key} settings for {url}; its overall score is not comparable.")
     for url in sorted(crawls[0].keys() & crawls[1].keys()):
-        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'schema_extraction_reviewed', "rule_config"):
+        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config"):
             values = [item[url].get(key, set()) for item in crawls]
             if all(values) and values[0] != values[1]:
                 reasons.append(f"Crawl setting {key} differs for {url}; its contribution to the overall score is not comparable.")
@@ -137,7 +138,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction gaps and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction gaps and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 
@@ -146,7 +147,7 @@ def _recorded_settings(meta, rendered=None):
     """Only explicit booleans prove a known setting; legacy data stays unknown."""
     raw = meta.get("scan_settings") if isinstance(meta, dict) else None
     raw = raw if isinstance(raw, dict) else {}
-    result = {key: raw[key] for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'schema_extraction_reviewed')
+    result = {key: raw[key] for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed')
             if type(raw.get(key)) is bool}
     if "rendered" not in result and type(rendered) is bool:
         result["rendered"] = rendered

@@ -68,6 +68,7 @@ def facts(report, doc) -> dict:
                                             len(audit_geo._CITE_HINT.findall(text)), doc.extraction)
     settings = report.meta.get('scan_settings', {})
     reviewed = settings.get('content_length_reviewed') if isinstance(settings, dict) else None
+    reading_reviewed = settings.get('readability_reviewed') if isinstance(settings, dict) else None
     records, schema_errors = structured_data.collect(doc)
     schema_types = sorted({typ for record in records for typ in structured_data.types(record['node'])})
     return {
@@ -82,6 +83,7 @@ def facts(report, doc) -> dict:
         "words": length['whitespace_tokens'],  # legacy alias, not a linguistic word count
         "text_length": length,
         "content_length_reviewed": reviewed if type(reviewed) is bool else None,
+        'readability_reviewed': reading_reviewed if type(reading_reviewed) is bool else None,
         "extraction": doc.extraction,
         "h1": any(lvl == 1 for lvl, _ in doc.headings),
         "headings": len(doc.headings),
@@ -296,6 +298,9 @@ def render_markdown(r: dict) -> str:
         ("Page length-threshold review", [
             'Reviewed' if c.get('content_length_reviewed') is True else
             'Uninterpreted' if c.get('content_length_reviewed') is False else 'Unrecorded' for c in cols]),
+        ('Page readability-formula review', [
+            'Reviewed' if c.get('readability_reviewed') is True else
+            'Uninterpreted' if c.get('readability_reviewed') is False else 'Unrecorded' for c in cols]),
         ("H1", [_yn(c["h1"]) for c in cols]),
         ("Question-heading cues", [question_observation.cell(c) for c in cols]),
         ("Statistics/citation pattern matches", [evidence_observation.cell(c) for c in cols]),

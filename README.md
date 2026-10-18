@@ -121,6 +121,14 @@ content-depth gaps/leads or automatic writing targets. JSON keeps the historical
 stay unverified. Explicit user/editorial length goals remain separate. See
 [comparison and brief compatibility](skills/seo-scan/references/content-eeat.md#comparison-and-brief-length-observations).
 
+Readability reports expose the historical ASCII-token/punctuation-fragment/
+vowel-group inputs and Flesch/FK formula estimates, not measured comprehension,
+school grade or AI citability. Below-range reviews are low and contextual; useful
+concise or specialist text can stay. Non-English declarations, non-ASCII letters/
+marks, hub hints or unusable inputs leave interpretation unassessed. No minimum
+word count or universal formula target is imposed. See
+[readability boundaries](skills/seo-scan/references/content-eeat.md#readability).
+
 Comparison/brief `stats_cites` values are retained lexical match counts, not
 verified sources or evidence quality. New `evidence_cues` receipts split statistic
 patterns from English-oriented citation cues and explicitly leave source validity

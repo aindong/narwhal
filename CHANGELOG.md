@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Readability checks expose historical ASCII-token/punctuation-fragment/vowel-group
+  inputs and Flesch/FK estimates rather than comprehension, school-grade or AI-
+  citability verdicts. Unsupported language/text scope stays unassessed; below-
+  range reviews and current/legacy plans preserve useful concise/specialist text.
+  Known coverage changes guard page/audit/crawl diffs. Formula results/IDs remain;
+  priority/score corrections are not measured SEO gains or new word-count quotas.
 - Page scans, comparisons and briefs share bounded date-related candidates and
   inspectable scope, not freshness/publication certificates. Modified metadata
   counts consistently; blanks and bare years alone do not. Article reviews and
