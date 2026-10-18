@@ -7,28 +7,24 @@ not measurements of content depth, expertise, quality or search outcomes.
 
 from __future__ import annotations
 
-import re
-
 try:
     from lib import text as textlib
     from lib import content_quality
     from lib import htmlx
     from lib import authorship
     from lib import content_length
+    from lib import date_cues
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
     from .lib import content_quality  # type: ignore
     from .lib import htmlx  # type: ignore
     from .lib import authorship  # type: ignore
     from .lib import content_length  # type: ignore
+    from .lib import date_cues  # type: ignore
 
 CAT = "content"
 
 _WORD = content_length.WORD_PATTERN  # historical private matcher alias
-_DATE_HINT = re.compile(
-    r"\b(20\d{2})\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}",
-    re.I,
-)
 
 
 def audit(doc, resp, report, ctx=None) -> None:
@@ -214,17 +210,19 @@ def _authorship(doc, text, report, article=False):
 
 
 def _freshness(doc, text, report):
-    published = (
-        doc.meta_by_property("article:published_time")
-        or doc.meta_by_name("date")
-        or doc.meta_by_property("article:modified_time")
-    )
-    if not published and not _DATE_HINT.search(text[:2000]):
-        report.add(CAT, "low", "No visible date signal",
-                   "No published/modified date in metadata or near the top.",
-                   "Expose a publish or last-updated date to signal freshness.")
-    else:
-        report.ok(CAT, "Date/freshness signal present")
+    receipt = date_cues.observe(doc, text)
+    report.meta['date_cues'] = receipt
+    if receipt['candidates']:
+        report.add(CAT, 'good', 'Date-related candidate observed',
+                   f"{receipt['candidate_count']} captured metadata/text candidate(s). " + date_cues.LIMITS,
+                   rule_id='content.date.freshness.signal.present')
+    elif htmlx.looks_article(doc):
+        report.add(CAT, 'low', 'Review article date cues',
+                   'No candidate observed in the checked metadata and selected-text prefix. ' + date_cues.LIMITS,
+                   'Review actual page purpose and original date evidence. Add accurate publication/update '
+                   'information only when useful and known; do not invent dates, relabel events as publication '
+                   'or refresh a date without substantive change. Ranking/citation effects are not measured.',
+                   rule_id='content.no.visible.date.signal')
 
 
 def _og_social(doc, report):

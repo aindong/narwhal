@@ -91,6 +91,26 @@
       },
       "article_hint": true
     },
+    "date_cues": {
+      "version": 1,
+      "basis": "normalized_metadata_and_selected_text_prefix",
+      "interpretation": "date_related_candidates_only",
+      "source_basis": "visible text",
+      "source_basis_clipped": false,
+      "metadata_fields_checked": 4,
+      "text_prefix_characters": 1046,
+      "text_pattern": "\\b(?:[12][0-9]{3}-[0-9]{2}-[0-9]{2}|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\\.?\\s+(?:[0-9]{1,2}(?:,?\\s+[12][0-9]{3})?|[12][0-9]{3}))\\b",
+      "year_pattern_matches": 0,
+      "candidate_count": 0,
+      "candidates": [],
+      "coverage": {
+        "metadata_limited": false,
+        "metadata_value_limited": false,
+        "candidates_omitted": false,
+        "text_prefix_limited": false
+      },
+      "limits": "Date-related candidates only, not validated dates, publication/update ownership, rendered visibility, content freshness, accuracy or ranking/citation impact. Metadata values and English-month/ISO-like text patterns can be unrelated or invalid. Bare years alone are not publication evidence. Non-observation in these bounded checks does not establish that the page lacks dates; structured-data date graphs are not inspected."
+    },
     "structured_data": {
       "formats": [
         "jsonld"
@@ -478,14 +498,14 @@
     {
       "category": "content",
       "severity": "low",
-      "title": "No visible date signal",
-      "detail": "No published/modified date in metadata or near the top.",
-      "recommendation": "Expose a publish or last-updated date to signal freshness.",
+      "title": "Review article date cues",
+      "detail": "No candidate observed in the checked metadata and selected-text prefix. Date-related candidates only, not validated dates, publication/update ownership, rendered visibility, content freshness, accuracy or ranking/citation impact. Metadata values and English-month/ISO-like text patterns can be unrelated or invalid. Bare years alone are not publication evidence. Non-observation in these bounded checks does not establish that the page lacks dates; structured-data date graphs are not inspected.",
+      "recommendation": "Review actual page purpose and original date evidence. Add accurate publication/update information only when useful and known; do not invent dates, relabel events as publication or refresh a date without substantive change. Ranking/citation effects are not measured.",
       "evidence": null,
       "rule_id": "content.no.visible.date.signal",
       "scope": "page",
       "confidence": 1.0,
-      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#freshness"
+      "reference_url": "https://github.com/aindong/narwhal/blob/main/skills/seo-scan/references/content-eeat.md#date-cues-not-freshness-verification"
     },
     {
       "category": "content",

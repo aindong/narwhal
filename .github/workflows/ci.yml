@@ -132,3 +132,5 @@ jobs:
         run: python skills/seo-scan/tests/jsonld_error_stages_smoke.py
       - name: Paired rendered-text evidence browser regression
         run: python skills/seo-scan/tests/rendered_text_evidence_smoke.py
+      - name: Scoped date-cue browser regression
+        run: python skills/seo-scan/tests/date_cues_smoke.py

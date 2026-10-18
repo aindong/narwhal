@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Scoped date candidates:** page/compare/brief share bounded metadata and
+  selected-text observations, not validated publication dates or freshness.
+  Modified-only metadata counts, blanks/year-only text do not; conditional
+  article/planner advice avoids invented or cosmetic dates. Compared pages set
+  no date quota, and missing legacy receipt scope remains unrecorded. Corrected
+  findings/scores are not independent SEO accuracy or measured page gains.
 - **Explicit review recording:** the offline maintainer utility records one
   operator-supplied decision into a new, validated packet, preserving evidence,
   inventory, originals and other reviewers. Replacement is explicit, not merged

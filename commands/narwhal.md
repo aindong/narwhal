@@ -248,6 +248,10 @@ Legacy `missing_subtopics` candidates are not verified missing semantic content.
 not section-content understanding or query demand. Review synonyms, context and
 existing coverage before proposing sections; topic mode has no own page to assess.
 Missing or unsupported receipts do not establish measured term counts or gaps.
+`date_cues` are bounded metadata/text candidates, not validated publication/update
+dates, freshness or a date quota. Inspect actual page purpose and known dates;
+do not invent dates, relabel event dates or cosmetically refresh them to satisfy
+an audit. Missing legacy receipts stay unrecorded, not inferred from booleans.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:

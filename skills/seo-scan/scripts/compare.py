@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as configlib  # noqa: E402
 from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
 from lib import question_observation, schema_appearance, schema_coverage  # noqa: E402
+from lib import date_cues  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -62,6 +63,7 @@ def facts(report, doc) -> dict:
     attribution = authorship.observe(doc, text)
     length = length_observation.observe(text, doc.extraction)
     questions = question_observation.observe(doc.headings, _QUESTION_WORDS)
+    dates = date_cues.observe(doc, text)
     evidence = evidence_observation.observe(len(audit_geo._STAT.findall(text)),
                                             len(audit_geo._CITE_HINT.findall(text)), doc.extraction)
     settings = report.meta.get('scan_settings', {})
@@ -94,8 +96,8 @@ def facts(report, doc) -> dict:
         "canonical": bool(doc.canonical()),
         "author_signal": bool(attribution['candidates']),
         "authorship_cues": attribution,
-        "date_signal": bool(doc.meta_by_property("article:published_time")
-                            or doc.meta_by_name("date")),
+        "date_signal": bool(dates['candidates']),  # candidate presence, never verified freshness
+        'date_cues': dates,
         "stats_cites": evidence['total_matches'],  # legacy alias; not verified sources
         "evidence_cues": evidence,
     }
@@ -112,7 +114,6 @@ _BOOL_GAPS = [
     ("author_signal", "Attribution cues",
      "Review actual attribution and page intent; observed cue differences do not verify writers "
      "or require matching a competitor. Do not invent people or credentials."),
-    ("date_signal", "Publish/update date", "Expose a published/modified date."),
 ]
 
 
@@ -303,7 +304,7 @@ def render_markdown(r: dict) -> str:
         ("Twitter card", [_yn(c["twitter_card"]) for c in cols]),
         ("Canonical", [_yn(c["canonical"]) for c in cols]),
         ("Attribution cues (not verified writers)", [_yn(c["author_signal"]) for c in cols]),
-        ("Date signal", [_yn(c["date_signal"]) for c in cols]),
+        ('Date-related candidates (not freshness)', [date_cues.cell(c) for c in cols]),
     ]
     lines += ["## Side by side", "", header, sep]
     lines += [f"| {label} | " + " | ".join(vals) + " |" for label, vals in rows]
@@ -317,18 +318,19 @@ def render_markdown(r: dict) -> str:
               *evidence_observation.summary(you, rivals), '']
     lines += ['## Question-heading cues (contextual review)', '',
               *question_observation.summary(you, rivals), '']
+    lines += ['## Date-related candidates (not freshness)', '', *date_cues.summary(you, rivals), '']
     lines += ['## Google schema appearances (dated snapshot)', '',
               *schema_appearance.summary(you, rivals), '']
-    unsupported = {'Content depth', 'Evidence density (stats/citations)', 'Question-based headings'}
+    unsupported = {'Content depth', 'Evidence density (stats/citations)', 'Question-based headings', 'Publish/update date'}
     gaps = [g for g in r['gaps'] if g.get('what') not in unsupported and not (
         g.get('what', '').startswith('Schema types:') and not schema_coverage.absence_review(you))]
     leads = [g for g in r['leads'] if g.get('what') not in unsupported and not (
         g.get('what', '').startswith('Schema types only you have:')
         and not all(schema_coverage.absence_review(facts) for facts in cols))]
     if any(g.get('what') in unsupported for g in r['gaps'] + r['leads']):
-        lines += ['A legacy content-depth gap/lead, evidence-density verdict or question-heading '
+        lines += ['A legacy content-depth gap/lead, evidence-density verdict, publication-date or question-heading '
                   'prescription is not repeated as a recommendation; counts alone do not establish '
-                  'content depth, factual support or real user queries.', '']
+                  'content depth, factual support, actual publication dates or real user queries.', '']
     if len(gaps) + len(leads) < len([g for g in r['gaps'] + r['leads'] if g.get('what') not in unsupported]):
         lines += ['Schema absence-based claims are withheld for unverified extraction coverage. '
                   'Inspect existing markup; observed types remain available as observations.', '']

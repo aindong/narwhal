@@ -168,11 +168,51 @@ may remove a real header byline. A captured cue is not a verified writer.
 - Trust is the most important E-E-A-T member — a page can be expert but
   untrustworthy (deceptive, unsafe), and that caps its quality rating.
 
-## Freshness
-- Show a published and/or last-updated date. Freshness matters most for topics
-  that change (news, prices, "best of {year}", software).
-- Don't fake updates — changing only the date without substantive edits is a
-  pattern raters and systems penalize.
+<a id="freshness"></a>
+
+## Date cues (not freshness verification)
+
+Review the page's actual purpose and original date evidence. Add accurate,
+appropriately labelled publication/update information when useful and known;
+do not invent dates, relabel event dates as publication or cosmetically refresh
+dates without substantive changes. Google's [byline-date guidance](https://developers.google.com/search/docs/appearance/publication-dates)
+distinguishes page publication/update dates from dates of the events described,
+uses multiple signals, and does not guarantee a displayed date. Narwhal does not
+measure engine interpretation, freshness, accuracy or ranking/citation impact.
+
+- Page content scans and comparison/brief facts share `date_cues`: normalized
+  nonempty `property=article:published_time`, `property=article:modified_time`
+  and `name=date` metadata, plus English-month/ISO-like patterns in the first
+  2,000 Unicode code points of selected extracted text. Bare `20xx` years are
+  counted separately, not publication evidence on their own. Metadata values
+  and pattern matches can be invalid or unrelated; no calendar, ownership,
+  rendered-visibility, multilingual date or structured-data date-graph validation
+  occurs. A candidate gets a passing observation, not a freshness certificate.
+- The receipt checks at most 1,000 normalized metadata fields and retains five
+  distinct kind/value candidates. Declaration attributes are inspected through
+  4,096 raw characters; witnesses normalize whitespace/controls and clip at 160.
+  JSON records field ordinals or zero-based selected-prefix offsets, extraction
+  basis and metadata/value/candidate/prefix limit flags. These are output/check
+  bounds, not total CPU/heap guarantees. Human page reports show literal bounded
+  witnesses, not source hyperlinks; JSON may retain sensitive metadata values,
+  so inspect before sharing. No extra fetch or external API is added.
+- Missing candidates on article-like pages give a low conditional review, not
+  a missing-date verdict. Nonarticles without candidates get no date instruction.
+  Dates can exist outside the selected prefix, in unsupported formats or in
+  omitted metadata. Selected-text extraction may remove real date information;
+  normalized metadata is parser-dependent, not an independent HTML5 projection.
+- Historical IDs `content.no.visible.date.signal` and
+  `content.date.freshness.signal.present` stay stable; review title-based ignore
+  filters for the new labels. Comparison's `date_signal` boolean now means a
+  shared candidate was captured: modified metadata and date-like text can turn
+  it true; blank metadata and bare years alone no longer do. Missing/unsupported
+  legacy receipts remain unrecorded; do not reconstruct scope from the boolean.
+- Comparisons/briefs no longer generate `Publish/update date` gaps/leads. Their
+  renderers suppress those known legacy prescriptions without changing saved
+  JSON. Candidate counts are neutral observations, not date quotas. Current and
+  legacy missing-date plans keep edits review-required and conditional on known,
+  useful information. Other checks and fetch guards remain unchanged. Corrected
+  date findings can change tool scores without any page or measured SEO gain.
 
 ## Readability
 - Aim for scannable prose: short paragraphs, ~15–20 words/sentence average,

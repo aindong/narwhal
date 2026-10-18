@@ -37,7 +37,7 @@ _SECTION_RULES = (
      'filler.padding.language some.filler.phrasing reads.as.ai.generated.generic '
      'some.generic.ai.sounding.phrasing repetitive.vocabulary'),
     ('content', 'experience--expertise', 'no.visible.author.byline'),
-    ('content', 'freshness', 'no.visible.date.signal'),
+    ('content', 'date-cues-not-freshness-verification', 'no.visible.date.signal date.freshness.signal.present'),
     ('content', 'social--preview-metadata', 'incomplete.open.graph.tags no.twitter.x.card.type'),
     ('schema', 'format', 'no.structured.data microdata.extraction rdfa.extraction'),
     ('geo', '1-question-based-headings', 'few.question.based.headings'),
