@@ -54,6 +54,15 @@ class TestRenderedTextEvidence(unittest.TestCase):
         dep, report = measured('', '')
         self.assertEqual(0, dep['text_comparison']['served_tokens'])
         self.assertEqual('No selected text observed in either snapshot', report.findings[0].title)
+        self.assertEqual(('technical.rendered.text.unobserved', 'low'),
+                         (report.findings[0].rule_id, report.findings[0].severity))
+        self.assertNotIn('Selected extracted text matches', report.findings[0].detail)
+        result = plan.build_plan(json.loads(report.to_json()), str(FIXTURE))
+        action, = result['actions']
+        self.assertTrue(action['manual_action'])
+        self.assertEqual([], action['likely_files'])
+        self.assertFalse(action['requires_deploy'])
+        self.assertEqual([], result['groups'])
 
     def test_large_increase_retains_legacy_numbers_and_ids_as_low_reviews(self):
         dep, report = measured('<main>Server intro</main>', '<main>Server intro ' + 'client ' * 98 + '</main>')

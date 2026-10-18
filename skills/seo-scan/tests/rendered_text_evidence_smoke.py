@@ -28,6 +28,8 @@ def main(argv=None):
     for name, raw, rendered in cases:
         dep, report = measured(raw, rendered)
         before = report.to_json()
+        if name == 'empty':
+            assert [(f.rule_id, f.severity) for f in report.findings] == [('technical.rendered.text.unobserved', 'low')]
         docs += [(name, report.to_html()),
                  (name + '-markdown', html_document('Paired text QA', '', md_to_html(report.to_markdown())))]
         if name == 'equal-count':
@@ -69,6 +71,8 @@ def main(argv=None):
                         assert 'Selected extracted text matches' in text and 'not full-page content' in text
                     if name.startswith('empty'):
                         assert 'No selected text observed' in text
+                        assert 'Selected extracted text matches' not in text
+                        assert 'No flagged findings' not in text
                     if name.startswith('metadata'):
                         assert 'Some may already exist in served HTML' in text
                     if name == 'plan':

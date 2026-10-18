@@ -48,6 +48,7 @@ SCHEMA_VERIFICATION_RULES = SCHEMA_EXTRACTION_RULES - {'schema.invalid.json.ld'}
 RENDER_VERIFICATION_RULES = frozenset((
     'technical.most.content.requires.javascript', 'technical.significant.content.requires.javascript',
     'technical.rendered.text.changed', 'technical.rendered.text.comparison.unverified',
+    'technical.rendered.text.unobserved',
     'technical.head.metadata.injected.by.javascript', 'technical.json.ld.injected.by.javascript',
     'geo.ai.answer.engines.may.not.see.this.content'))
 

@@ -24,7 +24,8 @@ All notable changes to Narwhal are documented here. The format follows
   block-count differences are low manual reviews, not JS-only shares, authenticated
   injection or AI-access verdicts. Plans verify before assigning SSR/markup edits.
   Priority/score corrections are not measured SEO gains; fetch/render/body guards
-  and partial-pair diff gates remain intact. Review title/severity-based filters.
+  and partial-pair diff gates remain intact. Empty pairs have a distinct manual
+  verification rule, not a passing server-rendering ID. Review title/severity-based filters.
 - JSON-LD errors distinguish decoder-reported syntax defects from tool decoding/
   node-processing failures. Actual syntax errors retain their high rule/repair
   path; recursion/numeric/Unicode handling gaps are low manual verification notes,
