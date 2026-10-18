@@ -15,6 +15,7 @@ try:
     from lib import content_length
     from lib import date_cues
     from lib import readability_observation
+    from lib import lexical_focus
 except ImportError:  # when imported as a package
     from .lib import text as textlib  # type: ignore
     from .lib import content_quality  # type: ignore
@@ -23,6 +24,7 @@ except ImportError:  # when imported as a package
     from .lib import content_length  # type: ignore
     from .lib import date_cues  # type: ignore
     from .lib import readability_observation  # type: ignore
+    from .lib import lexical_focus  # type: ignore
 
 CAT = "content"
 
@@ -104,29 +106,27 @@ def _readability(text, report, hub=False, article=False, *, language='', basis='
 
 
 def _keywords(doc, text, report):
-    keywords = textlib.top_keywords(text, 8)
+    receipt = lexical_focus.observe(doc, text)
+    report.meta['lexical_focus'] = receipt
+    keywords = receipt['body_terms']
     if not keywords:
         return
-    top_terms = {k for k, _ in keywords}
-    summary = ", ".join(f"{k} ({c})" for k, c in keywords[:6])
-    bigrams = textlib.top_bigrams(text, 3)
+    display = lambda item: item['term'] + (' [clipped]' if item['clipped'] else '') + f" ({item['count']})"
+    summary = ', '.join(display(item) for item in keywords[:6])
+    bigrams = receipt['phrases']
     if bigrams:
-        summary += "  ·  phrases: " + ", ".join(k for k, _ in bigrams)
-    report.ok(CAT, "Dominant topics detected", summary)
-
-    # Topical focus: do the title/H1 terms show up in the body's top keywords?
-    focus_words = set(textlib.words((doc.title or "").lower()))
-    h1s = [t for lvl, t in doc.headings if lvl == 1]
-    if h1s:
-        focus_words |= set(textlib.words(h1s[0].lower()))
-    focus_words = {w for w in focus_words if len(w) >= 3
-                   and w not in textlib.STOPWORDS}
-    if focus_words and not (focus_words & top_terms):
-        report.add(CAT, "low", "Body may not reinforce the title topic",
-                   "None of the title/H1 keywords appear among the page's most "
-                   "frequent body terms.",
-                   "Make sure the main content actually develops the topic promised "
-                   "by the title and H1 (helps ranking and AI topical grounding).")
+        summary += '  ·  phrases: ' + ', '.join(item['term'] + (' [clipped]' if item['clipped'] else '') for item in bigrams)
+    report.add(CAT, 'good', 'Frequent extracted-text terms observed', summary + '. ' + lexical_focus.LIMITS,
+               rule_id='content.dominant.topics.detected')
+    if receipt['status'] == 'zero_overlap':
+        report.add(CAT, 'low', 'Review literal title/H1 term overlap',
+                   f"0 exact shared title/first-H1 terms among {len(keywords)} retained frequent body terms. " + lexical_focus.LIMITS,
+                   'Review actual page purpose and wording in context, including synonyms and extraction. '
+                   'Edit only confirmed misleading labels or missing useful content; keep accurate wording. '
+                   'Do not repeat keywords or rewrite solely to force overlap with the top-8 list. '
+                   'Ranking and AI-citation effects are unmeasured.',
+                   evidence=lexical_focus.witnesses(receipt),
+                   rule_id='content.body.may.not.reinforce.the.title.topic')
 
 
 def _quality(text, report):

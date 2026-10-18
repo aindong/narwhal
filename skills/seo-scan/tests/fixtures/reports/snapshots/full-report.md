@@ -87,7 +87,7 @@ Year-pattern matches in selected prefix: 0 (not publication evidence on their ow
 - 🟢 **robots.txt references a sitemap**
 - 🟢 **XML sitemap reachable**
 - 🟢 **Few configured style-pattern matches** — 0 filler matches; 0 distinct common-phrase matches; lexical diversity 0.815. This does not establish authorship, originality or content quality.
-- 🟢 **Dominant topics detected** — page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy
+- 🟢 **Frequent extracted-text terms observed** — page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy. ASCII frequency and exact term overlap only, not dominant topics, semantic relevance, intent satisfaction, rankings or AI citations. Top-8 cutoff/ties, synonyms, inflections, stopwords and extraction can hide matches; overlap does not establish semantic coverage.
 - 🟢 **Structured data present** — Article
 - 🟢 **Configured question-heading cues present** — 2/2 subheadings match configured English starters or a terminal ASCII question mark. Question relevance and engine matching are not measured.
 - 🟢 **Sentence groups in the configured word range** — 3/4 synthetic sentence groups contain 40–120 counted ASCII-word matches. Actual paragraphs, self-containment and engine citability are not measured.

@@ -137,6 +137,13 @@ remain outside the disclosure. JSON and Markdown stay unchanged. The HTML contai
 mutually exclusive screen/print detail copies; use JSON for recorded facts, not
 counts of duplicated DOM text.
 
+Lexical-focus checks expose the existing top-eight ASCII-term list and exact
+title/first-H1 overlap, not dominant topics or semantic coverage. A title term
+may occur outside the cutoff; ties and synonyms can change the heuristic without
+an intent mismatch. Review actual wording and purpose, without keyword stuffing
+or forced overlap. Counts, selection and score contributions stay unchanged.
+See [lexical scope and compatibility](skills/seo-scan/references/content-eeat.md#topical-focus).
+
 Comparison/brief `stats_cites` values are retained lexical match counts, not
 verified sources or evidence quality. New `evidence_cues` receipts split statistic
 patterns from English-oriented citation cues and explicitly leave source validity

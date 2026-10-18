@@ -12,6 +12,15 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Page frequency/title-H1 checks expose bounded lexical receipts with exact
+  overlap, filter/cutoff/tie basis and clipped/omitted witnesses rather than
+  claiming dominant topics or semantic relevance. Existing counts, selection,
+  priorities and score contributions remain. Current/legacy plans preserve
+  accurate wording and avoid keyword stuffing or forced overlap; original plan
+  labels stay in JSON. Missing legacy scope and ranking/citation effects remain
+  unverified; review title-based filters for the updated observation labels.
+- Long literal terms in Markdown-derived report lists wrap on narrow screens
+  without changing source text or report data.
 - Native page/site-audit HTML groups supplemental text-length/readability and
   attribution/date evidence behind keyboard-operable disclosure. Counts,
   unassessed scope and candidate uncertainty remain visible; priorities, quick

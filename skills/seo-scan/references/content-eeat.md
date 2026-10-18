@@ -262,11 +262,43 @@ from a formula; no universal score or minimum word count is established.
   separate and are not newly validated by this change.
 
 ## Topical focus
-- The auditor extracts the page's most frequent terms and phrases (its "dominant
-  topics") and candidate entities. If none of the **title/H1** keywords appear
-  among the body's top terms, the page may not actually develop the topic it
-  promises — bad for ranking and for AI topical grounding. Keep the title, H1, and
-  body reinforcing one clear subject.
+
+The page auditor reports lexical frequency and exact title/first-H1 overlap,
+not dominant topics, semantic relevance, intent satisfaction, ranking or AI
+citability. Review actual purpose and wording, including synonyms, before editing.
+Keep accurate wording; do not stuff keywords or rewrite solely to force overlap.
+
+- `meta.lexical_focus` records the existing ASCII pattern `[A-Za-z][A-Za-z'\-]*`,
+  minimum three-character terms, current English stopword-set SHA-256, selected
+  extraction basis and exact overlap count. It retains the same top eight body
+  terms and top three adjacent eligible-token phrases. Frequency ties use first
+  occurrence in selected text; a title term can occur ninth without entering the
+  retained list. Body terms outside that cutoff are not absence evidence.
+- Focus terms come from the normalized title plus **only the first H1**, lowercased
+  and filtered by the same length/stopword rules. The exact distinct focus count
+  and overlap use complete, unclipped terms. Up to twelve sorted focus witnesses,
+  eight body terms and three phrases are retained, clipped at 160 code points
+  with flags; extraction labels have the same limit. Clipped equal-looking values
+  do not establish term identity, and omitted focus witnesses cannot reconstruct
+  the complete overlap. These are receipt/output bounds, not total CPU/heap budgets.
+- `no_body_terms` / `no_focus_terms` mean no eligible terms for this specific
+  pattern/filter, not absent content or an assessed semantic match. Other statuses
+  record zero/positive exact overlap only. Synonyms, inflections, non-ASCII text,
+  incidental matches, navigation and extraction can distort interpretation. No
+  language detection, stemming, multilingual segmentation or semantic model runs.
+- Historical IDs `content.dominant.topics.detected` and
+  `content.body.may.not.reinforce.the.title.topic` remain, with good observation /
+  low review priorities and the same selection/counts/score contributions. Titles
+  change, so review title-based ignore filters; ID-based filters remain stable.
+  Missing/malformed/unsupported legacy receipts do not supply measured scope.
+  The stopword hash identifies a filter snapshot, not source authenticity.
+- Current/legacy plans keep changes conditional on confirmed misleading labels
+  or missing useful content, not forced word repetition. Human plans label the
+  original lexical observation without repeating a semantic-gap verdict; original
+  titles/priorities remain in JSON. Bounded term witnesses may contain names or
+  identifiers, so inspect reports before sharing. No external fetch/API or
+  independent accuracy/engine-outcome measurement is added. Other heuristics,
+  comparison/brief facts and their own lexical filters are unchanged.
 
 ## Social / preview metadata
 - Open Graph (`og:title`, `og:description`, `og:image`) and `twitter:card` don't

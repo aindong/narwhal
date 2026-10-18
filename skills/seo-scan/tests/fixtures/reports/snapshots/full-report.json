@@ -87,6 +87,102 @@
       "uninterpreted_reasons": [],
       "limits": "English-oriented heuristic formula estimates, not measured reader comprehension, a verified school grade, content quality or ranking/AI-citation impact. ASCII-pattern matches are not multilingual words; punctuation fragments are not verified sentences and vowel-group estimates are not validated syllables. Short samples, headings, abbreviations, code and specialist vocabulary can distort results. Review actual audience and text; no universal formula target or minimum word count is established."
     },
+    "lexical_focus": {
+      "version": 1,
+      "basis": "selected_text_ascii_frequency_and_exact_overlap",
+      "word_pattern": "[A-Za-z][A-Za-z'\\-]*",
+      "minimum_term_characters": 3,
+      "stopwords_sha256": "f0f76c95aa0314ad347db59df9097dd71dbd11875b8ce15f161ed1c1a72e88f8",
+      "tie_basis": "first_selected_text_occurrence",
+      "focus_basis": "normalized_title_plus_first_h1",
+      "source_basis": "visible text",
+      "source_basis_clipped": false,
+      "body_term_limit": 8,
+      "phrase_limit": 3,
+      "focus_witness_limit": 12,
+      "body_terms": [
+        {
+          "term": "page",
+          "clipped": false,
+          "count": 4
+        },
+        {
+          "term": "should",
+          "clipped": false,
+          "count": 4
+        },
+        {
+          "term": "evidence",
+          "clipped": false,
+          "count": 2
+        },
+        {
+          "term": "engines",
+          "clipped": false,
+          "count": 2
+        },
+        {
+          "term": "without",
+          "clipped": false,
+          "count": 2
+        },
+        {
+          "term": "teams",
+          "clipped": false,
+          "count": 2
+        },
+        {
+          "term": "after",
+          "clipped": false,
+          "count": 2
+        },
+        {
+          "term": "practical",
+          "clipped": false,
+          "count": 1
+        }
+      ],
+      "phrases": [
+        {
+          "term": "practical guide",
+          "clipped": false,
+          "count": 1
+        },
+        {
+          "term": "answer-engine visibility",
+          "clipped": false,
+          "count": 1
+        },
+        {
+          "term": "page easy",
+          "clipped": false,
+          "count": 1
+        }
+      ],
+      "focus_terms": [
+        {
+          "term": "answer-engine",
+          "clipped": false
+        },
+        {
+          "term": "guide",
+          "clipped": false
+        },
+        {
+          "term": "practical",
+          "clipped": false
+        },
+        {
+          "term": "visibility",
+          "clipped": false
+        }
+      ],
+      "focus_term_count": 4,
+      "shared_term_count": 1,
+      "focus_witnesses_omitted": false,
+      "status": "observed_overlap",
+      "limits": "ASCII frequency and exact term overlap only, not dominant topics, semantic relevance, intent satisfaction, rankings or AI citations. Top-8 cutoff/ties, synonyms, inflections, stopwords and extraction can hide matches; overlap does not establish semantic coverage."
+    },
     "authorship_cues": {
       "version": 1,
       "interpretation": "attribution_candidates_only",
@@ -498,8 +594,8 @@
     {
       "category": "content",
       "severity": "good",
-      "title": "Dominant topics detected",
-      "detail": "page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy",
+      "title": "Frequent extracted-text terms observed",
+      "detail": "page (4), should (4), evidence (2), engines (2), without (2), teams (2)  ·  phrases: practical guide, answer-engine visibility, page easy. ASCII frequency and exact term overlap only, not dominant topics, semantic relevance, intent satisfaction, rankings or AI citations. Top-8 cutoff/ties, synonyms, inflections, stopwords and extraction can hide matches; overlap does not establish semantic coverage.",
       "recommendation": "",
       "evidence": null,
       "rule_id": "content.dominant.topics.detected",
