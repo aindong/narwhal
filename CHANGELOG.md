@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Native page/audit and Markdown-derived reports size header/footer logos with
+  explicit CSS (46px/16px) and align the footer mark inline with its credit.
+  WeasyPrint no longer falls back to the embedded image's 128px intrinsic size.
+  Inline image bytes, report data, engine options and fetching stay unchanged;
+  both PDF engines have geometry regressions in optional-engine CI.
 - Page frequency/title-H1 checks expose bounded lexical receipts with exact
   overlap, filter/cutoff/tie basis and clipped/omitted witnesses rather than
   claiming dominant topics or semantic relevance. Existing counts, selection,
