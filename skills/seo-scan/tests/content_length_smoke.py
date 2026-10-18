@@ -2,6 +2,7 @@
 """Text-count scope is visible without zero-word or quality claims in Chromium."""
 import argparse
 from pathlib import Path
+from _measurement_browser import expand_measurements
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -52,6 +53,7 @@ def main(argv=None):
                 docs.append(('installed-cli', args.html.read_text(encoding='utf-8'), True))
             for name, output, unassessed in docs:
                 page.set_content(output)
+                expand_measurements(page)
                 for mode, width in (('screen', 320), ('screen', 390), ('screen', 1100), ('print', 794)):
                     page.emulate_media(media=mode)
                     page.set_viewport_size({'width': width, 'height': 1000})

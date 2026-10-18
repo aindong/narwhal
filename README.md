@@ -129,6 +129,14 @@ marks, hub hints or unusable inputs leave interpretation unassessed. No minimum
 word count or universal formula target is imposed. See
 [readability boundaries](skills/seo-scan/references/content-eeat.md#readability).
 
+Native page/site-audit HTML keeps measurement counts and uncertainty in a compact
+overview. Expand **Inspect detailed evidence and limits** with a click or keyboard
+to read every witness and caveat. Print/PDF includes all details even if collapsed;
+no JavaScript is required. Priorities, quick wins and resource/coverage warnings
+remain outside the disclosure. JSON and Markdown stay unchanged. The HTML contains
+mutually exclusive screen/print detail copies; use JSON for recorded facts, not
+counts of duplicated DOM text.
+
 Comparison/brief `stats_cites` values are retained lexical match counts, not
 verified sources or evidence quality. New `evidence_cues` receipts split statistic
 patterns from English-oriented citation cues and explicitly leave source validity

@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Compact native measurement evidence:** page/audit HTML keeps counts and
+  uncertainty visible while detailed lexical/attribution/date receipts expand by
+  mouse or keyboard. Priority/resource warnings stay outside; print/PDF includes
+  all details once even when collapsed, without scripts. No JSON/Markdown,
+  findings/scoring or fetching change; dual screen/print DOM is presentation only.
 - **Inspectable readability formulas:** historical lexical/fragment/syllable
   counts and exact Flesch/FK estimates remain, not comprehension, school-grade or
   AI-citability certificates. Unsupported scope stays unassessed; low contextual
