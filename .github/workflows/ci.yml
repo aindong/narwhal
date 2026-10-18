@@ -122,3 +122,5 @@ jobs:
         run: python skills/seo-scan/tests/question_observation_smoke.py
       - name: Dated schema-appearance browser regression
         run: python skills/seo-scan/tests/schema_appearance_smoke.py
+      - name: Schema-extraction coverage browser regression
+        run: python skills/seo-scan/tests/schema_coverage_smoke.py

@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
 from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
-from lib import question_observation, schema_appearance  # noqa: E402
+from lib import question_observation, schema_appearance, schema_coverage  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -66,7 +66,8 @@ def facts(report, doc) -> dict:
                                             len(audit_geo._CITE_HINT.findall(text)), doc.extraction)
     settings = report.meta.get('scan_settings', {})
     reviewed = settings.get('content_length_reviewed') if isinstance(settings, dict) else None
-    schema_types = _schema_types(doc)
+    records, schema_errors = structured_data.collect(doc)
+    schema_types = sorted({typ for record in records for typ in structured_data.types(record['node'])})
     return {
         "url": report.final_url or report.url,
         "rendered": report.rendered,
@@ -86,6 +87,7 @@ def facts(report, doc) -> dict:
         "question_cues": questions,
         "schema_types": schema_types,
         'schema_search_features': schema_appearance.observe(schema_types),
+        'schema_extraction': schema_coverage.observe(doc, schema_errors),
         "og_complete": all(doc.meta_by_property(p)
                            for p in ("og:title", "og:description", "og:image")),
         "twitter_card": bool(doc.meta_by_name("twitter:card")),
@@ -141,7 +143,7 @@ def gap_analysis(you: dict, rivals: list) -> dict:
         for t in r["schema_types"]:
             if t not in yours:
                 missing.setdefault(t, []).append(r["url"])
-    if missing:
+    if missing and schema_coverage.absence_review(you):
         gaps.append({"what": "Schema types: " + ", ".join(sorted(missing)),
                      "who": sorted({u for who in missing.values() for u in who}),
                      "action": "Review these types; add only those matching real visible content and the intended consumer "
@@ -149,7 +151,7 @@ def gap_analysis(you: dict, rivals: list) -> dict:
                                "appearance notes separately; presence is not proof of eligibility "
                                "or ranking benefit. Some types belong nested in existing markup."})
     extra = yours - {t for r in rivals for t in r["schema_types"]}
-    if extra and rivals:
+    if extra and rivals and all(schema_coverage.absence_review(facts) for facts in [you] + rivals):
         leads.append({"what": f"Schema types only you have: {', '.join(sorted(extra))}",
                       "detail": ""})
 
@@ -161,7 +163,7 @@ def gap_analysis(you: dict, rivals: list) -> dict:
                                'when helpful; do not rewrite solely to satisfy a cue fraction. '
                                'Real queries, engine matching and citation impact are not measured.'})
 
-    return {"gaps": gaps, "leads": leads,
+    return {"gaps": gaps, "leads": leads, 'schema_comparison': schema_coverage.comparison(you, rivals),
             "text_length": length_observation.comparison(you, rivals)}
 
 
@@ -244,6 +246,13 @@ def _short(url: str, limit: int = 40) -> str:
     return u if len(u) <= limit else u[: limit - 1] + "…"
 
 
+def _score_cell(facts, value):
+    state = schema_coverage.fact_state(facts)
+    suffix = (' (schema extraction unverified)' if state == 'unverified' else
+              ' (schema coverage unrecorded)' if state == 'unknown' else '')
+    return str(value) + suffix
+
+
 def render_markdown(r: dict) -> str:
     if r.get("error"):
         lines = [f"# Narwhal Compare", "", r["error"]]
@@ -265,12 +274,15 @@ def render_markdown(r: dict) -> str:
     header = "| | **You** | " + " | ".join(_short(c["url"], 24) for c in rivals) + " |"
     sep = "|:--|" + "--:|" * len(cols)
     lines += ["## Scoreboard", "", header, sep,
-              "| Overall | " + " | ".join(f"**{c['score']}**" for c in cols) + " |"]
+              "| Overall | " + " | ".join('**' + _score_cell(c, c['score']) + '**' for c in cols) + " |"]
     for key, label in (("technical", "Technical"), ("content", "Content"),
                        ("schema", "Schema"), ("geo", "GEO")):
-        row = [str(c["cat_scores"].get(key, "–")) for c in cols]
+        row = [(_score_cell(c, c['cat_scores'].get(key, '–')) if key == 'schema' else str(c['cat_scores'].get(key, '–')))
+               for c in cols]
         lines.append(f"| {label} | " + " | ".join(row) + " |")
     lines.append("")
+
+    lines += ['## Structured-data extraction coverage', '', *schema_coverage.summary(you, rivals), '']
 
     rows = [
         ("HTML snapshot", [html_source(c) for c in cols]),
@@ -308,19 +320,27 @@ def render_markdown(r: dict) -> str:
     lines += ['## Google schema appearances (dated snapshot)', '',
               *schema_appearance.summary(you, rivals), '']
     unsupported = {'Content depth', 'Evidence density (stats/citations)', 'Question-based headings'}
-    gaps = [g for g in r['gaps'] if g.get('what') not in unsupported]
-    leads = [g for g in r['leads'] if g.get('what') not in unsupported]
-    if len(gaps) != len(r['gaps']) or len(leads) != len(r['leads']):
+    gaps = [g for g in r['gaps'] if g.get('what') not in unsupported and not (
+        g.get('what', '').startswith('Schema types:') and not schema_coverage.absence_review(you))]
+    leads = [g for g in r['leads'] if g.get('what') not in unsupported and not (
+        g.get('what', '').startswith('Schema types only you have:')
+        and not all(schema_coverage.absence_review(facts) for facts in cols))]
+    if any(g.get('what') in unsupported for g in r['gaps'] + r['leads']):
         lines += ['A legacy content-depth gap/lead, evidence-density verdict or question-heading '
                   'prescription is not repeated as a recommendation; counts alone do not establish '
                   'content depth, factual support or real user queries.', '']
+    if len(gaps) + len(leads) < len([g for g in r['gaps'] + r['leads'] if g.get('what') not in unsupported]):
+        lines += ['Schema absence-based claims are withheld for unverified extraction coverage. '
+                  'Inspect existing markup; observed types remain available as observations.', '']
     lines += ["## Gaps to close (they have it — you don't)", ""]
     if gaps:
         for g in gaps:
             who = ", ".join(_short(w, 30) for w in g["who"])
             lines.append(f"- **{g['what']}** — seen on {who}. {g['action']}")
     else:
-        lines.append("No feature gaps detected against these competitors. 🟢")
+        lines.append('No other assessed feature gaps; schema absence checks are unverified.'
+                     if schema_coverage.comparison(you, rivals)['status'] != 'no_known_problem'
+                     else "No feature gaps detected against these competitors. 🟢")
     lines.append("")
 
     if leads:

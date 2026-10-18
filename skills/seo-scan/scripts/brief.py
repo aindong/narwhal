@@ -42,7 +42,7 @@ from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_disc
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
 from lib import length_observation, evidence_observation, question_observation  # noqa: E402
-from lib import schema_appearance  # noqa: E402
+from lib import schema_appearance, schema_coverage  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -196,6 +196,10 @@ def schema_suggestions(you: dict | None, rivals: list, questions: list) -> list:
                     "who": []})
     for candidate in out:
         candidate['google_search_appearance'] = schema_appearance.observe([candidate['type']])
+        candidate['existing_markup_status'] = ('not_applicable' if you is None else
+            'not_observed_in_supported_subset' if schema_coverage.absence_review(you['facts']) else 'unverified')
+        if candidate['existing_markup_status'] == 'unverified':
+            candidate['reason'] += '; existing own-page markup is unverified, inspect before adding or duplicating it'
     return out
 
 
@@ -252,6 +256,7 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
     brief["structure"] = structure_targets(you, rivals)
     brief['text_length'] = length_observation.comparison(you['facts'] if you else None,
                                                        [r['facts'] for r in rivals])
+    brief['schema_comparison'] = schema_coverage.comparison(you['facts'] if you else None, [r['facts'] for r in rivals])
     return brief
 
 
@@ -381,6 +386,8 @@ def render_markdown(b: dict) -> str:
             label = page['url'].replace('|', '%7C').replace('\n', ' ').replace('\r', ' ')
             lines.append(f"| {label} | {compare.html_source(page)} |")
         lines.append("")
+    lines += ['## Structured-data extraction coverage', '',
+              *schema_coverage.summary(b.get('you'), b.get('competitors', [])), '']
 
     # Target queries (only ever real ones).
     if striking:
@@ -412,13 +419,16 @@ def render_markdown(b: dict) -> str:
     if b.get("gaps") is not None:
         lines += ["## Gaps vs compared pages", ""]
         gaps = [g for g in b['gaps'] if g.get('what') not in
-                ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings')]
+                ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings') and not (
+                    g.get('what', '').startswith('Schema types:') and not schema_coverage.absence_review(b.get('you')))]
         if gaps:
             for g in gaps:
                 who = ", ".join(_short(w, 30) for w in g["who"])
                 lines.append(f"- **{g['what']}** — seen on {who}. {g['action']}")
         else:
-            lines.append("No on-page feature gaps against the compared pages. 🟢")
+            lines.append('No other assessed feature gaps; schema absence checks are unverified.'
+                         if schema_coverage.comparison(b.get('you'), b.get('competitors', []))['status'] != 'no_known_problem'
+                         else "No on-page feature gaps against the compared pages. 🟢")
         lines.append("")
 
     if b["missing_subtopics"]:
@@ -477,11 +487,18 @@ def render_markdown(b: dict) -> str:
             lines.append(f"- **{s['type']}** — {s['reason']}{who}. Generate it: "
                          f"`narwhal schema {s['type']}`; only add types that "
                          "match the page's real visible content and intended consumer.")
+            own = b.get('you')
+            expected = 'not_applicable' if own is None else 'not_observed_in_supported_subset'
+            if (s.get('existing_markup_status') != expected
+                    or own is not None and (not schema_coverage.absence_review(own) or s['type'] in own.get('schema_types', []))):
+                lines.append('  Existing own-page markup is unverified; inspect it before adding or duplicating this type.')
             lines += ['  ' + line for line in schema_appearance.lines(s.get('google_search_appearance'), [s['type']])]
         lines.append("")
 
     leads = [lead for lead in b.get('leads', []) if lead.get('what') not in
-             ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings')]
+             ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings') and not (
+                 lead.get('what', '').startswith('Schema types only you have:')
+                 and not all(schema_coverage.absence_review(facts) for facts in pages))]
     if leads:
         lines += ["## Keep (where you already lead)", ""]
         for l in leads:

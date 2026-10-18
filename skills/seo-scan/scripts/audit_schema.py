@@ -8,9 +8,9 @@ page that clearly should carry markup (article, product, org) has none.
 from __future__ import annotations
 
 try:
-    from lib import ecommerce, htmlx, microdata, structured_data, schema_appearance
+    from lib import ecommerce, htmlx, microdata, structured_data, schema_appearance, schema_coverage
 except ImportError:  # when imported as a package
-    from .lib import ecommerce, htmlx, microdata, structured_data, schema_appearance  # type: ignore
+    from .lib import ecommerce, htmlx, microdata, structured_data, schema_appearance, schema_coverage  # type: ignore
 
 CAT = "schema"
 
@@ -96,6 +96,7 @@ def audit(doc, resp, report, ctx=None) -> None:
     blobs = doc.scripts_ld
     records, errors = structured_data.collect(doc)
     report.meta["structured_data"] = structured_data.provenance(doc, records)
+    report.meta['structured_data']['extraction_coverage'] = schema_coverage.observe(doc, errors)
     if doc.microdata_warnings:
         warning = "\n".join(doc.microdata_warnings)
         report.add(CAT, "low", "Microdata extraction needs verification",

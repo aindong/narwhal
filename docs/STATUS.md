@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Schema extraction uncertainty:** supported-extractor error/warning-detail
+  receipts prevent false schema absence/exclusivity claims and qualify schema/
+  overall comparison scores. Brief candidates preserve positive observations
+  while requiring inspection of unknown existing markup. Known uncertainty blocks
+  page/audit diff improvements and CI gates, including crawl contributions.
+  Limits/findings/raw scores stay unchanged; no full conformance/accuracy claim.
 - **Schema appearance context downstream:** comparisons and semantic brief
   candidates carry the same dated Google retirement notices as page scans.
   Source links/limits distinguish a retired display from schema.org validity or

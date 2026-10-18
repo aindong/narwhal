@@ -29,7 +29,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
-from lib.report import recorded_llms_problem  # noqa: E402
+from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -85,6 +85,10 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + ' audit contains unverified sitemap availability; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get('llms_txt_unverified') is True for page in pages):
             reasons.append(label + ' audit contains unverified root llms.txt availability; its overall score is not comparable.')
+        if isinstance(pages, list) and any(isinstance(page, dict) and (
+                page.get('schema_extraction_unverified') is True or recorded_schema_extraction_problem(
+                    {'scan_settings': page.get('scan_settings')}, for_score=True)) for page in pages):
+            reasons.append(label + ' audit contains unverified structured-data extraction; its overall score is not comparable.')
         meta = item["meta"] if isinstance(item["meta"], dict) else {}
         coverage = meta.get("coverage")
         js_problem = recorded_js_comparison_problem(meta, for_score=True)
@@ -94,6 +98,8 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + ' report did not verify supported sitemap availability; technical-score comparison is unverified.')
         if recorded_llms_problem(meta, for_score=True):
             reasons.append(label + ' report did not verify root llms.txt availability; GEO-score comparison is unverified.')
+        if recorded_schema_extraction_problem(meta, for_score=True):
+            reasons.append(label + ' report has unverified structured-data extraction; schema/overall score comparison is unverified.')
         if meta.get("response_truncated") is True or (
                 isinstance(coverage, dict) and coverage.get("response_truncated") is True):
             reasons.append(label + " report used truncated HTML coverage.")
@@ -106,6 +112,7 @@ def _comparison(o: dict, n: dict) -> dict:
                        ("rendered", "Actual rendered/raw mode"),
                        ("image_checks", "Image-check setting"),
                        ("content_length_reviewed", "Content-length threshold coverage"),
+                       ('schema_extraction_reviewed', 'Schema-extraction coverage'),
                        ("rule_config", "Rule/scoring configuration")):
         if all(key in item for item in settings) and settings[0][key] != settings[1][key]:
             reasons.append(label + " differs between reports; changed checks or page representations are not fix evidence.")
@@ -116,7 +123,7 @@ def _comparison(o: dict, n: dict) -> dict:
                 if len(values) > 1:
                     reasons.append(f"{label} crawl contains contradictory {key} settings for {url}; its overall score is not comparable.")
     for url in sorted(crawls[0].keys() & crawls[1].keys()):
-        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", "rule_config"):
+        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'schema_extraction_reviewed', "rule_config"):
             values = [item[url].get(key, set()) for item in crawls]
             if all(values) and values[0] != values[1]:
                 reasons.append(f"Crawl setting {key} differs for {url}; its contribution to the overall score is not comparable.")
@@ -130,7 +137,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms availability gaps and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction gaps and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 
@@ -139,7 +146,7 @@ def _recorded_settings(meta, rendered=None):
     """Only explicit booleans prove a known setting; legacy data stays unknown."""
     raw = meta.get("scan_settings") if isinstance(meta, dict) else None
     raw = raw if isinstance(raw, dict) else {}
-    result = {key: raw[key] for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed")
+    result = {key: raw[key] for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'schema_extraction_reviewed')
             if type(raw.get(key)) is bool}
     if "rendered" not in result and type(rendered) is bool:
         result["rendered"] = rendered

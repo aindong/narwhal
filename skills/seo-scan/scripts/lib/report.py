@@ -18,6 +18,7 @@ from . import sitemap as sitemaplib
 from . import llms_resource
 from . import authorship
 from . import content_length
+from . import schema_coverage
 from .code_fences import closes_fence, markdown_lines, opening_fence
 from .markdown_text import TABLE_TEXT_MARKER
 
@@ -105,6 +106,23 @@ def recorded_llms_problem(meta, *, for_score=False):
     if for_score and scope is not None and 'geo' not in scope[0]:
         return None
     return llms_resource.problem(meta, for_score=for_score)
+
+
+def recorded_schema_extraction_problem(meta, *, for_score=False):
+    """Keep explicit extractor gaps visible, without inferring old coverage."""
+    scope = recorded_scan_scope(meta) if isinstance(meta, dict) else None
+    if for_score and scope is not None and 'schema' not in scope[0]:
+        return None
+    settings = meta.get('scan_settings') if isinstance(meta, dict) else None
+    data = meta.get('structured_data') if isinstance(meta, dict) else None
+    legacy_warning = isinstance(data, dict) and any(
+        isinstance(data.get(key), list) and bool(data[key]) for key in ('microdata_warnings', 'rdfa_warnings'))
+    unsupported = (isinstance(data, dict) and 'extraction_coverage' in data
+                   and schema_coverage.recorded(data['extraction_coverage']) is None)
+    if (schema_coverage.state(schema_coverage.meta_receipt(meta)) == 'unverified'
+            or legacy_warning or unsupported or isinstance(settings, dict) and settings.get('schema_extraction_reviewed') is False):
+        return 'Structured-data extraction needs verification; schema/overall score comparisons are unverified.'
+    return None
 
 
 def _crawler_policy_notes(meta):
@@ -290,7 +308,9 @@ class Report:
         scope = self._scope_info()
         discovery = recorded_sitemap_discovery_problem(self.meta)
         llms = recorded_llms_problem(self.meta)
-        discovery_suffix = (' ' + discovery if discovery else '') + (' ' + llms if llms else '')
+        schema = recorded_schema_extraction_problem(self.meta, for_score=True)
+        discovery_suffix = ((' ' + discovery if discovery else '') + (' ' + llms if llms else '')
+                            + (' ' + schema if schema else ''))
         if scope is None:
             if self.hard_fail:
                 return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded." + discovery_suffix

@@ -29,7 +29,7 @@ from lib.cli_errors import url_errors  # noqa: E402
 from lib.markdown_text import TABLE_TEXT_MARKER, table_text  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
-from lib.report import recorded_llms_problem  # noqa: E402
+from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib import llms_resource  # noqa: E402
 from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery, MAX_INDEX_CHILDREN  # noqa: E402
@@ -357,6 +357,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "js_comparison_unverified": bool(recorded_js_comparison_problem(rep.meta, for_score=True)),
                       "sitemap_discovery_unverified": bool(recorded_sitemap_discovery_problem(rep.meta, for_score=True)),
                       "llms_txt_unverified": bool(recorded_llms_problem(rep.meta, for_score=True)),
+                      'schema_extraction_unverified': bool(recorded_schema_extraction_problem(rep.meta, for_score=True)),
                       "scan_settings": rep.meta.get("scan_settings", {}),
                       "counts": rep.counts(),
                       "is_product": bool(ecommerce.get("is_product")),
@@ -447,12 +448,27 @@ def _page_indexing_notes(page):
     return notes
 
 
+def schema_extraction_note(result: dict) -> str:
+    """Qualify aggregate scores only for explicitly recorded extraction gaps."""
+    affected = sum(1 for page in result.get('pages', []) if isinstance(page, dict) and (
+        page.get('schema_extraction_unverified') is True
+        or recorded_schema_extraction_problem({'scan_settings': page.get('scan_settings')}, for_score=True)))
+    if not affected:
+        return ''
+    return (f'Structured-data extraction needs verification on {affected} scanned page(s); '
+            'schema/overall score comparisons, including the site average, are unverified. '
+            'Raw scores are retained, not proof of improvement.')
+
+
 def render_markdown(result: dict) -> str:
     skipped = result.get("skipped_robots", 0)
     skip_note = f"  ·  {skipped} skipped (robots.txt)" if skipped else ""
     lines = [f"# Site SEO & GEO Scan — {result['base']}", "",
              f"**Pages scanned:** {result['pages_scanned']}  ·  "
              f"**Average score:** {result['avg_score']}/100{skip_note}", ""]
+    schema_note = schema_extraction_note(result)
+    if schema_note:
+        lines += ['> ' + schema_note, '']
     sitemap_note = sm.reference_note(result.get('sitemap_references'))
     if sitemap_note:
         lines += ['> ' + sitemap_note, '']

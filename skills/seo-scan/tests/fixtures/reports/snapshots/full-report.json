@@ -40,7 +40,8 @@
       "rendered": false,
       "image_checks": false,
       "rule_config": "73dd3ab00a8fb78cc6bd9fdde9742750180283543f2b1df87fe6b6a69a495887",
-      "content_length_reviewed": true
+      "content_length_reviewed": true,
+      "schema_extraction_reviewed": true
     },
     "extraction": "visible text",
     "content_length": {
@@ -104,6 +105,17 @@
       "rdfa_supported": true,
       "rdfa_scope": "bounded schema.org RDFa (not a full RDFa processor)",
       "rdfa_warnings": [],
+      "extraction_coverage": {
+        "version": 1,
+        "basis": "supported_structured_data_extraction",
+        "source_basis": "document_html",
+        "status": "no_known_problem",
+        "jsonld_blocks": 1,
+        "jsonld_errors": 0,
+        "microdata_warning_details": 0,
+        "rdfa_warning_details": 0,
+        "limits": "Counts describe the supported extractor only, not complete JSON-LD/RDFa conformance, schema.org validity, visible-content ownership or Google eligibility. Warning-detail counts include retained omission notices, not all underlying errors. No known problem is not proof of exhaustive extraction. Known problems leave schema/overall score comparisons unverified; observed types remain observations, not evidence of absence."
+      },
       "article_field_policy": {
         "scope": "Google Article-family field recommendations, not full eligibility or schema.org validity",
         "required_properties": [],

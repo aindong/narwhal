@@ -138,6 +138,16 @@ generation/types remain available. Missing or unsupported legacy snapshots stay
 unverified, and no listed retirement notice is **not** an eligibility certificate.
 No policy sources are fetched at scan/render time. See [scope and compatibility](skills/seo-scan/references/schema.md#comparison-and-brief-appearance-context).
 
+Known structured-data extraction problems are not evidence that markup is absent.
+`schema_extraction` facts and page `meta.structured_data.extraction_coverage`
+record JSON-LD processing errors and retained Microdata/RDFa warning-detail counts.
+Comparisons withhold absence-based schema claims when their required coverage is
+unverified; brief candidates remain available but require inspecting existing
+markup. Scores/types/findings stay intact, with schema/overall comparisons labelled
+unverified. Page/audit `diff --fail-on-regression` exits 2 for known schema-extraction
+uncertainty, including crawl contributions. Missing legacy coverage is not backfilled
+or certified complete. See [extraction boundaries](skills/seo-scan/references/schema.md#known-extraction-uncertainty).
+
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,
 plus an omission marker when clipped. Full fields remain in JSON.
