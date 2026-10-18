@@ -92,9 +92,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install Playwright + Chromium
+      - name: Install optional PDF/browser engines
         run: |
-          pip install playwright
+          pip install playwright weasyprint
           python -m playwright install --with-deps chromium
       - name: Render smoke test
         run: python skills/seo-scan/tests/render_smoke.py
@@ -140,3 +140,5 @@ jobs:
         run: python skills/seo-scan/tests/measurement_disclosure_smoke.py
       - name: Scoped lexical-focus browser regression
         run: python skills/seo-scan/tests/lexical_focus_smoke.py
+      - name: Branded page/audit/Markdown geometry in both PDF engines
+        run: python skills/seo-scan/tests/brand_layout_smoke.py

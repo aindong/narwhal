@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Consistent PDF branding:** explicit 46px/16px CSS sizes keep header/footer
+  marks from expanding to 128px in WeasyPrint; the footer stays inline with its
+  credit. Page/audit/Markdown layouts are checked in both PDF engines without
+  changing image bytes, engine defaults, report facts or network behavior.
 - **Inspectable lexical focus:** exact top-eight ASCII frequency/title-first-H1
   overlap has bounded witnesses and cutoff/tie/filter provenance, not dominant-
   topic or semantic-relevance certification. Counts/selection/priorities/scores
