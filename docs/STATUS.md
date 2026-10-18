@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Exact comparative question cues:** literal heading counts, not rounded ratio
+  aliases, drive optional one-in-five reviews. Missing bases/no eligible headings
+  stay unassessed. Candidate provenance distinguishes compared headings from
+  supplied GSC queries; advice preserves useful descriptive headings and does not
+  promise citations. Matching/page scores remain unchanged, not newly validated.
 - **Neutral comparative evidence cues:** existing statistic/citation-pattern
   counts gain split-count/basis receipts with source validity unchecked, not
   evidence-density gaps or automatic source quotas. Zero/topic/hub observations

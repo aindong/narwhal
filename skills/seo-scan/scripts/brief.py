@@ -41,7 +41,7 @@ from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_pr
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
-from lib import length_observation, evidence_observation  # noqa: E402
+from lib import length_observation, evidence_observation, question_observation  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -164,13 +164,13 @@ def questions_to_answer(subtopics: list, striking: list) -> list:
     out, seen = [], []
     for s in subtopics:
         if s["question"]:
-            out.append({"question": s["heading"], "source": s["who"]})
+            out.append({"question": s["heading"], "source": s["who"], 'source_kind': 'compared_heading'})
             seen.append(_terms(s["heading"]))
     for q in striking:
         if _is_question(q["query"]):
             t = _terms(q["query"])
             if not any(t and _overlap(t, prior) == len(t) for prior in seen):
-                out.append({"question": q["query"],
+                out.append({"question": q["query"], 'source_kind': 'gsc_query',
                             "source": f"your own striking-distance query "
                                       f"({q['impressions']} impressions)"})
                 seen.append(t)
@@ -200,10 +200,8 @@ def structure_targets(you: dict | None, rivals: list) -> dict:
     """Existing question-heading heuristic on non-hubs, not length/evidence targets."""
     t: dict = {}
     content = [r["facts"] for r in rivals if r["facts"]["page_kind"] != "hub"]
-    if content:
-        qr = max(f["question_ratio"] for f in content)
-        if qr >= 0.2 and (you is None or you["facts"]["question_ratio"] < 0.2):
-            t["question_headings"] = True
+    if question_observation.review_difference(you['facts'] if you else None, content):
+        t['question_headings'] = True
     return t
 
 
@@ -240,7 +238,7 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
             ga = compare.gap_analysis(you["facts"], [r["facts"] for r in rivals])
             # Questions appear under structure targets; legacy length/evidence
             # verdicts are not recommendations either.
-            structural = {"Content depth", "Question-based headings",
+            structural = {"Content depth", "Question-based headings", question_observation.REVIEW_LABEL,
                           "Evidence density (stats/citations)"}
             brief["gaps"] = [g for g in ga["gaps"] if g["what"] not in structural]
             brief["leads"] = ga["leads"]
@@ -411,7 +409,7 @@ def render_markdown(b: dict) -> str:
     if b.get("gaps") is not None:
         lines += ["## Gaps vs compared pages", ""]
         gaps = [g for g in b['gaps'] if g.get('what') not in
-                ('Content depth', 'Evidence density (stats/citations)')]
+                ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings')]
         if gaps:
             for g in gaps:
                 who = ", ".join(_short(w, 30) for w in g["who"])
@@ -430,11 +428,15 @@ def render_markdown(b: dict) -> str:
         lines.append("")
 
     if b["questions"]:
-        lines += ["## Questions to answer on the page", ""]
+        lines += ["## Question-shaped candidates to review", ""]
         for q in b["questions"]:
-            lines.append(f"- **{q['question']}** — from {_short(q['source'], 60)}")
-        lines += ["", "Answer each in the first sentence under its heading — "
-                  "citable passages are what AI answer engines lift.", ""]
+            kind = ('Recorded GSC query' if q.get('source_kind') == 'gsc_query' else
+                    'Compared-page heading; not verified query data' if q.get('source_kind') == 'compared_heading' else
+                    'Source kind unrecorded; query grounding unverified')
+            lines.append(f"- **{q['question']}** — {kind}; from {_short(q['source'], 60)}")
+        lines += ['', 'Review relevance and existing coverage for the actual audience. Add a concise '
+                  'answer only when useful; candidate headings do not establish query demand. '
+                  'Citation impact is not measured.', '']
 
     st = b["structure"]
     length = (b['text_length'] if 'text_length' in b else
@@ -451,13 +453,18 @@ def render_markdown(b: dict) -> str:
         lines += ['Legacy evidence-target fields have an unrecorded measurement basis. '
                   'They do not establish verified evidence or a required source count. '
                   'Review real claims and sources; do not invent statistics or citations.', '']
-    if st.get('question_headings'):
-        lines += ["## Structure targets", ""]
-        if st.get("question_headings"):
-            lines.append("- **Question-shaped H2/H3s:** the compared pages "
-                         "phrase key headings as the questions users ask — "
-                         "do the same where it's natural.")
-        lines.append("")
+    lines += ['## Question-heading cues (contextual review)', '',
+              *question_observation.summary(b.get('you'), b.get('competitors', [])), '']
+    if st.get('question_headings') is True:
+        content = [facts for facts in b.get('competitors', []) if facts.get('page_kind') != 'hub']
+        if question_observation.review_difference(b.get('you'), content):
+            lines += ['## Structure review (optional)', '',
+                      'The exact heading-pattern counts trigger a contextual review heuristic. '
+                      'Keep useful descriptive headings; questions are optional when helpful, '
+                      'not required to match real queries or AI engines.', '']
+        else:
+            lines += ['The supplied question-heading flag is unverified for the recorded counts/basis. '
+                      'It is not a requirement to rewrite headings or proof of real query demand.', '']
 
     if b["schema"]:
         lines += ["## Schema to add", ""]
@@ -470,7 +477,7 @@ def render_markdown(b: dict) -> str:
         lines.append("")
 
     leads = [lead for lead in b.get('leads', []) if lead.get('what') not in
-             ('Content depth', 'Evidence density (stats/citations)')]
+             ('Content depth', 'Evidence density (stats/citations)', 'Question-based headings')]
     if leads:
         lines += ["## Keep (where you already lead)", ""]
         for l in leads:

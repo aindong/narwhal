@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Compare/brief question-heading heuristics use exact recorded counts rather
+  than the preserved two-decimal `question_ratio`. An 8/41 fraction no longer
+  becomes 20%; no eligible headings or legacy missing counts stay unassessed.
+  Reports show literal fractions and optional contextual advice, not forced
+  question rewrites or engine-matching claims. Brief candidates distinguish
+  compared headings from supplied GSC queries via `source_kind`. Pattern counts,
+  page scores and deduplication remain unchanged; this is not query/SEO validation.
 - Comparison/brief statistic/citation counts are explicit lexical observations,
   not verified evidence density. Preserve `stats_cites` and add split-count/basis
   receipts with source validity unchecked. Remove evidence-density gaps and

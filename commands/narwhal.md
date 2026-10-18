@@ -216,6 +216,11 @@ they do not establish measured word-count requirements.
 or factual support. Do not infer an evidence gap or source quota from these counts.
 Old `evidence_target`/`your_evidence` fields are unverified, not source requirements;
 review actual claims and sources without inventing statistics/citations.
+`question_cues` contains exact heading-pattern counts; the rounded `question_ratio`
+is a legacy alias, not a decision input. The one-in-five review heuristic is not
+query demand or an engine requirement. Question candidates distinguish
+`source_kind=compared_heading` from `gsc_query`; missing kinds stay unverified,
+not inferred from source wording. Keep deliberate editorial formats separate.
 
 **Step 3 — Synthesize the editorial brief.** The script measures; you plan.
 Write a brief a writer can execute without further research:
@@ -224,10 +229,11 @@ Write a brief a writer can execute without further research:
 - **Target queries** — from the JSON's `gsc` block only. If it's `found:
   false`, state plainly that this is a **structure-only brief** and skip the
   section — never estimate volumes.
-- **Recommended outline** — a concrete H1 + H2/H3 skeleton that covers the
-  missing subtopics and answers the questions list (question-shaped headings
-  where natural). Under each heading, one line on what to say — including a
-  direct first-sentence answer for citability.
+- **Recommended outline** — a concrete H1 + H2/H3 skeleton after reviewing
+  candidate subtopics/questions for actual reader intent and existing coverage.
+  Compared-page headings are not verified query data. Use descriptive headings
+  that help readers, with question forms/concise opening answers only when useful;
+  do not force them to satisfy cue fractions or promise engine citability.
 - **Claims & sources to review** — identify actual claims needing support in
   context, with real, checkable source types. Cue counts alone do not establish
   a gap or quota; don't invent figures/citations. Keep explicit editorial source
