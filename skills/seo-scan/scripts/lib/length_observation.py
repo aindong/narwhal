@@ -25,6 +25,8 @@ def recorded(facts):
     value = facts.get('text_length') if isinstance(facts, dict) else None
     if (not isinstance(value, dict) or type(value.get('version')) is not int
             or value['version'] != 1 or value.get('basis') != 'python_str_split'
+            or type(value.get('source_basis')) is not str or len(value['source_basis']) > 160
+            or not value['source_basis'].strip() or type(value.get('source_basis_clipped')) is not bool
             or not _count(value.get('whitespace_tokens')) or not _count(value.get('code_points'))
             or value['whitespace_tokens'] > value['code_points']):
         return None

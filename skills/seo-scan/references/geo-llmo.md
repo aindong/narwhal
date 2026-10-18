@@ -98,7 +98,10 @@ mode. Deliberate editorial source requirements are separate from these counts.
 
 Rendering new facts shows actual units and limits. Missing/malformed receipts,
 unknown markers and conflicting aliases remain basis-unrecorded; tool versions
-do not backfill missing provenance. Rendering legacy data does not mutate its
+do not backfill missing provenance. A bounded nonblank extraction label and a
+boolean clipping flag are required to recognize a cue or length receipt;
+missing/malformed provenance is not a recorded extraction basis.
+Rendering legacy data does not mutate its
 JSON or repeat known old evidence-density verdicts/targets as advice. Real
 claims and sources need contextual review, not a quota or fabricated citations.
 Scores, page-auditor receipts and other measurements stay unchanged by this

@@ -23,7 +23,9 @@ All notable changes to Narwhal are documented here. The format follows
   not verified evidence density. Preserve `stats_cites` and add split-count/basis
   receipts with source validity unchecked. Remove evidence-density gaps and
   automatic brief `evidence_target`/`your_evidence` quotas, including zero in topic
-  mode. Legacy bases/targets stay unverified. No regex, page score or source
+  mode. Legacy bases/targets stay unverified. Both cue and length receipts require
+  bounded nonblank extraction labels and boolean clipping flags before their
+  basis is shown as recorded. No regex, page score or source
   verification change; real claims/sources still need contextual review.
 - Comparisons and briefs keep literal whitespace-token/code-point receipts, not
   content-depth gaps/leads or automatically inferred word targets. Historical
