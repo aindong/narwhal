@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Page schema absence advice (including Product) now requires no known extraction error/limit; observed
+  syntax/property checks remain active. Clean-scan suggestions are conditional,
+  preserve valid supported formats and no longer promise rich results/AI benefits.
+  Plans treat extraction verification as manual-only without source edits or
+  generation, including ignored/legacy/crawl evidence, while keeping actual
+  observed repairs reviewable. Limits, rule IDs and healthy absence severities stay
+  unchanged; removed false penalties are not measured SEO fixes.
 - Brief subtopic suggestions are labelled compared-heading review candidates,
   not verified missing content. Typed term-match receipts expose exact counts and
   the existing lexical cutoff; synonym misses, unrelated word matches and topic/
@@ -22,8 +29,8 @@ All notable changes to Narwhal are documented here. The format follows
   types and scores while qualifying schema/overall comparisons; semantic brief
   candidates require reviewing unverified existing markup. Page/audit diff gates
   with known extraction uncertainty return incomparable/exit 2, including crawl
-  contributions. Existing extractor limits, findings and score arithmetic stay
-  unchanged; missing legacy coverage is not certified or backfilled.
+  contributions. Coverage metadata adds no score penalties or larger extractor
+  budgets; missing legacy coverage is not certified or backfilled.
 - Comparison and brief reports carry the page auditor's dated Google rich-result
   retirement context, including source links and scope for observed/suggested
   schema types. Semantic candidates/generation remain available; retired Google

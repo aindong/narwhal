@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
-from lib.report import recorded_llms_problem  # noqa: E402
+from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
@@ -37,6 +37,17 @@ SKIP_DIRS = {
     "node_modules", "vendor", "dist", "build", "coverage", "__pycache__",
 }
 SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "good": 4}
+SCHEMA_ABSENCE_RULES = frozenset(('schema.no.structured.data',
+    'schema.article.like.page.without.article.schema', 'schema.no.organization.website.entity',
+    'schema.ecommerce.product.missing'))
+SCHEMA_EXTRACTION_RULES = frozenset(('schema.microdata.extraction', 'schema.rdfa.extraction',
+    'schema.ecommerce.source.extraction', 'schema.invalid.json.ld', 'schema.extraction.unverified'))
+
+
+def _schema_uncertain(meta, findings):
+    """Explicit metadata or known extraction-error IDs, never supplied prose."""
+    return bool(recorded_schema_extraction_problem(meta, for_score=True) or any(
+        finding['rule_id'] in SCHEMA_EXTRACTION_RULES for finding in findings))
 
 
 def _legacy_rule_id(finding: dict) -> str:
@@ -132,6 +143,10 @@ def normalize_report(data: dict) -> dict:
         finding.setdefault("scope", "page")
         findings.append(finding)
     page_meta = page.get('meta')
+    schema_page_uncertain = _schema_uncertain(page_meta, findings)
+    if schema_page_uncertain:
+        findings = [f for f in findings if f['rule_id'] not in SCHEMA_ABSENCE_RULES]
+    schema_crawl_uncertain = False
     llms_metadata = [page_meta]
     if kind == 'audit':
         llms_metadata.append(data.get('crawl'))
@@ -155,12 +170,22 @@ def normalize_report(data: dict) -> dict:
                              'title': 'Sitemap discovery needs manual verification', 'detail': detail,
                              'occurrences': max(1, recorded['unverified_files']) if recorded else 1})
     if kind == "audit":
+        crawl = data.get('crawl', {})
+        schema_crawl_uncertain = any(isinstance(item, dict) and (
+            item.get('schema_extraction_unverified') is True
+            or recorded_schema_extraction_problem({'scan_settings': item.get('scan_settings')}, for_score=True))
+            for item in crawl.get('pages', []))
+        schema_crawl_uncertain = schema_crawl_uncertain or any(
+            isinstance(item, dict) and item.get('severity') != 'good'
+            and _legacy_rule_id(item) in SCHEMA_EXTRACTION_RULES for item in crawl.get('recurring', []))
         seen = {f["rule_id"]: f for f in findings}
         for raw in data.get("crawl", {}).get("recurring", []):
             if not isinstance(raw, dict) or raw.get("severity") == "good":
                 continue
             finding = dict(raw)
             finding["rule_id"] = _legacy_rule_id(finding)
+            if schema_crawl_uncertain and finding['rule_id'] in SCHEMA_ABSENCE_RULES:
+                continue  # aggregate occurrences cannot locate an absence in the verified portion
             finding["scope"] = "site"
             finding["occurrences"] = int(finding.get("count", 1))
             if finding["rule_id"] in seen:
@@ -205,6 +230,16 @@ def normalize_report(data: dict) -> dict:
                                   'Unsupported formats are not necessarily invalid.',
                 'occurrences': parse_coverage['unverified_files'],
             })
+    if (schema_page_uncertain or schema_crawl_uncertain) and not any(
+            f['rule_id'] in SCHEMA_EXTRACTION_RULES - {'schema.invalid.json.ld'} for f in findings):
+        findings.append({'category': 'schema', 'severity': 'low',
+                         'scope': 'site' if schema_crawl_uncertain else 'page',
+                         'rule_id': 'schema.extraction.unverified',
+                         'title': 'Structured-data extraction needs manual verification',
+                         'detail': 'Known structured-data extraction uncertainty was recorded in the '
+                                   + ('crawl sample/rollup' if schema_crawl_uncertain else 'page report')
+                                   + '; non-observed types are not evidence of missing markup. '
+                                   'Existing syntax/property findings remain reviewable.'})
     if llms_uncertain:
         # Older/contradictory missing-file findings cannot authorize generation
         # when recorded HTTP evidence explicitly leaves root availability open.
@@ -535,6 +570,20 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    'schema.ecommerce.product.missing':
+        'Review existing Product markup and actual visible product facts before adding applicable semantic data. '
+        'Preserve valid JSON-LD, Microdata or RDFa; do not duplicate entities or infer Google merchant eligibility '
+        'or rich-result benefits solely from page signals.',
+    'schema.no.structured.data':
+        'Review existing supported markup and the actual page entity; add semantic data only when applicable. '
+        'Do not duplicate entities or invent visible content. Non-observation does not prove a markup requirement '
+        'or establish rich-result eligibility, ranking or AI citation gains.',
+    'schema.article.like.page.without.article.schema':
+        'Review actual page purpose and existing Article-family markup before adding applicable known facts. '
+        'Preserve valid JSON-LD, Microdata or RDFa; do not invent authors/dates or promise rich results or AI attribution.',
+    'schema.no.organization.website.entity':
+        'Review publisher/site identity and existing markup for the intended consumer before adding applicable data. '
+        'A single-page non-observation is not whole-site absence; do not duplicate entities or add both types automatically.',
     **PHRASE_REVIEW_GUIDANCE,
     **dict.fromkeys(('content.thin.content', 'content.content.is.on.the.short.side',
                      'content.link.hub.page.with.little.prose'),
@@ -604,6 +653,14 @@ RESOURCE_VERIFICATION['geo.llms.txt.availability.unverified'] = (
     'Do not create or rewrite llms.txt solely because this observation was unverified.',
     ('Review the recorded HTTP status, media type and completeness; retain access/SSRF/body limits.',
      'Re-scan the deployed root endpoint after resolving a verified cause; subpath files and engine behavior remain separate checks.'))
+for _rule in ('schema.microdata.extraction', 'schema.rdfa.extraction',
+              'schema.ecommerce.source.extraction', 'schema.extraction.unverified'):
+    RESOURCE_VERIFICATION[_rule] = (
+        'Verify the original structured data and supported extraction scope before proposing source changes. '
+        'Do not add or duplicate markup, rewrite valid unsupported data, or increase limits automatically to clear this note.',
+        ('Review original HTML, retained extraction warnings and intended entity/consumer; preserve SSRF and body/parser limits.',
+         'Validate supported/unsupported markup with an appropriate validator and re-scan before treating missing findings as fixes. '
+         'Syntax/property defects actually observed may still be repaired after confirming their source.'))
 
 
 def safety_for(artifact: str) -> tuple:
@@ -695,7 +752,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         verification = RESOURCE_VERIFICATION.get(finding['rule_id'])
         artifact = classify_artifact(finding)
         if verification:
-            artifact = 'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap'
+            artifact = ('json_ld' if finding['rule_id'].startswith('schema.') else
+                        'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap')
         if artifact != "unknown":
             mapped_named += 1
         safety, requires_deploy = safety_for(artifact)

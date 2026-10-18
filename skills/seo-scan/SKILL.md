@@ -295,6 +295,11 @@ flag pages worth a human look rather than issuing verdicts.
 Known structured-data extraction uncertainty also prevents page/audit diff
 improvement/resolution verdicts; the CI gate exits 2, including uncertain crawl
 contributions. Fix/verify extraction before treating missing findings as fixes.
+Page scans with known extraction gaps withhold generic/Article/site-entity/Product
+absence advice while retaining checks on observed nodes. Plans make extraction
+verification manual-only, not markup-generation work; actual syntax/property
+repairs remain reviewable. Even without known errors, non-observation is only a
+conditional review: preserve valid formats/entities and do not promise eligibility.
 
 ## Deep audit (multi-agent)
 

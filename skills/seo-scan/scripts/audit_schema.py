@@ -112,15 +112,17 @@ def audit(doc, resp, report, ctx=None) -> None:
     if not blobs and not any(structured_data.types(r["node"]) for r in records):
         # Hub/index pages have no single entity to mark up — absence there is a
         # note, not a real gap (articles/products/homepages keep medium).
-        hub = htmlx.is_hub_page(doc)
-        report.add(CAT, "low" if hub else "medium",
-                   "No structured data",
-                   "No JSON-LD, typed Microdata or supported schema.org RDFa was detected.",
-                   "Add JSON-LD for the page's entity (Article, Product, "
-                   "Organization…) to unlock rich results and clarify meaning for "
-                   "AI search."
-                   + (" (Least critical on listing/index pages.)" if hub else ""),
-                   rule_id="schema.no.structured.data")
+        if schema_coverage.state(schema_coverage.meta_receipt(report.meta)) == 'no_known_problem':
+            hub = htmlx.is_hub_page(doc)
+            report.add(CAT, "low" if hub else "medium",
+                       "No structured data",
+                       "No JSON-LD, typed Microdata or supported schema.org RDFa was observed in the supported subset; "
+                       "this does not certify exhaustive extraction or a markup requirement.",
+                       "Review existing markup and the page's real entity before adding applicable semantic markup. "
+                       "Preserve valid JSON-LD, Microdata or RDFa; do not invent content or duplicate existing entities. "
+                       "Rich-result eligibility, ranking and AI citation benefits are not established."
+                       + (" (Least critical on listing/index pages.)" if hub else ""),
+                       rule_id="schema.no.structured.data")
         report.meta["ecommerce"] = ecommerce.audit(doc, report)
         return
 
@@ -225,16 +227,24 @@ def _validate_node(node, found_types, report):
 
 
 def _cross_checks(doc, found_types, report):
+    # An unobserved type may be in the portion the extractor could not inspect.
+    # Node-level validation above remains active for positively observed objects.
+    if schema_coverage.state(schema_coverage.meta_receipt(report.meta)) != 'no_known_problem':
+        return
     has_article = any(t in found_types for t in ("Article", "NewsArticle", "BlogPosting"))
     # Shared page-type heuristic (og:type / published_time / single <article>) —
     # raw text length alone misread text-heavy homepages as articles.
     if htmlx.looks_article(doc) and not has_article:
         report.add(CAT, "low", "Article-like page without Article schema",
-                   "Long-form content with no Article/BlogPosting markup.",
-                   "Add Article JSON-LD (headline, author, datePublished) to aid "
-                   "rich results and AI attribution.")
+                   "The page-type heuristic suggests an article, but no Article/BlogPosting/NewsArticle "
+                   "type was observed in the supported subset; this is not proof of absence or suitability.",
+                   "Review the actual page purpose and existing markup before adding an applicable Article type. "
+                   "Use only real visible content and known authors/dates; preserve valid supported formats. "
+                   "No rich-result eligibility, ranking or AI attribution benefit is verified.")
     if not any(t in found_types for t in ("Organization", "LocalBusiness", "WebSite")):
         report.add(CAT, "low", "No Organization/WebSite entity",
-                   "No site-level Organization or WebSite markup detected.",
-                   "Add Organization + WebSite JSON-LD (typically sitewide) to "
-                   "establish the publishing entity.")
+                   "No Organization, LocalBusiness or WebSite type was observed in this page's supported subset; "
+                   "this is not a whole-site identity or exhaustive-extraction check.",
+                   "Review existing publisher/site markup and intended consumer before adding applicable entity data. "
+                   "Do not duplicate entities, invent publisher facts or add both types automatically. "
+                   "Preserve valid JSON-LD, Microdata or RDFa; eligibility and ranking benefits are not established.")

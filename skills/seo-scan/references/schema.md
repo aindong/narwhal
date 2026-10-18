@@ -112,8 +112,41 @@ runs have the same uncertainty. Crawl contributions are included. Focused
 non-schema page comparisons are not blocked by unrelated schema metadata.
 Explicit legacy warning lists still need verification; absent old receipts do
 not invent either full coverage or new errors. Unsupported supplied receipts
-cannot certify comparability. Findings/IDs/score arithmetic stay unchanged;
+cannot certify comparability. Coverage metadata itself adds no score penalties;
 clearing an extraction warning is verification work, not a measured SEO gain.
+
+### Page advice and remediation under uncertain extraction
+
+Known extraction gaps also withhold `schema.no.structured.data`,
+`schema.article.like.page.without.article.schema` and
+`schema.no.organization.website.entity` and `schema.ecommerce.product.missing`
+page advice. Hidden-after-limit or
+unprocessed markup must not become a recommendation to add duplicate entities.
+Observed types, parse errors and node-level property/merchant checks remain
+active; supported-extractor limits are not increased. On scans with no known
+problem, the existing absence-rule IDs/severities remain conditional reviews of
+the supported subset, not exhaustive absence, page suitability or whole-site
+identity or merchant eligibility. Product/merchant classification is unchanged.
+Inspect existing valid JSON-LD/Microdata/RDFa before adding real,
+applicable semantic data; never invent authors/dates or add both site types by rote.
+
+Remediation plans create a non-scoring `schema.extraction.unverified` manual
+verification action from explicit metadata, known extraction-error IDs or crawl
+uncertainty when no explicit extraction-verification task already covers it.
+This survives ignored findings without duplicating the existing warning tasks.
+Extraction notes have no assigned
+source owner, source-generation command, deploy requirement or grouped-template
+edit. Older contradictory absence advice is withheld for the uncertain scope;
+unlocatable audit rollup claims are withheld without suppressing clean-homepage
+review candidates. Actual observed syntax/property repairs remain review-required
+with likely owners, not automatically erased by incomplete extraction. Missing
+legacy metadata alone does not invent an extraction failure or certify coverage.
+
+Even correctly marked-up pages are not guaranteed rich results. The
+[Google general guidelines](https://developers.google.com/search/docs/appearance/structured-data/sd-policies)
+also require representative, non-misleading content (checked 2026-10-19).
+These review notes do not establish Google eligibility, ranking or AI citation
+benefits; no policy/validator resource is fetched during scans or planning.
 
 ## Common types and their required properties
 The auditor and `generate_schema.py` validate these:

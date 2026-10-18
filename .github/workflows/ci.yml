@@ -126,3 +126,5 @@ jobs:
         run: python skills/seo-scan/tests/schema_coverage_smoke.py
       - name: Compared-heading review browser regression
         run: python skills/seo-scan/tests/subtopic_observation_smoke.py
+      - name: Page-schema advice and remediation browser regression
+        run: python skills/seo-scan/tests/page_schema_review_smoke.py

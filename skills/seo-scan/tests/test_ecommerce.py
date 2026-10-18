@@ -316,13 +316,15 @@ class TestMerchantSchema(unittest.TestCase):
         _, report, _ = inspect(html)
         self.assertIn("schema.ecommerce.offer.price.expired", rules(report))
 
-    def test_malformed_jsonld_still_reports_syntax_and_missing_product_schema(self):
+    def test_malformed_jsonld_reports_syntax_without_certifying_product_absence(self):
         html = '<meta property="og:type" content="product"><meta property="product:price:amount" content="20"><script type="application/ld+json">{"@type":"Product",}</script><h1>Cap</h1>'
         doc = htmlx.parse(html, "https://shop.test/cap")
         report = Report("https://shop.test/cap", final_url="https://shop.test/cap", fetched_status=200)
         audit_schema.audit(doc, None, report, {})
         self.assertIn("schema.invalid.json.ld", rules(report))
-        self.assertIn("schema.ecommerce.product.missing", rules(report))
+        self.assertNotIn("schema.ecommerce.product.missing", rules(report))
+        self.assertTrue(report.meta['ecommerce']['is_product'])
+        self.assertTrue(report.meta['ecommerce']['is_merchant'])
 
 
 if __name__ == "__main__":

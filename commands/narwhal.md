@@ -230,6 +230,10 @@ counts. Missing/uncertain coverage is not evidence that a schema type is absent;
 review existing markup before adding or duplicating a candidate. Observed types
 remain useful, but schema/overall score comparisons are unverified when extraction
 has known problems. Do not describe those scores as measured improvements.
+Page absence recommendations also require no known extraction gap. In plans,
+verify extraction manually before treating an unobserved type as missing; do not
+generate duplicate markup or increase limits to clear a note. Actual observed
+syntax/property repairs remain reviewable; clean non-observations are conditional.
 Legacy `missing_subtopics` candidates are not verified missing semantic content.
 `subtopic_review`/candidate `term_match` describe an ASCII/English prefix-term filter,
 not section-content understanding or query demand. Review synonyms, context and

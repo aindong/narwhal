@@ -14,7 +14,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
 
-from . import htmlx, merchant_source, microdata, structured_data
+from . import htmlx, merchant_source, microdata, structured_data, schema_coverage
 
 CAT = "schema"
 IDENTIFIERS = ("sku", "gtin", "gtin8", "gtin12", "gtin13", "gtin14", "mpn")
@@ -408,7 +408,8 @@ def _comparison_fact(product, offers, field, visible):
 def audit(doc, report, *, today=None):
     """Add product-scoped merchant findings and return serializable evidence."""
     finding_start = len(report.findings)
-    nodes = schema_nodes(doc)
+    records, errors = structured_data.collect(doc)
+    nodes = [record['node'] for record in records]
     detected = detect(doc, nodes)
     meta = {"is_product": detected["is_product"], "is_merchant": detected["is_merchant"],
             "confidence": detected["confidence"],
@@ -424,11 +425,14 @@ def audit(doc, report, *, today=None):
         return meta
     products = detected["product_nodes"]
     if not products:
-        report.add(CAT, "high", "Product page has no Product structured data",
-                   "Strong product-page signals were found, but no Product JSON-LD, Microdata or supported RDFa was detected.",
-                   "Add Product JSON-LD using only visible, current merchant facts.",
-                   evidence="; ".join(detected["evidence"]),
-                   rule_id="schema.ecommerce.product.missing")
+        if schema_coverage.state(schema_coverage.observe(doc, errors)) == 'no_known_problem' and not meta['source_warnings']:
+            report.add(CAT, "high", "Product page has no Product structured data",
+                       "Product-page signals were found, but no Product type was observed in the supported subset; "
+                       "this is not exhaustive absence or Google merchant eligibility.",
+                       "Review existing markup before adding an applicable Product entity using real visible, current facts. "
+                       "Preserve valid JSON-LD, Microdata or RDFa; do not duplicate entities or promise rich results.",
+                       evidence="; ".join(detected["evidence"]),
+                       rule_id="schema.ecommerce.product.missing")
         return meta
 
     by_id = {n.get("@id"): n for n in nodes if isinstance(n.get("@id"), str)}
