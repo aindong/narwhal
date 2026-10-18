@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Offline maintainer review packs can record one explicit adjudicator decision
+  without hand-editing packet structure. Source bindings and full packets are
+  validated before/after; existing decisions need explicit replacement into a
+  fresh file, other reviews are preserved, and outputs request owner-only access.
+  Verdicts/identity/time/witnesses are never inferred; accuracy/recall remain
+  unmeasured. This is not a runtime scanner command or automatic adjudication.
 - Served/rendered text comparisons now record selected-text equality, extraction
   bases and signed whitespace-token deltas instead of certifying server rendering
   from equal counts. Legacy numeric aliases remain, but net increases and metadata/
