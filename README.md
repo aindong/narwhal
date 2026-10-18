@@ -151,10 +151,24 @@ Known structured-data extraction problems are not evidence that markup is absent
 record JSON-LD processing errors and retained Microdata/RDFa warning-detail counts.
 Comparisons withhold absence-based schema claims when their required coverage is
 unverified; brief candidates remain available but require inspecting existing
-markup. Scores/types/findings stay intact, with schema/overall comparisons labelled
+markup. Observed types remain visible, with schema/overall comparisons labelled
 unverified. Page/audit `diff --fail-on-regression` exits 2 for known schema-extraction
 uncertainty, including crawl contributions. Missing legacy coverage is not backfilled
 or certified complete. See [extraction boundaries](skills/seo-scan/references/schema.md#known-extraction-uncertainty).
+
+Page scans likewise withhold generic/Article/site-entity/Product absence advice when
+extraction has known gaps, while retaining observed syntax/property checks.
+Remediation plans make extraction verification manual-only, not source-generation
+work, and do not repeat contradictory legacy absence advice for uncertain scopes.
+Clean-scan non-observations remain conditional reviews, not feature promises or
+whole-site identity checks. See [page/planner behavior](skills/seo-scan/references/schema.md#page-advice-and-remediation-under-uncertain-extraction).
+
+JSON-LD syntax errors are distinct from tool-processing failures. Decoder
+`JSONDecodeError` findings remain high repair candidates; other caught decoder/
+node failures are low verification notes (`schema.jsonld.processing.unverified`),
+not proof of invalid source or engine rejection. `jsonld_error_stages` records
+runtime counts; legacy missing stages are not inferred. Limits remain intact,
+and both kinds still leave score comparisons unverified. See [error-stage scope](skills/seo-scan/references/schema.md#json-ld-syntax-versus-processing-failures).
 
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,

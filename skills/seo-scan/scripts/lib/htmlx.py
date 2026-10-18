@@ -203,7 +203,7 @@ def looks_product(doc: "Doc") -> bool:
         try:
             if has_product_type(json.loads(blob)):
                 return True
-        except (json.JSONDecodeError, TypeError, RecursionError):
+        except (ValueError, TypeError, RecursionError):
             continue
     markup_product = any(any(schema_name(t).lower() == "product" for t in
                         (node.get("@type") if isinstance(node.get("@type"), list) else [node.get("@type")])

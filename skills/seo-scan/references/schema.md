@@ -112,8 +112,89 @@ runs have the same uncertainty. Crawl contributions are included. Focused
 non-schema page comparisons are not blocked by unrelated schema metadata.
 Explicit legacy warning lists still need verification; absent old receipts do
 not invent either full coverage or new errors. Unsupported supplied receipts
-cannot certify comparability. Findings/IDs/score arithmetic stay unchanged;
+cannot certify comparability. Coverage metadata itself adds no score penalties;
 clearing an extraction warning is verification work, not a measured SEO gain.
+
+### Page advice and remediation under uncertain extraction
+
+Known extraction gaps also withhold `schema.no.structured.data`,
+`schema.article.like.page.without.article.schema` and
+`schema.no.organization.website.entity` and `schema.ecommerce.product.missing`
+page advice. Hidden-after-limit or
+unprocessed markup must not become a recommendation to add duplicate entities.
+Observed types, parse errors and node-level property/merchant checks remain
+active; supported-extractor limits are not increased. On scans with no known
+problem, the existing absence-rule IDs/severities remain conditional reviews of
+the supported subset, not exhaustive absence, page suitability or whole-site
+identity or merchant eligibility. Product/merchant classification is unchanged.
+Inspect existing valid JSON-LD/Microdata/RDFa before adding real,
+applicable semantic data; never invent authors/dates or add both site types by rote.
+
+Remediation plans create a non-scoring `schema.extraction.unverified` manual
+verification action from explicit metadata, known extraction-error IDs or crawl
+uncertainty when no explicit extraction-verification task already covers it.
+This survives ignored findings without duplicating the existing warning tasks.
+Homepage and crawl coverage are considered separately: a task in one scope does
+not silently cover an unverified other scope. A shared explicit warning coalesces
+to a site task; a metadata-only catch-all names the remaining scope(s).
+Human plans show each schema-verification task's page or site-sample scope.
+Extraction notes have no assigned
+source owner, source-generation command, deploy requirement or grouped-template
+edit. Older contradictory absence advice is withheld for the uncertain scope;
+unlocatable audit rollup claims are withheld without suppressing clean-homepage
+review candidates. Actual observed syntax/property repairs remain review-required
+with likely owners, not automatically erased by incomplete extraction. Missing
+legacy metadata alone does not invent an extraction failure or certify coverage.
+
+Even correctly marked-up pages are not guaranteed rich results. The
+[Google general guidelines](https://developers.google.com/search/docs/appearance/structured-data/sd-policies)
+also require representative, non-misleading content (checked 2026-10-19).
+These review notes do not establish Google eligibility, ranking or AI citation
+benefits; no policy/validator resource is fetched during scans or planning.
+
+### JSON-LD syntax versus processing failures
+
+The collector distinguishes a `JSONDecodeError` raised by JSON decoding from
+other caught decoding/normalization/walk/fingerprint failures. Decoder-reported
+syntax errors retain high `schema.invalid.json.ld` and a source-review/repair
+path. Other failures get low `schema.jsonld.processing.unverified`, a manual-only
+verification task without source ownership, generation or grouped-template edits.
+A recursion limit, numeric conversion guard or unsupported Unicode operation is
+not proof of source syntax invalidity or search-engine rejection. It also does
+not certify that the source is valid: inspect any actual interoperability defect.
+
+`meta.structured_data.jsonld_error_stages` records version 1 with basis
+`decoder_and_node_processing_exceptions` and four non-negative count fields:
+
+| Field | Recorded observation |
+|---|---|
+| `syntax_errors` | `JSONDecodeError` from the JSON decoder |
+| `decoder_processing_errors` | Other caught decoder ValueError/TypeError/RecursionError |
+| `node_processing_errors` | Caught errors after decoding, including normalization/literal copying/fingerprinting |
+| `unclassified_errors` | Returned errors without a stage observation, not inferred syntax errors |
+
+Counts describe this runtime's exceptions, not full JSON/JSON-LD conformance,
+schema validity, exhaustive coverage or authenticated evidence. Stage counts may
+differ across Python versions: a block can hit a decoder limit in one runtime
+and reach a node-processing limit in another. Zero counts do not certify valid
+data. Original `(block, message)` error tuples remain compatible; optional
+collector `diagnostics` appends block/kind/stage observations without raw markup.
+New metadata contains counts/static scope only, not copied source/error text.
+
+[RFC 8259 §9](https://www.rfc-editor.org/rfc/rfc8259#section-9) permits parser
+limits on size, nesting, numbers and strings (checked 2026-10-19); these are
+implementation boundaries, not a reason to increase limits automatically.
+Narwhal retains its existing guards and does not change global recursion/numeric
+settings. Its auxiliary Product heuristic also tolerates decoder guard failures
+without crashing or inventing product evidence.
+
+Both error kinds leave extraction unverified, withhold absence advice and keep
+page/audit diff comparisons incomparable. Positive observations and actual
+syntax/property repair candidates survive mixed blocks. Legacy stage metadata
+is not backfilled from versions, error text or old “Invalid JSON-LD” labels;
+inspect original blocks before treating an old unclassified error as source
+invalidity. Known legacy `schema.no.structured.data.json.ld` advice is likewise
+withheld under extraction uncertainty and otherwise remains conditional review.
 
 ## Common types and their required properties
 The auditor and `generate_schema.py` validate these:

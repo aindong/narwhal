@@ -1,8 +1,8 @@
-"""Structured-data (schema.org / JSON-LD, Microdata and bounded RDFa) auditor.
+"""Supported JSON-LD, Microdata and bounded schema.org RDFa observations.
 
-Parses every ``application/ld+json`` block, validates required properties for the
-common rich-result types, flags types Google has deprecated, and notes when a
-page that clearly should carry markup (article, product, org) has none.
+Distinguish decoder syntax errors from tool processing gaps, inspect observed
+node fields and dated appearance policies, and condition type-nonobservation
+advice on extraction scope rather than certifying absence or eligibility.
 """
 
 from __future__ import annotations
@@ -94,9 +94,19 @@ def _recipe_policy(report):
 
 def audit(doc, resp, report, ctx=None) -> None:
     blobs = doc.scripts_ld
-    records, errors = structured_data.collect(doc)
+    diagnostics = []
+    records, errors = structured_data.collect(doc, diagnostics=diagnostics)
     report.meta["structured_data"] = structured_data.provenance(doc, records)
     report.meta['structured_data']['extraction_coverage'] = schema_coverage.observe(doc, errors)
+    report.meta['structured_data']['jsonld_error_stages'] = {
+        'version': 1, 'basis': 'decoder_and_node_processing_exceptions',
+        'syntax_errors': sum(d['kind'] == 'syntax' for d in diagnostics),
+        'decoder_processing_errors': sum(d['kind'] == 'processing' and d['stage'] == 'decode' for d in diagnostics),
+        'node_processing_errors': sum(d['kind'] == 'processing' and d['stage'] == 'nodes' for d in diagnostics),
+        'unclassified_errors': max(0, len(errors) - len(diagnostics)),
+        'limits': 'Exception-stage observations only, not full JSON/JSON-LD conformance, schema validity, '
+                  'exhaustive extraction or engine behavior. Missing legacy classification is not inferred.',
+    }
     if doc.microdata_warnings:
         warning = "\n".join(doc.microdata_warnings)
         report.add(CAT, "low", "Microdata extraction needs verification",
@@ -112,24 +122,36 @@ def audit(doc, resp, report, ctx=None) -> None:
     if not blobs and not any(structured_data.types(r["node"]) for r in records):
         # Hub/index pages have no single entity to mark up — absence there is a
         # note, not a real gap (articles/products/homepages keep medium).
-        hub = htmlx.is_hub_page(doc)
-        report.add(CAT, "low" if hub else "medium",
-                   "No structured data",
-                   "No JSON-LD, typed Microdata or supported schema.org RDFa was detected.",
-                   "Add JSON-LD for the page's entity (Article, Product, "
-                   "Organization…) to unlock rich results and clarify meaning for "
-                   "AI search."
-                   + (" (Least critical on listing/index pages.)" if hub else ""),
-                   rule_id="schema.no.structured.data")
+        if schema_coverage.state(schema_coverage.meta_receipt(report.meta)) == 'no_known_problem':
+            hub = htmlx.is_hub_page(doc)
+            report.add(CAT, "low" if hub else "medium",
+                       "No structured data",
+                       "No JSON-LD, typed Microdata or supported schema.org RDFa was observed in the supported subset; "
+                       "this does not certify exhaustive extraction or a markup requirement.",
+                       "Review existing markup and the page's real entity before adding applicable semantic markup. "
+                       "Preserve valid JSON-LD, Microdata or RDFa; do not invent content or duplicate existing entities. "
+                       "Rich-result eligibility, ranking and AI citation benefits are not established."
+                       + (" (Least critical on listing/index pages.)" if hub else ""),
+                       rule_id="schema.no.structured.data")
         report.meta["ecommerce"] = ecommerce.audit(doc, report)
         return
 
     found_types = []
+    error_kinds = {d['block']: d['kind'] for d in diagnostics}
     for block, error in errors:
-        report.add(CAT, "high", "Invalid JSON-LD",
-                   f"Block #{block} could not be parsed or processed as JSON-LD.",
-                   "Fix the JSON syntax or excessive nesting; malformed blocks are ignored by search "
-                   "engines.", evidence=error)
+        if error_kinds.get(block) == 'syntax':
+            report.add(CAT, "high", "Invalid JSON-LD",
+                       f"Block #{block} triggered a JSON decoder syntax error; this is not full JSON-LD/schema validation.",
+                       "Inspect the original block and repair verified JSON syntax errors. Preserve valid semantic data; "
+                       "engine behavior and rich-result eligibility are not measured.", evidence=error)
+        else:
+            report.add(CAT, 'low', 'JSON-LD processing needs verification',
+                       f'Block #{block} could not be fully decoded or processed by this tool; '
+                       'a limit/unsupported processing path is not proof of source syntax invalidity.',
+                       'Inspect the original block, error evidence and supported tool/parser scope. '
+                       'Do not rewrite valid markup or increase recursion/numeric/body limits automatically to clear this note. '
+                       'Verify any actual source defect before editing; validity and engine behavior remain unverified.',
+                       evidence=error, rule_id='schema.jsonld.processing.unverified')
     # Validate shared unique objects, including nested Microdata/RDFa entities.
     # Distinct defective variants remain evidence, but score a given rule once.
     start = len(report.findings)
@@ -225,16 +247,24 @@ def _validate_node(node, found_types, report):
 
 
 def _cross_checks(doc, found_types, report):
+    # An unobserved type may be in the portion the extractor could not inspect.
+    # Node-level validation above remains active for positively observed objects.
+    if schema_coverage.state(schema_coverage.meta_receipt(report.meta)) != 'no_known_problem':
+        return
     has_article = any(t in found_types for t in ("Article", "NewsArticle", "BlogPosting"))
     # Shared page-type heuristic (og:type / published_time / single <article>) —
     # raw text length alone misread text-heavy homepages as articles.
     if htmlx.looks_article(doc) and not has_article:
         report.add(CAT, "low", "Article-like page without Article schema",
-                   "Long-form content with no Article/BlogPosting markup.",
-                   "Add Article JSON-LD (headline, author, datePublished) to aid "
-                   "rich results and AI attribution.")
+                   "The page-type heuristic suggests an article, but no Article/BlogPosting/NewsArticle "
+                   "type was observed in the supported subset; this is not proof of absence or suitability.",
+                   "Review the actual page purpose and existing markup before adding an applicable Article type. "
+                   "Use only real visible content and known authors/dates; preserve valid supported formats. "
+                   "No rich-result eligibility, ranking or AI attribution benefit is verified.")
     if not any(t in found_types for t in ("Organization", "LocalBusiness", "WebSite")):
         report.add(CAT, "low", "No Organization/WebSite entity",
-                   "No site-level Organization or WebSite markup detected.",
-                   "Add Organization + WebSite JSON-LD (typically sitewide) to "
-                   "establish the publishing entity.")
+                   "No Organization, LocalBusiness or WebSite type was observed in this page's supported subset; "
+                   "this is not a whole-site identity or exhaustive-extraction check.",
+                   "Review existing publisher/site markup and intended consumer before adding applicable entity data. "
+                   "Do not duplicate entities, invent publisher facts or add both types automatically. "
+                   "Preserve valid JSON-LD, Microdata or RDFa; eligibility and ranking benefits are not established.")

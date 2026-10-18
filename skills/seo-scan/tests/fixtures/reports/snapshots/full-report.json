@@ -116,6 +116,15 @@
         "rdfa_warning_details": 0,
         "limits": "Counts describe the supported extractor only, not complete JSON-LD/RDFa conformance, schema.org validity, visible-content ownership or Google eligibility. Warning-detail counts include retained omission notices, not all underlying errors. No known problem is not proof of exhaustive extraction. Known problems leave schema/overall score comparisons unverified; observed types remain observations, not evidence of absence."
       },
+      "jsonld_error_stages": {
+        "version": 1,
+        "basis": "decoder_and_node_processing_exceptions",
+        "syntax_errors": 0,
+        "decoder_processing_errors": 0,
+        "node_processing_errors": 0,
+        "unclassified_errors": 0,
+        "limits": "Exception-stage observations only, not full JSON/JSON-LD conformance, schema validity, exhaustive extraction or engine behavior. Missing legacy classification is not inferred."
+      },
       "article_field_policy": {
         "scope": "Google Article-family field recommendations, not full eligibility or schema.org validity",
         "required_properties": [],
@@ -529,8 +538,8 @@
       "category": "schema",
       "severity": "low",
       "title": "No Organization/WebSite entity",
-      "detail": "No site-level Organization or WebSite markup detected.",
-      "recommendation": "Add Organization + WebSite JSON-LD (typically sitewide) to establish the publishing entity.",
+      "detail": "No Organization, LocalBusiness or WebSite type was observed in this page's supported subset; this is not a whole-site identity or exhaustive-extraction check.",
+      "recommendation": "Review existing publisher/site markup and intended consumer before adding applicable entity data. Do not duplicate entities, invent publisher facts or add both types automatically. Preserve valid JSON-LD, Microdata or RDFa; eligibility and ranking benefits are not established.",
       "evidence": null,
       "rule_id": "schema.no.organization.website.entity",
       "scope": "page",

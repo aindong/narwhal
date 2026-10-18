@@ -22,6 +22,17 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **JSON-LD failure stages:** syntax defects retain high repair findings while
+  tool decoder/node-processing failures get low, manual-only verification notes.
+  Runtime stage counts do not certify syntax/conformance, validity or engine
+  behavior. Product heuristics tolerate decoder guard failures without inventing
+  evidence; limits remain unchanged. Legacy absence IDs/stages are not certified.
+- **Page schema advice and planner safety:** known extraction gaps no longer
+  become generic/Article/site-entity/Product absence recommendations. Verification-only
+  plan tasks have no source owner/generation or shared-template edit, including
+  ignored/legacy/audit evidence. Observed syntax/property repairs remain available;
+  clean-scan suggestions are conditional, not eligibility/ranking/citation promises.
+  Removed unsupported penalties do not establish SEO improvements.
 - **Compared-heading review candidates:** briefs preserve the historical
   `missing_subtopics` candidate list but no longer call lexical non-matches missing
   semantic content. Basis/count receipts explain the ASCII/English prefix heuristic,
@@ -32,7 +43,7 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   overall comparison scores. Brief candidates preserve positive observations
   while requiring inspection of unknown existing markup. Known uncertainty blocks
   page/audit diff improvements and CI gates, including crawl contributions.
-  Limits/findings/raw scores stay unchanged; no full conformance/accuracy claim.
+  Coverage metadata adds no score penalties or full conformance/accuracy claim.
 - **Schema appearance context downstream:** comparisons and semantic brief
   candidates carry the same dated Google retirement notices as page scans.
   Source links/limits distinguish a retired display from schema.org validity or

@@ -28,7 +28,7 @@ Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace pla
 
 - **Rule:** `schema.no.structured.data.json.ld`
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
-- **Change:** Add or repair structured data for the page's real entity; preserve valid Microdata, RDFa or JSON-LD and validate all values before publishing.
+- **Change:** Review existing supported markup and the actual page entity; add semantic data only when applicable. Do not duplicate entities or invent visible content. Non-observation does not prove a markup requirement or establish rich-result eligibility, ranking or AI citation gains.
 - **Verify:** `narwhal diff -- before.json after.json`
 
 ### MEDIUM — Images missing alt text
