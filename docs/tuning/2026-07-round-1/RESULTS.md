@@ -2,8 +2,12 @@
 
 Raw scan JSONs are in [`before/`](before/) and [`after/`](after/); both were
 produced by `scan.py <url> --format json` on 2026-07-02. Sites are public
-pages chosen for *diversity of page type*; every score change below comes from
-removing findings that were **wrong**, not from loosening checks.
+pages chosen for *diversity of page type*. The recorded changes include
+extraction/detection fixes, priority revisions and new findings. They are
+historical tool-score changes, not demonstrated website improvements. With no
+attached frozen page inputs or independent adjudication, these reports do not
+isolate all live-page/environment differences or measure accuracy and recall.
+The finding lists below preserve the original maintainer observations.
 
 | Site | Before | After |
 |:--|--:|--:|

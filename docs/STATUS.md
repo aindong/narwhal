@@ -22,6 +22,12 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Evidence-scoped tuning guidance:** the README and tuning workflow distinguish
+  rule/prompt development from model training, tests from accuracy, and tool-score
+  corrections from website improvements. Detection and priority revisions can
+  raise or lower scores; familiar sites and agent agreement are not ground truth.
+  Historical score tables remain unchanged with missing-input/review limits.
+  This is documentation correction, not completed independent validation.
 - **Document-order headings:** optional BeautifulSoup parsing no longer groups
   heading levels before technical checks or brief subtopic extraction. The
   selected parser's document order preserves actual skip-pair evidence and

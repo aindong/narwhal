@@ -6,6 +6,11 @@ rich schema, a French-language site, an international hreflang site, and
 a deliberately dead URL. Raw scan JSONs in [`before/`](before/) and
 [`after/`](after/), captured 2026-07-02.
 
+These are historical tool-score changes, not demonstrated website improvements.
+The reports have no attached frozen page inputs or independent adjudication;
+they do not isolate all live-page/environment differences or measure accuracy
+and recall. The finding lists below preserve the original maintainer observations.
+
 | Page | Before | After |
 |:--|--:|--:|
 | allbirds.com (e-commerce home) | 79 | **79** |

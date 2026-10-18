@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- User-facing and tuning documentation distinguish observed findings, priority
+  revisions, scanner-score changes and actual website outcomes. Historical score
+  tables are retained without treating familiar sites, passing tests or agent
+  agreement as ground truth. Rule/prompt refinement is not described as model
+  training or independent validation. No scanner behavior or scores change.
 - A prospective 50-URL acquisition plan records intended page-role/language
   diversity, operational site-family splits, reserved-output rules and bounded
   conservative collection policy before scans. Local evidence is git-ignored;
