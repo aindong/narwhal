@@ -116,6 +116,15 @@
         "rdfa_warning_details": 0,
         "limits": "Counts describe the supported extractor only, not complete JSON-LD/RDFa conformance, schema.org validity, visible-content ownership or Google eligibility. Warning-detail counts include retained omission notices, not all underlying errors. No known problem is not proof of exhaustive extraction. Known problems leave schema/overall score comparisons unverified; observed types remain observations, not evidence of absence."
       },
+      "jsonld_error_stages": {
+        "version": 1,
+        "basis": "decoder_and_node_processing_exceptions",
+        "syntax_errors": 0,
+        "decoder_processing_errors": 0,
+        "node_processing_errors": 0,
+        "unclassified_errors": 0,
+        "limits": "Exception-stage observations only, not full JSON/JSON-LD conformance, schema validity, exhaustive extraction or engine behavior. Missing legacy classification is not inferred."
+      },
       "article_field_policy": {
         "scope": "Google Article-family field recommendations, not full eligibility or schema.org validity",
         "required_properties": [],

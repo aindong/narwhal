@@ -300,6 +300,11 @@ absence advice while retaining checks on observed nodes. Plans make extraction
 verification manual-only, not markup-generation work; actual syntax/property
 repairs remain reviewable. Even without known errors, non-observation is only a
 conditional review: preserve valid formats/entities and do not promise eligibility.
+JSON decoder syntax errors remain repair candidates. JSON-LD decoder limits,
+numeric/Unicode handling or node-processing failures are verification-only, not
+proof of invalid source or engine rejection. `jsonld_error_stages` records actual
+runtime counts; missing legacy stages stay unclassified. Verify before rewriting
+data, and do not increase global parser/body limits just to clear a note.
 
 ## Deep audit (multi-agent)
 

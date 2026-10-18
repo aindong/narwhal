@@ -163,6 +163,13 @@ work, and do not repeat contradictory legacy absence advice for uncertain scopes
 Clean-scan non-observations remain conditional reviews, not feature promises or
 whole-site identity checks. See [page/planner behavior](skills/seo-scan/references/schema.md#page-advice-and-remediation-under-uncertain-extraction).
 
+JSON-LD syntax errors are distinct from tool-processing failures. Decoder
+`JSONDecodeError` findings remain high repair candidates; other caught decoder/
+node failures are low verification notes (`schema.jsonld.processing.unverified`),
+not proof of invalid source or engine rejection. `jsonld_error_stages` records
+runtime counts; legacy missing stages are not inferred. Limits remain intact,
+and both kinds still leave score comparisons unverified. See [error-stage scope](skills/seo-scan/references/schema.md#json-ld-syntax-versus-processing-failures).
+
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,
 plus an omission marker when clipped. Full fields remain in JSON.

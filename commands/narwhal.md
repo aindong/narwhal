@@ -234,6 +234,10 @@ Page absence recommendations also require no known extraction gap. In plans,
 verify extraction manually before treating an unobserved type as missing; do not
 generate duplicate markup or increase limits to clear a note. Actual observed
 syntax/property repairs remain reviewable; clean non-observations are conditional.
+Distinguish decoder syntax errors from `schema.jsonld.processing.unverified`:
+tool limits/processing gaps require verification, not automatic source rewriting
+or claims of engine rejection. `jsonld_error_stages` is runtime scope, not full
+validation; absent legacy stages cannot be reconstructed from labels/messages.
 Legacy `missing_subtopics` candidates are not verified missing semantic content.
 `subtopic_review`/candidate `term_match` describe an ASCII/English prefix-term filter,
 not section-content understanding or query demand. Review synonyms, context and

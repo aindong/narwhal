@@ -1,8 +1,8 @@
-"""Structured-data (schema.org / JSON-LD, Microdata and bounded RDFa) auditor.
+"""Supported JSON-LD, Microdata and bounded schema.org RDFa observations.
 
-Parses every ``application/ld+json`` block, validates required properties for the
-common rich-result types, flags types Google has deprecated, and notes when a
-page that clearly should carry markup (article, product, org) has none.
+Distinguish decoder syntax errors from tool processing gaps, inspect observed
+node fields and dated appearance policies, and condition type-nonobservation
+advice on extraction scope rather than certifying absence or eligibility.
 """
 
 from __future__ import annotations
@@ -94,9 +94,19 @@ def _recipe_policy(report):
 
 def audit(doc, resp, report, ctx=None) -> None:
     blobs = doc.scripts_ld
-    records, errors = structured_data.collect(doc)
+    diagnostics = []
+    records, errors = structured_data.collect(doc, diagnostics=diagnostics)
     report.meta["structured_data"] = structured_data.provenance(doc, records)
     report.meta['structured_data']['extraction_coverage'] = schema_coverage.observe(doc, errors)
+    report.meta['structured_data']['jsonld_error_stages'] = {
+        'version': 1, 'basis': 'decoder_and_node_processing_exceptions',
+        'syntax_errors': sum(d['kind'] == 'syntax' for d in diagnostics),
+        'decoder_processing_errors': sum(d['kind'] == 'processing' and d['stage'] == 'decode' for d in diagnostics),
+        'node_processing_errors': sum(d['kind'] == 'processing' and d['stage'] == 'nodes' for d in diagnostics),
+        'unclassified_errors': max(0, len(errors) - len(diagnostics)),
+        'limits': 'Exception-stage observations only, not full JSON/JSON-LD conformance, schema validity, '
+                  'exhaustive extraction or engine behavior. Missing legacy classification is not inferred.',
+    }
     if doc.microdata_warnings:
         warning = "\n".join(doc.microdata_warnings)
         report.add(CAT, "low", "Microdata extraction needs verification",
@@ -127,11 +137,21 @@ def audit(doc, resp, report, ctx=None) -> None:
         return
 
     found_types = []
+    error_kinds = {d['block']: d['kind'] for d in diagnostics}
     for block, error in errors:
-        report.add(CAT, "high", "Invalid JSON-LD",
-                   f"Block #{block} could not be parsed or processed as JSON-LD.",
-                   "Fix the JSON syntax or excessive nesting; malformed blocks are ignored by search "
-                   "engines.", evidence=error)
+        if error_kinds.get(block) == 'syntax':
+            report.add(CAT, "high", "Invalid JSON-LD",
+                       f"Block #{block} triggered a JSON decoder syntax error; this is not full JSON-LD/schema validation.",
+                       "Inspect the original block and repair verified JSON syntax errors. Preserve valid semantic data; "
+                       "engine behavior and rich-result eligibility are not measured.", evidence=error)
+        else:
+            report.add(CAT, 'low', 'JSON-LD processing needs verification',
+                       f'Block #{block} could not be fully decoded or processed by this tool; '
+                       'a limit/unsupported processing path is not proof of source syntax invalidity.',
+                       'Inspect the original block, error evidence and supported tool/parser scope. '
+                       'Do not rewrite valid markup or increase recursion/numeric/body limits automatically to clear this note. '
+                       'Verify any actual source defect before editing; validity and engine behavior remain unverified.',
+                       evidence=error, rule_id='schema.jsonld.processing.unverified')
     # Validate shared unique objects, including nested Microdata/RDFa entities.
     # Distinct defective variants remain evidence, but score a given rule once.
     start = len(report.findings)

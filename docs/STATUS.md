@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **JSON-LD failure stages:** syntax defects retain high repair findings while
+  tool decoder/node-processing failures get low, manual-only verification notes.
+  Runtime stage counts do not certify syntax/conformance, validity or engine
+  behavior. Product heuristics tolerate decoder guard failures without inventing
+  evidence; limits remain unchanged. Legacy absence IDs/stages are not certified.
 - **Page schema advice and planner safety:** known extraction gaps no longer
   become generic/Article/site-entity/Product absence recommendations. Verification-only
   plan tasks have no source owner/generation or shared-template edit, including

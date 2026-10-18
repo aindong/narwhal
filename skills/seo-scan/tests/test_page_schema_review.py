@@ -258,6 +258,20 @@ class TestPageSchemaReview(unittest.TestCase):
         self.assertEqual('review_required', action['safety'])
         self.assertIn('Non-observation does not prove', action['proposed_change'])
 
+    def test_documented_legacy_jsonld_absence_id_is_withheld_on_known_extraction_warning(self):
+        value = {'url': URL, 'findings': [finding('schema.no.structured.data.json.ld')],
+                 'meta': {'structured_data': {'rdfa_warnings': ['unsupported relation']}}}
+        result = plan.build_plan(value, str(FIXTURE))
+        self.assertNotIn('schema.no.structured.data.json.ld', {a['rule_id'] for a in result['actions']})
+        self.assertTrue(all(a['manual_action'] for a in result['actions']))
+
+    def test_documented_legacy_absence_without_coverage_remains_conditional_review(self):
+        value = {'url': URL, 'findings': [finding('schema.no.structured.data.json.ld')]}
+        result = plan.build_plan(value, str(FIXTURE))
+        action, = result['actions']
+        self.assertEqual('review_required', action['safety'])
+        self.assertIn('Non-observation does not prove', action['proposed_change'])
+
     def test_unsupported_supplied_receipt_does_not_authorize_absence_remediation(self):
         value = {'url': URL, 'findings': [finding('schema.no.structured.data')],
                  'meta': {'structured_data': {'extraction_coverage': None}}}

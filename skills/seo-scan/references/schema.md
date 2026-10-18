@@ -152,6 +152,50 @@ also require representative, non-misleading content (checked 2026-10-19).
 These review notes do not establish Google eligibility, ranking or AI citation
 benefits; no policy/validator resource is fetched during scans or planning.
 
+### JSON-LD syntax versus processing failures
+
+The collector distinguishes a `JSONDecodeError` raised by JSON decoding from
+other caught decoding/normalization/walk/fingerprint failures. Decoder-reported
+syntax errors retain high `schema.invalid.json.ld` and a source-review/repair
+path. Other failures get low `schema.jsonld.processing.unverified`, a manual-only
+verification task without source ownership, generation or grouped-template edits.
+A recursion limit, numeric conversion guard or unsupported Unicode operation is
+not proof of source syntax invalidity or search-engine rejection. It also does
+not certify that the source is valid: inspect any actual interoperability defect.
+
+`meta.structured_data.jsonld_error_stages` records version 1 with basis
+`decoder_and_node_processing_exceptions` and four non-negative count fields:
+
+| Field | Recorded observation |
+|---|---|
+| `syntax_errors` | `JSONDecodeError` from the JSON decoder |
+| `decoder_processing_errors` | Other caught decoder ValueError/TypeError/RecursionError |
+| `node_processing_errors` | Caught errors after decoding, including normalization/literal copying/fingerprinting |
+| `unclassified_errors` | Returned errors without a stage observation, not inferred syntax errors |
+
+Counts describe this runtime's exceptions, not full JSON/JSON-LD conformance,
+schema validity, exhaustive coverage or authenticated evidence. Stage counts may
+differ across Python versions: a block can hit a decoder limit in one runtime
+and reach a node-processing limit in another. Zero counts do not certify valid
+data. Original `(block, message)` error tuples remain compatible; optional
+collector `diagnostics` appends block/kind/stage observations without raw markup.
+New metadata contains counts/static scope only, not copied source/error text.
+
+[RFC 8259 §9](https://www.rfc-editor.org/rfc/rfc8259#section-9) permits parser
+limits on size, nesting, numbers and strings (checked 2026-10-19); these are
+implementation boundaries, not a reason to increase limits automatically.
+Narwhal retains its existing guards and does not change global recursion/numeric
+settings. Its auxiliary Product heuristic also tolerates decoder guard failures
+without crashing or inventing product evidence.
+
+Both error kinds leave extraction unverified, withhold absence advice and keep
+page/audit diff comparisons incomparable. Positive observations and actual
+syntax/property repair candidates survive mixed blocks. Legacy stage metadata
+is not backfilled from versions, error text or old “Invalid JSON-LD” labels;
+inspect original blocks before treating an old unclassified error as source
+invalidity. Known legacy `schema.no.structured.data.json.ld` advice is likewise
+withheld under extraction uncertainty and otherwise remains conditional review.
+
 ## Common types and their required properties
 The auditor and `generate_schema.py` validate these:
 

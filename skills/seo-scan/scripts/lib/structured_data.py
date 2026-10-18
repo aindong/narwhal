@@ -130,11 +130,13 @@ def _fingerprint(value, memo, prop=""):
     return memo[id(value)]
 
 
-def collect(doc):
-    """Return unique node records with source formats, plus JSON syntax errors.
+def collect(doc, *, diagnostics=None):
+    """Return unique node records with formats, plus JSON decoding/processing errors.
 
     Only equal normalized objects are folded. Conflicting copies and different
     variants remain observable; a matching @id alone never overwrites evidence.
+    Errors retain their historical (block, message) shape. When supplied, append
+    stage/kind observations to ``diagnostics`` without copying raw source text.
     """
     records, by_value, errors = [], {}, []
 
@@ -151,13 +153,25 @@ def collect(doc):
                 by_value[key] = record
                 records.append(record)
 
+    def error(block, exc, kind, stage):
+        errors.append((block, str(exc)))
+        if diagnostics is not None:
+            diagnostics.append({'block': block, 'kind': kind, 'stage': stage})
+
     for i, blob in enumerate(doc.scripts_ld):
         try:
             # Binary floats would round exact JSON decimal price tokens before
             # the bounded Decimal parser can compare them to page evidence.
-            add(json.loads(blob, parse_float=_JSONFloat), "jsonld")
+            data = json.loads(blob, parse_float=_JSONFloat)
+        except json.JSONDecodeError as exc:
+            error(i + 1, exc, 'syntax', 'decode')
         except (ValueError, TypeError, RecursionError) as exc:
-            errors.append((i + 1, str(exc)))
+            error(i + 1, exc, 'processing', 'decode')
+        else:
+            try:
+                add(data, 'jsonld')
+            except (ValueError, TypeError, RecursionError) as exc:
+                error(i + 1, exc, 'processing', 'nodes')
     add(doc.microdata, "microdata")
     add(doc.rdfa, "rdfa")
     return records, errors

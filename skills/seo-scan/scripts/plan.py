@@ -38,10 +38,12 @@ SKIP_DIRS = {
 }
 SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "good": 4}
 SCHEMA_ABSENCE_RULES = frozenset(('schema.no.structured.data',
+    'schema.no.structured.data.json.ld',
     'schema.article.like.page.without.article.schema', 'schema.no.organization.website.entity',
     'schema.ecommerce.product.missing'))
 SCHEMA_EXTRACTION_RULES = frozenset(('schema.microdata.extraction', 'schema.rdfa.extraction',
-    'schema.ecommerce.source.extraction', 'schema.invalid.json.ld', 'schema.extraction.unverified'))
+    'schema.ecommerce.source.extraction', 'schema.invalid.json.ld', 'schema.extraction.unverified',
+    'schema.jsonld.processing.unverified'))
 SCHEMA_VERIFICATION_RULES = SCHEMA_EXTRACTION_RULES - {'schema.invalid.json.ld'}
 
 
@@ -580,14 +582,18 @@ PHRASE_REVIEW_GUIDANCE = dict.fromkeys(
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    'schema.invalid.json.ld':
+        'Inspect the original JSON-LD block and repair verified JSON syntax errors only. '
+        'An old unclassified processing failure is not proof of syntax invalidity; verify tool/parser '
+        'limits before rewriting source. Preserve valid semantic data and do not promise engine behavior.',
     'schema.ecommerce.product.missing':
         'Review existing Product markup and actual visible product facts before adding applicable semantic data. '
         'Preserve valid JSON-LD, Microdata or RDFa; do not duplicate entities or infer Google merchant eligibility '
         'or rich-result benefits solely from page signals.',
-    'schema.no.structured.data':
+    **dict.fromkeys(('schema.no.structured.data', 'schema.no.structured.data.json.ld'),
         'Review existing supported markup and the actual page entity; add semantic data only when applicable. '
         'Do not duplicate entities or invent visible content. Non-observation does not prove a markup requirement '
-        'or establish rich-result eligibility, ranking or AI citation gains.',
+        'or establish rich-result eligibility, ranking or AI citation gains.'),
     'schema.article.like.page.without.article.schema':
         'Review actual page purpose and existing Article-family markup before adding applicable known facts. '
         'Preserve valid JSON-LD, Microdata or RDFa; do not invent authors/dates or promise rich results or AI attribution.',

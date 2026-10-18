@@ -12,6 +12,16 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- JSON-LD errors distinguish decoder-reported syntax defects from tool decoding/
+  node-processing failures. Actual syntax errors retain their high rule/repair
+  path; recursion/numeric/Unicode handling gaps are low manual verification notes,
+  not source-invalidity or engine-rejection verdicts. Error-stage counts are
+  recorded without raw markup, original error tuple compatibility remains, and
+  parser/body/global limits are unchanged. The auxiliary Product heuristic no
+  longer crashes on decoder ValueError guards. The documented legacy absence ID
+  also honors extraction uncertainty and conditional review.
+- Long source URLs in native report findings and quick-win advice wrap within
+  narrow screens instead of overflowing the page; text and JSON stay intact.
 - Page schema absence advice (including Product) now requires no known extraction error/limit; observed
   syntax/property checks remain active. Clean-scan suggestions are conditional,
   preserve valid supported formats and no longer promise rich results/AI benefits.
