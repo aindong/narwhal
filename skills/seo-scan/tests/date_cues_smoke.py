@@ -4,6 +4,7 @@ import argparse
 import copy
 import json
 from pathlib import Path
+from _measurement_browser import expand_measurements
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -68,6 +69,7 @@ def main(argv=None):
             tab.route('https://**/*', deny)
             for name, output in docs:
                 tab.set_content(output)
+                expand_measurements(tab)
                 for mode, width in [('screen', 320), ('screen', 390), ('screen', 1100), ('print', 794)]:
                     tab.emulate_media(media=mode)
                     tab.set_viewport_size({'width': width, 'height': 1000})

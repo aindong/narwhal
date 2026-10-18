@@ -136,3 +136,5 @@ jobs:
         run: python skills/seo-scan/tests/date_cues_smoke.py
       - name: Scoped readability-formula browser regression
         run: python skills/seo-scan/tests/readability_observation_smoke.py
+      - name: Native measurement disclosure browser regression
+        run: python skills/seo-scan/tests/measurement_disclosure_smoke.py

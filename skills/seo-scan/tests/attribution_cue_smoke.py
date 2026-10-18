@@ -4,6 +4,7 @@
 import argparse
 import html
 from pathlib import Path
+from _measurement_browser import expand_measurements
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -59,6 +60,7 @@ def main(argv=None):
                               'Leading byline-like block: By Jane Doe', True))
             for name, output, expected, has_section in cases:
                 page.set_content(output)
+                expand_measurements(page)
                 heading = page.get_by_role('heading', name='Attribution cue evidence (not identity verification)', exact=True)
                 assert heading.count() == int(has_section), name
                 if has_section:

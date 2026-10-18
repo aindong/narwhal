@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Native page/site-audit HTML groups supplemental text-length/readability and
+  attribution/date evidence behind keyboard-operable disclosure. Counts,
+  unassessed scope and candidate uncertainty remain visible; priorities, quick
+  wins and resource warnings stay expanded. Print/PDF includes every detail once
+  whether open or closed, without JavaScript. JSON/Markdown, findings, scores and
+  fetch behavior are unchanged; screen/print copies are presentation, not new facts.
 - Readability checks expose historical ASCII-token/punctuation-fragment/vowel-group
   inputs and Flesch/FK estimates rather than comprehension, school-grade or AI-
   citability verdicts. Unsupported language/text scope stays unassessed; below-

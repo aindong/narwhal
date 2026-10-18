@@ -663,26 +663,9 @@ class Report:
                         + '<ul>' + ''.join('<li>' + _esc(note) + '</li>' for note in named_meta_notes)
                         + '</ul></section>')
 
-        length_note = content_length.note(self.meta)
-        if length_note:
-            body.append('<section class="card"><h2>Text-length observation (not content quality)</h2><p>'
-                        + _esc(length_note) + '</p></section>')
-
-        reading_note = readability_observation.note(self.meta)
-        if reading_note:
-            body.append('<section class="card"><h2>Readability formula observation (not comprehension)</h2><p>'
-                        + _esc(reading_note) + '</p></section>')
-
-        attribution = authorship.evidence_lines(self.meta)
-        if attribution:
-            body.append('<section class="card"><h2>Attribution cue evidence (not identity verification)</h2>'
-                        + '<p>' + _esc(authorship.LIMITS_NOTE) + '</p><pre><code>'
-                        + _esc('\n'.join(attribution)) + '</code></pre></section>')
-        dates = date_cues.evidence_lines(self.meta)
-        if dates:
-            body.append('<section class="card"><h2>Date-cue evidence (not freshness verification)</h2>'
-                        + '<p>' + _esc(date_cues.LIMITS) + '</p><pre><code>'
-                        + _esc('\n'.join(dates)) + '</code></pre></section>')
+        measurement = _measurement_evidence(self.meta)
+        if measurement:
+            body.append(measurement)
 
         # Passing checks
         if buckets["good"]:
@@ -698,6 +681,56 @@ class Report:
 
 
 # --- HTML helpers (shared by Report.to_html and audit.render_html) --------
+
+def _measurement_evidence(meta):
+    """Compact native overview; literal details expand on screen and print once.
+
+    A print-only copy is intentional: closed native details do not reliably
+    print their contents, and PDF engines need not execute JavaScript.
+    """
+    summaries, sections = [], []
+    length_note = content_length.note(meta)
+    if length_note:
+        value = meta['content_length']
+        state = ('threshold review not applied (language/text scope)' if value['threshold_status'] == 'uninterpreted'
+                 else 'configured threshold review applied')
+        summaries.append(f"Text length: {value['ascii_pattern_matches']} ASCII-pattern matches; {state}. Not content quality.")
+        sections.append('<section class="card"><h2>Text-length observation (not content quality)</h2><p>'
+                        + _esc(length_note) + '</p></section>')
+    reading_note = readability_observation.note(meta)
+    if reading_note:
+        value = meta['readability']
+        state = (f"Flesch estimate {value['flesch_reading_ease']}, FK estimate {value['flesch_kincaid_grade']}"
+                 if value['formula_status'] == 'computed' else 'unassessed (language/text, page-role or input scope)')
+        summaries.append(f'Readability formula: {state}. Not reader comprehension.')
+        sections.append('<section class="card"><h2>Readability formula observation (not comprehension)</h2><p>'
+                        + _esc(reading_note) + '</p></section>')
+    attribution = authorship.evidence_lines(meta)
+    if attribution:
+        count = sum(line.startswith(tuple(label + ': ' for label in authorship.LABELS.values())) for line in attribution)
+        limited = any(line.startswith('A source/depth/') for line in attribution)
+        summaries.append(f'Attribution: {count} captured candidate witness(es); identity is unverified.'
+                         + (' Capture limits reached; unchecked evidence remains unknown.' if limited else ''))
+        sections.append('<section class="card"><h2>Attribution cue evidence (not identity verification)</h2>'
+                        + '<p>' + _esc(authorship.LIMITS_NOTE) + '</p><pre><code>'
+                        + _esc('\n'.join(attribution)) + '</code></pre></section>')
+    dates = date_cues.evidence_lines(meta)
+    if dates:
+        value = meta['date_cues']
+        summaries.append(f"Date cues: {value['candidate_count']} captured candidate(s); publication dates and freshness are unverified."
+                         + (' Capture limits reached; unchecked evidence remains unknown.' if any(value['coverage'].values()) else ''))
+        sections.append('<section class="card"><h2>Date-cue evidence (not freshness verification)</h2>'
+                        + '<p>' + _esc(date_cues.LIMITS) + '</p><pre><code>'
+                        + _esc('\n'.join(dates)) + '</code></pre></section>')
+    if not sections:
+        return ''
+    details = ''.join(sections)
+    return ('<section class="card measurement-overview"><h2>Measurement overview</h2>'
+            '<p class="muted">Reported counts/candidates, not verified page quality. Expand for detailed evidence and limits; '
+            'print/PDF includes all details.</p><ul class="clean">'
+            + ''.join('<li>' + _esc(line) + '</li>' for line in summaries)
+            + '</ul><details class="measurement-details"><summary>Inspect detailed evidence and limits</summary>'
+            + details + '</details><div class="measurement-print">' + details + '</div></section>')
 
 def _quick_win_previews(finding):
     """Return bounded display copies; original reported fields remain untouched."""
@@ -899,6 +932,11 @@ border-radius:8px;padding:14px 16px;margin:0 0 12px}
 .reference-link{color:#0f766e;text-underline-offset:2px}
 .reference-link:focus-visible{outline:2px solid #0f766e;outline-offset:3px;border-radius:2px}
 .quick-preview{display:block;margin:6px 0 0;overflow-wrap:anywhere}
+.measurement-details{margin-top:14px}
+.measurement-details>summary{cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:6px;color:#0f766e}
+.measurement-details>summary:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
+.measurement-details .card,.measurement-print .card{border:0;border-radius:0;padding:18px 0 0;margin:0}
+.measurement-print{display:none}
 .k{display:inline-block;min-width:70px;font-weight:600;color:var(--muted);font-size:12px;
 text-transform:uppercase;letter-spacing:.03em}
 code{background:#f0f1f3;padding:1px 5px;border-radius:4px;font-size:12.5px;word-break:break-all}
@@ -913,6 +951,7 @@ pre code{display:block;padding:0;background:transparent;border-radius:0;word-bre
 .foot a{color:var(--brand);text-decoration:none}
 @media print{body{background:#fff;padding:0}.card,.hero,.finding{break-inside:avoid}pre{white-space:pre-wrap;overflow:visible}pre code{overflow-wrap:break-word}.table-scroll{overflow:visible;border:0;border-radius:0}.table-scroll:focus-visible{outline:0}table.markdown{table-layout:fixed;font-size:11px}table.markdown th,table.markdown td{min-width:0;padding:6px 8px}}
 @media print{.score-table-scroll{overflow:visible;border:0;border-radius:0}.score-table-scroll:focus-visible{outline:0}.score-table-scroll table.areas th:first-child,.score-table-scroll table.areas td:first-child,.score-table-scroll .score-cell{min-width:0}}
+@media print{.measurement-details{display:none}.measurement-print{display:block}.measurement-overview{break-inside:auto}}
 """
 
 
