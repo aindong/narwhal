@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Contextual style counts:** filler-list and type/token flags carry exact
+  ASCII-pattern counts and extraction basis, not padding or thin/spun diagnoses.
+  Current/legacy plans preserve useful quotes and consistent terms rather than
+  forcing synonyms. Matching/cutoffs/IDs remain; the rate flag is now low, so
+  scores may reflect priority calibration, not page or independently measured SEO gains.
 - **Consistent PDF branding:** explicit 46px/16px CSS sizes keep header/footer
   marks from expanding to 128px in WeasyPrint; the footer stays inline with its
   credit. Page/audit/Markdown layouts are checked in both PDF engines without

@@ -595,6 +595,12 @@ READABILITY_REVIEW_GUIDANCE = (
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    **dict.fromkeys(('content.filler.padding.language', 'content.some.filler.phrasing',
+                     'content.repetitive.vocabulary'),
+        'Review actual wording, quoted examples and audience needs in context. Keep useful phrasing and '
+        'consistent technical terms; edit only confirmed unnecessary repetition or vague wording. '
+        'Do not add filler or substitute synonyms solely to change a count or ratio. Pattern counts '
+        'do not establish padding, thin/spun content, authorship or ranking/AI-citation impact.'),
     'content.body.may.not.reinforce.the.title.topic':
         'Review actual page purpose and wording, including synonyms, the top-8 lexical cutoff and extraction. '
         'Edit only confirmed misleading labels or missing useful content; keep accurate wording. Do not stuff '
@@ -957,6 +963,11 @@ def render_markdown(plan: dict) -> str:
                 owners = 'not assigned (verification only)'
             scope_lines = []
             display_title = action['title']
+            if action['rule_id'] in ('content.filler.padding.language', 'content.some.filler.phrasing',
+                                     'content.repetitive.vocabulary'):
+                display_title = 'Review recorded style-pattern observation'
+                scope_lines.append('- **Observation scope:** Original label/priority retained in JSON, '
+                                   'not verified padding, thinness or originality risk. Review actual text.')
             if action['rule_id'] in READABILITY_REVIEW_RULES:
                 display_title = 'Review recorded readability formula finding'
                 scope_lines.append('- **Priority scope:** Input report priority retained, not verified readability risk. '

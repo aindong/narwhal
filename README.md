@@ -105,6 +105,12 @@ absence establish originality, helpfulness or ranking impact. The four-distinct-
 advisory is now low priority (previously medium), so that score correction is not
 a page improvement. Stable rule IDs remain; update title-based ignore filters
 for the [revised labels and interpretation](skills/seo-scan/references/content-eeat.md#filler--phrase-review).
+Configured filler-list matches and vocabulary ratios are also low contextual
+reviews, with exact ASCII-pattern counts and extraction basis—not padding or
+thin/spun-content diagnoses. Keep useful quoted text and consistent terminology;
+do not substitute synonyms solely to change a count. Legacy rule IDs remain,
+but title-based ignore filters may need updating. Priority calibration is not a
+measured website improvement.
 
 Page content-length checks report literal ASCII-pattern counts, not universal
 word counts or a thinness verdict. Declared non-English text or non-ASCII

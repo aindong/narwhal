@@ -142,3 +142,5 @@ jobs:
         run: python skills/seo-scan/tests/lexical_focus_smoke.py
       - name: Branded page/audit/Markdown geometry in both PDF engines
         run: python skills/seo-scan/tests/brand_layout_smoke.py
+      - name: Contextual style-pattern browser regression
+        run: python skills/seo-scan/tests/style_review_smoke.py --html skills/seo-scan/tests/fixtures/reports/snapshots/full-report.html

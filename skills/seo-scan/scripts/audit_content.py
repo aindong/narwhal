@@ -49,7 +49,7 @@ def audit(doc, resp, report, ctx=None) -> None:
     _word_count(receipt, report, hub=hub)
     _readability(text, report, hub=hub, article=article, language=doc.lang, basis=doc.extraction)
     if english:
-        _quality(text, report)
+        _quality(text, report, basis=doc.extraction)
     _keywords(doc, text, report)
     _authorship(doc, text, report, article=article)
     _freshness(doc, text, report)
@@ -129,24 +129,34 @@ def _keywords(doc, text, report):
                    rule_id='content.body.may.not.reinforce.the.title.topic')
 
 
-def _quality(text, report):
+def _quality(text, report, *, basis='selected extracted text'):
     """Surface phrase matches for editorial review, not authorship detection."""
     q = content_quality.analyze(text)
     if q["word_count"] < 100:
-        return  # too short to judge reliably
+        return  # preserve the historical review minimum, not calibrated reliability
+
+    source = ' '.join(str(basis or 'selected extracted text').split())[:160]
+    counts = (f"{q['word_count']} matches of [A-Za-z][A-Za-z'-]+; "
+              f"{q['unique_word_count']} distinct lowercased matches in {source}. ")
+    limits = ('English-oriented patterns and a type/token ratio, not padding, thin/spun content, '
+              'authorship, helpfulness or ranking/AI-citation measurements. Counts depend on '
+              'selected text and this ASCII-only matcher; necessary repetition can be useful.')
+    style_advice = ('Review actual wording, quoted examples and audience needs in context. Keep useful '
+                    'phrasing and consistent technical terms; edit only confirmed unnecessary repetition '
+                    'or vague wording. Do not add filler or substitute synonyms solely to change a count '
+                    'or ratio. Search and AI-citation effects are unmeasured.')
 
     if q["filler_per_100w"] >= 1.0:
-        report.add(CAT, "medium", "Filler / padding language",
-                   f"{q['filler_count']} filler phrases "
-                   f"(~{q['filler_per_100w']} per 100 words).",
-                   "Cut hollow phrasing and lead with substance; padding dilutes the "
-                   "content for readers and AI extraction.",
-                   evidence="; ".join(q["filler_examples"]))
+        report.add(CAT, 'low', 'Review configured phrase-match rate',
+                   f"{q['filler_count']} configured phrase matches; rounded rate "
+                   f"{q['filler_per_100w']} per 100 ASCII-pattern matches (review cutoff >=1.0). "
+                   + counts + limits, style_advice,
+                   evidence='; '.join(q['filler_examples']), rule_id='content.filler.padding.language')
     elif q["filler_count"] >= 2:
-        report.add(CAT, "low", "Some filler phrasing",
-                   f"{q['filler_count']} filler phrases detected.",
-                   "Tighten wording; prefer specifics over padding.",
-                   evidence="; ".join(q["filler_examples"]))
+        report.add(CAT, 'low', 'Review configured phrase matches',
+                   f"{q['filler_count']} configured phrase matches (review cutoff >=2 below the rate cutoff). "
+                   + counts + limits, style_advice,
+                   evidence='; '.join(q['filler_examples']), rule_id='content.some.filler.phrasing')
 
     # Keep examples/limits in advice too: legacy/third-party compact renderers
     # may omit the reported detail and evidence previews.
@@ -172,16 +182,16 @@ def _quality(text, report):
                    rule_id="content.some.generic.ai.sounding.phrasing")
 
     if q["word_count"] >= 400 and q["lexical_diversity"] < 0.35:
-        report.add(CAT, "low", "Repetitive vocabulary",
-                   f"Lexical diversity {q['lexical_diversity']} (unique/total words).",
-                   "Vary wording and add substance; heavy repetition signals thin or "
-                   "spun content.")
+        report.add(CAT, 'low', 'Review lower type/token ratio',
+                   f"Rounded distinct/total ASCII-pattern ratio {q['lexical_diversity']} "
+                   '(review cutoff <0.35 with >=400 matches). ' + counts + limits,
+                   style_advice, rule_id='content.repetitive.vocabulary')
     if (q["filler_per_100w"] < 1.0 and q["ai_distinct"] < 2
             and q["lexical_diversity"] >= 0.35):
         report.add(CAT, "good", "Few configured style-pattern matches",
-                   f"{q['filler_count']} filler matches; {q['ai_distinct']} distinct "
-                   f"common-phrase matches; lexical diversity {q['lexical_diversity']}. "
-                   "This does not establish authorship, originality or content quality.",
+                   f"{q['filler_count']} configured phrase matches; {q['ai_distinct']} distinct "
+                   f"common-phrase matches; rounded type/token ratio {q['lexical_diversity']}. "
+                   + counts + limits + ' This does not establish originality or content quality.',
                    rule_id="content.clean.specific.writing")
 
 

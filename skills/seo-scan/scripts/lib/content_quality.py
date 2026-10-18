@@ -84,10 +84,12 @@ def analyze(text: str) -> dict:
     ai = _matches(text, _AI_RE)
     filler_count = sum(filler.values())
     ai_count = sum(ai.values())
-    diversity = round(len(set(words)) / wc, 3) if wc else 0.0
+    unique = len(set(words))
+    diversity = round(unique / wc, 3) if wc else 0.0
     per100 = (lambda n: round(n / (wc / 100), 2) if wc >= 100 else 0.0)
     return {
         "word_count": wc,
+        "unique_word_count": unique,            # same lowercased ASCII-pattern matches
         "lexical_diversity": diversity,          # unique/total (type-token ratio)
         "filler_count": filler_count,
         "filler_per_100w": per100(filler_count),

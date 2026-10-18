@@ -82,8 +82,8 @@ class TestContentPhrases(unittest.TestCase):
         finding, = [f for f in quality(BASE).findings if f.rule_id == PASS_ID]
         self.assertEqual('good', finding.severity)
         self.assertEqual('Few configured style-pattern matches', finding.title)
-        self.assertIn('0 filler matches; 0 distinct common-phrase matches', finding.detail)
-        self.assertIn('does not establish authorship, originality or content quality', finding.detail)
+        self.assertIn('0 configured phrase matches; 0 distinct common-phrase matches', finding.detail)
+        self.assertIn('does not establish originality or content quality', finding.detail)
         self.assertNotIn('Clean, specific writing', quality(BASE).to_markdown())
 
     def test_legacy_helper_keys_remain_literal_counts_not_probabilities(self):
@@ -97,7 +97,7 @@ class TestContentPhrases(unittest.TestCase):
         report = quality((BASE + " In today's digital world, when it comes to repairs. ") * 4)
         ids = {f.rule_id: f for f in report.findings}
         self.assertIn('content.filler.padding.language', ids)
-        self.assertEqual('medium', ids['content.filler.padding.language'].severity)
+        self.assertEqual('low', ids['content.filler.padding.language'].severity)
         self.assertIn('content.repetitive.vocabulary', ids)
 
     def test_language_scope_and_both_parser_paths_are_preserved(self):
