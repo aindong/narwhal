@@ -22,6 +22,13 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Scoped page text-length cues:** historical ASCII matches no longer become
+  a high "thin content" verdict or a content-depth certificate. Literal count/
+  extraction/language receipts explain conservative uninterpreted coverage for
+  non-English declarations or non-ASCII letters/marks. Applicable length reviews
+  are low; current/legacy plans preserve useful concise text. Counts/defaults/IDs
+  remain, while titles/priorities/scores can change. No multilingual segmentation,
+  ranking/citation validation or comparison/brief length correction is claimed.
 - **Inspectable quick wins:** low-priority page findings show safe reported-field
   previews rather than only titles/advice. Detail and evidence each have a
   400-character normalized preview with explicit truncation; full JSON is intact.

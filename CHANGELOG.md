@@ -12,6 +12,15 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- The page content auditor labels its historical ASCII-pattern count accurately
+  instead of certifying thinness/depth. Non-English declarations or non-ASCII
+  letters/marks leave length-threshold review uninterpreted, with typed counts
+  and explicit coverage notes. Applicable below-bound advisories are low priority;
+  current/legacy plans do not prescribe padding. Stable IDs/default bounds remain,
+  but titles and corrected scores can change without page improvements. This is
+  not multilingual word segmentation or validation of other length heuristics.
+  Known changes in length-threshold coverage also prevent false page/audit diff
+  improvement/resolution claims; matching uninterpreted coverage remains usable.
 - Low-priority page findings retain bounded, whitespace-normalized previews of
   their reported observation/evidence in Markdown and native HTML/PDF input.
   Markup stays literal, clipped fields are labelled and full values remain in

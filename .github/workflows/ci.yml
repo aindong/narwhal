@@ -112,3 +112,5 @@ jobs:
         run: python skills/seo-scan/tests/review_capture_smoke.py
       - name: Literal quick-win preview browser regression
         run: python skills/seo-scan/tests/quick_win_preview_smoke.py
+      - name: Scoped content-length browser regression
+        run: python skills/seo-scan/tests/content_length_smoke.py

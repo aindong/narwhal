@@ -69,7 +69,7 @@ And yes, it works as a backronym too:
 | Area | Highlights |
 |---|---|
 | **Technical SEO** | title/meta, headings, canonical, robots directives, viewport/mobile, hreflang, images, links, HTTP hygiene, robots.txt, sitemap |
-| **Content & E-E-A-T** | thin-content detection, readability, author/date signals, Open Graph / Twitter cards |
+| **Content & E-E-A-T** | scoped text-length/readability cues, author/date candidates, Open Graph / Twitter cards |
 | **Structured data** | JSON-LD + Microdata + bounded schema.org RDFa detection, required/recommended property validation, merchant checks, source-backed Google feature-retirement notes, JSON-LD generation |
 | **E-commerce** | evidence-gated Product detection; Product/Offer/AggregateOffer completeness; variants; expired prices; visible-vs-schema price, currency, availability, SKU, and brand consistency |
 | **GEO / LLMO** | contextual review of question-heading, sentence-group, statistic/citation and intro cues—not measured citability—plus `llms.txt` and role-aware **search/retrieval robots policies**, with separate non-scoring training/data-use notes |
@@ -98,6 +98,13 @@ absence establish originality, helpfulness or ranking impact. The four-distinct-
 advisory is now low priority (previously medium), so that score correction is not
 a page improvement. Stable rule IDs remain; update title-based ignore filters
 for the [revised labels and interpretation](skills/seo-scan/references/content-eeat.md#filler--phrase-review).
+
+Page content-length checks report literal ASCII-pattern counts, not universal
+word counts or a thinness verdict. Declared non-English text or non-ASCII
+letters/marks leave the length threshold uninterpreted, with a non-scoring
+coverage note. Applicable below-bound reviews are low priority, not instructions
+to reach 300/600 words. Useful concise text can stay. See the
+[measurement scope and compatibility](skills/seo-scan/references/content-eeat.md#page-text-length-observation).
 
 Page-report **Quick wins** include reported observation/evidence previews, not
 only advice. Each field shows its first 400 whitespace-normalized characters,

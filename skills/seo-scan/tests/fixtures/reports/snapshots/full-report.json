@@ -5,12 +5,12 @@
   "final_url": "https://example.test/guides/answer-visibility",
   "status": 200,
   "rendered": false,
-  "score": 81,
+  "score": 86,
   "counts": {
     "critical": 0,
-    "high": 1,
+    "high": 0,
     "medium": 1,
-    "low": 10,
+    "low": 11,
     "good": 15
   },
   "meta": {
@@ -39,9 +39,30 @@
       "render_requested": false,
       "rendered": false,
       "image_checks": false,
-      "rule_config": "73dd3ab00a8fb78cc6bd9fdde9742750180283543f2b1df87fe6b6a69a495887"
+      "rule_config": "73dd3ab00a8fb78cc6bd9fdde9742750180283543f2b1df87fe6b6a69a495887",
+      "content_length_reviewed": true
     },
     "extraction": "visible text",
+    "content_length": {
+      "version": 1,
+      "basis": "selected_extracted_text",
+      "source_basis": "visible text",
+      "source_basis_clipped": false,
+      "declared_language": "en",
+      "declared_language_clipped": false,
+      "text_characters": 1046,
+      "ascii_pattern_matches": 146,
+      "non_ascii_letters_or_marks": 0,
+      "pattern": "[A-Za-z][A-Za-z'-]+",
+      "word_segmentation": "not_performed",
+      "threshold_status": "below_lower",
+      "uninterpreted_reasons": [],
+      "bounds": {
+        "thin_content": 300,
+        "short_content": 600
+      },
+      "limits": "ASCII-pattern matches are not universal word counts or a measure of content depth, usefulness, ranking or AI citations. Configured bounds are editorial defaults, not engine requirements."
+    },
     "authorship_cues": {
       "version": 1,
       "interpretation": "attribution_candidates_only",
@@ -377,10 +398,10 @@
     },
     {
       "category": "content",
-      "severity": "high",
-      "title": "Thin content",
-      "detail": "~146 words of main text (measured on visible text).",
-      "recommendation": "Expand to cover the topic fully; thin pages struggle to rank and are rarely cited by AI answers.",
+      "severity": "low",
+      "title": "Review limited ASCII-token count",
+      "detail": "146 matches of the configured ASCII-only pattern in selected extracted text (visible text). Below the configured lower bound. ASCII-pattern matches are not universal word counts or a measure of content depth, usefulness, ranking or AI citations. Configured bounds are editorial defaults, not engine requirements.",
+      "recommendation": "Review whether the captured text serves the reader and page intent. Keep useful concise text; edit only confirmed coverage gaps. Do not pad content to reach a configured count. Ranking and citation impact are not measured.",
       "evidence": null,
       "rule_id": "content.thin.content",
       "scope": "page",
