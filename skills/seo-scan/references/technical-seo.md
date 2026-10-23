@@ -80,6 +80,19 @@ URL identities and observed link targets. Zero additional candidates therefore
 does **not** prove every sitemap URL has inbound links; use the separate sampled
 zero-inbound observations and inspect wider coverage before edits.
 
+Graph `depth_coverage` records `breadth_first_over_supplied_graph_edges_v1`,
+whether the start identity occurs in the supplied nodes, and counts of reachable
+and unreachable nodes. Depth is the shortest input-edge path from that start,
+only among reachable nodes. An absent start means no assessed start depth;
+the historical numeric `max_depth=0` then remains a placeholder, not a site pass.
+Missing/unsupported or inconsistent receipts are not inferred from tool version.
+This local computation does not verify fetch success, crawler access, link equity
+or ranking. Zero inter-page edges retain known URL lists, orphan-check status
+and sample caveats. It does not prove the whole site lacks links; inspect captured
+links, extraction and sampling before source edits or a larger authorized crawl.
+Existing five-item depth/unreachable/zero-inbound and eight-item orphan displays
+keep full JSON lists and expose omitted counts. No scoring or fetch policy changes.
+
 This preserves distinctions described in [RFC 3986 path/query components](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.3).
 In particular, [protocol-based slash equivalence](https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2.4)
 needs observed evidence rather than automatic removal (checked 2026-10-19).

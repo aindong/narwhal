@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Zero-edge crawl reports retain known unreachable/zero-inbound URLs, orphan
+  candidates and sample limits rather than returning early. A recorded BFS
+  scope separates measured depth from an absent start or unrecorded legacy
+  coverage; low depth is not a health pass. Existing graph facts, display caps,
+  crawl/fetch budgets and scoring remain; omitted list items are explicit.
 - Crawl discovery, graph and hreflang URL identity preserve non-root slashes,
   semicolon path data and query literals instead of hiding distinct addresses.
   Fragment aliases still group; orphan candidates deduplicate by the same key.
