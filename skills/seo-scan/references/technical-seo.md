@@ -93,6 +93,25 @@ links, extraction and sampling before source edits or a larger authorized crawl.
 Existing five-item depth/unreachable/zero-inbound and eight-item orphan displays
 keep full JSON lists and expose omitted counts. No scoring or fetch policy changes.
 
+Relative anchor-path merging preserves empty path segments (`guide//chapter`
+is not `guide/chapter`), including repeated separators in the base path and
+semicolon data. Literal `.`/`..` resolution shares the existing canonical path
+helper without changing canonical comparison. Collection, fallback discovery
+and link-check targets use this resolver; scheme/authority/query handling
+outside the relative path merge remains as before. Per-fetch SSRF/redirect
+checks and configured caps remain mandatory and unchanged. Corrected observed
+targets may change a bounded sample, graph counts or its average without a site edit.
+
+Crawl JSON records `link_resolution_basis=relative_path_merge_preserve_separators_v1`.
+Known current versus missing/different policy makes audit diffs incomparable;
+matching policy is not proof of equal samples, server aliases or a measured fix.
+This is not full WHATWG URL conformance: encoded-dot decoding, HTML base elements
+and empty-query transport remain outside this receipt. Bounded supported path
+fixtures are checked against Chromium, not all browser repair behavior.
+See [RFC 3986 reference merging](https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.3)
+and [dot-segment removal](https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.4)
+(checked 2026-10-24).
+
 This preserves distinctions described in [RFC 3986 path/query components](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.3).
 In particular, [protocol-based slash equivalence](https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2.4)
 needs observed evidence rather than automatic removal (checked 2026-10-19).

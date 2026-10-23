@@ -150,3 +150,5 @@ jobs:
         run: python skills/seo-scan/tests/crawl_url_identity_smoke.py
       - name: Zero-edge graph and depth-coverage browser regression
         run: python skills/seo-scan/tests/graph_depth_coverage_smoke.py
+      - name: Relative anchor-path resolution browser regression
+        run: python skills/seo-scan/tests/relative_link_paths_smoke.py

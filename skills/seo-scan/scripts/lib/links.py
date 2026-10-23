@@ -8,11 +8,14 @@ decide which HTTP results count as broken.
 from __future__ import annotations
 
 import re
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlsplit, urlunsplit
+
+from .urlpaths import remove_dot_segments
 
 # Non-navigational hrefs we should never HTTP-check.
 SKIP_SCHEMES = ("mailto:", "tel:", "javascript:", "data:", "sms:", "callto:")
 _SCHEME = re.compile(r'^([a-zA-Z][a-zA-Z0-9+.-]*):')
+RESOLUTION_BASIS = 'relative_path_merge_preserve_separators_v1'
 
 
 def resolve_http_link(href: str, base_url: str):
@@ -27,6 +30,15 @@ def resolve_http_link(href: str, base_url: str):
             or (scheme and scheme.group(1).lower() not in ('http', 'https'))):
         return None
     full = urljoin(base_url, href).split('#')[0]
+    reference = urlsplit(href)
+    if reference.path and not reference.scheme and not reference.netloc and not reference.path.startswith('/'):
+        # urllib.urljoin drops empty segments when merging relative paths.
+        # Preserve their literal separators, including ones in the base path;
+        # keep its existing scheme/authority/query handling outside this merge.
+        origin = urlsplit(base_url)
+        merged = (origin.path.rpartition('/')[0] + '/' if origin.path else '/') + reference.path
+        parts = urlsplit(full)
+        full = urlunsplit((parts.scheme, parts.netloc, remove_dot_segments(merged), parts.query, ''))
     parts = urlparse(full)
     if parts.scheme not in ('http', 'https'):
         return None

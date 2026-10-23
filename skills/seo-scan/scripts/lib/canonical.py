@@ -7,6 +7,7 @@ No DNS, URL retrieval or permission decision belongs in these helpers.
 from html.parser import HTMLParser
 import re
 from urllib.parse import urlsplit
+from .urlpaths import remove_dot_segments as _path
 
 VERSION = 1
 BASIS = 'first_html_canonical_http_components_v1'
@@ -112,21 +113,6 @@ def _utf8(value):
     return re.sub(r'[^\x00-\x7f]+',
                   lambda match: ''.join('%%%02X' % byte for byte in match.group().encode('utf-8')),
                   value)
-
-
-def _path(value):
-    """Remove complete dot segments without collapsing repeated separators."""
-    segments = []
-    parts = value.split('/')
-    for index, part in enumerate(parts):
-        if part in ('.', '..'):
-            if part == '..' and len(segments) > 1:
-                segments.pop()
-            if index == len(parts) - 1:
-                segments.append('')
-        else:
-            segments.append(part)
-    return '/'.join(segments) or '/'
 
 
 def key(url):
