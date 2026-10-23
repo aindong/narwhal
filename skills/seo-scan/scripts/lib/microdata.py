@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from html.parser import HTMLParser
+from .source_parser import SourceHTMLParser
 from urllib.parse import urljoin, urlsplit
 
 VOID = set("area base br col embed hr img input link meta param source track wbr".split())
@@ -37,7 +37,7 @@ class Element:
     content: list = field(default_factory=list)
 
 
-class _Tree(HTMLParser):
+class _Tree(SourceHTMLParser):
     """Bounded source tree shared by the Microdata and RDFa extractors."""
 
     def __init__(self, base_url, label="Microdata", element_limit=None, warning_limit=None):

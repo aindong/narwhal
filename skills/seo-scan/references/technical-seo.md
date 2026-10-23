@@ -119,8 +119,9 @@ It uses the first non-template href-bearing base, including an explicit empty
 first href; a target-only base does not prevent a later href-bearing one.
 The shared base reader ignores script/style/raw-text/RCDATA lookalikes (also
 used by canonical resolution), not a full HTML5 tree construction algorithm.
-Bogus marked declarations follow the existing source projection's comment
-handling instead of crashing shared base reading.
+Bogus marked declarations share the existing source projection's comment
+handling across base, fallback HTML, markup-tree and attribution readers,
+instead of aborting the complete scan.
 Internal/external classification and fallback discovery compare targets with
 the fetched document host, **not** the declared base host. Base parsing never
 resolves DNS, fetches a target or overrides per-request SSRF/redirect controls.

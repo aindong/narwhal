@@ -4,7 +4,7 @@ RFC 3986 sections 6.2.2/6.2.3 and RFC 9110 section 4.2.3 inform the
 normalizations, not a claim of server equivalence or search-engine selection.
 No DNS, URL retrieval or permission decision belongs in these helpers.
 """
-from html.parser import HTMLParser
+from .source_parser import SourceHTMLParser
 import re
 from urllib.parse import urlsplit
 from .urlpaths import remove_dot_segments as _path
@@ -24,7 +24,7 @@ _UNRESERVED = frozenset('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 _ILLEGAL = frozenset('<>"{}|^`\\')
 
 
-class _Base(HTMLParser):
+class _Base(SourceHTMLParser):
     """Read the first href-bearing base from an already non-template source."""
     CDATA_CONTENT_ELEMENTS = ('script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noembed', 'noframes')
     def __init__(self, source):
@@ -38,13 +38,6 @@ class _Base(HTMLParser):
                 if name == 'href':
                     self.href = value or ''
                     break
-
-    def parse_html_declaration(self, index):
-        try:
-            return super().parse_html_declaration(index)
-        except (AssertionError, NotImplementedError):
-            # Match the non-template source projection's bogus-comment handling.
-            return self.parse_bogus_comment(index)
 
 
 def _join(base, href):

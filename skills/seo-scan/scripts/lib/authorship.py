@@ -4,7 +4,7 @@ Read-only source projection shared by scans and comparisons. No links are
 followed, names authenticated or structured-data author graphs interpreted.
 """
 
-from html.parser import HTMLParser
+from .source_parser import SourceHTMLParser
 from itertools import chain, islice
 import re
 
@@ -62,7 +62,7 @@ class _Limit(Exception):
     pass
 
 
-class _Probe(HTMLParser):
+class _Probe(SourceHTMLParser):
     CDATA_CONTENT_ELEMENTS = ('script', 'style', 'textarea', 'title')
 
     def __init__(self, noscript=False):

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from html.parser import HTMLParser
+from .source_parser import SourceHTMLParser
 from typing import Optional
 from urllib.parse import urljoin
 
@@ -323,7 +323,7 @@ def _join(tag, key):  # normalize list-valued attrs from bs4
     return " ".join(v) if isinstance(v, list) else (v or "")
 
 
-class _StdlibParser(HTMLParser):
+class _StdlibParser(SourceHTMLParser):
     """Stdlib fallback parser.
 
     Captures are a **stack**, so nested markup like ``<h1><a>Title</a></h1>``
@@ -343,14 +343,6 @@ class _StdlibParser(HTMLParser):
         self._noscript_depth = 0   # separate channel, not silently skipped
         self._text = []
         self._noscript = []
-
-    def parse_html_declaration(self, index):
-        try:
-            return super().parse_html_declaration(index)
-        except (AssertionError, NotImplementedError):
-            # Match document_source/base parsing: unsupported marked declarations
-            # are bogus comments, not a reason to abort all page auditors.
-            return self.parse_bogus_comment(index)
 
     def handle_starttag(self, tag, attrs):
         a = {k.lower(): (v or "") for k, v in attrs}

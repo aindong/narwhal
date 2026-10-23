@@ -103,6 +103,16 @@ class TestDocumentBaseLinks(unittest.TestCase):
                 self.assertEqual('/catalog/', page.base_href)
                 self.assertEqual([{'url': 'https://example.test/catalog/guide', 'internal': True}], links.extract_links(page, BASE))
 
+    def test_bogus_marked_declarations_complete_full_scan_for_both_parser_paths(self):
+        for parser in (htmlx._parse_stdlib, htmlx.parse):
+            for prefix in ('<![bad]>', '<![bad>'):
+                body = prefix + '<base href="/catalog/"><a href="guide">Guide</a>'
+                response = http.Response(BASE, BASE, 200, {'content-type': 'text/html'}, body, 1)
+                with mock.patch.object(scan.htmlx, 'parse', side_effect=parser), mock.patch.object(http, 'fetch', return_value=response):
+                    report = scan.scan(BASE, ctx={}, collect_links=True, check_images=False)
+                self.assertEqual(['technical', 'content', 'schema', 'geo'], report.meta['scan_scope']['completed'])
+                self.assertEqual([{'url': 'https://example.test/catalog/guide', 'internal': True}], report.meta['links'])
+
     def test_empty_fragment_and_ignored_data_javascript_bases_use_document_url(self):
         for value in ('', '#part', 'javascript:alert(1)', 'data:text/plain,x'):
             with self.subTest(value=value):
