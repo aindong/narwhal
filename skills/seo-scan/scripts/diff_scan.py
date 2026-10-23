@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib import canonical  # noqa: E402
+from lib import sitegraph  # noqa: E402
 
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -67,6 +68,14 @@ def _comparison(o: dict, n: dict) -> dict:
     reasons = []
     if o["kind"] != n["kind"]:
         reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
+    graph_bases = []
+    for item in (o, n):
+        crawl = item['crawl'] if isinstance(item['crawl'], dict) else {}
+        graph = crawl.get('graph') if isinstance(crawl.get('graph'), dict) else {}
+        graph_bases.append(graph.get('url_identity_basis'))
+    if sitegraph.URL_IDENTITY_BASIS in graph_bases and any(
+            basis != sitegraph.URL_IDENTITY_BASIS for basis in graph_bases):
+        reasons.append('Crawl URL-identity policy differs or is unrecorded; changed page selection/graph grouping is not fix evidence.')
     for label, item, scope in zip(("Earlier", "Later"), (o, n), scopes):
         if scope is not None and (not scope[1] or set(scope[0]) != set(scope[1])):
             reasons.append(label + " report did not complete all requested auditor groups.")
@@ -143,7 +152,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction/HTML canonical comparison gaps and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction/HTML canonical comparison gaps, crawl URL-identity policy and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 

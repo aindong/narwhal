@@ -58,6 +58,32 @@ and [Google's canonical guidance](https://developers.google.com/search/docs/craw
 (checked 2026-10-19). The latter treats declarations as signals and discourages
 fragment canonicals; a local match does not verify Google's choice.
 
+## Observed crawl address identity
+
+Crawl deduplication, graph nodes/orphan candidates and hreflang matching use a
+separate **observed-address key**, not the canonical comparator above. Literal
+fragments and scheme/host case group; empty roots use `/`. Non-root trailing/
+repeated separators, semicolon path data, path/query case, query order and
+explicit empty query delimiters remain distinct. Userinfo case is preserved.
+This does not implement full URI equivalence, canonical/redirect alias inference
+or proof of equal server content. Per-URL fetch/SSRF guards remain separate.
+
+Graph JSON records `url_identity_basis`; unrecorded legacy policy is not inferred.
+Distinct variants can now consume their own slots within the existing page/probe
+caps, changing graph counts or the sampled site average without a site change.
+Audit diffs with known current versus missing/different policy withhold fix claims
+and fail CI comparability gates. Matching policy alone is not an identical-sample
+guarantee. The graph is non-scoring; per-page audit rules remain unchanged.
+
+Orphan candidates deduplicate fragment aliases and exclude already crawled/start
+URL identities and observed link targets. Zero additional candidates therefore
+does **not** prove every sitemap URL has inbound links; use the separate sampled
+zero-inbound observations and inspect wider coverage before edits.
+
+This preserves distinctions described in [RFC 3986 path/query components](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.3).
+In particular, [protocol-based slash equivalence](https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2.4)
+needs observed evidence rather than automatic removal (checked 2026-10-19).
+
 ## Robots directives (two layers)
 1. `<meta name="robots">` / `X-Robots-Tag` header — page-level. `noindex` here is
    the single most common cause of "my page vanished."

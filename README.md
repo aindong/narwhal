@@ -228,8 +228,18 @@ IDs and recommendations are unchanged.
 Site-graph ranked lists use URL order to break equal inbound-link or depth
 ranks before display caps. For the same fixed sample, process hash seeds no
 longer change which tied pages enter the top-five JSON or top-three Markdown
-most-linked list. Numeric priority, counts, URL identities and scores stay
-unchanged; this does not certify complete site coverage.
+most-linked list. That tie-break-only change kept numeric priority, counts,
+URL identities and scores unchanged; it did not certify complete site coverage.
+
+Crawl discovery, graph nodes/orphan candidates and hreflang matching now group
+only fragment aliases, scheme/host case and empty root paths. Non-root trailing/
+repeated slashes, semicolon path data and query literals remain distinct. Graph
+JSON records `url_identity_basis`; missing legacy policy stays unverified. This
+is observed-address grouping, not canonical/redirect/content equivalence.
+Graph counts and which pages fit a fixed crawl cap can change, without changing
+per-page rules. Audit diffs with current versus unrecorded/different identity
+policy withhold fix claims and exit 2 under `--fail-on-regression`; even matching
+policy does not prove an identical sample or a website improvement.
 
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a

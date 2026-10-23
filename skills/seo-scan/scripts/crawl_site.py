@@ -117,7 +117,7 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
             break
     if coverage is not None:
         coverage.update(discovery.receipt())
-    sitemap_keys = {url.split('#')[0].rstrip('/') for url in urls} if discovered_sitemap is not None else set()
+    sitemap_keys = {sitegraph.norm(url) for url in urls} if discovered_sitemap is not None else set()
 
     # 2) fallback: internal links on the entry page
     if not urls:
@@ -133,12 +133,12 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
                 if full is not None and urlparse(full).netloc == host:
                     urls.append(full)
 
-    # de-dupe, keep order, drop obvious non-HTML assets. Normalize the dedupe key
-    # so "…/page" and "…/page/" (and #fragments) count as one URL.
+    # De-dupe observed URL identities, keep order and drop obvious non-HTML assets.
+    # Only fragments/case-insensitive scheme+host group; path/query literals stay.
     seen, out = set(), []
     for u in [base] + urls:
         u = u.split("#")[0]
-        key = u.rstrip("/") or u
+        key = sitegraph.norm(u)
         if key in seen or re.search(r"\.(jpg|png|gif|svg|pdf|css|js|xml|zip)$", u, re.I):
             continue
         seen.add(key)
@@ -146,7 +146,7 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
         if len(out) >= limit:
             break
     if discovered_sitemap is not None:
-        discovered_sitemap.extend(url for url in out if url.rstrip('/') in sitemap_keys)
+        discovered_sitemap.extend(url for url in out if sitegraph.norm(url) in sitemap_keys)
     return out
 
 

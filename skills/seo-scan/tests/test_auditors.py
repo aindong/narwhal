@@ -707,14 +707,17 @@ class TestSiteGraph(unittest.TestCase):
         self.assertFalse(g2["orphans"]["checked"])
         self.assertEqual(g2["orphans"]["candidates"], [])
 
-    def test_trailing_slash_and_fragment_are_one_node(self):
+    def test_fragments_group_but_non_root_trailing_slashes_remain_distinct(self):
         from lib import sitegraph
         base = "https://x.com/"
         crawled = [base, "https://x.com/a/"]
         pages_links = {base: [{"url": "https://x.com/a#section", "internal": True}]}
         g = sitegraph.analyze(base, crawled, pages_links, [], False)
-        self.assertEqual(g["unreachable_from_start"], [])   # /a/ == /a#section
-        self.assertEqual(g["max_depth"], 1)
+        self.assertEqual(g["unreachable_from_start"], ['https://x.com/a/'])
+        self.assertEqual(g["max_depth"], 0)  # /a#section does not establish an edge to /a/
+        g = sitegraph.analyze(base, [base, 'https://x.com/a'], pages_links, [], False)
+        self.assertEqual(g['unreachable_from_start'], [])
+        self.assertEqual(g['max_depth'], 1)
 
     def test_render_markdown_states_sample_size(self):
         from lib import sitegraph

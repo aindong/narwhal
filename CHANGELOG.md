@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl discovery, graph and hreflang URL identity preserve non-root slashes,
+  semicolon path data and query literals instead of hiding distinct addresses.
+  Fragment aliases still group; orphan candidates deduplicate by the same key.
+  Graph policy receipts qualify legacy/current audit diffs and sampled counts;
+  page/probe caps, fetch guards and per-page scoring rules stay unchanged.
 - Page and near-duplicate canonical checks share HTTP component comparison,
   preserving scheme/path/query distinctions while handling standard URL
   normalizations, relative bases and explicit empty delimiters locally.
