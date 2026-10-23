@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Relative anchor paths:** relative repeated separators and semicolon path
+  data no longer collapse distinct collected/discovered targets. A recorded
+  crawl resolution policy qualifies current/legacy audit comparisons; selection
+  and graph counts may change, not page scoring rules or fetch authorization.
+  Bounded Chromium fixture agreement is not full browser conformance or SEO accuracy.
 - **Zero-edge graph evidence:** known unlinked URLs, orphan candidates and
   sample limits stay visible even without inter-page edges. Additive BFS scope
   distinguishes measured reachable-node depth from an absent start or unknown

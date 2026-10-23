@@ -400,6 +400,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     result["graph"] = sitegraph.analyze(
         base, [u for u, _ in results], pages_links,
         sitemap_urls, bool(sitemap_urls))
+    result['link_resolution_basis'] = links.RESOLUTION_BASIS
     result["sitemap_candidates"] = len(sitemap_urls)
     # Hreflang reciprocity — only when the site actually uses hreflang. Probe a
     # few same-host alternates (capped) so return tags are verifiable instead of
@@ -474,6 +475,11 @@ def render_markdown(result: dict) -> str:
     lines = [f"# Site SEO & GEO Scan — {result['base']}", "",
              f"**Pages scanned:** {result['pages_scanned']}  ·  "
              f"**Average score:** {result['avg_score']}/100{skip_note}", ""]
+    if result.get('link_resolution_basis') == links.RESOLUTION_BASIS:
+        lines += ['Relative anchor paths preserve repeated separators while resolving literal dot segments. '
+                  'This is not full browser URL conformance or server equivalence; fetch guards and budgets remain separate.', '']
+    else:
+        lines += ['Anchor link-resolution policy was not recorded; historical path merging is unverified.', '']
     schema_note = schema_extraction_note(result)
     if schema_note:
         lines += ['> ' + schema_note, '']

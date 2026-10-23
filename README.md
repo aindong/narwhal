@@ -252,6 +252,17 @@ orphan lists retain their existing caps with explicit omission counts; inspect
 extraction/sampling before editing the site or raising crawl limits. Graph
 measurements, fetching and scores stay unchanged.
 
+Relative anchor references such as `guide//chapter` now retain their path
+separators when merged with the page URL; `guide/chapter` is a distinct observed
+target, not an inferred alias. Collection, fallback crawl discovery and optional
+link checks share this resolution. Crawl JSON records `link_resolution_basis`;
+audit diffs with a known current versus missing/different policy withhold site-fix
+claims and exit 2 under `--fail-on-regression`. Corrected targets can change fixed-cap
+selection, graph counts and averages without a site edit. Host/redirect guards,
+caps and per-page scoring rules are unchanged. This bounded path correction is
+not complete browser/WHATWG conformance: encoded-dot handling, HTML base-element
+support and empty-query transport behavior are not certified by this receipt.
+
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a
 candidate, complete 404/410 is observed root absence, and HTML fallbacks, gates, empty,

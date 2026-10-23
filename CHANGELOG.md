@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Relative anchor-path merging preserves repeated separators and semicolon path
+  data instead of silently merging distinct link/crawl targets. Shared literal
+  dot-segment handling keeps canonical comparison unchanged. Crawl policy receipts
+  qualify audit diffs across this selection correction; existing fetch guards,
+  caps and page scoring rules remain. This is not full browser URL conformance.
 - Zero-edge crawl reports retain known unreachable/zero-inbound URLs, orphan
   candidates and sample limits rather than returning early. A recorded BFS
   scope separates measured depth from an absent start or unrecorded legacy
