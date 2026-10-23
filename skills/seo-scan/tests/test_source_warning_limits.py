@@ -52,11 +52,18 @@ class TestSourceWarningLimits(unittest.TestCase):
         self.assertEqual(3, len(tree.warnings))
 
     def test_long_details_are_explicitly_truncated(self):
+        tree = microdata._Tree(URL)
+        tree.warn('Diagnostic detail ' + 'x' * 10000)
+        self.assertLessEqual(len(tree.warnings[0]), microdata.MAX_WARNING_CHARS)
+        self.assertIn('warning detail truncated', tree.warnings[0])
+
+    def test_long_invalid_url_values_are_omitted_not_serialized_as_prefixes(self):
         html = '<div itemscope itemtype="https://schema.org/Thing"><a itemprop="url" href="http://[bad' + 'x' * 10000 + '">x</a></div>'
         _, warnings = microdata.extract(html, URL)
         self.assertEqual(1, len(warnings))
         self.assertLessEqual(len(warnings[0]), microdata.MAX_WARNING_CHARS)
-        self.assertIn("warning detail truncated", warnings[0])
+        self.assertIn('source value omitted', warnings[0])
+        self.assertNotIn('http://[bad', warnings[0])
         _, rdfa_warnings = rdfa.extract('<div typeof="[unknown:' + 'x' * 10000 + ']"></div>', URL)
         self.assertLessEqual(len(rdfa_warnings[0]), microdata.MAX_WARNING_CHARS)
         self.assertIn("warning detail truncated", rdfa_warnings[0])

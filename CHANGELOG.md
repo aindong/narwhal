@@ -12,6 +12,16 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Anchor collection, source checks and fallback discovery use the first declared
+  non-template base href, retaining the document's internal-host boundary.
+  Unsupported/malformed/CSP-restricted bases withhold dependent targets with
+  explicit unscored coverage notes, not fabricated HTTP failures or source fixes.
+  Current/legacy page/crawl policy and known-gap gates qualify diff/compare/brief
+  claims. Base parsing ignores raw-text/RCDATA lookalikes; caps, fetch guards,
+  required dependencies and scoring rules remain unchanged. Counts/scores may
+  reflect corrected targets, not measured site gains or full browser conformance.
+  Shared malformed-URL extraction warnings omit raw values/credentials while
+  retaining bounded local-reference deduplication and warning caps.
 - Relative anchor-path merging preserves repeated separators and semicolon path
   data instead of silently merging distinct link/crawl targets. Shared literal
   dot-segment handling keeps canonical comparison unchanged. Crawl policy receipts

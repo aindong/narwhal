@@ -164,9 +164,15 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     if collect_links:
         link_diagnostics = {}
         report.meta["links"] = links.extract_links(doc, resp.final_url or url,
-                                                   diagnostics=link_diagnostics)
+                                                   diagnostics=link_diagnostics,
+                                                   csp=resp.headers.get('content-security-policy', ''))
+        report.meta['anchor_resolution_basis'] = links.RESOLUTION_BASIS
+        base_receipt = link_diagnostics.pop('anchor_base', None)
+        if base_receipt is not None:
+            report.meta['anchor_base'] = base_receipt
         if link_diagnostics:
-            report.meta["link_extraction"] = {**link_diagnostics, "basis": "url_syntax_only"}
+            report.meta["link_extraction"] = {**link_diagnostics, "basis": (
+                'url_syntax_and_declared_base_scope' if link_diagnostics.get('unassessed_base_occurrences') else 'url_syntax_only')}
     if collect_fingerprint:
         report.meta["fingerprint"] = simhash.simhash(doc.body_text)
         report.meta["canonical"] = doc.canonical()

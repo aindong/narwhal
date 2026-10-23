@@ -51,6 +51,7 @@
       "status": "matches",
       "differences": []
     },
+    "anchor_resolution_basis": "first_declared_base_relative_path_merge_v2",
     "content_length": {
       "version": 1,
       "basis": "selected_extracted_text",

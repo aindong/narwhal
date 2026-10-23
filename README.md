@@ -260,8 +260,32 @@ audit diffs with a known current versus missing/different policy withhold site-f
 claims and exit 2 under `--fail-on-regression`. Corrected targets can change fixed-cap
 selection, graph counts and averages without a site edit. Host/redirect guards,
 caps and per-page scoring rules are unchanged. This bounded path correction is
-not complete browser/WHATWG conformance: encoded-dot handling, HTML base-element
-support and empty-query transport behavior are not certified by this receipt.
+not complete browser/WHATWG conformance: encoded-dot handling and empty-query
+transport behavior are not certified by this receipt.
+
+Anchor source checks, collection and fallback discovery now use the first
+non-template href-bearing `<base>` when supported (including an explicit empty
+first href, rather than a later base). Internal/external classification remains
+relative to the fetched document host, not the base host. A base does not grant
+fetch permission or expand the same-host crawl boundary. Raw-text/RCDATA
+lookalikes do not inject a base into the shared source reader.
+
+Page `meta.anchor_resolution_basis` and crawl `link_resolution_basis` record the
+v2 policy; optional `anchor_base` receipts describe declared-base scope without
+retaining raw base values. Unsupported/malformed bases and a detected CSP
+`base-uri` directive stay unassessed: base-dependent targets are omitted, not
+invented or called dead/malformed anchors. Absolute HTTP(S) anchors remain
+independently assessable. Separate omission counts and unscored notes survive
+page/site HTML, Markdown and PDF; known gaps and current/legacy policy changes
+withhold score-improvement claims in diffs, comparisons and briefs. The previous
+v1/missing-policy audit guard remains. Counts or averages can change because
+target selection was corrected, not because the website improved. This bounded
+declaration resolver does not verify CSP enforcement, scripting/noscript or a
+complete browser DOM/URL implementation. See [scope details](skills/seo-scan/references/technical-seo.md#declared-anchor-bases).
+Malformed-URL warnings from the shared markup tree omit raw values (including
+credentials), using bounded extraction-local reference IDs to retain warning
+deduplication and caps. This is diagnostic redaction, not a claim that all user-
+supplied/report URLs are secret-free.
 
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a

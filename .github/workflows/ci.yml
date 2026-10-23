@@ -152,3 +152,5 @@ jobs:
         run: python skills/seo-scan/tests/graph_depth_coverage_smoke.py
       - name: Relative anchor-path resolution browser regression
         run: python skills/seo-scan/tests/relative_link_paths_smoke.py
+      - name: Declared document-base anchor browser regression
+        run: python skills/seo-scan/tests/document_base_links_smoke.py

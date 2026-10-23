@@ -5,10 +5,10 @@ The original HTML remains on Doc for provenance and bounded markup consumers.
 No ordinary hidden/CSS-hidden content or JSON-LD data block is discarded.
 """
 
-from html.parser import HTMLParser
+from .source_parser import SourceHTMLParser
 
 
-class _Projection(HTMLParser):
+class _Projection(SourceHTMLParser):
     # RCDATA elements cannot open/close a source template. Their literal angle
     # brackets are encoded below so the stdlib HTML shim keeps the same view.
     CDATA_CONTENT_ELEMENTS = ("script", "style", "textarea", "title")
@@ -59,14 +59,6 @@ class _Projection(HTMLParser):
 
     def unknown_decl(self, data):
         self.handle_data("<![" + data + "]>")
-
-    def parse_html_declaration(self, index):
-        try:
-            return super().parse_html_declaration(index)
-        except (AssertionError, NotImplementedError):
-            # HTMLParser rejects unknown marked declarations. Browsers treat
-            # these as bogus comments; preserve that non-content behavior.
-            return self.parse_bogus_comment(index)
 
     def handle_pi(self, data):
         self.handle_data("<?" + data + ">")

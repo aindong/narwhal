@@ -77,13 +77,22 @@ def _comparison(o: dict, n: dict) -> dict:
             basis != sitegraph.URL_IDENTITY_BASIS for basis in graph_bases):
         reasons.append('Crawl URL-identity policy differs or is unrecorded; changed page selection/graph grouping is not fix evidence.')
     link_bases = [item['crawl'].get('link_resolution_basis') if isinstance(item['crawl'], dict) else None for item in (o, n)]
-    if links.RESOLUTION_BASIS in link_bases and any(basis != links.RESOLUTION_BASIS for basis in link_bases):
+    if any(basis in links.KNOWN_RESOLUTION_BASES for basis in link_bases) and link_bases[0] != link_bases[1]:
         reasons.append('Crawl link-resolution policy differs or is unrecorded; changed discovered targets are not site-fix evidence.')
+    page_link_bases = [item['meta'].get('anchor_resolution_basis') if isinstance(item['meta'], dict) else None for item in (o, n)]
+    if links.RESOLUTION_BASIS in page_link_bases and any(basis != links.RESOLUTION_BASIS for basis in page_link_bases):
+        reasons.append('Page anchor-resolution policy differs or is unrecorded; changed source-link checks are not site-fix evidence.')
     for label, item, scope in zip(("Earlier", "Later"), (o, n), scopes):
         if scope is not None and (not scope[1] or set(scope[0]) != set(scope[1])):
             reasons.append(label + " report did not complete all requested auditor groups.")
         crawl = item["crawl"]
+        meta_base = item['meta'] if isinstance(item['meta'], dict) else {}
+        if links.unassessed_base(meta_base):
+            reasons.append(label + ' page has unassessed declared anchor-base coverage.')
         pages = crawl.get("pages") if isinstance(crawl, dict) else None
+        if isinstance(pages, list) and any(links.unassessed_base(page)
+                                           for page in pages if isinstance(page, dict)):
+            reasons.append(label + ' audit contains unassessed declared anchor-base coverage; the sampled site score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("hard_fail") is True
                                            for page in pages):
             reasons.append(label + " audit contains a hard-failed crawl page; its overall score is not comparable.")
@@ -155,7 +164,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction/HTML canonical comparison gaps, crawl URL-identity/link-resolution policy and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base gaps, page anchor-resolution and crawl URL-identity/link-resolution policy and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 

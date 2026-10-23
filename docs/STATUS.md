@@ -22,6 +22,15 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Declared anchor bases:** source checks, collected links and fallback discovery
+  share the first non-template base href, without changing which document host
+  is internal. Unsupported or CSP-restricted bases stay unassessed with explicit
+  notes/omissions, not false dead links. Page/crawl policy and known-gap guards
+  qualify comparisons and briefs. Shared base parsing ignores raw-text/RCDATA
+  lookalikes; fetch guards, caps, dependencies and scoring rules remain. Corrected
+  target selection is not a website fix or full browser/CSP conformance proof.
+  Dogfooding also removed raw credentials from shared malformed-URL warnings;
+  bounded local-reference IDs preserve duplicate/cap behavior.
 - **Relative anchor paths:** relative repeated separators and semicolon path
   data no longer collapse distinct collected/discovered targets. A recorded
   crawl resolution policy qualifies current/legacy audit comparisons; selection
