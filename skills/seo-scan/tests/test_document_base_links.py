@@ -267,6 +267,22 @@ class TestDocumentBaseLinks(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Declared anchor-base'):
                 brief._page(BASE)
 
+    def test_real_compare_and_brief_scans_gate_base_gaps_without_collecting_links(self):
+        def response(url, **kwargs):
+            body = doc('<base href="http://[">' if url == BASE else '').html
+            return http.Response(url, url, 200, {'content-type': 'text/html'}, body, 1)
+        original = scan.scan
+        with mock.patch.object(scan, 'gather_context', return_value={}), \
+                mock.patch.object(http, 'fetch', side_effect=response), \
+                mock.patch.object(scan, 'scan', wraps=original) as scanned:
+            result = compare.run([BASE, 'https://other.test/'])
+            self.assertTrue(result['failed'][0]['anchor_base_unassessed'])
+            self.assertIn('error', result)
+            with self.assertRaisesRegex(RuntimeError, 'Declared anchor-base'):
+                brief._page(BASE)
+        self.assertTrue(scanned.call_args_list)
+        self.assertTrue(all(not call.kwargs.get('collect_links', False) for call in scanned.call_args_list))
+
     def test_base_scope_warning_stays_visible_outside_capped_page_lists(self):
         result = {'base': BASE, 'pages_scanned': 8, 'avg_score': 100, 'recurring': {},
                   'pages': [{'url': BASE + str(i), 'score': 100, 'anchor_base': {
