@@ -30,7 +30,7 @@ from lib import config as configlib  # noqa: E402
 from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
 from lib import question_observation, schema_appearance, schema_coverage  # noqa: E402
 from lib import date_cues  # noqa: E402
-from lib import canonical  # noqa: E402
+from lib import canonical, links as linklib  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
@@ -98,6 +98,8 @@ def facts(report, doc) -> dict:
         "twitter_card": bool(doc.meta_by_name("twitter:card")),
         "canonical": bool(doc.canonical()),  # first candidate presence, not validity/selection
         'canonical_comparison': report.meta.get('canonical_comparison'),
+        'anchor_resolution_basis': report.meta.get('anchor_resolution_basis'),
+        'anchor_base': report.meta.get('anchor_base'),
         "author_signal": bool(attribution['candidates']),
         "authorship_cues": attribution,
         "date_signal": bool(dates['candidates']),  # candidate presence, never verified freshness
@@ -218,6 +220,10 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
             failed.append({'url': u, 'status': rep.fetched_status,
                            'canonical_comparison_unverified': True, 'error': canonical.ERROR})
             continue
+        if linklib.unassessed_base(rep.meta):
+            failed.append({'url': u, 'status': rep.fetched_status,
+                           'anchor_base_unassessed': True, 'error': linklib.BASE_ERROR})
+            continue
         results.append(facts(rep, doc))
         if index == 0:
             target = results[-1]
@@ -261,6 +267,8 @@ def _score_cell(facts, value):
               ' (schema coverage unrecorded)' if state == 'unknown' else '')
     if canonical.unverified(facts):
         suffix += ' (canonical comparison unverified)'
+    if linklib.unassessed_base(facts):
+        suffix += ' (anchor base unassessed)'
     return str(value) + suffix
 
 

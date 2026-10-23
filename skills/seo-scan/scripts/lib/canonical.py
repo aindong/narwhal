@@ -26,6 +26,7 @@ _ILLEGAL = frozenset('<>"{}|^`\\')
 
 class _Base(HTMLParser):
     """Read the first href-bearing base from an already non-template source."""
+    CDATA_CONTENT_ELEMENTS = ('script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noembed', 'noframes')
     def __init__(self, source):
         super().__init__(convert_charrefs=True)
         self.href = None
@@ -37,6 +38,13 @@ class _Base(HTMLParser):
                 if name == 'href':
                     self.href = value or ''
                     break
+
+    def parse_html_declaration(self, index):
+        try:
+            return super().parse_html_declaration(index)
+        except (AssertionError, NotImplementedError):
+            # Match the non-template source projection's bogus-comment handling.
+            return self.parse_bogus_comment(index)
 
 
 def _join(base, href):
@@ -74,6 +82,8 @@ def _join(base, href):
 
 def first_base(source):
     """Return the first href-bearing base, or None; no document repair or I/O."""
+    if '<base' not in source.lower():
+        return None
     return _Base(source).href
 
 

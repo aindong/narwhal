@@ -141,15 +141,20 @@ class Doc:
         rel = rel.lower()
         return [l for l in self.link_rels if rel in (l.get("rel") or "").lower().split()]
 
+    @property
+    def base_href(self) -> Optional[str]:
+        """First non-template href-bearing base, including an explicit empty href."""
+        if self._canonical_base_cache is None:
+            self._canonical_base_cache = (_canonical.first_base(self.document_html),)
+        return self._canonical_base_cache[0]
+
     def canonical(self) -> Optional[str]:
         """First HTML candidate, locally resolved; presence does not prove validity."""
         links = self.links_by_rel("canonical")
         href = links[0].get("href") if links else None
         if not href:
             return None
-        if self._canonical_base_cache is None:
-            self._canonical_base_cache = (_canonical.first_base(self.document_html),)
-        return _canonical.resolve(self.base_url, href, self._canonical_base_cache[0])
+        return _canonical.resolve(self.base_url, href, self.base_href)
 
 
 def link_text_share(doc: "Doc") -> float:

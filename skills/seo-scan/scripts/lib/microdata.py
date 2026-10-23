@@ -47,6 +47,7 @@ class _Tree(HTMLParser):
         self.warning_limit = MAX_WARNINGS if warning_limit is None else warning_limit
         self.warnings_suppressed = False
         self._warning_seen = set()
+        self._unresolved_urls = {}  # bounded local IDs keep warning dedup/caps without serializing source URLs
         self.root = Element("", {}, -1)
         self.stack = [self.root]
         self.elements = []
@@ -76,7 +77,11 @@ class _Tree(HTMLParser):
         try:
             return urljoin(self.base_url, raw)
         except ValueError:
-            self.warn(self.label + " URL could not be resolved: " + raw)
+            if not self.warnings_suppressed:
+                if raw not in self._unresolved_urls and len(self._unresolved_urls) <= self.warning_limit:
+                    self._unresolved_urls[raw] = len(self._unresolved_urls) + 1
+                reference = self._unresolved_urls.get(raw, self.warning_limit + 2)
+                self.warn(self.label + f" URL could not be resolved (source value omitted; reference {reference}).")
             return ""
 
     def close_optional(self, targets, boundaries=()):

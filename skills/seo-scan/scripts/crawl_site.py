@@ -124,14 +124,10 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
         resp = http.fetch(base, allow_private=allow_private, timeout=timeout)
         if resp.ok:
             doc = htmlx.parse(resp.text, base_url=resp.final_url or base)
-            host = urlparse(resp.final_url or base).netloc
-            for a in doc.links:
-                try:
-                    full = links.resolve_http_link(a.get("href") or "", resp.final_url or base)
-                except ValueError:
-                    continue  # malformed source href, not a failed network request
-                if full is not None and urlparse(full).netloc == host:
-                    urls.append(full)
+            for observation in links.extract_links(doc, resp.final_url or base,
+                                                   csp=resp.headers.get('content-security-policy', '')):
+                if observation['internal']:
+                    urls.append(observation['url'])
 
     # De-dupe observed URL identities, keep order and drop obvious non-HTML assets.
     # Only fragments/case-insensitive scheme+host group; path/query literals stay.
@@ -365,6 +361,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "product_confidence": ecommerce.get("confidence", 0.0)})
         if rep.meta.get("link_extraction"):
             pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
+        if isinstance(rep.meta.get('anchor_base'), dict):
+            pages[-1]['anchor_base'] = dict(rep.meta['anchor_base'])
         for key in ('crawler_meta_robots', 'http_robots', 'llms_txt'):
             if not rep.hard_fail and isinstance(rep.meta.get(key), dict):
                 pages[-1][key] = rep.meta[key]
@@ -390,8 +388,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         result['sitemap_discovery'] = discovery_coverage
     if source_diagnostics:
         result['sitemap_references'] = sm.reference_diagnostics(source_diagnostics)
-    omitted = [p["link_extraction"]["invalid_url_occurrences"]
-               for p in pages if p.get("link_extraction")]
+    omitted = [p["link_extraction"].get("invalid_url_occurrences", 0)
+               for p in pages if p.get("link_extraction", {}).get('invalid_url_occurrences')]
     if omitted:
         result["link_extraction"] = {"invalid_url_occurrences": sum(omitted),
                                      "affected_pages": len(omitted), "basis": "url_syntax_only"}
@@ -469,6 +467,14 @@ def canonical_comparison_note(result: dict) -> str:
             'technical/overall score comparisons, including the site average, are unverified.') if affected else ''
 
 
+def anchor_base_note(result: dict) -> str:
+    """Expose known sampled base gaps even when per-page displays are capped."""
+    affected = sum(1 for page in result.get('pages', []) if isinstance(page, dict) and links.unassessed_base(page))
+    return (f'Declared anchor-base coverage is unassessed on {affected} scanned page(s); '
+            'technical/overall score comparisons and graph completeness are unverified. '
+            'Raw counts and scores are retained, not proof of site improvement.') if affected else ''
+
+
 def render_markdown(result: dict) -> str:
     skipped = result.get("skipped_robots", 0)
     skip_note = f"  ·  {skipped} skipped (robots.txt)" if skipped else ""
@@ -477,6 +483,7 @@ def render_markdown(result: dict) -> str:
              f"**Average score:** {result['avg_score']}/100{skip_note}", ""]
     if result.get('link_resolution_basis') == links.RESOLUTION_BASIS:
         lines += ['Relative anchor paths preserve repeated separators while resolving literal dot segments. '
+                  'Supported targets use the first declared non-template base href when present. '
                   'This is not full browser URL conformance or server equivalence; fetch guards and budgets remain separate.', '']
     else:
         lines += ['Anchor link-resolution policy was not recorded; historical path merging is unverified.', '']
@@ -486,6 +493,9 @@ def render_markdown(result: dict) -> str:
     canonical_note = canonical_comparison_note(result)
     if canonical_note:
         lines += ['> ' + canonical_note, '']
+    base_scope_note = anchor_base_note(result)
+    if base_scope_note:
+        lines += ['> ' + base_scope_note, '']
     sitemap_note = sm.reference_note(result.get('sitemap_references'))
     if sitemap_note:
         lines += ['> ' + sitemap_note, '']
@@ -497,6 +507,17 @@ def render_markdown(result: dict) -> str:
         lines += [f"> {omission['invalid_url_occurrences']} malformed HTTP href occurrence(s) "
                   f"in {omission['affected_pages']} scanned page(s) were omitted from HTTP link collection. "
                   "These are source syntax issues, not network failures; they were not HTTP-checked.", ""]
+    base_pages = [(page.get('url', ''), links.base_note(page)) for page in result['pages']
+                  if not page.get('hard_fail') and links.base_note(page)]
+    unassessed_urls = {page.get('url', '') for page in result['pages'] if links.unassessed_base(page)}
+    base_pages.sort(key=lambda item: item[0] not in unassessed_urls)
+    if base_pages:
+        lines += ['## Declared anchor-base observations (not scored)', '']
+        for url, note in base_pages[:5]:
+            lines += ['- ' + _observation_literal(url, 400) + ': ' + note]
+        if len(base_pages) > 5:
+            lines += [f'- … +{len(base_pages) - 5} more sampled pages (see JSON)']
+        lines += ['']
     ranked = sorted(result["pages"], key=lambda p: p["score"])
     llms_note = llms_resource.note(result)
     if llms_note:

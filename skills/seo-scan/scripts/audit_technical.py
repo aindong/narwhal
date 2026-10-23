@@ -298,12 +298,17 @@ def _links(doc, resp, report):
     empty = 0
     generic = 0
     invalid = 0
+    base_url = resp.final_url or resp.url
+    effective, receipt = links.document_base(doc, base_url, csp=resp.headers.get('content-security-policy', ''))
+    report.meta['anchor_resolution_basis'] = links.RESOLUTION_BASIS
+    if receipt is not None:
+        report.meta['anchor_base'] = receipt
     for a in doc.links:
         href = a.get("href") or ""
         if not href or href.startswith("#") or href.startswith("javascript:"):
             continue
         try:
-            links.resolve_http_link(href, resp.final_url or resp.url)
+            links.resolve_anchor(href, base_url, effective)
         except ValueError:
             invalid += 1
         # Google documents image alt text and an otherwise-empty anchor's title

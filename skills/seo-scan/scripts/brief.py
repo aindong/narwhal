@@ -44,7 +44,7 @@ from lib import text as textlib  # noqa: E402
 from lib import length_observation, evidence_observation, question_observation  # noqa: E402
 from lib import schema_appearance, schema_coverage, subtopic_observation  # noqa: E402
 from lib import date_cues  # noqa: E402
-from lib import canonical  # noqa: E402
+from lib import canonical, links as linklib  # noqa: E402
 import audit_geo  # noqa: E402
 import compare  # noqa: E402
 import scan as scanner  # noqa: E402
@@ -284,6 +284,8 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
         raise RuntimeError(UNVERIFIED_LLMS_ERROR)
     if canonical.unverified(rep.meta):
         raise RuntimeError(canonical.ERROR)
+    if linklib.unassessed_base(rep.meta):
+        raise RuntimeError(linklib.BASE_ERROR)
     return {"url": rep.final_url or url, "facts": compare.facts(rep, doc),
             "headings": list(doc.headings), "text": doc.body_text or ""}
 

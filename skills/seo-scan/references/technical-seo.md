@@ -105,12 +105,57 @@ targets may change a bounded sample, graph counts or its average without a site 
 Crawl JSON records `link_resolution_basis=relative_path_merge_preserve_separators_v1`.
 Known current versus missing/different policy makes audit diffs incomparable;
 matching policy is not proof of equal samples, server aliases or a measured fix.
-This is not full WHATWG URL conformance: encoded-dot decoding, HTML base elements
-and empty-query transport remain outside this receipt. Bounded supported path
+This v1 receipt is not full WHATWG URL conformance: encoded-dot decoding, HTML base
+elements and empty-query transport remain outside its scope. Bounded supported path
 fixtures are checked against Chromium, not all browser repair behavior.
 See [RFC 3986 reference merging](https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.3)
 and [dot-segment removal](https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.4)
 (checked 2026-10-24).
+
+### Declared anchor bases
+
+The current anchor policy is `first_declared_base_relative_path_merge_v2`.
+It uses the first non-template href-bearing base, including an explicit empty
+first href; a target-only base does not prevent a later href-bearing one.
+The shared base reader ignores script/style/raw-text/RCDATA lookalikes (also
+used by canonical resolution), not a full HTML5 tree construction algorithm.
+Bogus marked declarations follow the existing source projection's comment
+handling instead of crashing shared base reading.
+Internal/external classification and fallback discovery compare targets with
+the fetched document host, **not** the declared base host. Base parsing never
+resolves DNS, fetches a target or overrides per-request SSRF/redirect controls.
+Existing crawl/link/probe budgets remain unchanged.
+
+Page `anchor_resolution_basis` and crawl `link_resolution_basis` record policy.
+When a base is declared, `anchor_base` records `basis` and `status` without source
+URL values or exception text. Status is `declared_http`, `document_url` (empty or
+fragment-only), `ignored_scheme` (data/javascript), `non_http`, or `unverified`.
+Known unsupported syntax, authority-ambiguous slash/backslash/control/credential
+references, and a detected enforced-header/meta CSP `base-uri` directive withhold
+base-dependent targets. CSP allowlists/enforcement are not guessed. Unrelated or
+report-only CSP does not trigger that gap. Absolute HTTP(S) references remain
+independently assessable; separate unassessed-base occurrence counts are not
+malformed-anchor or failed-request counts.
+Shared markup-tree resolution warnings omit raw source values/credentials.
+Bounded extraction-local reference IDs retain deduplication and warning caps;
+they are not URL fingerprints, network results or stable cross-report IDs.
+
+Unscored page/site report notes expose known gaps outside capped page lists;
+URL details remain bounded and full observations stay in JSON. Diff gates with
+known current versus missing/different policy, or known unassessed base coverage,
+exit 2 rather than claim a site fix. The previous v1-versus-unrecorded guard is
+retained. Compare/brief acquisition withholds known unassessed page-score
+verdicts, and facts retain recorded scope. Matching policy alone cannot prove
+equal samples, accuracy or SEO improvement. Rule weights/IDs stay unchanged;
+corrected target selection can change graph counts, failures and sampled scores.
+
+This is local declaration resolution, not browser execution, CSP evaluation,
+scripting/noscript/shadow-DOM certification, server-resource equivalence or full
+WHATWG URL repair. Other resource/hreflang consumers, encoded-dot decoding and
+empty-query transport are not certified by this anchor receipt. Conditional or
+malformed HTML still needs browser inspection before source edits.
+See [HTML base elements](https://html.spec.whatwg.org/multipage/semantics.html#the-base-element)
+and [CSP base-uri](https://www.w3.org/TR/CSP3/#directive-base-uri) (checked 2026-10-24).
 
 This preserves distinctions described in [RFC 3986 path/query components](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.3).
 In particular, [protocol-based slash equivalence](https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2.4)
