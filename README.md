@@ -74,7 +74,7 @@ And yes, it works as a backronym too:
 | **E-commerce** | evidence-gated Product detection; Product/Offer/AggregateOffer completeness; variants; expired prices; visible-vs-schema price, currency, availability, SKU, and brand consistency |
 | **GEO / LLMO** | contextual review of question-heading, sentence-group, statistic/citation and intro cues—not measured citability—plus `llms.txt` and role-aware **search/retrieval robots policies**, with separate non-scoring training/data-use notes |
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
-| **Site structure** | click depth from the start URL, orphan-page candidates (sitemap vs crawl), internal-link equity (zero-inbound + most-linked pages) — sample-aware honesty built in |
+| **Site structure** | sampled click depth and start coverage, orphan-page candidates (sitemap vs crawl), inbound-link counts (not measured link equity) — observations stay visible even with zero inter-page edges |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, structure, social packaging, with separate neutral length and statistic/citation-pattern observations (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
 | **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, heading-review candidates, questions to review, schema and structure candidates. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
 
@@ -240,6 +240,17 @@ Graph counts and which pages fit a fixed crawl cap can change, without changing
 per-page rules. Audit diffs with current versus unrecorded/different identity
 policy withhold fix claims and exit 2 under `--fail-on-regression`; even matching
 policy does not prove an identical sample or a website improvement.
+
+Zero recorded inter-page edges no longer hide known unreachable/zero-inbound
+URLs, orphan candidates or sample limits. Graph JSON adds `depth_coverage`
+(`basis`, `start_present`, `reachable_nodes`, `unreachable_nodes`): BFS over
+supplied edges only, not verified crawler access, link equity or ranking.
+Depth applies only to reachable nodes; an absent start leaves depth unassessed
+even though the historical raw `max_depth` placeholder stays 0. Legacy/malformed
+receipts remain unrecorded/unsupported, not inferred. Deep/unreachable/zero-inbound/
+orphan lists retain their existing caps with explicit omission counts; inspect
+extraction/sampling before editing the site or raising crawl limits. Graph
+measurements, fetching and scores stay unchanged.
 
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a

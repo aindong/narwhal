@@ -148,3 +148,5 @@ jobs:
         run: python skills/seo-scan/tests/canonical_comparison_smoke.py
       - name: Crawl URL-identity browser regression
         run: python skills/seo-scan/tests/crawl_url_identity_smoke.py
+      - name: Zero-edge graph and depth-coverage browser regression
+        run: python skills/seo-scan/tests/graph_depth_coverage_smoke.py

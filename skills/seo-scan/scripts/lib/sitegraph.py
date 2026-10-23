@@ -1,12 +1,12 @@
-"""Site-structure analysis over a crawl: click depth, orphans, link equity.
+"""Site-structure analysis over a crawl: depth, inbound counts, orphan candidates.
 
 Pure computation (no network) on data the crawler already collects — each
 crawled page's internal links plus the sitemap URL set. Three questions:
 
-- **Click depth** — how many clicks from the start URL is each page? Pages
-  buried deeper than ~3 clicks get crawled less and rank worse.
+- **Click depth** — shortest paths from the supplied start node over input edges.
+  Depth is not a measurement of crawler access or ranking.
 - **Internal-link distribution** — which crawled pages receive no internal
-  links from the other crawled pages (weak link equity)?
+  links from the other crawled pages? Counts do not measure link equity.
 - **Orphan candidates** — sitemap URLs that no crawled page links to. With a
   capped crawl this is a *candidate* list, not proof; the report says so.
 
@@ -22,6 +22,7 @@ from urllib.parse import urlparse, urlsplit, urlunsplit
 DEPTH_WARN = 3          # clicks from the start URL beyond which we flag
 ORPHAN_SAMPLE = 8       # candidates listed in the report (full count still given)
 URL_IDENTITY_BASIS = 'fragment_free_scheme_host_case_preserve_path_query_v1'
+DEPTH_BASIS = 'breadth_first_over_supplied_graph_edges_v1'
 
 
 def norm(url: str) -> str:
@@ -113,6 +114,8 @@ def analyze(base: str, crawled: list, pages_links: dict,
     max_depth = max(depths.values()) if depths else 0
     return {
         'url_identity_basis': URL_IDENTITY_BASIS,
+        'depth_coverage': {'basis': DEPTH_BASIS, 'start_present': base_n in nodes,
+                           'reachable_nodes': len(depths), 'unreachable_nodes': len(unreachable)},
         "pages_in_graph": len(nodes),
         "internal_edges": sum(len(v) for v in edges.values()),
         "max_depth": max_depth,
@@ -122,6 +125,37 @@ def analyze(base: str, crawled: list, pages_links: dict,
         "top_linked": [{"url": u, "inbound": c} for u, c in top],
         "orphans": orphans,
     }
+
+
+def recorded_depth(g):
+    """Accept a self-consistent recorded BFS scope, not fetch or site coverage."""
+    value = g.get('depth_coverage')
+    if not isinstance(value, dict) or value.get('basis') != DEPTH_BASIS:
+        return None
+    start = value.get('start_present')
+    reached, other = value.get('reachable_nodes'), value.get('unreachable_nodes')
+    count, depth, edges = g.get('pages_in_graph'), g.get('max_depth'), g.get('internal_edges')
+    if type(start) is not bool or any(type(item) is not int or item < 0 for item in (reached, other, count, depth, edges)):
+        return None
+    if reached + other != count or (not start and reached != 0) or (start and reached < 1):
+        return None
+    if (reached == 0 and depth != 0) or (reached and depth >= reached):
+        return None
+    if (reached > 1 and depth == 0) or edges < max(0, reached - 1):
+        return None
+    if edges > count * max(0, count - 1):
+        return None
+    if not isinstance(g.get('unreachable_from_start'), list) or len(g['unreachable_from_start']) != other:
+        return None
+    return value
+
+
+def _url_sample(lines, urls, cap=5):
+    """Keep the existing URL display budget while making omissions explicit."""
+    for url in urls[:cap]:
+        lines.append(f'  - {url}')
+    if len(urls) > cap:
+        lines.append(f'  - … +{len(urls) - cap} more (see JSON)')
 
 
 def render_markdown(g: dict, *, sitemap_total: int = 0) -> list:
@@ -137,27 +171,40 @@ def render_markdown(g: dict, *, sitemap_total: int = 0) -> list:
     else:
         lines += ['URL identity policy was not recorded; historical alias handling is unverified.', '']
     if g["internal_edges"] == 0:
-        lines += ["No internal links were observed between the crawled pages — "
-                  "depth/link-equity analysis needs a larger crawl "
-                  "(`--max-pages`).", ""]
-        return lines
+        lines += ['No inter-page edges were recorded in this sample. Inspect captured links, '
+                  'extraction and sampling limits before editing the site or increasing the crawl; '
+                  'zero recorded edges does not prove the site has no links.', '']
 
-    lines.append(f"- **Max click depth from the start URL:** {g['max_depth']}"
-                 + (" 🟢" if g["max_depth"] <= DEPTH_WARN else ""))
+    coverage = recorded_depth(g)
+    if coverage is None:
+        lines += [f"- **Reported max depth:** {g['max_depth']} — start/BFS coverage is unrecorded or unsupported; "
+                  'this is not a verified reachability or health verdict.']
+    elif coverage['start_present']:
+        lines += [f"- **Max measured click depth from the start URL:** {g['max_depth']} "
+                  f"among {coverage['reachable_nodes']} reachable of {n} supplied graph nodes. "
+                  'Reachability is computed from input edges only, not verified crawler access or ranking.']
+    else:
+        lines += ['- **Depth from the start URL is unassessed:** the start address is absent from the supplied '
+                  'graph. Raw `max_depth=0` is a placeholder, not a measured zero-hop site.']
     if g["deep_pages"]:
-        lines.append(f"- **Buried pages (deeper than {DEPTH_WARN} clicks):**")
+        lines.append(f"- **Recorded pages deeper than {DEPTH_WARN} clicks ({len(g['deep_pages'])}):**")
         for p in g["deep_pages"][:5]:
             lines.append(f"  - depth {p['depth']}: {p['url']}")
+        if len(g['deep_pages']) > 5:
+            lines.append(f"  - … +{len(g['deep_pages']) - 5} more (see JSON)")
     if g["unreachable_from_start"]:
-        lines.append("- **Crawled but not reachable from the start URL** "
-                     "(no internal path within the sample):")
-        for u in g["unreachable_from_start"][:5]:
-            lines.append(f"  - {u}")
+        if coverage is None:
+            label = 'Recorded URLs listed as unreachable (start/BFS scope unverified)'
+        elif not coverage['start_present']:
+            label = 'Recorded URLs with unassessed start reachability'
+        else:
+            label = 'Crawled but not reachable from the start URL within the supplied graph'
+        lines.append(f"- **{label} ({len(g['unreachable_from_start'])}):**")
+        _url_sample(lines, g['unreachable_from_start'])
     if g["zero_inbound"]:
-        lines.append("- **No inbound internal links** (weak link equity within "
-                     "the sample):")
-        for u in g["zero_inbound"][:5]:
-            lines.append(f"  - {u}")
+        lines.append(f"- **No inbound internal links observed in the sample ({len(g['zero_inbound'])}):** "
+                     'A count, not measured link equity or ranking impact.')
+        _url_sample(lines, g['zero_inbound'])
     if g["top_linked"]:
         best = ", ".join(f"{t['url']} ({t['inbound']})" for t in g["top_linked"][:3])
         lines.append(f"- **Most-linked pages:** {best}")
@@ -182,5 +229,6 @@ def render_markdown(g: dict, *, sitemap_total: int = 0) -> list:
               + (f" against {sitemap_total} discovered sitemap URLs"
                  if o["checked"] and sitemap_total else "")
               + "; a page 'unlinked' here may be linked from pages outside the "
-                "sample. Raise `--max-pages` for a fuller graph._", ""]
+                "sample. Raise `--max-pages` only when broader authorized sampling is useful; "
+                "a larger cap does not itself repair missing edges._", ""]
     return lines

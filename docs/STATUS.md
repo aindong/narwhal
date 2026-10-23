@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-19 · latest release **1.30.19**_
+_Last updated: 2026-10-24 · latest release **1.30.19**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Zero-edge graph evidence:** known unlinked URLs, orphan candidates and
+  sample limits stay visible even without inter-page edges. Additive BFS scope
+  distinguishes measured reachable-node depth from an absent start or unknown
+  legacy coverage; low depth is not a health pass. Counts, fetching, budgets,
+  display caps and scores remain; omitted URLs are disclosed, not silently hidden.
 - **Distinct crawl addresses:** discovery, graph nodes/orphans and hreflang no
   longer merge non-root trailing/repeated slashes, path parameters or query
   literals. Fragment aliases still group under a recorded graph policy; audit
