@@ -12,6 +12,18 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- HTML hreflang extraction survives malformed URLs and retains supported source
+  annotations without inventing absolute URLs from relative references. Explicit
+  source counts, omission reasons and scoped relationship/probe receipts replace
+  false clean-cluster verdicts under missing/partial coverage. Complete matching-
+  identity HTML is required for production probes; already sampled pages and
+  zero budgets do not trigger extra probes. Current/legacy and known-gap gates
+  qualify technical score comparisons, briefs and manual-only remediation.
+  Existing request caps/guards, weights and supported-presence rule ID remain;
+  a new low source review can change scores, not measured site/SEO gains.
+  Optional x-default advice is conditional; review title-based ignore filters.
+  Dogfooding also fixed a read-only planner crash on empty static-directory hints;
+  fallback file candidates remain explicitly marked as existing or hypothetical.
 - Anchor collection, source checks and fallback discovery use the first declared
   non-template base href, retaining the document's internal-host boundary.
   Unsupported/malformed/CSP-restricted bases withhold dependent targets with

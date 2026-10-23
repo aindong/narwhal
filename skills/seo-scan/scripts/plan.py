@@ -524,7 +524,7 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
     if artifact in ("robots_txt", "sitemap"):
         candidates = list(config.get(artifact, []))
     elif artifact == "llms_txt":
-        base = config.get("static", ["."])[0]
+        base = (config.get("static") or ["."])[0]
         candidates = [("llms.txt" if base == "." else f"{base}/llms.txt")]
     elif artifact in HEAD_ARTIFACTS:
         candidates = list(config.get("head", [])) + _route_candidates(target, framework)
@@ -699,6 +699,12 @@ SITEMAP_VERIFICATION = {
 
 
 RESOURCE_VERIFICATION = dict(SITEMAP_VERIFICATION)
+RESOURCE_VERIFICATION['technical.hreflang.urls.review'] = (
+    'Confirm intended language-page URLs and original HTML declarations before editing. '
+    'Do not invent locale pages, infer HTTP failures or rewrite unrelated anchor links.',
+    ('Inspect supported/omitted source counts and verify intended fully-qualified HTTP(S) alternates manually.',
+     'Re-scan source annotations and bounded reciprocal snapshots after any confirmed correction; '
+     'verify search acceptance separately.'))
 RESOURCE_VERIFICATION['technical.canonical.comparison.unverified'] = (
     'Inspect the original HTML canonical, document base and fetched URL before proposing edits. '
     'Repair only confirmed defects; do not add duplicate markup or assume a selected canonical.',
@@ -816,6 +822,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         artifact = classify_artifact(finding)
         if verification:
             artifact = ('canonical' if finding['rule_id'] == 'technical.canonical.comparison.unverified' else
+                        'hreflang' if finding['rule_id'] == 'technical.hreflang.urls.review' else
                         'server_rendering' if finding['rule_id'] in RENDER_VERIFICATION_RULES else
                         'json_ld' if finding['rule_id'].startswith('schema.') else
                         'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap')

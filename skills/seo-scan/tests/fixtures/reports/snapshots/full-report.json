@@ -45,6 +45,13 @@
       "schema_extraction_reviewed": true
     },
     "extraction": "visible text",
+    "hreflang_policy_basis": "html_hreflang_absolute_http_source_v1",
+    "hreflang_extraction": {
+      "basis": "html_hreflang_absolute_http_source_v1",
+      "declared": 0,
+      "accepted": 0,
+      "omitted": {}
+    },
     "canonical_comparison": {
       "version": 1,
       "basis": "first_html_canonical_http_components_v1",
