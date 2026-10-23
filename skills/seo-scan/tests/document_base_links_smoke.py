@@ -68,8 +68,9 @@ def main(argv=None):
                     else: route.abort()
                 page.route('**/*', source_route); page.goto(BASE)
                 observed = page.locator('a').evaluate('(a)=>{const u=new URL(a.href);u.hash="";return u.href}')
-                doc = htmlx.parse(source, BASE)
-                assert expected == observed == links.extract_links(doc, BASE)[0]['url'], (head, observed, expected)
+                for parser in (htmlx._parse_stdlib, htmlx.parse):
+                    doc = parser(source, BASE)
+                    assert expected == observed == links.extract_links(doc, BASE)[0]['url'], (head, observed, expected)
                 assert requests == [BASE], requests  # fulfilled in-process; no public HTTP or anchor navigation
                 page.close()
             # Explicit unsupported scope must not fabricate browser-derived targets.

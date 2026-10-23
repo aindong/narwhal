@@ -344,6 +344,14 @@ class _StdlibParser(HTMLParser):
         self._text = []
         self._noscript = []
 
+    def parse_html_declaration(self, index):
+        try:
+            return super().parse_html_declaration(index)
+        except (AssertionError, NotImplementedError):
+            # Match document_source/base parsing: unsupported marked declarations
+            # are bogus comments, not a reason to abort all page auditors.
+            return self.parse_bogus_comment(index)
+
     def handle_starttag(self, tag, attrs):
         a = {k.lower(): (v or "") for k, v in attrs}
         if tag == "html" and a.get("lang"):

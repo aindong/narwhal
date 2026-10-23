@@ -97,10 +97,11 @@ class TestDocumentBaseLinks(unittest.TestCase):
 
     def test_bogus_marked_declaration_cannot_crash_shared_base_reading(self):
         for prefix in ('<![bad]>', '<![bad>'):
-            source = prefix + '<base href="/catalog/">'
-            page = htmlx.Doc(BASE, html=source, links=[htmlx.Tag('a', {'href': 'guide'})])
-            self.assertEqual('/catalog/', page.base_href)
-            self.assertEqual([{'url': 'https://example.test/catalog/guide', 'internal': True}], links.extract_links(page, BASE))
+            source = prefix + '<base href="/catalog/"><a href="guide">Guide</a>'
+            for parser in (htmlx._parse_stdlib, htmlx.parse):
+                page = parser(source, BASE)
+                self.assertEqual('/catalog/', page.base_href)
+                self.assertEqual([{'url': 'https://example.test/catalog/guide', 'internal': True}], links.extract_links(page, BASE))
 
     def test_empty_fragment_and_ignored_data_javascript_bases_use_document_url(self):
         for value in ('', '#part', 'javascript:alert(1)', 'data:text/plain,x'):
