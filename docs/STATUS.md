@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Explicit scan selection:** API/CLI/MCP reject unsupported or empty auditor
+  entries before HTTP; the CLI exits 2 without a traceback or artifact write.
+  Empty/default selection still runs all four; MCP no longer drops comma-entry
+  mistakes. Bounded selection errors do not swallow unrelated auditor defects.
 - **Render source preservation:** HTML/PDF rendering and actual fallback HTML
   output cannot truncate an aliased file-backed Markdown source. PDF engines
   stage their bytes before the shared identity guard; malformed UTF-8 and I/O

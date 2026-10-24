@@ -575,6 +575,9 @@ are unchanged; absent flags do not certify unchecked or unmeasured conditions.
   ```
 - `--only technical,content,schema,geo` — choose auditor groups; duplicates run
   once. For example, `--only schema` produces a focused structured-data report.
+  Unknown names and empty comma-separated entries are rejected before fetching
+  (CLI exit 2); MCP uses the same strict selection. Omit the selection or pass an
+  empty string to run all four.
 - `--fail-under N` — exit non-zero if the score is below `N`. Use it as a **CI
   quality gate** (also on `crawl_site.py`, where it checks the average score):
   ```bash

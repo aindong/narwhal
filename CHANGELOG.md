@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Invalid scan auditor selections now return CLI usage failure without a
+  traceback or output artifact. API/CLI/MCP reject unknown names and empty
+  comma-separated entries before fetching; MCP no longer silently drops them.
+  Empty/default selection still runs all auditors. Diagnostics are bounded,
+  and unrelated auditor exceptions remain visible for debugging.
 - Markdown report rendering preserves its file-backed source when HTML, PDF or
   fallback HTML destinations alias the read input, including links and renamed
   sources. PDF engines stage output before the guarded write; invalid UTF-8

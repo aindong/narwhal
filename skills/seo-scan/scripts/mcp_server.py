@@ -47,7 +47,8 @@ def _scan(url: str, render: bool = False, only: str = "", timeout: int = 20,
         render: Render JavaScript with Playwright first (for SPAs). Requires the
             optional playwright extra.
         only: Comma-separated subset of auditors to run: technical,content,schema,geo.
-            Empty runs all four.
+            Empty runs all four; unknown names or empty comma-separated entries
+            are rejected before fetching.
         timeout: Per-request timeout in seconds (1–120).
         max_bytes: Maximum HTML bytes retained (64KB–20MB).
 
@@ -55,7 +56,7 @@ def _scan(url: str, render: bool = False, only: str = "", timeout: int = 20,
     (category, severity, title, detail, recommendation, evidence).
     """
     import scan as scan_mod
-    subset = [s.strip() for s in only.split(",") if s.strip()] or None
+    subset = [s.strip() for s in only.split(",")] if only else None
     timeout = max(1, min(int(timeout), 120))
     max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     report = scan_mod.scan(url, render=render, only=subset, timeout=timeout,
