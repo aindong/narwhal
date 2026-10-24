@@ -239,10 +239,9 @@ class TestPageSchemaReview(unittest.TestCase):
     def test_unsupported_supplied_verification_scope_is_not_rendered_or_coerced(self):
         item = finding('schema.rdfa.extraction')
         item['scope'] = ['<img src="https://evil.test/pixel">']
-        result = plan.build_plan({'url': URL, 'findings': [item]}, str(FIXTURE))
-        text = plan.render_markdown(result)
-        self.assertIn('Verification scope:** Unrecorded scope', text)
-        self.assertNotIn('evil.test', text)
+        with self.assertRaisesRegex(ValueError, r'findings\[0\]\.scope') as error:
+            plan.build_plan({'url': URL, 'findings': [item]}, str(FIXTURE))
+        self.assertNotIn('evil.test', str(error.exception))
 
     def test_clean_homepage_unknown_crawl_flags_do_not_invent_extraction_failures(self):
         for flag in (None, False, 0, 1, 'true'):

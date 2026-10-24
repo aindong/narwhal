@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Remediation planning rejects malformed consumed finding/report evidence with field-specific errors before repository inventory or output writes, rather than silently dropping findings or emitting invalid action fields. Legacy omissions remain supported; invalid UTF-8 and JSON parser-limit failures produce bounded CLI errors.
+
 - Planner page-scan verification templates preserve valid recorded auditor selections, requested rendering and disabled image checks. Scan handoffs explicitly require restoring unrecorded configuration/access/resource limits; page receipts do not fabricate a full site-audit invocation.
 
 - Markdown remediation plans retain every verification step in order, including prerequisite reviews, after-scan commands and deployment scope. Shell commands use literal-safe fenced blocks in both action and shared audit sections; the baseline-saving reminder appears once.
