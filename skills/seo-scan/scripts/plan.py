@@ -21,7 +21,8 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
-from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
+                        recorded_response_partial, recorded_response_truncated, recorded_scan_scope)
 from lib.report_output import write_output  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
@@ -129,6 +130,19 @@ def _sitemap_sample_evidence(sitemap):
     return failures, unverified
 
 
+def _automation_source_gap(page):
+    """Known incomplete technical observations cannot support structural edits."""
+    meta = page.get('meta', page)
+    if not isinstance(meta, dict):
+        meta = {}
+    status = page.get('status', 0)
+    scope = recorded_scan_scope(meta)
+    return (page.get('hard_fail') is True
+            or (isinstance(status, int) and status > 0 and (status == 206 or not 200 <= status < 300))
+            or recorded_response_partial(meta) or recorded_response_truncated(meta)
+            or (scope is not None and 'technical' not in scope[1]))
+
+
 def normalize_report(data: dict) -> dict:
     """Accept scan or audit JSON and return its actionable page findings."""
     if not isinstance(data, dict):
@@ -145,6 +159,8 @@ def normalize_report(data: dict) -> dict:
         raise ValueError(
             "Unrecognized report JSON: expected `narwhal scan --format json` or "
             "`narwhal audit --format json` output.")
+    crawl_rule_ids = set()
+    crawl_automation_gap = False
     findings = []
     for raw in page.get("findings", []):
         if not isinstance(raw, dict) or raw.get("severity") == "good":
@@ -184,6 +200,8 @@ def normalize_report(data: dict) -> dict:
                              'occurrences': max(1, recorded['unverified_files']) if recorded else 1})
     if kind == "audit":
         crawl = data.get('crawl', {})
+        crawl_automation_gap = any(_automation_source_gap(item) for item in crawl.get('pages', [])
+                                   if isinstance(item, dict))
         schema_crawl_uncertain = any(isinstance(item, dict) and (
             item.get('schema_extraction_unverified') is True
             or recorded_schema_extraction_problem({'scan_settings': item.get('scan_settings')}, for_score=True))
@@ -197,6 +215,7 @@ def normalize_report(data: dict) -> dict:
                 continue
             finding = dict(raw)
             finding["rule_id"] = _legacy_rule_id(finding)
+            crawl_rule_ids.add(finding["rule_id"])
             if finding['rule_id'] in SCHEMA_VERIFICATION_RULES:
                 schema_crawl_verification = True
             if schema_crawl_uncertain and finding['rule_id'] in SCHEMA_ABSENCE_RULES:
@@ -284,6 +303,9 @@ def normalize_report(data: dict) -> dict:
                              finding["rule_id"]))
     total_findings = len(normalized_findings)
     return {
+        "page_automation_gap": _automation_source_gap(page),
+        "crawl_automation_gap": crawl_automation_gap,
+        "crawl_rule_ids": sorted(crawl_rule_ids),
         "kind": kind,
         "target": str(target),
         "score": data.get("overall_score", page.get("score")),
@@ -635,7 +657,7 @@ CHANGE_GUIDANCE = {
     "meta_description": "Add or revise the page meta description in its metadata/head owner.",
     "canonical": "Define the intended absolute canonical URL in the page or shared head owner.",
     "robots_meta": "Review the page robots directive and remove noindex/nofollow only if indexing is intended.",
-    "viewport": "Add a responsive viewport declaration in the shared document head.",
+    "viewport": "Inspect complete HTML and the current viewport/source owner. Add a declaration only if confirmed absent; repair an empty declaration in place. Preserve intentional values and avoid duplicate declarations.",
     "language": "Set the document language on the root html element from the site's real locale.",
     "hreflang": "Correct the locale alternate set in the shared/page head and verify reciprocal targets.",
     "image_alt": "Add meaningful alt text to informative images; use empty alt for decorative images.",
@@ -810,7 +832,7 @@ for _rule in sorted(RENDER_VERIFICATION_RULES):
          'Do not treat a count/score change alone as an SEO improvement.'))
 
 
-def safety_for(artifact: str) -> tuple:
+def safety_for(artifact: str, rule_id: str = "") -> tuple:
     if artifact == "server_config":
         return "manual_external", True
     if artifact in ("robots_txt", "sitemap", "llms_txt"):
@@ -819,11 +841,10 @@ def safety_for(artifact: str) -> tuple:
                     "content", "headings", "image_alt", "json_ld", "product_schema", "robots_meta", "hreflang",
                     "server_rendering"):
         return "review_required", False
-    if artifact == "unknown":
-        return "manual_external", False
-    # Structural declarations such as a missing viewport can be inserted
-    # deterministically; content-bearing values still require review above.
-    return "safely_automatable", False
+    if artifact == "viewport":
+        return ("safely_automatable" if rule_id == "technical.no.responsive.viewport.tag"
+                else "review_required"), False
+    return "manual_external", False
 
 
 def _verification_outputs(report_source):
@@ -907,11 +928,28 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                         'llms_txt' if finding['rule_id'] == 'geo.llms.txt.availability.unverified' else 'sitemap')
         if artifact != "unknown":
             mapped_named += 1
-        safety, requires_deploy = safety_for(artifact)
+        safety, requires_deploy = safety_for(artifact, finding["rule_id"])
         if verification:
             safety, requires_deploy = 'manual_external', False
         owners = ([] if verification else likely_files(root, inv["files"], framework["name"], artifact,
                                                      normalized["target"], warnings))
+        eligibility = None
+        if artifact == 'viewport':
+            blockers = []
+            if finding['rule_id'] != 'technical.no.responsive.viewport.tag':
+                blockers.append('unrecognized_structural_rule')
+            if not any(owner.get('exists') is True for owner in owners):
+                blockers.append('no_existing_owner_candidate')
+            if ((finding.get('scope', 'page') != 'site' and normalized['page_automation_gap'])
+                    or (finding['rule_id'] in normalized['crawl_rule_ids'] and normalized['crawl_automation_gap'])):
+                blockers.append('known_incomplete_source_evidence')
+            eligibility = {
+                'basis': 'explicit_structural_rule_and_existing_candidate_v1',
+                'eligible': not blockers, 'blockers': blockers,
+                'scope': 'Planning classification only, not edit authorization or proof of source ownership/completeness; inspect current source before editing.',
+            }
+            if blockers:
+                safety = 'review_required'
         if not owners and safety != "manual_external":
             warnings.append(f"No likely source owner found for {finding['rule_id']}.")
             safety = 'manual_external'
@@ -942,6 +980,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "provenance": {"source": "narwhal_finding", "report": report_source,
                            "report_schema_version": normalized["report_schema_version"]},
         })
+        if eligibility is not None:
+            actions[-1]['automation_eligibility'] = eligibility
     actions.sort(key=lambda action: (SEVERITY_RANK.get(action["severity"], 9),
                                      action["rule_id"], action["action_id"]))
     groups = _groups(actions)
@@ -1062,6 +1102,10 @@ def render_markdown(plan: dict) -> str:
             if action['rule_id'] in RESOURCE_VERIFICATION:
                 owners = 'not assigned (verification only)'
             scope_lines = []
+            if 'automation_eligibility' in action:
+                receipt = action['automation_eligibility']
+                result = 'candidate' if receipt['eligible'] else 'withheld: ' + ', '.join(receipt['blockers'])
+                scope_lines.append(f"- **Automation eligibility:** {result}. {receipt['scope']}")
             display_title = action['title']
             if action['rule_id'] in ('content.filler.padding.language', 'content.some.filler.phrasing',
                                      'content.repetitive.vocabulary'):
