@@ -207,6 +207,13 @@ selected because of robots rules or budgets; they are not whole-site coverage.
 Absent content-type headers remain supported, not certified as HTML. A successful
 generation still requires curation and does not prove completeness or AI use.
 
+Authenticated fetch URLs stay intact for the HTTP guard/transport. The generator
+removes URL userinfo from returned candidate links and its host-name fallback;
+`coverage.authentication_removed` and the CLI/MCP curation note disclose that
+removal when observed. Stripping credentials does not verify public access to
+those addresses. Query values and page-supplied names/descriptions are preserved;
+this is not a general secret redactor. Curate the artifact before publishing.
+
 ## Myths worth rejecting
 - "Just add llms.txt and you'll rank in AI." — no evidence.
 - "Stuff pages with AI keywords / 'as an AI language model' bait." — spam.
