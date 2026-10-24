@@ -216,6 +216,107 @@ class TestPlanContract(unittest.TestCase):
 
 
 class TestPathSafety(unittest.TestCase):
+    def test_url_paths_cannot_emit_traversal_or_windows_source_candidates(self):
+        for target in ('https://example.test/a/../../../sibling',
+                       'https://example.test/a/../page',
+                       'https://example.test/a/..\\outside',
+                       'https://example.test/a/C:stream',
+                       'https://example.test/..', 'https://example.test/a/.',
+                       'https://example.test/a/\tpage'):
+            with self.subTest(target=target):
+                report = load_report()
+                report['url'] = report['final_url'] = target
+                built = plan.build_plan(report, str(FIXTURES / 'plain_html'))
+                paths = {item['path'] for action in built['actions'] for item in action['likely_files']}
+                self.assertTrue(paths)
+                self.assertTrue(all('..' not in path.split('/') and '\\' not in path and ':' not in path
+                                    for path in paths), paths)
+                self.assertTrue(any('source candidates omitted' in warning for warning in built['warnings']))
+
+    def test_convention_candidates_do_not_follow_symlinked_owners(self):
+        with tempfile.TemporaryDirectory() as repo, tempfile.TemporaryDirectory() as outside:
+            root = Path(repo).resolve()
+            Path(repo, 'package.json').write_text('{"dependencies":{"next":"1"}}', encoding='utf-8')
+            try:
+                Path(repo, 'public').symlink_to(outside, target_is_directory=True)
+                Path(repo, 'app').symlink_to(outside, target_is_directory=True)
+            except OSError:
+                self.skipTest('symlinks unavailable')
+            report = load_report()
+            built = plan.build_plan(report, repo)
+            paths = {item['path'] for action in built['actions'] for item in action['likely_files']}
+            self.assertTrue(all(not path.startswith(('public/', 'app/')) for path in paths), paths)
+            for path in paths:
+                (root / path).resolve().relative_to(root)
+            self.assertTrue(any('source candidates omitted' in warning for warning in built['warnings']))
+
+    def test_file_and_internal_symlinks_are_not_suggested_as_literal_owners(self):
+        with tempfile.TemporaryDirectory() as repo:
+            root = Path(repo).resolve()
+            (root / 'real.html').write_text('real source', encoding='utf-8')
+            (root / 'assets').mkdir()
+            try:
+                (root / 'index.html').symlink_to(root / 'real.html')
+                (root / 'public').symlink_to(root / 'assets', target_is_directory=True)
+            except OSError:
+                self.skipTest('symlinks unavailable')
+            warnings = []
+            self.assertEqual([], plan.likely_files(root, ['real.html'], 'plain_html', 'title',
+                                                  'https://example.test/', warnings))
+            self.assertEqual([], plan.likely_files(root, ['real.html'], 'nextjs', 'llms_txt',
+                                                  'https://example.test/', warnings))
+            self.assertTrue(warnings)
+
+    def test_unparseable_target_retains_safe_shared_candidates_with_warning(self):
+        report = load_report()
+        report['url'] = report['final_url'] = 'https://[invalid'
+        built = plan.build_plan(report, str(FIXTURES / 'plain_html'))
+        title = next(action for action in built['actions'] if action['artifact'] == 'title')
+        self.assertIn('index.html', {item['path'] for item in title['likely_files']})
+        self.assertTrue(any('source candidates omitted' in warning for warning in built['warnings']))
+
+    def test_non_directory_and_uninspectable_components_are_not_source_owners(self):
+        with tempfile.TemporaryDirectory() as repo:
+            root = Path(repo).resolve()
+            (root / 'index.html').write_text('home', encoding='utf-8')
+            (root / 'a').write_text('not a directory', encoding='utf-8')
+            warnings = []
+            owners = plan.likely_files(root, ['index.html', 'a'], 'plain_html', 'title',
+                                       'https://example.test/a/page', warnings)
+            self.assertEqual(['index.html'], [item['path'] for item in owners])
+            self.assertTrue(warnings)
+            with mock.patch.object(Path, 'lstat', side_effect=PermissionError('not inspectable')):
+                owners = plan.likely_files(root, ['index.html'], 'plain_html', 'title',
+                                           'https://example.test/', warnings)
+            self.assertEqual([], owners)
+            (root / 'index.html').unlink()
+            (root / 'index.html').mkdir()
+            self.assertEqual([], plan.likely_files(root, [], 'plain_html', 'title',
+                                                  'https://example.test/', warnings))
+
+    def test_missing_source_owner_never_authorizes_structural_automation(self):
+        with tempfile.TemporaryDirectory() as repo:
+            report = {'url': 'https://example.test/', 'findings': [
+                {'category': 'technical', 'severity': 'medium', 'title': 'Missing viewport',
+                 'rule_id': 'technical.missing.viewport'}]}
+            built = plan.build_plan(report, repo)
+            action = built['actions'][0]
+            self.assertEqual([], action['likely_files'])
+            self.assertEqual('manual_external', action['safety'])
+            self.assertTrue(action['manual_action'])
+
+    def test_hidden_route_names_are_preserved_in_source_candidates(self):
+        with tempfile.TemporaryDirectory() as repo:
+            root = Path(repo)
+            Path(repo, 'index.html').write_text('home', encoding='utf-8')
+            Path(repo, '.well-known').mkdir()
+            Path(repo, '.well-known', 'info.html').write_text('info', encoding='utf-8')
+            report = load_report()
+            report['url'] = report['final_url'] = 'https://example.test/.well-known/info'
+            built = plan.build_plan(report, repo)
+            title = next(action for action in built['actions'] if action['artifact'] == 'title')
+            self.assertIn('.well-known/info.html', {item['path'] for item in title['likely_files'] if item['exists']})
+
     def test_missing_and_non_directory_repo_rejected(self):
         with self.assertRaisesRegex(ValueError, "does not exist"):
             plan.safe_repo_root(str(FIXTURES / "absent"))

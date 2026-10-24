@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shlex
+import stat
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -494,9 +495,59 @@ HEAD_ARTIFACTS = {"title", "meta_description", "canonical", "robots_meta", "view
                   "server_rendering"}
 
 
-def _route_candidates(target: str, framework: str) -> list:
-    path = urlparse(target).path.strip("/")
+SOURCE_CANDIDATE_WARNING = (
+    'Unsafe or symlinked source candidates omitted; confirm source ownership manually. '
+    'No URL path decoding or filesystem alias equivalence was inferred.'
+)
+
+
+def _portable_source_path(rel: str) -> bool:
+    """Reject traversal, controls and drive/stream separator spellings."""
+    return (bool(rel) and not any(char in rel for char in ('\\', ':'))
+            and not any(ord(char) < 32 for char in rel)
+            and all(part not in ('', '.', '..') for part in rel.split('/')))
+
+
+def _safe_source_candidate(root: Path, rel: str) -> bool:
+    """Check current containment and every component, including missing owners."""
+    if not _portable_source_path(rel):
+        return False
+    try:
+        root = root.resolve()
+        path = root
+        parts = rel.split('/')
+        for index, part in enumerate(parts):
+            path = path / part
+            try:
+                mode = path.lstat().st_mode
+            except FileNotFoundError:
+                break  # absent descendants are proposed owners, not observed files
+            if stat.S_ISLNK(mode) or (index < len(parts) - 1 and not stat.S_ISDIR(mode)):
+                return False
+            if index == len(parts) - 1 and not stat.S_ISREG(mode):
+                return False
+        (root / rel).resolve().relative_to(root)
+    except (OSError, ValueError, RuntimeError):
+        return False
+    return True
+
+
+def _route_candidates(target: str, framework: str, warnings=None) -> list:
+    if any(ord(char) < 32 for char in target):
+        if warnings is not None:
+            warnings.append(SOURCE_CANDIDATE_WARNING)
+        return []
+    try:
+        path = urlparse(target).path.strip("/")
+    except ValueError:
+        if warnings is not None:
+            warnings.append(SOURCE_CANDIDATE_WARNING)
+        return []
     if not path:
+        return []
+    if not _portable_source_path(path):
+        if warnings is not None:
+            warnings.append(SOURCE_CANDIDATE_WARNING)
         return []
     slug = path.split("/")[-1]
     if framework == "plain_html":
@@ -516,7 +567,7 @@ def _route_candidates(target: str, framework: str) -> list:
 
 
 def likely_files(root: Path, files: list, framework: str, artifact: str,
-                 target: str) -> list:
+                 target: str, warnings=None) -> list:
     if artifact in ("server_config", "unknown"):
         return []
     file_set = set(files)
@@ -527,9 +578,9 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
         base = (config.get("static") or ["."])[0]
         candidates = [("llms.txt" if base == "." else f"{base}/llms.txt")]
     elif artifact in HEAD_ARTIFACTS:
-        candidates = list(config.get("head", [])) + _route_candidates(target, framework)
+        candidates = list(config.get("head", [])) + _route_candidates(target, framework, warnings)
     else:
-        candidates = _route_candidates(target, framework) + list(config.get("content", []))
+        candidates = _route_candidates(target, framework, warnings) + list(config.get("content", []))
 
     # Include existing convention-matching files, not just canonical names.
     if artifact in HEAD_ARTIFACTS:
@@ -541,10 +592,13 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
 
     out, seen = [], set()
     for rel in candidates:
-        rel = rel.lstrip("./") if rel != "." else rel
         if not rel or rel in seen:
             continue
         seen.add(rel)
+        if not _safe_source_candidate(root, rel):
+            if warnings is not None:
+                warnings.append(SOURCE_CANDIDATE_WARNING)
+            continue
         exists = rel in file_set
         out.append({
             "path": rel,
@@ -838,9 +892,10 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         if verification:
             safety, requires_deploy = 'manual_external', False
         owners = ([] if verification else likely_files(root, inv["files"], framework["name"], artifact,
-                                                     normalized["target"]))
+                                                     normalized["target"], warnings))
         if not owners and safety != "manual_external":
             warnings.append(f"No likely source owner found for {finding['rule_id']}.")
+            safety = 'manual_external'
         actions.append({
             "action_id": f"action:{finding['rule_id']}",
             "rule_id": finding["rule_id"],

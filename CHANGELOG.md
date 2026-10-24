@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation source suggestions omit traversal, ambiguous drive/stream paths
+  and symlink components, including proposed files not yet present. Warnings
+  disclose omissions; hidden route names retain their spelling. Ownerless
+  structural actions require manual source verification instead of automation.
 - Complete-byte resource downloads reject HTTP 206 and any Content-Range
   evidence before body reads or decoding in both HTTP backends. Ranged XML
   cannot become a verified sitemap root; ordinary complete/gzip and HTTP-error

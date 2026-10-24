@@ -32,6 +32,17 @@ Safety values mean:
 `groups` identify findings best fixed in one shared template. `conflicts` stop
 automation where canonical/index/crawler intent must be decided first.
 
+Source candidates, including suggested files that do not exist yet, must be
+literal relative paths contained in the repository at planning time. Candidates
+with parent/current-directory segments, backslashes, drive/stream separators or
+control characters are omitted, as are paths through any symlink component.
+URL path names are not decoded or rewritten into presumed filesystem aliases;
+hidden names such as `.well-known` retain their spelling. Omissions produce a
+warning, while other safe shared/conventional owners remain review candidates.
+Actions with no candidates are manual, including structural declarations that
+would otherwise be safely automatable. Containment is a read-only planning
+check, not a filesystem lock: verify paths and ownership again before any edit.
+
 ## Verification templates
 
 `verification` contains ordered human instructions and command templates, not
