@@ -105,7 +105,7 @@ def main(argv=None) -> int:
     ap.add_argument("--no-recommended", action="store_true",
                     help="emit only required properties")
     ap.add_argument("--raw", action="store_true",
-                    help="print bare JSON without the <script> wrapper")
+                    help="print bare JSON without the <script> wrapper (not HTML-escaped)")
     ap.add_argument("--pretty", action="store_true", help="alias for default pretty output")
     args = ap.parse_args(argv)
 
@@ -129,6 +129,8 @@ def main(argv=None) -> int:
     if args.raw:
         print(blob)
     else:
+        # JSON quoting alone does not prevent HTML's script-closing delimiter.
+        blob = blob.replace('<', '\\u003c')
         print('<script type="application/ld+json">')
         print(blob)
         print("</script>")

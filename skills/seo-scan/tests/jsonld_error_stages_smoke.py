@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import plan
 from lib.report import html_document, md_to_html
 from test_jsonld_error_stages import page, DEPTH, UNICODE, FIXTURE
+from schema_script_embedding_smoke import main as verify_schema_embedding
 
 
 def main(argv=None):
@@ -68,6 +69,7 @@ def main(argv=None):
             assert not requests, requests
         finally:
             browser.close()
+    verify_schema_embedding([])
     print('OK: JSON-LD syntax/processing remedies distinct on mobile/desktop/print; manual processing verification, JSON stable and no external requests.')
     return 0
 
