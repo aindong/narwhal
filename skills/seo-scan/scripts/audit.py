@@ -167,7 +167,9 @@ def _schema_score_note(data: dict) -> str:
                  or (links.BASE_ERROR if links.unassessed_base(data['page'].meta) else ''))
     hreflang_note = (crawl_site.hreflang_source_note(data['site_result'])
                      or (hreflang.ERROR if hreflang.unverified(data['page'].meta, for_score=True) else ''))
-    return ' '.join(note for note in (schema, canonical_note, base_note, hreflang_note) if note)
+    partial_note = (crawl_site.partial_response_note(data['site_result'])
+                    or (report_lib.PARTIAL_HTML_ERROR if report_lib.recorded_response_partial(data['page'].meta) else ''))
+    return ' '.join(note for note in (schema, canonical_note, base_note, hreflang_note, partial_note) if note)
 
 
 def render_markdown(data: dict) -> str:

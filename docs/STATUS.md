@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Partial HTML coverage:** primary 206/Content-Range responses remain
+  unassessed before page extraction, not false missing-metadata/content results.
+  Partial served baselines cannot certify JS-content differences. Known current/
+  historical range evidence qualifies page/site comparisons and manual plans;
+  complete and intentionally byte-limited scans retain their separate paths.
 - **Terminal HTTP status:** unresolved 3xx/304 responses no longer become
   measured page-health reports or successful text resources. Ordinary followed
   redirects still use their successful final response; 2xx alone does not

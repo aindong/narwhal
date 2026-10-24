@@ -22,6 +22,38 @@ Request/redirect/DNS/SSRF budgets, default CLI output/exit behavior and score
 weights are unchanged. Corrected acquisition/scoring is not a website fix or
 measured SEO gain; CI diffs retain the existing incomplete-execution guard.
 
+Primary HTTP 206 or any Content-Range header is **range evidence**, not proof of
+a complete standalone HTML representation. Narwhal withholds page extraction,
+links/fingerprints, page auditors and site-context requests for that primary
+response. It retains observed status and a positive-only `coverage.server_range`
+receipt (`basis=http_206_or_content_range_v1`, `observed=true`), without raw header
+values. Full-page health is unassessed; the zero is an execution fail-safe, not a
+measured SEO failure or a signal to add missing metadata/content. This includes
+empty, malformed or apparently full-range declarations: range syntax and byte
+interval completeness are not certified. Investigate standalone delivery and
+server/CDN handling before any source edit; do not auto-retry or relax guards.
+Crawl fallback discovery likewise does not resolve anchors/document bases from
+an already fetched ranged response. The requested start URL remains in scope;
+this neither certifies an absent link nor authorizes an extra request.
+
+An otherwise usable rendered primary can still be audited when its served
+baseline is ranged. The paired text comparison remains unverified with reason
+`served_html_partial`; no stale/measured JS-content result is promoted. Existing
+auditor-selection rules decide whether that missing pair affects scored groups.
+Explicit client byte-limit truncation retains its separate partial-scan path,
+byte-limit warning and comparison guard; it is not mislabeled as a server range.
+
+Current range receipts and known historical snapshot partial/206 observations
+qualify full-page score/diff/compare/brief claims, including sampled crawl
+contributions. Legacy reports explicitly recording HTTP 206 remain unassessed
+even without a receipt; missing or unknown metadata is not a completeness pass.
+Imported receipts are self-consistency evidence, not authenticated facts. Native
+and Markdown page/site reports keep scope visible independently of finding
+filters. Remediation is manual-only, with no guessed file owners or generated
+markup. Healthy page facts, weights, default CLI exits, dependencies and fetch
+budgets remain unchanged. Root-resource coverage has its own checks; this is not
+complete HTTP conformance or independent SEO accuracy.
+
 ## Title & meta description
 - **Title:** ~50–60 characters. Front-load the primary query; include the brand
   at the end. One title per page, unique across the site. Titles over ~65 chars

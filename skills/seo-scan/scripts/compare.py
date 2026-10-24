@@ -32,6 +32,7 @@ from lib import question_observation, schema_appearance, schema_coverage  # noqa
 from lib import date_cues  # noqa: E402
 from lib import canonical, links as linklib, hreflang  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
+from lib.report import PARTIAL_HTML_ERROR, recorded_response_partial  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
@@ -198,6 +199,10 @@ def run(urls: list, *, timeout=20, allow_private=False, render=False,
             failed.append({"url": u, "status": 0, "error": str(exc)})
             continue
         doc = getattr(rep, "_doc", None)
+        if recorded_response_partial(rep.meta):
+            failed.append({'url': u, 'status': rep.fetched_status,
+                           'response_partial': True, 'error': PARTIAL_HTML_ERROR})
+            continue
         if rep.fetched_status != 200 or doc is None:
             failed.append({"url": u, "status": rep.fetched_status})
             continue

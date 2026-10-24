@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urlparse, urlsplit
 
-from . import htmlx
+from . import htmlx, http
 from .sitegraph import norm
 
 # BCP-47-ish subset Google accepts: lang(2-3) [-Script(4)] [-REGION(2)|-(3digit)]
@@ -128,7 +128,7 @@ def source_observation(response, target):
     """
     content_type = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
     status = ('unavailable' if not response.ok or not 200 <= response.status < 300 else 'empty' if not response.text else
-              'partial' if response.status == 206 or 'content-range' in response.headers
+              'partial' if http.has_range_evidence(response)
               or response.headers.get('x-narwhal-truncated') == 'true' else
               'non_html' if content_type not in ('text/html', 'application/xhtml+xml') else
               'identity_changed' if href_problem(response.final_url) is not None or href_problem(target) is not None

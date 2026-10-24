@@ -63,7 +63,7 @@ class TestJsBaselineCoverage(unittest.TestCase):
                 self.assertNotIn('js_dependence', report.meta)
                 receipt = report.meta['coverage']['js_comparison']
                 self.assertEqual('unverified', receipt['status'])
-                self.assertEqual('served_html_unavailable', receipt['reason'])
+                self.assertEqual('served_html_partial' if status == 206 else 'served_html_unavailable', receipt['reason'])
 
     def test_explicit_non_html_baseline_is_not_js_evidence(self):
         report, _ = scanned(response('{"data": 1}', content_type='application/json'))

@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib.report import recorded_response_partial  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
 
@@ -48,14 +49,14 @@ def _normalize(data: dict) -> dict:
                 "score": data.get("score", 0),
                 "findings": data.get("findings", []),
                 "kind": "scan", "meta": data.get("meta", {}), "crawl": None,
-                "rendered": data.get("rendered")}
+                "rendered": data.get("rendered"), 'status': data.get('status')}
     if "homepage" in data:  # comprehensive audit report
         hp = data.get("homepage", {})
         return {"url": data.get("site") or hp.get("url", ""),
                 "score": data.get("overall_score", hp.get("score", 0)),
                 "findings": hp.get("findings", []),
                 "kind": "audit", "meta": hp.get("meta", {}), "crawl": data.get("crawl"),
-                "rendered": hp.get("rendered")}
+                "rendered": hp.get("rendered"), 'status': hp.get('status')}
     raise ValueError(
         "Unrecognized report JSON — expected `narwhal scan` or `narwhal audit` "
         "output produced with `--format json`.")
@@ -99,6 +100,8 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + ' page has unassessed declared anchor-base coverage.')
         if hreflang.unverified(meta_base, for_score=True):
             reasons.append(label + ' page has unassessed HTML hreflang URL coverage.')
+        if recorded_response_partial(meta_base) or (type(item.get('status')) is int and item['status'] == 206):
+            reasons.append(label + ' report has partial/ranged HTML coverage; full-page comparisons are unverified.')
         pages = crawl.get("pages") if isinstance(crawl, dict) else None
         if isinstance(pages, list) and any(links.unassessed_base(page)
                                            for page in pages if isinstance(page, dict)):
@@ -110,6 +113,8 @@ def _comparison(o: dict, n: dict) -> dict:
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("hard_fail") is True
                                            for page in pages):
             reasons.append(label + " audit contains a hard-failed crawl page; its overall score is not comparable.")
+        if isinstance(pages, list) and any(recorded_response_partial(page) for page in pages):
+            reasons.append(label + ' audit contains partial/ranged HTML coverage; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("response_truncated") is True
                                            for page in pages):
             reasons.append(label + " audit contains a truncated crawl page; its overall score is not comparable.")
@@ -178,7 +183,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base/HTML hreflang gaps, page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base/HTML hreflang gaps, page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
                  "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
     }
 
