@@ -166,22 +166,87 @@ def _recorded_scan_options(page: dict) -> tuple:
     return tuple(options)
 
 
+def _validate_text(value, location, *, nullable=False):
+    if nullable and value is None:
+        return
+    if not isinstance(value, str):
+        raise ValueError(location + ' must be a string' + (' or null.' if nullable else '.'))
+    try:
+        value.encode('utf-8')
+    except UnicodeError:
+        raise ValueError(location + ' must contain valid UTF-8 text.') from None
+
+
+def _validate_findings(findings, location):
+    """Validate fields consumed as identities, priorities and action evidence."""
+    if not isinstance(findings, list):
+        raise ValueError(location + ' must be a list.')
+    for index, finding in enumerate(findings):
+        at = f'{location}[{index}]'
+        if not isinstance(finding, dict):
+            raise ValueError(at + ' must be an object.')
+        for field in ('category', 'title', 'recommendation'):
+            if field in finding:
+                _validate_text(finding[field], at + '.' + field)
+        for field in ('detail', 'evidence'):
+            _validate_text(finding.get(field), at + '.' + field, nullable=True)
+        if 'severity' in finding and (not isinstance(finding['severity'], str)
+                                      or finding['severity'] not in SEVERITY_RANK):
+            raise ValueError(at + '.severity must be critical, high, medium, low or good.')
+        rule = finding.get('rule_id')
+        _validate_text(rule, at + '.rule_id', nullable=True)
+        if rule and not rule.strip():
+            raise ValueError(at + '.rule_id must be a string or null; whitespace is unsupported.')
+        if not rule and not _legacy_rule_id(finding).rsplit('.', 1)[-1]:
+            raise ValueError(at + ' needs an explicit rule_id or usable legacy title identity.')
+        if 'confidence' in finding and (type(finding['confidence']) not in (int, float)
+                                        or not 0 <= finding['confidence'] <= 1):
+            raise ValueError(at + '.confidence must be a finite number between 0 and 1.')
+        if 'scope' in finding and finding['scope'] not in ('page', 'site', 'external'):
+            raise ValueError(at + '.scope must be page, site or external.')
+        for field in ('count', 'occurrences'):
+            if field in finding and (type(finding[field]) is not int or finding[field] < 1):
+                raise ValueError(at + '.' + field + ' must be a positive integer.')
+
+
 def normalize_report(data: dict) -> dict:
     """Accept scan or audit JSON and return its actionable page findings."""
     if not isinstance(data, dict):
         raise ValueError("Report JSON must be an object.")
-    if isinstance(data.get("findings"), list):
+    if 'findings' in data and 'homepage' in data:
+        raise ValueError('Report has ambiguous scan/audit fields; supply one report kind.')
+    if 'findings' in data:
         page = data
         target = data.get("final_url") or data.get("url") or ""
         kind = "scan"
-    elif isinstance(data.get("homepage"), dict):
-        page = data["homepage"]
+    elif 'homepage' in data:
+        page = data['homepage']
+        if not isinstance(page, dict):
+            raise ValueError('Report.homepage must be an object.')
         target = data.get("site") or page.get("final_url") or page.get("url") or ""
         kind = "audit"
     else:
         raise ValueError(
             "Unrecognized report JSON: expected `narwhal scan --format json` or "
             "`narwhal audit --format json` output.")
+    _validate_text(target, 'Report URL label')
+    for field in ('schema_version', 'tool_version'):
+        if field in data:
+            _validate_text(data[field], 'Report.' + field)
+    score_field = 'overall_score' if 'overall_score' in data else 'score'
+    score = data.get('overall_score', page.get('score'))
+    if score is not None and (type(score) not in (int, float) or not 0 <= score <= 100):
+        raise ValueError('Report.' + score_field + ' must be a finite number between 0 and 100 or null.')
+    _validate_findings(page.get('findings', []), 'Report.homepage.findings' if kind == 'audit' else 'Report.findings')
+    if kind == 'audit':
+        for field in ('crawl', 'sitemap'):
+            if not isinstance(data.get(field, {}), dict):
+                raise ValueError('Report.' + field + ' must be an object.')
+        crawl = data.get('crawl', {})
+        pages = crawl.get('pages', [])
+        if not isinstance(pages, list) or any(not isinstance(item, dict) for item in pages):
+            raise ValueError('Report.crawl.pages must be a list of objects.')
+        _validate_findings(crawl.get('recurring', []), 'Report.crawl.recurring')
     crawl_rule_ids = set()
     crawl_automation_gap = False
     findings = []
@@ -1197,9 +1262,15 @@ def _load_json(path: str, input_stats=None) -> dict:
         with candidate.open('r', encoding='utf-8') as source:
             if input_stats is not None:
                 input_stats.append(os.fstat(source.fileno()))
-            return json.loads(source.read())
+            text = source.read()
+    except UnicodeError:
+        raise ValueError('Report file must contain UTF-8 JSON.') from None
+    try:
+        return json.loads(text)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Invalid report JSON: {exc}") from exc
+        raise ValueError(f'Invalid report JSON at line {exc.lineno}, column {exc.colno}.') from None
+    except (ValueError, RecursionError):
+        raise ValueError('Report JSON could not be decoded within supported parser limits.') from None
 
 
 def main(argv=None) -> int:
