@@ -25,6 +25,12 @@ DEFAULT_UA = (
 DEFAULT_TIMEOUT = 20
 MAX_REDIRECTS = 10
 SERVER_RANGE_BASIS = 'http_206_or_content_range_v1'
+PARTIAL_RESOURCE_ERROR = 'Partial/ranged HTTP response; complete resource bytes are unverified.'
+
+
+def _range_evidence(status, headers):
+    """Shared membership rule for normalized and transport-native headers."""
+    return status == 206 or 'content-range' in headers
 
 
 def has_range_evidence(response):
@@ -33,7 +39,7 @@ def has_range_evidence(response):
     A full byte range or a malformed Content-Range still needs verification;
     neither is silently promoted to a complete standalone representation.
     """
-    return response.status == 206 or 'content-range' in response.headers
+    return _range_evidence(response.status, response.headers)
 
 
 def _origin_headers(headers):
@@ -559,6 +565,8 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
         try:
             if not 200 <= r.status_code < 300:
                 return None, f'HTTP {r.status_code}'
+            if _range_evidence(r.status_code, r.headers):
+                return None, PARTIAL_RESOURCE_ERROR
             encoding = (r.headers.get('content-encoding') or 'identity').strip().lower()
             if encoding != 'identity':
                 # iter_content auto-decodes and older urllib3 can accept a short
@@ -596,6 +604,8 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
         with fh:
             if not 200 <= fh.status < 300:
                 return None, f'HTTP {fh.status}'
+            if _range_evidence(fh.status, fh.headers):
+                return None, PARTIAL_RESOURCE_ERROR
             raw = fh.read(max_bytes + 1)
             if len(raw) > max_bytes:
                 return None, limit_note

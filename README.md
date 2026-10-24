@@ -329,6 +329,12 @@ known historical evidence blocks comparison/brief/diff fix claims and CI gates;
 remediation stays manual, without guessed metadata owners or automatic retries.
 Complete pages and explicitly byte-limited scans keep their existing paths.
 This does not validate HTTP range syntax or certify every other response complete.
+The complete-byte resource downloader also withholds 206/Content-Range bodies
+before reading or decoding them, so a complete-looking XML fragment cannot be
+promoted into a verified sitemap root. Root llms.txt uses header presence, not
+truthiness, for range evidence: an empty marker is still unverified. These are
+separate completeness checks, not changes to generic 2xx transport success or
+the intentional ranged image-header probes.
 
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a

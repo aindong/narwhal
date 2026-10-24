@@ -1,6 +1,6 @@
 # Project status & handoff
 
-_Last updated: 2026-10-24 · latest release **1.30.19**_
+_Last updated: 2026-10-25 · latest release **1.30.19**_
 
 A snapshot of where Narwhal stands and how to continue it. For the item-by-item
 plan see [ROADMAP.md](ROADMAP.md); for release history see
@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Complete resource bytes:** both HTTP backends reject range evidence before
+  byte reads/XML decoding instead of accepting a complete-looking sitemap
+  fragment. Empty range headers also keep root llms.txt candidate/absence
+  evidence unverified. No budgets, permissions or healthy-file facts change.
 - **Partial HTML coverage:** primary 206/Content-Range responses remain
   unassessed before page extraction, not false missing-metadata/content results.
   Partial served baselines cannot certify JS-content differences. Known current/

@@ -12,7 +12,7 @@ _REASONS = {
     'request_failed': 'the root request failed',
     'http_unverified': 'the root response was gated, unsuccessful or otherwise unverified',
     'truncated': 'the root response exceeded its body budget',
-    'partial_response': 'the root endpoint returned partial content',
+    'partial_response': 'the root response carried partial/range evidence',
     'html_response': 'the root endpoint returned HTML, possibly an application fallback',
     'unsupported_media_type': 'the root endpoint did not return a supported text media type',
     'empty_body': 'the root response had no usable text',
@@ -42,7 +42,7 @@ def assess(response):
     status = response.status if type(response.status) is int else 0
     mime = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()[:120]
     truncated = response.headers.get('x-narwhal-truncated') == 'true'
-    partial = status == 206 or bool(response.headers.get('content-range'))
+    partial = http.has_range_evidence(response)
     text = response.text if isinstance(response.text, str) else ''
     state, reason = 'unverified', 'http_unverified'
     if status in (404, 410):
