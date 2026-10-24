@@ -27,6 +27,8 @@ class TestMarkdownVerification(unittest.TestCase):
         section = markdown.split('### HIGH', 1)[1]
         previous = -1
         for step in built['actions'][0]['verification']:
+            if step == plan.SCAN_SETTINGS_INSTRUCTION:
+                continue
             position = section.index(step)
             self.assertGreater(position, previous)
             previous = position
@@ -38,6 +40,8 @@ class TestMarkdownVerification(unittest.TestCase):
         section = plan.render_markdown(built).split('### HIGH', 1)[1]
         previous = -1
         for step in built['actions'][0]['verification']:
+            if step == plan.SCAN_SETTINGS_INSTRUCTION:
+                continue
             position = section.index(step)
             self.assertGreater(position, previous)
             previous = position

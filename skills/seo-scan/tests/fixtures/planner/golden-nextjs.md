@@ -8,6 +8,8 @@ Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace pla
 
 > Save the original input report JSON, keeping all fields, to a fresh before.json before edits or reruns. If using an existing saved report, point the diff at that baseline and choose distinct fresh verification output paths. Do not overwrite files or substitute a new scan. This read-only plan has not saved a baseline.
 
+> Restore the original scan configuration, access settings and resource limits before running this template. Recorded auditor selection, requested rendering and image-check options are included when known; the report does not record the complete invocation. Matching known options alone does not establish comparable coverage.
+
 ## Review required
 
 ### HIGH — Missing meta description

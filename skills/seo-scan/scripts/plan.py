@@ -35,6 +35,12 @@ MEMORY_BASELINE_INSTRUCTION = (
     'baseline and choose distinct fresh verification output paths. '
     'Do not overwrite files or substitute a new scan. This read-only plan has not saved a baseline.'
 )
+SCAN_SETTINGS_INSTRUCTION = (
+    'Restore the original scan configuration, access settings and resource limits before '
+    'running this template. Recorded auditor selection, requested rendering and image-check '
+    'options are included when known; the report does not record the complete invocation. '
+    'Matching known options alone does not establish comparable coverage.'
+)
 SKIP_DIRS = {
     ".git", ".hg", ".svn", ".next", ".nuxt", ".output", ".cache",
     "node_modules", "vendor", "dist", "build", "coverage", "__pycache__",
@@ -141,6 +147,23 @@ def _automation_source_gap(page):
             or (isinstance(status, int) and status > 0 and (status == 206 or not 200 <= status < 300))
             or recorded_response_partial(meta) or recorded_response_truncated(meta)
             or (scope is not None and 'technical' not in scope[1]))
+
+
+def _recorded_scan_options(page: dict) -> tuple:
+    """Reproduce supported recorded inputs without guessing a full invocation."""
+    meta = page.get('meta')
+    meta = meta if isinstance(meta, dict) else {}
+    options = []
+    scope = recorded_scan_scope(meta)
+    if scope is not None:
+        options += ['--only', ','.join(scope[0])]
+    settings = meta.get('scan_settings')
+    if isinstance(settings, dict):
+        if settings.get('render_requested') is True:
+            options.append('--render')
+        if settings.get('image_checks') is False:
+            options.append('--no-image-checks')
+    return tuple(options)
 
 
 def normalize_report(data: dict) -> dict:
@@ -303,6 +326,7 @@ def normalize_report(data: dict) -> dict:
                              finding["rule_id"]))
     total_findings = len(normalized_findings)
     return {
+        "scan_options": _recorded_scan_options(page),
         "page_automation_gap": _automation_source_gap(page),
         "crawl_automation_gap": crawl_automation_gap,
         "crawl_rule_ids": sorted(crawl_rule_ids),
@@ -860,18 +884,19 @@ def _verification_outputs(report_source):
 
 
 def verification_for(artifact: str, target: str, report_source: str,
-                     report_kind: str = "scan") -> list:
+                     report_kind: str = "scan", *, scan_options: tuple = ()) -> list:
     """Human POSIX-shell templates; quote data and stop option interpretation."""
     memory_source = report_source.startswith("<")
     prerequisites = [MEMORY_BASELINE_INSTRUCTION] if memory_source else []
     before = ("before.json" if memory_source else
               shlex.quote(report_source))
     page_output, comparison_output = _verification_outputs(report_source)
+    options = ''.join(' ' + shlex.quote(option) for option in scan_options)
     if report_kind == 'audit':
         commands = []
         if artifact not in ("robots_txt", "sitemap", "llms_txt", "server_config"):
             commands += [
-                f"narwhal scan --allow-private --format json -o {page_output} -- '<local-preview-url>'",
+                f"narwhal scan --allow-private --format json -o {page_output}{options} -- '<local-preview-url>'",
                 'The local scan verifies page-level changes only; do not compare '
                 f'{page_output} with the audit baseline or treat it as deployed site verification.',
             ]
@@ -888,9 +913,10 @@ def verification_for(artifact: str, target: str, report_source: str,
         return prerequisites + commands
     if artifact in ("robots_txt", "sitemap", "llms_txt", "server_config"):
         scan_target = shlex.quote(target)
-        scan_command = f"narwhal scan --format json -o {comparison_output} -- {scan_target}  # run after deploy"
+        scan_command = f"narwhal scan --format json -o {comparison_output}{options} -- {scan_target}  # run after deploy"
     else:
-        scan_command = f"narwhal scan --allow-private --format json -o {comparison_output} -- '<local-preview-url>'"
+        scan_command = f"narwhal scan --allow-private --format json -o {comparison_output}{options} -- '<local-preview-url>'"
+    prerequisites.append(SCAN_SETTINGS_INSTRUCTION)
     commands = [scan_command,
                 f"narwhal diff -- {before} {comparison_output}"]
     if artifact in ("json_ld", "product_schema"):
@@ -971,7 +997,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "likely_files": owners,
             "verification": (list(verification[1]) if verification else
                              verification_for(artifact, normalized["target"], report_source,
-                                              normalized["kind"])),
+                                              normalized["kind"], scan_options=normalized["scan_options"])),
             "evidence": finding.get("evidence") or finding.get("detail") or "",
             "source_recommendation": finding.get("recommendation", ""),
             "confidence": finding.get("confidence", 1.0),
@@ -1084,8 +1110,9 @@ def render_markdown(plan: dict) -> str:
         'Replace placeholders and add original options before `--`; do not execute '
         'instruction text as commands.', '',
     ]
-    if any(MEMORY_BASELINE_INSTRUCTION in action['verification'] for action in plan['actions']):
-        lines += ['> ' + MEMORY_BASELINE_INSTRUCTION, '']
+    for instruction in (MEMORY_BASELINE_INSTRUCTION, SCAN_SETTINGS_INSTRUCTION):
+        if any(instruction in action['verification'] for action in plan['actions']):
+            lines += ['> ' + instruction, '']
     if (plan.get('provenance', {}).get('report_kind') == 'audit'
             and any(step.startswith('narwhal audit ') for action in plan['actions']
                     for step in action['verification'])):
@@ -1138,7 +1165,7 @@ def render_markdown(plan: dict) -> str:
                       f"- **Change:** {action['proposed_change']}", "",
                       "**Verification, in order:**", ""]
             for step in action['verification']:
-                if step == MEMORY_BASELINE_INSTRUCTION:
+                if step in (MEMORY_BASELINE_INSTRUCTION, SCAN_SETTINGS_INSTRUCTION):
                     continue  # the shared prerequisite is already visible above all actions
                 if step.startswith('narwhal '):
                     lines += _command_block(step)

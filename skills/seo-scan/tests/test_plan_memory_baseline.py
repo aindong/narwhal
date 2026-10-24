@@ -39,7 +39,7 @@ class TestPlanMemoryBaseline(unittest.TestCase):
             for kind in ('scan', 'audit'):
                 steps = plan.verification_for('title', PAGE['url'], source, kind)
                 self.assertNotIn(plan.MEMORY_BASELINE_INSTRUCTION, steps)
-                self.assertTrue(steps[0].startswith('narwhal scan '))
+                self.assertTrue(any(step.startswith('narwhal scan ') for step in steps))
 
     def test_mcp_plan_changes_neither_report_nor_repository_and_saves_no_baseline(self):
         report = copy.deepcopy(PAGE)
