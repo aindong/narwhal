@@ -42,7 +42,7 @@ class TestLlmsArtifactUserinfo(unittest.TestCase):
         original = copy.deepcopy(sections)
         output = llms.render_llms_txt('Example', '', sections)
         self.assertNotIn(SECRET, output)
-        self.assertIn('- [Guide](' + PUBLIC + '): Read this guide.', output)
+        self.assertIn('- [Guide](' + PUBLIC + r'): Read this guide\.', output)
         self.assertIn('URL userinfo was removed', output)
         self.assertEqual(original, sections)
 
