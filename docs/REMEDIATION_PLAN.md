@@ -11,6 +11,20 @@ repository. It emits at most 1,000 deduplicated actions, severity-first, with an
 explicit coverage warning if capped. MCP is stricter: callers pass a parsed report object, and `repo` must
 be a relative descendant of the server working directory.
 
+For an explicitly saved CLI plan, `-o` checks the output file against the OS
+identity of the baseline report captured while reading it. Direct, relative,
+symlink and hard-link aliases of that baseline are refused with exit 2 before
+truncation, including a baseline renamed after reading. Distinct regular artifact
+paths retain normal replacement behavior; use a dedicated artifact path, since
+this guard does not protect every other existing file. Encoding/write errors are
+controlled, and named pipes are not used as outputs. The shared writer also
+protects diff snapshots. It does not lock filesystem names or concurrent writers,
+and separate artifact writes remain non-atomic. Stdout and the MCP planner remain
+read-only with no saved baseline or file-output behavior.
+CLI report paths use the same home expansion for loading and recorded
+verification provenance, so a quoted `~/report.json` does not become a different
+literal path beneath the current directory.
+
 ## Action semantics
 
 Every non-passing finding becomes one action linked by stable `rule_id`. Older

@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Saved plan baseline safety:** CLI plan output cannot replace an aliased read
+  report through direct, relative or link paths. Plan and diff saves share one
+  writer guard; ordinary planning content stays unchanged, while home-relative
+  report provenance now matches loading. Explicit artifact writes remain
+  non-atomic and do not protect arbitrary other files.
 - **Snapshot-preserving diff saves:** CLI output uses the actual input/output
   file identities before truncation, including link aliases and renamed inputs.
   Failed handles close; regular distinct saves and gate exits remain. This
