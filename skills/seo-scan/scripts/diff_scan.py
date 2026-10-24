@@ -232,6 +232,20 @@ def _worse(a: str, b: str) -> bool:
     return _RANK.get(a, 99) < _RANK.get(b, 99)
 
 
+def _index_findings(findings: list) -> dict:
+    """Select worst-severity evidence per identity, with an order-independent tie."""
+    indexed = {}
+    for finding in findings:
+        key = _key(finding)
+        previous = indexed.get(key)
+        if previous is None or _worse(finding.get('severity'), previous.get('severity')):
+            indexed[key] = finding
+        elif finding.get('severity') == previous.get('severity') and (
+                json.dumps(finding, sort_keys=True) < json.dumps(previous, sort_keys=True)):
+            indexed[key] = finding
+    return indexed
+
+
 def diff_reports(old: dict, new: dict) -> dict:
     o, n = _normalize(old), _normalize(new)
     comparison = _comparison(o, n)
@@ -242,23 +256,25 @@ def diff_reports(old: dict, new: dict) -> dict:
                 "improved": [], "unchanged": 0, "regression": None,
                 "new_critical_high": [], "comparison": comparison,
                 "not_compared": {"old_findings": len(o["findings"]), "new_findings": len(n["findings"])}}
-    oi = {_key(f): f for f in o["findings"]}
-    ni = {_key(f): f for f in n["findings"]}
+    oi = _index_findings(o['findings'])
+    ni = _index_findings(n['findings'])
     okeys, nkeys = set(oi), set(ni)
 
     added = [ni[k] for k in nkeys - okeys]
     resolved = [oi[k] for k in okeys - nkeys]
     worsened, improved = [], []
-    for k in okeys & nkeys:
+    for k in sorted(okeys & nkeys, key=json.dumps):
         a, b = oi[k], ni[k]
         if a.get("severity") != b.get("severity"):
             entry = {"category": b.get("category"), "title": b.get("title"),
                      "from": a.get("severity"), "to": b.get("severity")}
+            if b.get('rule_id'):
+                entry['rule_id'] = b['rule_id']
             (worsened if _worse(b.get("severity"), a.get("severity"))
              else improved).append(entry)
 
-    added.sort(key=lambda f: _RANK.get(f.get("severity"), 99))
-    resolved.sort(key=lambda f: _RANK.get(f.get("severity"), 99))
+    added.sort(key=lambda f: (_RANK.get(f.get("severity"), 99), json.dumps(_key(f))))
+    resolved.sort(key=lambda f: (_RANK.get(f.get("severity"), 99), json.dumps(_key(f))))
     new_bad = [f for f in added if f.get("severity") in ("critical", "high")]
     score_dropped = n["score"] < o["score"]
 
@@ -276,6 +292,14 @@ def diff_reports(old: dict, new: dict) -> dict:
         "regression": score_dropped or bool(new_bad),
         "new_critical_high": new_bad,
         "comparison": comparison,
+        'finding_identity': {
+            'basis': 'category_rule_or_legacy_title_worst_severity_v1',
+            'representative': 'Worst observed severity; equal-severity ties use sorted-key JSON lexical order.',
+            'scope': 'Rule-level identities; individual instances are not matched. Scores retain input values.',
+            **{label: {'raw_findings': len(item['findings']), 'distinct_identities': len(index),
+                       'repeated_entries': len(item['findings']) - len(index)}
+               for label, item, index in (('old', o, oi), ('new', n, ni))},
+        },
     }
 
 
@@ -291,6 +315,12 @@ def _verdict(d: dict) -> str:
         if d["new_critical_high"]:
             why.append(f"{len(d['new_critical_high'])} new high-severity issue(s)")
         return "**Regressed** — " + ", ".join(why) + "."
+    if d['worsened']:
+        if delta > 0 or d['resolved'] or d['improved']:
+            return ('**Mixed reported finding changes** — severity worsened alongside other '
+                    'reported improvements; inspect both before claiming a fix.')
+        return ('**Worsened reported severity** — review the changes below. The regression flag '
+                'still uses score drops or new critical/high findings.')
     if delta > 0 or d["resolved"] or d["improved"]:
         return "**Improved reported findings** — not proof of improved overall page health."
     return "**No material change** since the previous run."
@@ -337,6 +367,15 @@ def render_markdown(d: dict) -> str:
         lines.append(f"_Not compared: {counts['old_findings']} earlier and {counts['new_findings']} later findings. "
                      "Re-scan with successful page fetches, matching completed auditor selections, rendering/image settings and full HTML coverage._")
         return "\n".join(lines).rstrip() + "\n"
+
+    identity = d.get('finding_identity', {})
+    if any(identity.get(label, {}).get('repeated_entries', 0) for label in ('old', 'new')):
+        old, new = identity['old'], identity['new']
+        lines += [f"Repeated finding identities: earlier {old['raw_findings']} entries → "
+                  f"{old['distinct_identities']} identities; later {new['raw_findings']} entries → "
+                  f"{new['distinct_identities']} identities. Comparisons use the worst observed severity "
+                  'and a stable representative; individual instances are not matched. '
+                  'Scores retain the input reports\' values.', '']
 
     def _bullets(items):
         for f in items:

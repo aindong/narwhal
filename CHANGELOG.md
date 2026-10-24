@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Scan/audit diffs compare repeated rule identities by worst observed severity
+  with stable representatives and ordering. Later low entries cannot hide a new
+  high rule or create order-only severity changes. Entry-count receipts disclose
+  rule-level scope without instance matching or score recalculation. Severity
+  transitions retain rule IDs; mixed/worsened changes get accurate headlines.
 - Remediation source-edit groups exclude manual/external and ownerless actions.
   Their evidence and manual tasks remain, without instructions to implement
   them as shared template fixes or borrow another action's source owner.
