@@ -198,6 +198,15 @@ plan actions, not automatic file creation. Legacy flags are explicitly caller
 context; no HTTP measurement is inferred from them. No runtime proposal fetch,
 linked-resource discovery or engine/ranking/citation measurement is performed.
 
+The starter generator (`narwhal llms`) separately reads homepage/page metadata.
+A failed, ranged, byte-truncated, empty or explicitly non-HTML homepage stops
+without producing an artifact (CLI exit 2; an existing output file is retained).
+Selected pages with those known gaps are omitted, with selected-fetch counts in
+`build()` coverage and a curation note in CLI/MCP text. Counts exclude pages not
+selected because of robots rules or budgets; they are not whole-site coverage.
+Absent content-type headers remain supported, not certified as HTML. A successful
+generation still requires curation and does not prove completeness or AI use.
+
 ## Myths worth rejecting
 - "Just add llms.txt and you'll rank in AI." — no evidence.
 - "Stuff pages with AI keywords / 'as an AI language model' bait." — spam.
