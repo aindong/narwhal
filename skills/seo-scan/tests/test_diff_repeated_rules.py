@@ -74,8 +74,8 @@ class TestRepeatedRuleDiffs(unittest.TestCase):
         worsened = diff_scan.diff_reports(after, before)
         self.assertEqual('medium', worsened['worsened'][0]['from'])
         self.assertEqual('high', worsened['worsened'][0]['to'])
-        self.assertFalse(worsened['regression'])  # documented gate: score drop or a newly appearing high rule
-        self.assertIn('Worsened reported severity', diff_scan.render_markdown(worsened))
+        self.assertTrue(worsened['regression'])  # existing rules escalating to high now trigger the gate
+        self.assertIn('escalated to critical/high', diff_scan.render_markdown(worsened))
         self.assertNotIn('No material change', diff_scan.render_markdown(worsened))
 
     def test_equal_severity_uses_a_stable_representative_without_mutation(self):
@@ -125,8 +125,8 @@ class TestRepeatedRuleDiffs(unittest.TestCase):
         self.assertNotIn('finding_identity', result)
 
     def test_mixed_changes_do_not_claim_only_improvement(self):
-        before = scan([finding('medium'), finding('low', rule_id='schema.other')])
-        after = scan([finding('high')])
+        before = scan([finding('low'), finding('low', rule_id='schema.other')])
+        after = scan([finding('medium')])
         result = diff_scan.diff_reports(before, after)
         self.assertTrue(result['worsened'])
         self.assertTrue(result['resolved'])

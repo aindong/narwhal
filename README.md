@@ -773,8 +773,10 @@ the older scope-based diff behavior remains, with those settings unverified.
 The diff shows the **score delta** and which findings are **new**, **resolved**,
 **worsened**, or **improved** (dynamic titles like `Thin content (210 words)` are
 matched across runs). Add `--fail-on-regression` as a **CI gate** — it exits
-non-zero for a measured score drop/new critical-high finding or known
-incomparable coverage. Commit the
+non-zero for a measured score drop, a new critical/high finding, an existing
+finding escalating to critical/high severity, or known incomparable coverage.
+Severe escalation fails even when other fixes offset its score cost; escalation
+ending below high severity alone does not trigger the gate. Commit the
 JSON snapshots alongside your repo to keep a lightweight history. Works on `audit`
 JSON too.
 
