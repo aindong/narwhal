@@ -29,6 +29,8 @@ PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
 MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
+EVIDENCE_PREVIEW_CHARS = 600
+SITEMAP_FAILURE_WITNESSES = 5
 MEMORY_BASELINE_INSTRUCTION = (
     'Save the original input report JSON, keeping all fields, to a fresh before.json '
     'before edits or reruns. If using an existing saved report, point the diff at that '
@@ -325,11 +327,19 @@ def normalize_report(data: dict) -> dict:
         if sitemap.get("problems") or sitemap.get("invalid_lastmod"):
             sitemap_issues.append("invalid sitemap entries or lastmod values")
         if sitemap_issues and "technical.sitemap.validation.issues" not in seen:
+            detail = "; ".join(map(str, sitemap_issues[:5]))
+            if failed_samples:
+                witnesses = [{'status': item['status'],
+                              'url': item.get('url') if isinstance(item.get('url'), str) else None}
+                             for item in failed_samples[:SITEMAP_FAILURE_WITNESSES]]
+                detail += (f"\nReported HTTP failure witnesses (first {len(witnesses)} of {len(failed_samples)}; "
+                           "not rechecked; null URL means unrecorded):\n"
+                           + json.dumps(witnesses, indent=2, ensure_ascii=True))
             findings.append({
                 "category": "technical", "severity": "medium",
                 "title": "Sitemap validation issues",
                 "rule_id": "technical.sitemap.validation.issues",
-                "scope": "site", "detail": "; ".join(map(str, sitemap_issues[:5])),
+                "scope": "site", "detail": detail,
                 "recommendation": "Fix the reported sitemap entries and validate again.",
             })
         if unverified_samples:
@@ -1156,11 +1166,11 @@ def render_json(plan: dict) -> str:
     return json.dumps(plan, indent=2, ensure_ascii=False)
 
 
-def _command_block(command: str) -> list:
-    """Keep literal backticks in shell arguments inside the code block."""
-    longest_run = max((len(run) for run in re.findall(r'`+', command)), default=0)
+def _code_block(text: str, language: str) -> list:
+    """Keep literal backtick runs inside data or command blocks."""
+    longest_run = max((len(run) for run in re.findall(r'`+', text)), default=0)
     fence = '`' * max(3, longest_run + 1)
-    return [f'{fence}sh', command, fence, '']
+    return [f'{fence}{language}', text, fence, '']
 
 
 def render_markdown(plan: dict) -> str:
@@ -1187,7 +1197,7 @@ def render_markdown(plan: dict) -> str:
                   f'`{page_output}` separate; do not diff it against the audit baseline. '
                   'Site-level signals remain pending deployment.', '']
         steps = verification_for('server_config', plan['target'], plan['provenance']['report'], 'audit')[-3:]
-        lines += [steps[0], ''] + _command_block(steps[1] + '\n' + steps[2])
+        lines += [steps[0], ''] + _code_block(steps[1] + '\n' + steps[2], 'sh')
     for safety, label in (("manual_external", "Manual / external"),
                           ("review_required", "Review required"),
                           ("deploy_verification", "Apply, then verify after deploy"),
@@ -1227,13 +1237,20 @@ def render_markdown(plan: dict) -> str:
                       f"- **Rule:** `{action['rule_id']}`",
                       *scope_lines,
                       f"- **Likely owner:** {owners}",
-                      f"- **Change:** {action['proposed_change']}", "",
-                      "**Verification, in order:**", ""]
+                      f"- **Change:** {action['proposed_change']}", ""]
+            evidence = action.get('evidence')
+            if evidence:
+                lines += ['**Reported evidence (preview, not reverified):**', '']
+                lines += _code_block(evidence[:EVIDENCE_PREVIEW_CHARS], 'text')
+                if len(evidence) > EVIDENCE_PREVIEW_CHARS:
+                    lines += [f'_Preview truncated at {EVIDENCE_PREVIEW_CHARS} characters; '
+                              'full action evidence remains in plan JSON._', '']
+            lines += ["**Verification, in order:**", ""]
             for step in action['verification']:
                 if step in (MEMORY_BASELINE_INSTRUCTION, SCAN_SETTINGS_INSTRUCTION):
                     continue  # the shared prerequisite is already visible above all actions
                 if step.startswith('narwhal '):
-                    lines += _command_block(step)
+                    lines += _code_block(step, 'sh')
                 else:
                     lines += [step, '']
     if plan["groups"]:

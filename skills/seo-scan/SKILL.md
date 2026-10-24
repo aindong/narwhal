@@ -235,6 +235,10 @@ links stable finding IDs to likely owning files; groups shared-template fixes;
 and separates safe candidates, review-required work, external/manual work, and
 changes that require post-deploy verification. Treat file matches as evidence-
 backed candidates, not permission to edit blindly; inspect warnings and conflicts.
+Markdown evidence previews are literal, capped at 600 characters and not
+reverified; full action evidence remains in JSON. Synthesized sitemap failure
+actions retain the first five reported status/URL witnesses and their total.
+Consult the original report for remaining witnesses and verify before editing.
 
 **Real Core Web Vitals** (opt-in; the one tool that calls an external service).
 Everything else is local and must never fabricate field metrics — for the *real*

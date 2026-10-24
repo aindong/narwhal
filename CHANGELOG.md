@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation plans retain the first five reported failing sitemap HTTP
+  status/URL witnesses with an explicit observation count. Uncertain probes
+  remain verification-only. Markdown now shows literal evidence previews
+  beside changes (600 characters); full action evidence remains in JSON.
+  Previews are reported observations, not rechecks or edit authorization.
 - Sitemap URL probes now sample distinct exact URL strings at deterministic
   evenly spaced positions, including first/last when at least two are selected.
   Duplicate entries no longer consume repeated HEAD requests, and awkward
