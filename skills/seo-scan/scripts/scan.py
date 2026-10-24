@@ -42,6 +42,11 @@ AUDITORS = {
     "geo": audit_geo.audit,
 }
 
+
+class AuditorSelectionError(ValueError):
+    """The requested auditor selection contains an unsupported entry."""
+
+
 SITEMAP_CANDIDATES = COMMON_PATHS
 
 
@@ -102,10 +107,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         ctx = dict(ctx)
         if "thresholds" in ctx:
             ctx["thresholds"], owned_context_rules = configlib.owned_value(ctx["thresholds"])
-    selected = list(dict.fromkeys(only or list(AUDITORS)))
-    unknown = sorted(set(selected) - set(AUDITORS))
-    if unknown:
-        raise ValueError("Unknown auditor(s): " + ", ".join(unknown))
+    selected = list(only or AUDITORS)
+    if any(not isinstance(name, str) or name not in AUDITORS for name in selected):
+        raise AuditorSelectionError("Unknown auditor(s); use nonempty names from: " + ", ".join(AUDITORS))
+    selected = list(dict.fromkeys(selected))
     max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     resp = http.fetch(url, render=render, allow_private=allow_private, timeout=timeout,
                       max_bytes=max_bytes)
@@ -317,9 +322,13 @@ def main(argv=None) -> int:
         pass
 
     only = [s.strip() for s in args.only.split(",")] if args.only else None
-    report = scan(args.url, render=args.render, allow_private=args.allow_private,
-                  timeout=args.timeout, only=only, config=cfg,
-                  check_images=not args.no_image_checks, max_bytes=args.max_bytes)
+    try:
+        report = scan(args.url, render=args.render, allow_private=args.allow_private,
+                      timeout=args.timeout, only=only, config=cfg,
+                      check_images=not args.no_image_checks, max_bytes=args.max_bytes)
+    except AuditorSelectionError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
 
     renderers = {
         "json": report.to_json,

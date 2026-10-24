@@ -64,6 +64,8 @@ Useful flags:
   report, or PDF (needs WeasyPrint; falls back to HTML). Use `-o <file>` to save.
   `html`/`pdf` also work on `audit.py` for a shareable, stakeholder-ready report.
 - `--only technical,geo` — run a subset: `technical`, `content`, `schema`, `geo`.
+  Unknown names and empty comma-separated entries fail before fetching (CLI exit
+  2); MCP follows the same rule. Omitted/empty selection runs all four.
 - Image checks run by default on single-page scans (a few HEADs + one ~64 KB
   ranged GET): heavy images (>200 KB), legacy formats worth AVIF/WebP, missing
   width/height (CLS), and og:image validation (reachable? real dimensions?).
