@@ -275,7 +275,10 @@ python scripts/render_report.py report.md -o report.html      # branded HTML
 python scripts/render_report.py report.md --format pdf -o report.pdf   # needs WeasyPrint
 ```
 The output is self-contained (inline CSS + logo), with the Narwhal header/footer —
-same look as the scan/audit reports.
+same look as the scan/audit reports. Choose a regular output file distinct from
+the source; direct/link aliases are rejected for HTML, PDF and actual fallback
+HTML writes. PDF bytes are staged first; separate final writes remain non-atomic.
+Avoid redirecting stdout over the input (the shell truncates before Narwhal runs).
 
 ## What each auditor covers
 

@@ -1287,26 +1287,47 @@ def pdf_from_html(html: str, path: str) -> bool:
 
 
 def deliver(fmt: str, output, content: str, *, label: str = "report",
-            score=None) -> int:
+            score=None, input_stats=None) -> int:
     """Write or print a rendered report, handling the PDF path uniformly for
     both scan.py and audit.py. For ``fmt == 'pdf'``, ``content`` must be the
     HTML source; this converts it via WeasyPrint, or gracefully falls back to
     writing the HTML when WeasyPrint isn't installed. Returns a process exit
-    contribution (0 = fine, 2 = usage error) so callers can bail early."""
+    contribution (0 = fine, 2 = usage error) so callers can bail early.
+    ``input_stats`` enables guarded output writes and stages PDF engine output
+    before writing; file identity/write failures propagate to the caller."""
     import sys
+    from .report_output import write_output
+
+    def save(path, text):
+        if input_stats is not None:
+            write_output(path, text, input_stats)
+        else:
+            with open(path, 'w', encoding='utf-8') as fh:
+                fh.write(text)
+
     score_txt = f" (score {score}/100)" if score is not None else ""
     if fmt == "pdf":
         if not output:
             print("--format pdf requires -o/--output (PDF is binary).",
                   file=sys.stderr)
             return 2
-        if pdf_from_html(content, output):
+        if input_stats is not None:
+            # Engines write paths directly; stage bytes before the guarded final write.
+            import tempfile
+            from pathlib import Path
+            with tempfile.TemporaryDirectory(prefix='narwhal-render-') as tmp:
+                staged = str(Path(tmp) / 'report.pdf')
+                made_pdf = pdf_from_html(content, staged)
+                if made_pdf:
+                    write_output(output, Path(staged).read_bytes(), input_stats)
+        else:
+            made_pdf = pdf_from_html(content, output)
+        if made_pdf:
             print(f"Wrote PDF {label} to {output}{score_txt}")
             return 0
         html_path = (output[:-4] + ".html"
                      if output.lower().endswith(".pdf") else output + ".html")
-        with open(html_path, "w", encoding="utf-8") as fh:
-            fh.write(content)
+        save(html_path, content)
         print(f"No PDF engine available - wrote HTML {label} to {html_path}"
               f"{score_txt} instead.\nFor PDF, install either:\n"
               f"  - WeasyPrint:  pip install weasyprint\n"
@@ -1316,8 +1337,7 @@ def deliver(fmt: str, output, content: str, *, label: str = "report",
               f"PDF from your browser).", file=sys.stderr)
         return 0
     if output:
-        with open(output, "w", encoding="utf-8") as fh:
-            fh.write(content)
+        save(output, content)
         print(f"Wrote {fmt} {label} to {output}{score_txt}")
     else:
         print(content)
