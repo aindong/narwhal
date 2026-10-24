@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl and audit reject nonpositive/noninteger page and worker budgets before
+  URL resolution or any subscan. Invalid CLI flags/config defaults exit 2
+  without replacing reports, instead of scanning despite a zero-page limit or
+  silently selecting sequential mode for zero workers. Valid CLI/API limits
+  remain uncapped; MCP retains its documented positive clamps.
 - Crawl delay now spaces parallel page-scan starts instead of being ignored
   when concurrency exceeds one. Workers can still overlap, and late wakeups do
   not create catch-up bursts. Sequential pauses remain unchanged. Invalid

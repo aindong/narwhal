@@ -108,8 +108,8 @@ Used when the corresponding flag isn't passed.
 |---|--:|---|
 | `timeout` | 20 | all tools |
 | `fail_under` | 0 | `scan`, `crawl` (0 disables the gate) |
-| `concurrency` | 4 | `crawl` |
-| `max_pages` | 15 | `crawl` |
+| `concurrency` | 4 | `crawl`, `audit` (positive integer) |
+| `max_pages` | 15 | `crawl`, `audit` (positive integer) |
 | `max_links` | 200 | `crawl --check-links` |
 | `delay` | 0.0 | `crawl`: finite, nonnegative seconds between parallel page-scan starts; sequential post-scan pause |
 | `sample` | 10 | `sitemap` |

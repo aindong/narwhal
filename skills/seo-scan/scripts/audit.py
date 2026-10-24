@@ -48,6 +48,7 @@ def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=Fal
     """Run the three sub-audits. The link and sitemap caps default lower than the
     standalone tools' — an audit is an overview, so it favors speed over an
     exhaustive link/sitemap sweep (the dedicated commands go deeper)."""
+    crawl_site.validate_budgets(max_pages=max_pages, concurrency=concurrency)
     config = config or configlib.Config()
     sample = config.default("sample")
     config, _ = configlib.snapshot_rules(config)
@@ -299,8 +300,10 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Comprehensive site audit (page + crawl + sitemap)",
                                  parents=[configlib.config_arg_parser()])
     ap.add_argument("url", help="site URL")
-    ap.add_argument("--max-pages", type=int, default=d["max_pages"])
-    ap.add_argument("--concurrency", type=int, default=d["concurrency"])
+    ap.add_argument("--max-pages", type=int, default=d["max_pages"],
+                    help="positive maximum pages for the crawl portion")
+    ap.add_argument("--concurrency", type=int, default=d["concurrency"],
+                    help="positive number of concurrent crawl page scans")
     ap.add_argument("--max-links", type=int, default=100,
                     help="cap on outbound links checked (default 100)")
     ap.add_argument("--max-sitemaps", type=int, default=12,
@@ -333,6 +336,12 @@ def main(argv=None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
+
+    try:
+        crawl_site.validate_budgets(max_pages=args.max_pages, concurrency=args.concurrency)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
 
     data = run(args.url, max_pages=args.max_pages, concurrency=args.concurrency,
                timeout=args.timeout, allow_private=args.allow_private,

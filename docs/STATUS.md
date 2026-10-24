@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Crawl budget preflight:** standalone and composite audits reject invalid
+  page/worker limits before I/O, including CLI config defaults. Zero no longer
+  means one scanned page or sequential fallback. Valid CLI/API ranges remain;
+  MCP keeps its positive page/worker clamps. Output artifacts survive rejection.
 - **Parallel page pacing:** crawl delay schedules page-scan starts across workers
   with a shared monotonic interval; scans can overlap and late wakeups do not
   create catch-up bursts. Sequential pauses remain. Invalid delay values fail
