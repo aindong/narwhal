@@ -131,16 +131,18 @@ def _page_meta(url, allow_private, timeout):
 def build(base: str, *, allow_private=False, timeout=20, max_pages=40,
           concurrency=4, obey_robots=True) -> dict:
     base = http.normalize_url(base)
-    root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
     home = http.fetch(base, allow_private=allow_private, timeout=timeout)
     problem = _metadata_problem(home)
     if problem:
         raise GenerationError(f'Cannot generate llms.txt: homepage metadata is unavailable '
                               f'({problem}). No artifact was generated.')
-    source_host = urlparse(home.final_url or base).netloc
+    base = home.final_url or base
+    parsed = urlparse(base)
+    root = f"{parsed.scheme}://{parsed.netloc}"
+    source_host = parsed.netloc
     host = source_host.rsplit('@', 1)[-1]
     authentication_removed = host != source_host
-    hdoc = htmlx.parse(home.text, base_url=home.final_url or base)
+    hdoc = htmlx.parse(home.text, base_url=base)
     site_name = (hdoc.meta_by_property("og:site_name") or hdoc.title or host)
     description = (hdoc.meta_by_name("description")
                    or hdoc.meta_by_property("og:description") or "")

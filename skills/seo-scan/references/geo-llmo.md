@@ -207,6 +207,12 @@ selected because of robots rules or budgets; they are not whole-site coverage.
 Absent content-type headers remain supported, not certified as HTML. A successful
 generation still requires curation and does not prove completeness or AI use.
 
+After a successful homepage redirect, discovery uses its final response URL,
+including its entry path. Robots.txt and conventional sitemap probes use that
+origin. The original alias is not a separate discovery seed. This is an observed
+response address, not a verified canonical URL. Existing per-request/private-host
+guards and explicit caller access settings still apply.
+
 Authenticated fetch URLs stay intact for the HTTP guard/transport. The generator
 removes URL userinfo from returned candidate links and its host-name fallback;
 `coverage.authentication_removed` and the CLI/MCP curation note disclose that
