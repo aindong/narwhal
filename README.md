@@ -972,6 +972,12 @@ branded report:
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```
 
+Scan, audit and render file outputs must be regular files. Expected delivery
+failures exit 2 without a success message. PDF engines stage output first so an
+incomplete engine write cannot replace the destination. UTF-8 encoding is checked
+before truncation. Final writes remain non-atomic and can fail partway through;
+use stdout without `-o` for shell pipelines.
+
 Render output must be a regular file distinct from the file-backed Markdown
 source, including link aliases. PDF output is staged before the identity check;
 the actual HTML fallback destination is checked too. Separate final writes remain
