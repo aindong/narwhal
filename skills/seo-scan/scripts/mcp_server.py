@@ -215,7 +215,9 @@ def _diff(old_json: str, new_json: str) -> dict:
     ``comparison.status`` records auditor-scope comparability. Known mismatched,
     rendering/image-check settings, incomplete/truncated coverage or explicit crawl hard failures yield null delta/regression and no change
     classifications; legacy scope remains explicitly unknown. Matching scope
-    alone does not prove identical configuration, rendering or crawl samples.
+    alone does not prove identical configuration or rendering. Different complete
+    recorded audit crawl URL samples (including multiplicities) also withhold
+    verdicts; missing/malformed samples remain unverified, not guessed to match.
     Repeated category/rule identities use worst observed severity and a stable
     representative; ``finding_identity`` discloses entry counts, not individual
     instance matches. Recorded scores and regression-gate criteria remain.

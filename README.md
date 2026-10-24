@@ -760,16 +760,19 @@ Gathered crawl threshold overrides are detached before discovery and workers;
 the audit resolves its sitemap sample budget at entry. This does not freeze
 remote site content or guarantee identical crawl samples between runs.
 Audits retain these settings for crawled pages and check common exact URLs too;
-different or unknown samples are not inferred to match.
+different complete recorded crawl page samples block score/finding verdicts,
+including changed URL multiplicities. Page order does not matter. Exact recorded
+URL strings are compared without normalizing aliases or preview hosts; unknown
+or malformed samples retain legacy comparisons and remain unverified.
 
 JSON includes `comparison.status` (`comparable`, `incomparable`, `unknown`) and
 reasons. Incomparable results have null `score_delta` and `regression`, empty
 change lists, and `not_compared` finding counts. Legacy/malformed scope is
 explicitly unverified: historical finding/score comparisons and gates remain
 compatible with a visible warning, not proof of matching checks. Even matching
-recorded auditor groups and known settings do not establish identical URLs,
-other configuration, rule versions or site-wide crawl samples; keep those controlled when
-using a diff to verify a fix.
+recorded auditor groups and known settings do not establish identical response
+destinations, other configuration, rule versions or unrecorded site-wide crawl
+samples; keep those controlled when using a diff to verify a fix.
 Missing/malformed legacy settings are not guessed from findings or score changes;
 the older scope-based diff behavior remains, with those settings unverified.
 
