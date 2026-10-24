@@ -123,13 +123,14 @@ def _llms(url: str, max_pages: int = 40) -> str:
 
     Args:
         url: The site URL to seed from.
-        max_pages: Maximum pages to include as candidate links.
+        max_pages: Maximum candidate links (clamped to 1–100; default 40).
 
     Returns starter text with selected-fetch omission counts when relevant.
     Unusable homepage metadata raises an error instead of returning an artifact.
     URL userinfo is removed from artifact links; public access remains unverified.
     """
     import generate_llms as llms_mod
+    max_pages = max(1, min(int(max_pages), 100))
     d = llms_mod.build(url, max_pages=max_pages)
     return llms_mod.render_llms_txt(d["site_name"], d["description"], d["sections"],
                                   coverage=d.get("coverage"))

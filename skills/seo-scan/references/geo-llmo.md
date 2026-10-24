@@ -207,6 +207,12 @@ selected because of robots rules or budgets; they are not whole-site coverage.
 Absent content-type headers remain supported, not certified as HTML. A successful
 generation still requires curation and does not prove completeness or AI use.
 
+Core/CLI starter generation requires positive integer `max_pages` and
+`concurrency` budgets; invalid values stop before requests or artifact writes.
+Explicit larger positive CLI page budgets remain available. The MCP adapter
+clamps its candidate-page budget to 1–100 (default 40), matching the bounded
+crawl/audit tools. Counts remain selected-fetch observations, not site totals.
+
 After a successful homepage redirect, discovery uses its final response URL,
 including its entry path. Robots.txt and conventional sitemap probes use that
 origin. The original alias is not a separate discovery seed. This is an observed

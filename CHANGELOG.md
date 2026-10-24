@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- llms.txt generation rejects invalid page/worker budgets before requests or output writes, fixing zero-page requests that still fetched a page. MCP candidate-page work is clamped to 1–100 (default 40); explicit larger positive core/CLI page budgets remain supported.
+
 - Schema generation preserves native MCP/Python JSON field types and returns detached results, preventing caller/template mutations from changing later outputs. Nonfinite/nonserializable fields and invalid UTF-8 fail before CLI output; unsupported MCP template types are recoverable tool errors. Legacy string/CLI interpretation is retained.
 
 - llms.txt discovery follows the successful homepage response URL and its origin, including destination robots rules and entry path, rather than mixing destination metadata with the original alias's resources. Redirect/private-host guards and ordinary no-redirect output are unchanged.
