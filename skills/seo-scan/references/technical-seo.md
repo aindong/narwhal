@@ -257,7 +257,8 @@ errors still propagate through their existing boundaries.
 ## hreflang (international)
 - Each `rel=alternate hreflang` value maps to exactly one URL; entries must be
   bidirectional (A points to B *and* B points to A).
-- Always include an `x-default` for the fallback/language-selector page.
+- Consider `x-default` if an intended unmatched-locale fallback exists; it is
+  not a universal requirement or a reason to invent a page.
 - Use ISO 639-1 language + optional ISO 3166-1 region: `en`, `en-GB`, `es-MX`.
 
 ## Images
@@ -368,11 +369,56 @@ card). Skip with `--no-image-checks`; crawls skip these automatically (they
 would multiply requests per page).
 
 ## Hreflang reciprocity (cross-page)
-hreflang only works when reciprocal: if A lists B, B must list A back, and every
-page must include itself in its own cluster — one-way pairs are ignored by
-Google. During a crawl, Narwhal collects each page's cluster, probes up to 5
-same-host alternates it didn't crawl (fetch + parse link tags only), and reports
-missing return tags as exact A → B pairs, missing self-references, invalid codes
-(BCP-47 subset: lang, optional script, optional region), and a sample-wide
-x-default check. Targets outside the crawled/probed sample are counted
-**unverified**, never broken.
+Google requires fully-qualified HTTP(S) alternate URLs, including the scheme;
+relative/scheme-relative declarations must not be turned into accepted absolute
+annotations by resolving against a page/base. Narwhal's bounded source classifier
+omits missing, non-qualified, non-HTTP, parser-rejected or unsupported references
+(including credentials/control/backslash cases). It does not certify complete
+URI/IRI, locale/IANA, head-placement, language/translation or search eligibility.
+Ordinary anchor links and canonical declarations keep their separate policies.
+
+Successful parsed pages record `hreflang_policy_basis` and `hreflang_extraction`
+(`basis=html_hreflang_absolute_http_source_v1`, `declared`, `accepted`, and reason
+counts in `omitted`). Counts are parsed annotation occurrences, not unique URLs
+or measured HTTP failures. Rejected URL values/exceptions are not serialized.
+Receipts are self-consistency checked, not authenticated; legacy/malformed or
+unknown bases remain unrecorded rather than inferred from a version.
+
+Crawls retain source receipts even when every declaration is rejected. Sampled
+relationship analysis distinguishes recorded missing references in supported
+snapshots from unassessed pairs/self-checks under omitted/partial sources, and
+targets outside the sampled/probed map. Unsupported source-address keys and
+imported targets are counted without echoing rejected values. `checked_pairs`
+counts directed retained declaration checks, not unique graph edges or verified
+language versions. No green cluster certificate is issued; legacy coverage is
+explicitly unrecorded. Full JSON facts remain; displays keep five self/six return/
+code items with omission counts and 400-character URL/80-character code previews.
+
+Optional production probes keep the existing five-target, same-host scope,
+timeouts, redirect and SSRF controls. Zero budget means no requests; sampled
+pages (including empty annotation sets) are not re-fetched. Only complete,
+successful HTML/XHTML with explicitly recorded matching final URL identity
+enters relationship analysis. Unavailable, truncated, non-HTML or redirected
+identity snapshots remain unassessed, never inferred absent or dead. The optional
+supplied-body callback is a computation/test hook, not HTTP identity verification.
+Matching URL identity is not canonical/server equivalence or Google acceptance.
+`probe_observations` records bounded selected-target outcomes (source observed,
+unavailable, empty, partial, non-HTML, or changed identity), acquisition kind and
+HTTP status when available, without raw exception/final-URL claims. `probed`
+counts usable snapshot entries, not all attempts or redirect/network hops.
+Reports display at most five probe observations with explicit omissions.
+
+Page/site notes expose known gaps and counts. Known current versus missing/
+different policy, or known omissions relevant to selected technical scoring,
+withhold diff/compare/brief improvement verdicts (CI diff gates exit 2).
+Content-only scores are not invalidated by unselected technical checks. A new
+low `technical.hreflang.urls.review` replaces unsupported clean-presence verdicts
+and stays manual-only in plans: no guessed locale pages, owner files, schema
+generation or source rewrite. The supported-presence rule ID is retained with an
+observational label. Review title-based filters. Rule weights stay unchanged;
+corrected findings/scores are tool calibration, not measured SEO/site gains.
+`x-default` remains a conditional review of an intended fallback, not a universal
+page requirement. Header/sitemap hreflang discovery is outside this HTML scope.
+
+See [Google's localized-version guidelines](https://developers.google.com/search/docs/specialty/international/localized-versions)
+for absolute URLs, return links and optional fallbacks (checked 2026-10-24).

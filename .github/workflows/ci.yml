@@ -154,3 +154,5 @@ jobs:
         run: python skills/seo-scan/tests/relative_link_paths_smoke.py
       - name: Declared document-base anchor browser regression
         run: python skills/seo-scan/tests/document_base_links_smoke.py
+      - name: Hreflang source and relationship coverage browser regression
+        run: python skills/seo-scan/tests/hreflang_source_smoke.py

@@ -21,6 +21,7 @@ from . import content_length
 from . import schema_coverage
 from . import canonical
 from . import links as linklib
+from . import hreflang as hreflanglib
 from . import date_cues
 from . import readability_observation
 from .code_fences import closes_fence, markdown_lines, opening_fence
@@ -316,7 +317,8 @@ class Report:
         discovery_suffix = ((' ' + discovery if discovery else '') + (' ' + llms if llms else '')
                             + (' ' + schema if schema else '')
                             + (' ' + canonical.ERROR if canonical.unverified(self.meta) else '')
-                            + (' ' + linklib.BASE_ERROR if linklib.unassessed_base(self.meta) else ''))
+                            + (' ' + linklib.BASE_ERROR if linklib.unassessed_base(self.meta) else '')
+                            + (' ' + hreflanglib.ERROR if hreflanglib.unverified(self.meta, for_score=True) else ''))
         if scope is None:
             if self.hard_fail:
                 return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded." + discovery_suffix
@@ -472,6 +474,9 @@ class Report:
         base_note = linklib.base_note(self.meta)
         if base_note:
             lines += ['## Declared anchor-base observations (not scored)', '', base_note, '']
+        hreflang_note = hreflanglib.note(self.meta)
+        if hreflang_note:
+            lines += ['## HTML hreflang source coverage', '', hreflang_note, '']
         notes = _crawler_policy_notes(self.meta)
         if notes:
             lines += ["## Crawler policy notes (not scored)", "",
@@ -645,6 +650,10 @@ class Report:
         if base_note:
             body.append('<section class="card"><h2>Declared anchor-base observations (not scored)</h2><p>'
                         + _esc(base_note) + '</p></section>')
+        hreflang_note = hreflanglib.note(self.meta)
+        if hreflang_note:
+            body.append('<section class="card"><h2>HTML hreflang source coverage</h2><p>'
+                        + _esc(hreflang_note) + '</p></section>')
         notes = _crawler_policy_notes(self.meta)
         if notes:
             items = []

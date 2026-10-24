@@ -158,7 +158,10 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
     doc = htmlx.parse(resp.text, base_url=resp.final_url or url)
     report._doc = doc   # non-serialized handle for tools that need the parse (compare)
     report.meta["extraction"] = doc.extraction
-    alts = hreflang.extract(doc, resp.final_url or url)
+    hreflang_receipt = {}
+    alts = hreflang.extract(doc, resp.final_url or url, diagnostics=hreflang_receipt)
+    report.meta['hreflang_policy_basis'] = hreflang.EXTRACTION_BASIS
+    report.meta['hreflang_extraction'] = hreflang_receipt
     if alts:   # only when in use — keeps most reports free of empty keys
         report.meta["hreflang"] = alts
     if collect_links:

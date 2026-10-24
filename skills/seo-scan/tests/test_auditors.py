@@ -447,12 +447,13 @@ class TestHreflang(unittest.TestCase):
         for bad in ("english", "en_US", "e", "en-GBR-x"):
             self.assertFalse(hreflang.valid_code(bad), bad)
 
-    def test_extract_resolves_relative(self):
+    def test_extract_does_not_fabricate_fully_qualified_relative_annotations(self):
         from lib import hreflang
         doc = htmlx.parse('<link rel="alternate" hreflang="fr" href="/fr/">',
                           base_url="https://x.com/en/")
-        self.assertEqual(hreflang.extract(doc, "https://x.com/en/"),
-                         [{"lang": "fr", "href": "https://x.com/fr/"}])
+        receipt = {}
+        self.assertEqual(hreflang.extract(doc, "https://x.com/en/", diagnostics=receipt), [])
+        self.assertEqual({'not_fully_qualified': 1}, receipt['omitted'])
 
     def test_reciprocal_cluster_is_clean(self):
         from lib import hreflang
@@ -505,7 +506,7 @@ class TestHreflang(unittest.TestCase):
         r = hreflang.analyze({"https://x.com/en/": en, "https://x.com/fr/": fr})
         md = "\n".join(hreflang.render_markdown(r))
         self.assertIn("Missing return tags", md)
-        self.assertIn("https://x.com/en/ → https://x.com/fr/", md)
+        self.assertIn("` https://x.com/en/ ` → ` https://x.com/fr/ `", md)
         self.assertIn("unverified**, not", md)              # /it/ outside sample
 
 class TestImageChecks(unittest.TestCase):

@@ -16,6 +16,7 @@ try:
     from lib import sitemap as sm
     from lib import indexing
     from lib import canonical
+    from lib import hreflang
 except ImportError:  # when imported as a package
     from .lib import htmlx  # type: ignore
     from .lib import jsdiff  # type: ignore
@@ -23,6 +24,7 @@ except ImportError:  # when imported as a package
     from .lib import sitemap as sm  # type: ignore
     from .lib import indexing  # type: ignore
     from .lib import canonical  # type: ignore
+    from .lib import hreflang  # type: ignore
 
 CAT = "technical"
 
@@ -257,12 +259,16 @@ def _viewport_lang(doc, report):
 
 def _hreflang(doc, report):
     alts = doc.links_by_rel("alternate")
-    hreflangs = [l for l in alts if l.get("hreflang")]
+    hreflangs = [l for l in alts if l.get("hreflang") is not None]
+    receipt = {}
+    hreflang.extract(doc, report.final_url or report.url, diagnostics=receipt)
+    report.meta['hreflang_policy_basis'] = hreflang.EXTRACTION_BASIS
+    report.meta['hreflang_extraction'] = receipt
     if not hreflangs:
         return
     seen = {}
     for l in hreflangs:
-        code = l.get("hreflang").lower()
+        code = l.get("hreflang").strip().lower()
         seen[code] = seen.get(code, 0) + 1
     dupes = [c for c, n in seen.items() if n > 1]
     if dupes:
@@ -271,10 +277,19 @@ def _hreflang(doc, report):
                    "Each hreflang value should map to exactly one URL.")
     if "x-default" not in seen:
         report.add(CAT, "low", "No x-default hreflang",
-                   "hreflang cluster has no x-default.",
-                   "Add rel=alternate hreflang=\"x-default\" for the fallback URL.")
-    if not dupes:
-        report.ok(CAT, "hreflang cluster present", f"{len(hreflangs)} locales")
+                   'No x-default declaration observed; an unmatched-locale fallback is optional, not a universal requirement.',
+                   'Review whether an existing intended fallback should be declared as x-default. '
+                   'Do not invent a page or add a fallback solely to clear this contextual review.')
+    if hreflang.unverified(report.meta):
+        report.add(CAT, 'low', 'HTML hreflang URL declarations need review', hreflang.note(report.meta),
+                   'If these are intended language alternatives, confirm their fully-qualified HTTP(S) page URLs '
+                   'and correct only the relevant declarations. Do not invent language pages or treat source '
+                   'omissions as HTTP failures; re-scan before relationship or score claims.',
+                   rule_id='technical.hreflang.urls.review')
+    if not dupes and not hreflang.unverified(report.meta):
+        report.add(CAT, 'good', 'hreflang declarations observed',
+                  f"{len(hreflangs)} declarations with supported source URLs; not search acceptance or language equivalence.",
+                  rule_id='technical.hreflang.cluster.present')
 
 
 def _images(doc, report):

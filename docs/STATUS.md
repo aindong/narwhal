@@ -22,6 +22,14 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Hreflang source safety and scope:** malformed or unsupported URLs no longer
+  crash scans or become fabricated absolute annotations. Source counts/omissions
+  remain visible; partial/omitted snapshots cannot prove missing return tags or
+  clean clusters. Production probes require complete matching-identity HTML,
+  within existing caps/guards. Technical comparisons and briefs honor known gaps;
+  URL remediation stays manual. New low reviews calibrate tool scores, not SEO
+  outcomes; x-default remains optional and no full URI/language/head/engine
+  conformance or translation equivalence is certified.
 - **Declared anchor bases:** source checks, collected links and fallback discovery
   share the first non-template base href, without changing which document host
   is internal. Unsupported or CSP-restricted bases stay unassessed with explicit

@@ -287,6 +287,25 @@ credentials), using bounded extraction-local reference IDs to retain warning
 deduplication and caps. This is diagnostic redaction, not a claim that all user-
 supplied/report URLs are secret-free.
 
+HTML hreflang uses the declared source URL, not a fabricated absolute target.
+Malformed, relative/scheme-relative, non-HTTP and unsupported references are
+counted and omitted from relationship/probe analysis; other auditors still run.
+Page/crawl `hreflang_policy_basis` and `hreflang_extraction` receipts distinguish
+parsed declarations, supported URLs and omission reasons without echoing rejected
+values. They do not validate full URI syntax, codes/head placement, translated
+content, HTTP-header/sitemap alternatives or search acceptance.
+
+Incomplete/omitted target snapshots are unassessed, not missing return tags or
+dead pages. Production same-host probes require complete HTML with recorded
+matching URL identity, retain existing request/redirect/SSRF limits and do not
+re-fetch sampled pages. Reports keep counts, bounded literal lists and legacy
+uncertainty visible without a green cluster certificate. Known gaps and policy
+changes guard technical-score diffs/compare/brief; content-only scores are not
+invalidated by unselected technical checks. The new low source review is manual
+in remediation plans, and x-default advice is conditional, not a page quota.
+Corrected findings or sampled relationship counts are not measured SEO gains.
+See [hreflang scope](skills/seo-scan/references/technical-seo.md#hreflang-reciprocity-cross-page).
+
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a
 candidate, complete 404/410 is observed root absence, and HTML fallbacks, gates, empty,
