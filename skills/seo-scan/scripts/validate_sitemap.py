@@ -146,11 +146,16 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
             f"Reached --max-sitemaps ({max_sitemaps}); {len(remaining)} more sitemap "
             f"file(s) not fetched, so total URLs is a partial count.")
 
-    # 404 sampling: spread the sample across the URL list
-    valid_locs = [e["loc"] for e in url_entries if not sm.loc_problem(e["loc"], host)]
+    # Sample exact URL identities once, preserving parsed order and both ends.
+    valid_locs = list(dict.fromkeys(e["loc"] for e in url_entries
+                                   if not sm.loc_problem(e["loc"], host)))
+    result['sample_selection'] = {'basis': 'unique_exact_urls_evenly_spaced_v1',
+                                  'eligible_unique_urls': len(valid_locs), 'requested': sample}
     if valid_locs and sample > 0:
-        step = max(1, len(valid_locs) // sample)
-        picked = valid_locs[::step][:sample]
+        count = min(sample, len(valid_locs))
+        indices = [0] if count == 1 else [i * (len(valid_locs) - 1) // (count - 1)
+                                         for i in range(count)]
+        picked = [valid_locs[i] for i in indices]
         for loc in picked:
             status, err = http.head(loc, allow_private=allow_private, timeout=timeout)
             entry = {"url": loc, "status": status, "error": err}
@@ -198,6 +203,15 @@ def render_markdown(r: dict) -> str:
     if r["problems"]:
         probs = ", ".join(f"{k}: {v}" for k, v in r["problems"].items())
         lines.append(f"- **`<loc>` problems:** {probs}")
+    selection = r.get('sample_selection')
+    if (isinstance(selection, dict) and selection.get('basis') == 'unique_exact_urls_evenly_spaced_v1'
+            and type(selection.get('eligible_unique_urls')) is int
+            and type(selection.get('requested')) is int
+            and min(selection['eligible_unique_urls'], selection['requested']) >= 0
+            and len(r['sample']) == min(selection['eligible_unique_urls'], selection['requested'])):
+        lines.append(f"- **Sampling policy:** {selection['eligible_unique_urls']} distinct eligible URL strings from parsed files; "
+                     "deterministic evenly spaced positions (first/last when at least two are picked). "
+                     "Not random or statistically representative.")
     if r["sample"]:
         ok = sum(_sample_succeeded(entry) for entry in r['sample'])
         unverified = max(0, len(r['sample']) - ok - len(r['broken_sample']))

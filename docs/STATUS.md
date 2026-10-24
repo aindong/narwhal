@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Distinct spread sitemap probes:** URL sampling deduplicates exact strings
+  and spreads a bounded selection across parsed-file order, including endpoints
+  when selecting at least two. Raw totals remain; a receipt describes the policy
+  without claiming randomness, representativeness or whole-site coverage.
 - **Optional budget preflight:** crawl link caps, sitemap file/sample caps and
   composite audit inputs reject negative/noninteger data before fetching, including
   consumed config defaults. Zero retains scoped optional-check skips, not a
