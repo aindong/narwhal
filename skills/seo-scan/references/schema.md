@@ -486,7 +486,16 @@ python scripts/generate_schema.py Product \
   --field name="Acme Widget" --field brand="Acme" \
   --field offers='{"@type":"Offer","price":"19.99","priceCurrency":"USD"}'
 ```
-- `--field` values can be plain strings or inline JSON (for nested objects).
+- CLI `--field` values remain strings unless they contain an inline JSON object
+  or array. MCP `generate_schema` and Python `build()` also accept native JSON
+  objects, arrays, numbers, booleans and null; those types are preserved.
+- Each returned object is detached from caller fields and template placeholders.
+  Changing one result cannot change later defaults or the caller's data.
+- Nonfinite/nonserializable values and invalid UTF-8 text fail instead of
+  becoming strings, replacement text or invalid JSON. CLI field failures exit 2 before artifact output. Unsupported MCP types
+  are recoverable tool errors; the core Python unknown-type contract is unchanged.
+- These are JSON/type boundaries, not validation of schema.org applicability,
+  visible-content truth or rich-result eligibility. Inspect the supplied values.
 - Required fields you omit become clearly-marked `TODO` placeholders — replace
   them before publishing (the tool warns on stderr when TODOs remain).
 

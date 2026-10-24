@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Schema generation preserves native MCP/Python JSON field types and returns detached results, preventing caller/template mutations from changing later outputs. Nonfinite/nonserializable fields and invalid UTF-8 fail before CLI output; unsupported MCP template types are recoverable tool errors. Legacy string/CLI interpretation is retained.
+
 - llms.txt discovery follows the successful homepage response URL and its origin, including destination robots rules and entry path, rather than mixing destination metadata with the original alias's resources. Redirect/private-host guards and ordinary no-redirect output are unchanged.
 
 - llms.txt starters remove URL userinfo from candidate links and the host-name fallback while preserving authenticated fetches. Build coverage and CLI/MCP notes disclose removal without claiming public access; path/query/fragment text and ordinary output remain unchanged.

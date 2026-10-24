@@ -83,16 +83,24 @@ def build(type_name: str, fields: dict, include_recommended: bool = True) -> dic
     for k, v in fields.items():
         if k not in node:
             node[k] = _coerce(v)
-    return node
+    try:
+        # Detach caller fields and shared placeholders, enforcing JSON value types.
+        return json.loads(json.dumps(node, allow_nan=False, ensure_ascii=False).encode('utf-8'))
+    except (TypeError, ValueError, RecursionError):
+        raise ValueError('Schema fields must be finite UTF-8 JSON-compatible values within supported serialization limits.') from None
 
 
-def _coerce(value: str):
+def _coerce(value):
+    if not isinstance(value, str):
+        return value
     v = value.strip()
     if v.startswith(("{", "[")):
         try:
             return json.loads(v)
         except json.JSONDecodeError:
             return value
+        except (ValueError, RecursionError):
+            raise ValueError('JSON field cannot be decoded within supported parser limits.') from None
     return value
 
 
@@ -124,7 +132,11 @@ def main(argv=None) -> int:
             raise SystemExit(f"--field must be KEY=VALUE, got {item!r}")
         k, v = item.split("=", 1)
         fields[k.strip()] = v
-    node = build(args.type, fields, include_recommended=not args.no_recommended)
+    try:
+        node = build(args.type, fields, include_recommended=not args.no_recommended)
+    except ValueError as exc:
+        print(f'Error: {exc}', file=sys.stderr)
+        return 2
     blob = json.dumps(node, indent=2, ensure_ascii=False)
     if args.raw:
         print(blob)

@@ -136,17 +136,21 @@ def _llms(url: str, max_pages: int = 40) -> str:
 
 
 def _schema(type: str, fields: dict) -> dict:
-    """Generate valid schema.org JSON-LD for a type, filling gaps with TODO placeholders.
+    """Generate a schema.org JSON-LD starter, filling gaps with TODO placeholders.
 
     Args:
         type: A schema.org type — e.g. Article, Product, Organization, FAQPage,
             LocalBusiness, Event, Recipe, BreadcrumbList (see the supported list).
-        fields: Key/value pairs to populate (e.g. {"headline": "…", "author": "…"}).
+        fields: JSON property values, including nested objects/lists, numbers,
+            booleans and null. Strings retain their legacy interpretation.
 
-    Returns the JSON-LD object.
+    Returns an independent JSON-LD object; inspect values/TODOs before publishing.
+    Unsupported template types and non-JSON/nonfinite values raise ValueError.
     """
     import generate_schema as schema_mod
-    return schema_mod.build(type, {k: str(v) for k, v in (fields or {}).items()})
+    if type not in schema_mod.TEMPLATES:
+        raise ValueError('Unsupported schema type; supported templates: ' + ', '.join(sorted(schema_mod.TEMPLATES)))
+    return schema_mod.build(type, fields or {})
 
 
 def _compare(your_url: str, competitor_urls: list, render: bool = False,
