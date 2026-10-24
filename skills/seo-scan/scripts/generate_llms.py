@@ -33,7 +33,7 @@ import crawl_site  # noqa: E402
 
 
 class GenerationError(ValueError):
-    """The primary page cannot support a metadata-derived starter artifact."""
+    """A generation precondition failed before an artifact could be produced."""
 
 
 def _metadata_problem(resp):
@@ -130,6 +130,9 @@ def _page_meta(url, allow_private, timeout):
 
 def build(base: str, *, allow_private=False, timeout=20, max_pages=40,
           concurrency=4, obey_robots=True) -> dict:
+    for name, value in (('max_pages', max_pages), ('concurrency', concurrency)):
+        if type(value) is not int or value < 1:
+            raise GenerationError(f'{name} must be a positive integer.')
     base = http.normalize_url(base)
     home = http.fetch(base, allow_private=allow_private, timeout=timeout)
     problem = _metadata_problem(home)
@@ -191,8 +194,9 @@ def main(argv=None) -> int:
                                  parents=[configlib.config_arg_parser()])
     ap.add_argument("url", help="site URL")
     ap.add_argument("--max-pages", type=int, default=40,
-                    help="max pages to include (default 40)")
-    ap.add_argument("--concurrency", type=int, default=d["concurrency"])
+                    help="positive maximum pages to include (default 40)")
+    ap.add_argument("--concurrency", type=int, default=d["concurrency"],
+                    help="positive number of concurrent page requests")
     ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--ignore-robots", action="store_true")
     ap.add_argument("--allow-private", action="store_true")
