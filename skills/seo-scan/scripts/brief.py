@@ -35,6 +35,8 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report_output import save_output  # noqa: E402
+
 from lib import config as configlib  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
 from lib.report import PARTIAL_HTML_ERROR, recorded_response_partial  # noqa: E402
@@ -610,8 +612,8 @@ def main(argv=None) -> int:
 
     out = render_json(b) if args.format == "json" else render_markdown(b)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='brief'):
+            return 2
         print(f"Wrote {args.format} brief to {args.output}")
     else:
         print(out)

@@ -31,6 +31,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report_output import save_output  # noqa: E402
+
 CRUX_ENDPOINT = "https://chromeuxreport.googleapis.com/v1/records:queryRecord"
 
 # metric key -> (label, unit, good_max, needs_improvement_max). Values at p75.
@@ -215,8 +217,8 @@ def main(argv=None) -> int:
                         timeout=max(args.timeout, 60))
         out = psi.render_json(r) if args.format == "json" else psi.render_markdown(r)
         if args.output:
-            with open(args.output, "w", encoding="utf-8") as fh:
-                fh.write(out)
+            if not save_output(args.output, out, label='vitals'):
+                return 2
             print(f"Wrote {args.format} lab vitals to {args.output}")
         else:
             print(out)
@@ -238,8 +240,8 @@ def main(argv=None) -> int:
                 form_factor=args.form_factor, timeout=args.timeout)
     out = render_json(r) if args.format == "json" else render_markdown(r)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='vitals'):
+            return 2
         print(f"Wrote {args.format} vitals to {args.output}")
     else:
         print(out)

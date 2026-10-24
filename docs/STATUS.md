@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Complete CLI save boundary:** remaining text artifact commands use shared
+  regular-file and encoding checks with controlled save failure. Analysis gates
+  and custom success messages remain; opt-in service behavior is unchanged.
+  Encoding failure preserves prior bytes; interrupted writes remain non-atomic.
 - **Uniform report delivery:** scan/audit/render share regular-output checks,
   encoding preflight, staged PDF engines and controlled exit 2 on expected
   delivery failures. Partial PDF generation cannot replace the destination;

@@ -972,6 +972,11 @@ branded report:
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```
 
+Named `-o` report/artifact outputs must be regular files across the CLI, including
+comparison, brief, crawl, sitemap, llms.txt and opt-in data reports. Expected save
+failures exit 2 without a success message, while successful saves retain each
+command's analysis gate code. Their final writes remain non-atomic.
+
 Scan, audit and render file outputs must be regular files. Expected delivery
 failures exit 2 without a success message. PDF engines stage output first so an
 incomplete engine write cannot replace the destination. UTF-8 encoding is checked

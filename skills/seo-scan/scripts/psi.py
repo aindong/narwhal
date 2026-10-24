@@ -19,8 +19,13 @@ both CrUX and PSI if you enable both APIs on it.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from urllib.parse import urlencode
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from lib.report_output import save_output  # noqa: E402
 
 PSI_ENDPOINT = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
 
@@ -177,8 +182,8 @@ def main(argv=None) -> int:
     r = analyze(args.url, args.psi_key, strategy=args.strategy, timeout=args.timeout)
     out = render_json(r) if args.format == "json" else render_markdown(r)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='PSI report'):
+            return 2
         print(f"Wrote {args.format} PSI report to {args.output}")
     else:
         print(out)
