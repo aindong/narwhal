@@ -78,7 +78,13 @@ class Response:
 
     @property
     def ok(self) -> bool:
-        return self.error is None and 200 <= self.status < 400
+        """Transport success, not complete HTML, indexability or page-health proof.
+
+        Redirects are followed by the transports. A terminal 3xx (including a
+        304 without a cached representation) is not a successful resource body.
+        Partial/empty 2xx coverage still needs each consumer's evidence checks.
+        """
+        return self.error is None and 200 <= self.status < 300
 
 
 class URLInputError(ValueError):

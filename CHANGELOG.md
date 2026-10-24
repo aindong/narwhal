@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Terminal HTTP 3xx responses (including 304 without a cached representation)
+  no longer count as successful page/resource bodies. Unresolved redirect HTML
+  cannot receive measured page-health scores or become root text resources;
+  normal redirects ending in a successful response still work. Successful 2xx
+  remains transport status, not complete-body or SEO certification.
 - Crawled hreflang responses now share bounded acquisition checks with optional
   probes: redirected identities, empty bytes, unknown media types and partial or
   unavailable snapshots cannot establish missing return tags or seed extra

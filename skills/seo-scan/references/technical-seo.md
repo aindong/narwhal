@@ -4,6 +4,24 @@ The technical auditor checks whether a page *can* rank at all — crawlability,
 indexability, and rendering. Below is the reasoning and thresholds behind each
 check, plus what to do when the automated check isn't enough.
 
+## Final HTTP response status
+
+Transport success means a final 2xx response without a recorded fetch error.
+The existing bounded transports follow usable redirects before this check; a
+terminal 3xx is not a successfully obtained resource representation. In
+particular, 304 alone does not supply a cached representation to this local
+scanner. Such responses use the existing unavailable-page path: no page
+auditors complete, the zero score is a fail-safe rather than measured health,
+and text-resource wrappers do not promote a redirect body into robots/sitemap/
+llms content. Reports retain observed HTTP status for inspection.
+
+Normal followed redirects ending in 2xx still work. Partial/empty 2xx responses
+still require each consumer's coverage checks; successful transport alone is
+not full HTML, indexing, crawler access, search acceptance or page quality.
+Request/redirect/DNS/SSRF budgets, default CLI output/exit behavior and score
+weights are unchanged. Corrected acquisition/scoring is not a website fix or
+measured SEO gain; CI diffs retain the existing incomplete-execution guard.
+
 ## Title & meta description
 - **Title:** ~50–60 characters. Front-load the primary query; include the brand
   at the end. One title per page, unique across the site. Titles over ~65 chars
