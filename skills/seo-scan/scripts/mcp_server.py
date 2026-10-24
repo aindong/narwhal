@@ -127,6 +127,7 @@ def _llms(url: str, max_pages: int = 40) -> str:
 
     Returns starter text with selected-fetch omission counts when relevant.
     Unusable homepage metadata raises an error instead of returning an artifact.
+    URL userinfo is removed from artifact links; public access remains unverified.
     """
     import generate_llms as llms_mod
     d = llms_mod.build(url, max_pages=max_pages)

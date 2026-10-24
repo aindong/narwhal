@@ -51,6 +51,12 @@ def _metadata_problem(resp):
     return None
 
 
+def _without_userinfo(url: str) -> str:
+    """Remove authority credentials without rewriting path/query/fragment text."""
+    authority = urlparse(url).netloc
+    return url.replace(authority, authority.rsplit('@', 1)[-1], 1) if '@' in authority else url
+
+
 def section_for(url: str) -> str:
     """Bucket a URL into an llms.txt section by its path."""
     path = urlparse(url).path.strip("/")
@@ -94,6 +100,12 @@ def render_llms_txt(site_name: str, description: str, sections: list, *, coverag
                      "empty or unsupported-content responses. Counts cover selected metadata "
                      "fetches, not the whole site. Review missing entries before publishing. -->")
         lines.append('')
+    authentication_removed = (coverage or {}).get('authentication_removed') is True or any(
+        _without_userinfo(page['url']) != page['url'] for _, pages in sections for page in pages)
+    if authentication_removed:
+        lines.append('<!-- URL userinfo was removed from artifact URLs/host fallback. '
+                     'Verify candidate links are publicly accessible before publishing. -->')
+        lines.append('')
     for name, pages in sections:
         lines.append(f"## {name}")
         lines.append("")
@@ -101,7 +113,7 @@ def render_llms_txt(site_name: str, description: str, sections: list, *, coverag
             title = p["title"] or _slug_title(p["url"]) or "TODO: page title"
             desc = p["description"].strip()
             suffix = f": {desc}" if desc else ""
-            lines.append(f"- [{title}]({p['url']}){suffix}")
+            lines.append(f"- [{title}]({_without_userinfo(p['url'])}){suffix}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -125,7 +137,9 @@ def build(base: str, *, allow_private=False, timeout=20, max_pages=40,
     if problem:
         raise GenerationError(f'Cannot generate llms.txt: homepage metadata is unavailable '
                               f'({problem}). No artifact was generated.')
-    host = urlparse(home.final_url or base).netloc
+    source_host = urlparse(home.final_url or base).netloc
+    host = source_host.rsplit('@', 1)[-1]
+    authentication_removed = host != source_host
     hdoc = htmlx.parse(home.text, base_url=home.final_url or base)
     site_name = (hdoc.meta_by_property("og:site_name") or hdoc.title or host)
     description = (hdoc.meta_by_name("description")
@@ -153,13 +167,18 @@ def build(base: str, *, allow_private=False, timeout=20, max_pages=40,
     # boilerplate, not useful per-link context.
     site_desc = description.strip().lower()
     for m in metas:
+        artifact_url = _without_userinfo(m['url'])
+        authentication_removed = authentication_removed or artifact_url != m['url']
+        m['url'] = artifact_url
         if m["description"].strip().lower() == site_desc:
             m["description"] = ""
 
+    coverage = {"basis": "selected_page_metadata_fetches_v1", "attempted_pages": len(urls),
+                "included_pages": len(metas), "omitted_pages": len(urls) - len(metas)}
+    if authentication_removed:
+        coverage['authentication_removed'] = True
     return {"site_name": site_name, "description": description,
-            "sections": group_sections(metas), "pages": len(metas),
-            "coverage": {"basis": "selected_page_metadata_fetches_v1", "attempted_pages": len(urls),
-                         "included_pages": len(metas), "omitted_pages": len(urls) - len(metas)}}
+            "sections": group_sections(metas), "pages": len(metas), "coverage": coverage}
 
 
 @url_errors

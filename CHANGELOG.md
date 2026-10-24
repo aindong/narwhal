@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- llms.txt starters remove URL userinfo from candidate links and the host-name fallback while preserving authenticated fetches. Build coverage and CLI/MCP notes disclose removal without claiming public access; path/query/fragment text and ordinary output remain unchanged.
+
 - The llms.txt generator stops before discovery/output when homepage metadata comes from a failed, ranged, truncated, empty or explicitly non-HTML response. Unusable selected pages are omitted with selected-fetch counts in build coverage and CLI/MCP curation notes; healthy starter text is unchanged.
 
 - Generated JSON-LD script blocks escape literal less-than characters so supplied closing-script text cannot break into HTML. JSON values round-trip unchanged, including nested keys/values; bare JSON and MCP objects retain their original representation.
