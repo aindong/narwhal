@@ -110,10 +110,10 @@ Used when the corresponding flag isn't passed.
 | `fail_under` | 0 | `scan`, `crawl` (0 disables the gate) |
 | `concurrency` | 4 | `crawl`, `audit` (positive integer) |
 | `max_pages` | 15 | `crawl`, `audit` (positive integer) |
-| `max_links` | 200 | `crawl --check-links` |
+| `max_links` | 200 | `crawl` (nonnegative integer; 0 skips optional link requests) |
 | `delay` | 0.0 | `crawl`: finite, nonnegative seconds between parallel page-scan starts; sequential post-scan pause |
-| `sample` | 10 | `sitemap` |
-| `max_sitemaps` | 50 | `sitemap` |
+| `sample` | 10 | `sitemap`, `audit` (nonnegative integer; 0 skips URL probes) |
+| `max_sitemaps` | 50 | `sitemap` (nonnegative integer; 0 skips validation file attempts, not discovery) |
 | `dup_threshold` | 90.0 | `crawl` (near-duplicate % similarity) |
 
 ```toml

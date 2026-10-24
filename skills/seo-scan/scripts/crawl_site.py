@@ -26,6 +26,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report_output import save_output  # noqa: E402
+from lib.budgets import nonnegative_integer  # noqa: E402
 
 from lib import hreflang, http, htmlx, links, simhash, sitegraph, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
@@ -179,6 +180,7 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
     **more workers** than page scanning — otherwise a handful of slow external
     links on a link-heavy page can serialize into a multi-minute stall.
     """
+    nonnegative_integer(max_links, 'max_links')
     registry: dict = {}   # link url -> {internal, sources:set}
     order: list = []
     for page, page_links in pages_links.items():
@@ -321,6 +323,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           check_links=False, max_links=200, detect_dupes=True,
           dup_threshold=90.0, config=None) -> dict:
     validate_budgets(max_pages=max_pages, concurrency=concurrency)
+    nonnegative_integer(max_links, 'max_links')
     delay = _delay_seconds(delay)
     base = http.normalize_url(base)
     config = config or configlib.Config()
@@ -756,7 +759,7 @@ def main(argv=None) -> int:
     ap.add_argument("--check-links", action="store_true",
                     help="check outbound links (internal + external) for 4xx/5xx/dead")
     ap.add_argument("--max-links", type=int, default=d["max_links"], metavar="N",
-                    help="cap the number of unique links checked (default 200)")
+                    help="nonnegative cap on unique links checked (0 skips link requests)")
     ap.add_argument("--no-dupes", action="store_true",
                     help="skip near-duplicate content detection (on by default)")
     ap.add_argument("--dup-threshold", type=float,
@@ -773,6 +776,7 @@ def main(argv=None) -> int:
 
     try:
         validate_budgets(max_pages=args.max_pages, concurrency=args.concurrency)
+        nonnegative_integer(args.max_links, 'max_links')
         delay = _delay_seconds(args.delay)
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)

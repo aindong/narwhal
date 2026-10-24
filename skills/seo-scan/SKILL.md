@@ -165,7 +165,10 @@ spacing of parallel page-scan starts; sequential post-scan pause), and
 `--ignore-robots` to override. Delay must be finite and nonnegative; it does not
 pace discovery, site resources or optional probes. Crawl/audit page and worker
 limits must be positive integers (including config defaults); invalid limits
-fail before fetching with CLI exit 2. MCP retains its page/worker clamps. `--fail-under N` gates on the
+fail before fetching with CLI exit 2. Link and sitemap file/sample caps require
+nonnegative integers; zero retains scoped optional-check skips, not an all-network
+off switch. Consumed config defaults follow the same preflight. MCP retains its
+page/worker clamps. `--fail-under N` gates on the
 average score. Add `--check-links` to check outbound links (internal + external)
 for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
 rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).
