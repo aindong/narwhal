@@ -207,6 +207,32 @@ class TestHreflangSourceSyntax(unittest.TestCase):
         self.assertEqual({VALID: alts(BASE)}, result)
         self.assertEqual([{'target': VALID, 'acquisition': 'supplied_body', 'status': 'source_observed'}], observations)
 
+    def test_probe_validation_rejection_is_unavailable_and_later_targets_continue(self):
+        later = VALID + 'later/'
+        response = http.Response(later, later, 200, {'content-type': 'text/html'}, source(BASE), 1)
+        for error in (http.URLInputError('secret:password@bad'), http.SSRFError('secret:password@private')):
+            observations = []
+            with mock.patch.object(http, 'fetch', side_effect=[error, response]) as fetch:
+                result = hreflang.probe({BASE: alts(VALID, later)}, cap=2, observations=observations)
+            self.assertEqual({later: alts(BASE)}, result)
+            self.assertEqual(2, fetch.call_count)
+            self.assertEqual({'target': VALID, 'acquisition': 'guarded_http', 'status': 'unavailable'}, observations[0])
+            self.assertNotIn('password', json.dumps(observations))
+
+    def test_probe_does_not_hide_unexpected_programming_exceptions(self):
+        with mock.patch.object(http, 'fetch', side_effect=RuntimeError('Unexpected bug')):
+            with self.assertRaisesRegex(RuntimeError, 'Unexpected bug'):
+                hreflang.probe({BASE: alts(VALID)})
+
+    def test_probe_real_host_validation_failure_stays_unavailable_without_transport(self):
+        observations = []
+        with mock.patch.object(socket, 'getaddrinfo', side_effect=socket.gaierror('secret:password@dns')), \
+                mock.patch.object(http, '_fetch_requests', side_effect=AssertionError('No request')), \
+                mock.patch.object(http, '_fetch_urllib', side_effect=AssertionError('No request')):
+            self.assertEqual({}, hreflang.probe({BASE: alts(VALID)}, observations=observations))
+        self.assertEqual([{'target': VALID, 'acquisition': 'guarded_http', 'status': 'unavailable'}], observations)
+        self.assertNotIn('password', json.dumps(observations))
+
     def test_empty_and_legacy_rendering_do_not_certify_reciprocity(self):
         result = hreflang.analyze({})
         self.assertFalse(result['used'])

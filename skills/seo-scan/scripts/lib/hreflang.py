@@ -146,7 +146,12 @@ def probe(pages_alts: dict, *, allow_private=False, timeout=8, cap=PROBE_CAP,
         observation = {'target': t, 'acquisition': 'supplied_body' if fetch_text is not None else 'guarded_http'}
         if fetch_text is None:
             from . import http
-            response = http.fetch(t, allow_private=allow_private, timeout=timeout)
+            try:
+                response = http.fetch(t, allow_private=allow_private, timeout=timeout)
+            except http.URLInputError:  # includes SSRFError; retain the guard, omit raw diagnostics
+                observation['status'] = 'unavailable'
+                if observations is not None: observations.append(observation)
+                continue
             content_type = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
             observation['http_status'] = response.status
             reason = ('unavailable' if not response.ok else 'empty' if not response.text else
