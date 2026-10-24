@@ -304,6 +304,12 @@ changes guard technical-score diffs/compare/brief; content-only scores are not
 invalidated by unselected technical checks. The new low source review is manual
 in remediation plans, and x-default advice is conditional, not a page quota.
 Corrected findings or sampled relationship counts are not measured SEO gains.
+Page `hreflang_source_observation` receipts and crawl
+`hreflang_acquisition_basis` also qualify already crawled responses before using
+their tags at a requested URL. Changed final identities, empty response bytes,
+unknown HTML media types and partial/unavailable bodies remain unassessed and
+do not seed probes. A final page can still be scanned normally after a redirect;
+its facts and score are not reassigned as proof of annotations at the old URL.
 See [hreflang scope](skills/seo-scan/references/technical-seo.md#hreflang-reciprocity-cross-page).
 
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a

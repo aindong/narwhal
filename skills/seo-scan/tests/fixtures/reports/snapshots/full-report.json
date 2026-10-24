@@ -20,6 +20,12 @@
       "response_byte_limit": 5000000,
       "response_truncated": false
     },
+    "hreflang_source_observation": {
+      "basis": "html_hreflang_response_snapshot_v1",
+      "status": "source_observed",
+      "acquisition": "guarded_http",
+      "http_status": 200
+    },
     "scan_scope": {
       "requested": [
         "technical",

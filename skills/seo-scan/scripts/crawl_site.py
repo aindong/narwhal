@@ -342,7 +342,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     pages, issue_counter, pages_links, page_fps = [], Counter(), {}, []
     pages_hreflang: dict = {}
-    hreflang_coverage, partial_hreflang = {}, set()
+    hreflang_coverage, partial_hreflang, sampled_hreflang_observations = {}, set(), []
     for u, rep in results:
         ecommerce = rep.meta.get("ecommerce", {})
         coverage = rep.meta.get("coverage")
@@ -369,7 +369,11 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         if hreflang_receipt is not None:
             pages[-1]['hreflang_extraction'] = hreflang_receipt
             hreflang_coverage[u] = hreflang_receipt
-        if rep.hard_fail or truncated:
+        source_observation = hreflang.recorded_observation(rep.meta)
+        if source_observation is not None:
+            pages[-1]['hreflang_source_observation'] = dict(source_observation)
+        sampled_hreflang_observations.append({'target': u, **(source_observation or {'status': 'unrecorded'})})
+        if rep.hard_fail or truncated or source_observation is None or source_observation['status'] != 'source_observed':
             partial_hreflang.add(u)
         for key in ('crawler_meta_robots', 'http_robots', 'llms_txt'):
             if not rep.hard_fail and isinstance(rep.meta.get(key), dict):
@@ -378,7 +382,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
         pages_links[u] = rep.meta.get("links", [])
-        pages_hreflang[u] = rep.meta.get('hreflang', [])
+        pages_hreflang[u] = rep.meta.get('hreflang', []) if u not in partial_hreflang else []
         if detect_dupes and not rep.hard_fail and not truncated and rep.meta.get("fingerprint"):
             page_fps.append({"url": u, "fingerprint": rep.meta["fingerprint"],
                              "canonical": rep.meta.get("canonical")})
@@ -407,6 +411,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         sitemap_urls, bool(sitemap_urls))
     result['link_resolution_basis'] = links.RESOLUTION_BASIS
     result['hreflang_policy_basis'] = hreflang.EXTRACTION_BASIS
+    result['hreflang_acquisition_basis'] = hreflang.SNAPSHOT_BASIS
     result["sitemap_candidates"] = len(sitemap_urls)
     # Hreflang reciprocity — only when the site actually uses hreflang. Probe a
     # few same-host alternates (capped) so return tags are verifiable instead of
@@ -420,6 +425,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                                              coverage={**hreflang_coverage, **probe_coverage}, partial_sources=partial_hreflang)
         result["hreflang"]["probed"] = len(probed)
         result['hreflang']['probe_observations'] = probe_observations
+        result['hreflang']['sampled_source_observations'] = sampled_hreflang_observations
     if check_links:
         result["links"] = check_broken_links(
             pages_links, allow_private=allow_private, timeout=timeout,

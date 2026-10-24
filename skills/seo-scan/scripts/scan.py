@@ -122,6 +122,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
         "response_byte_limit": max_bytes,
         "response_truncated": resp.headers.get("x-narwhal-truncated") == "true",
     }
+    report.meta['hreflang_source_observation'] = hreflang.source_observation(resp, url)
     report.meta["scan_scope"] = {
         "requested": list(selected), "completed": [],
         "not_selected": [name for name in AUDITORS if name not in selected],
