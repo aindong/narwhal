@@ -128,7 +128,8 @@ def source_observation(response, target):
     """
     content_type = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
     status = ('unavailable' if not response.ok or not 200 <= response.status < 300 else 'empty' if not response.text else
-              'partial' if response.headers.get('x-narwhal-truncated') == 'true' else
+              'partial' if response.status == 206 or 'content-range' in response.headers
+              or response.headers.get('x-narwhal-truncated') == 'true' else
               'non_html' if content_type not in ('text/html', 'application/xhtml+xml') else
               'identity_changed' if href_problem(response.final_url) is not None or href_problem(target) is not None
               or norm(response.final_url) != norm(target) else 'source_observed')
@@ -143,7 +144,8 @@ def recorded_observation(meta):
             or value.get('status') not in _SNAPSHOT_STATUSES
             or value.get('acquisition') not in ('guarded_http', 'rendered_snapshot')
             or type(value.get('http_status')) is not int or not 0 <= value['http_status'] <= 599
-            or (value.get('status') != 'unavailable' and not 200 <= value['http_status'] < 300)):
+            or (value.get('status') != 'unavailable' and not 200 <= value['http_status'] < 300)
+            or (value.get('status') == 'source_observed' and value['http_status'] == 206)):
         return None
     return value
 

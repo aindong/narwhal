@@ -110,10 +110,19 @@ class TestCrawledHreflangAcquisition(unittest.TestCase):
         self.assertEqual('rendered_snapshot', result['pages'][1]['hreflang_source_observation']['acquisition'])
         self.assertEqual([], result['hreflang']['missing_return'])
 
+    def test_server_range_response_does_not_establish_complete_html_coverage(self):
+        for status, headers in [(206, {'content-type': 'text/html'}),
+                                (200, {'content-type': 'text/html', 'content-range': 'bytes 0-80/900'})]:
+            result, fetched = crawl(http.Response(TARGET, TARGET, status, headers, html(), 1))
+            self.assertEqual([], result['hreflang']['missing_return'])
+            self.assertEqual(1, result['hreflang']['unassessed_pairs'])
+            self.assertEqual('partial', result['pages'][1]['hreflang_source_observation']['status'])
+            self.assertEqual(2, fetched.call_count)
+
     def test_receipt_basis_types_and_status_consistency_are_not_inferred(self):
         good = hreflang.source_observation(http.Response(TARGET, TARGET, 200, {'content-type': 'text/html'}, html(), 1), TARGET)
         for key, value in [('basis', 'future'), ('status', 'future'), ('http_status', True),
-                           ('http_status', 403), ('http_status', -1), ('acquisition', 'future')]:
+                           ('http_status', 403), ('http_status', 206), ('http_status', -1), ('acquisition', 'future')]:
             broken = dict(good); broken[key] = value
             self.assertIsNone(hreflang.recorded_observation({'hreflang_source_observation': broken}))
         for meta in (None, {}, {'hreflang_source_observation': []}):

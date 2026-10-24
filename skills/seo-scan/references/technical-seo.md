@@ -413,7 +413,8 @@ analysis. `hreflang_source_observation` records the explicit
 `html_hreflang_response_snapshot_v1` basis, bounded status, HTTP status and
 guarded-HTTP versus rendered-snapshot acquisition kind. Unknown/malformed
 receipts stay unassessed, not inferred complete. `source_observed` means a
-nonempty, untruncated 2xx HTML/XHTML response with matching requested/final URL
+nonempty, untruncated 2xx HTML/XHTML response without 206/Content-Range evidence,
+with matching requested/final URL
 identity under Narwhal's literal URL policy, not canonical/server equivalence
 or search acceptance. A complete HTML document without alternates can establish
 an observed missing return; an empty byte body cannot.
