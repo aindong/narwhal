@@ -64,7 +64,7 @@ class TestPlanCommandQuoting(unittest.TestCase):
             commands = plan.verification_for('title', 'https://example.test', '<memory>', kind)
             self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
             self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
-                              '-o', output, '--', '<local-preview-url>'], shlex.split(commands[1]))
+                              '-o', output, '--', '<local-preview-url>'], shlex.split(next(step for step in commands if step.startswith('narwhal scan '))))
             self.assertEqual('narwhal diff -- before.json after.json', commands[-1])
 
     def test_actual_diff_parser_accepts_leading_dash_filename_after_separator(self):

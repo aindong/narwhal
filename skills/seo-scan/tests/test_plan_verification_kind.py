@@ -30,7 +30,7 @@ class TestPlanVerificationKind(unittest.TestCase):
         action = next(item for item in built['actions'] if item['artifact'] == 'title')
         commands = action['verification']
         self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
-                          '-o', 'page-after.json', '--', '<local-preview-url>'], shlex.split(commands[0]))
+                          '-o', 'page-after.json', '--only', ','.join(ALL), '--', '<local-preview-url>'], shlex.split(commands[0]))
         self.assertIn('page-level', commands[1])
         self.assertIn('do not compare', commands[1])
         self.assertIn('original audit configuration', commands[-3])
@@ -63,7 +63,7 @@ class TestPlanVerificationKind(unittest.TestCase):
             self.assertEqual(plan.verification_for(artifact, 'https://example.test', 'before.json'),
                              plan.verification_for(artifact, 'https://example.test', 'before.json', 'scan'))
         commands = plan.verification_for('title', 'https://example.test', 'before.json')
-        self.assertIn('-o after.json', commands[0])
+        self.assertTrue(any('-o after.json' in step for step in commands))
         self.assertFalse(any('narwhal audit' in item for item in commands))
 
     def test_same_kind_keeps_real_diff_while_cross_kind_stays_blocked(self):
