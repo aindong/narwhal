@@ -26,6 +26,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report_output import save_output  # noqa: E402
+
 from lib import config as configlib  # noqa: E402
 from lib import authorship, htmlx, structured_data, length_observation, evidence_observation  # noqa: E402
 from lib import question_observation, schema_appearance, schema_coverage  # noqa: E402
@@ -432,8 +434,8 @@ def main(argv=None) -> int:
             render=args.render, config=cfg, max_bytes=args.max_bytes)
     out = render_json(r) if args.format == "json" else render_markdown(r)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='comparison'):
+            return 2
         print(f"Wrote {args.format} comparison to {args.output}")
     else:
         print(out)

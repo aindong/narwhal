@@ -25,6 +25,8 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report_output import save_output  # noqa: E402
+
 from lib import http, htmlx  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
@@ -231,8 +233,8 @@ def main(argv=None) -> int:
         print(f'Error: {exc}', file=sys.stderr)
         return 2
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='llms.txt'):
+            return 2
         print(f"Wrote llms.txt ({data['pages']} pages) to {args.output}")
     else:
         print(out)

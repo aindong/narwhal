@@ -37,6 +37,8 @@ from urllib.parse import quote, urlencode, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report_output import save_output  # noqa: E402
+
 SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -530,8 +532,8 @@ def main(argv=None) -> int:
                        min_impressions=args.min_impressions)}
     out = render_json(r) if args.format == "json" else render_markdown(r, args.url)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='GSC report'):
+            return 2
         print(f"Wrote {args.format} GSC report to {args.output}")
     else:
         print(out)

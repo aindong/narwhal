@@ -30,3 +30,14 @@ def write_output(path: str, text: Union[str, bytes], input_stats: list, *, label
     finally:
         if descriptor is not None:
             os.close(descriptor)
+
+
+def save_output(path: str, text: str, *, label='report') -> bool:
+    """Save a CLI artifact, reporting expected failures without claiming success."""
+    import sys
+    try:
+        write_output(path, text, [], label=label + ' output')
+    except (OSError, ValueError) as exc:
+        print(f'Error: {label} output: {exc}', file=sys.stderr)
+        return False
+    return True

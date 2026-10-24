@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remaining crawl/comparison/brief/sitemap/llms.txt and opt-in data report saves
+  use the shared regular-file/UTF-8 writer. Expected save errors exit 2 without
+  success messages or tracebacks; encoding preflight retains prior output.
+  Existing report text, success messages and analysis gate codes remain.
+  Final writes remain non-atomic; use stdout rather than named pipes/devices.
 - Scan/audit report delivery now uses regular-file and UTF-8 preflight checks
   and stages PDF engine output before final writes, matching Markdown rendering.
   Expected delivery failures return exit 2 without a success message or

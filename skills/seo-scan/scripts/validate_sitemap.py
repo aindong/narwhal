@@ -21,6 +21,8 @@ from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from lib.report_output import save_output  # noqa: E402
+
 from lib import http, links, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
@@ -248,8 +250,8 @@ def main(argv=None) -> int:
                      sample=args.sample, max_sitemaps=args.max_sitemaps)
     out = render_json(result) if args.format == "json" else render_markdown(result)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        if not save_output(args.output, out, label='sitemap report'):
+            return 2
         print(f"Wrote {args.format} report to {args.output}")
     else:
         print(out)

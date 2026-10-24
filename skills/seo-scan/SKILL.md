@@ -284,7 +284,8 @@ python scripts/render_report.py report.md --format pdf -o report.pdf   # needs W
 ```
 The output is self-contained (inline CSS + logo), with the Narwhal header/footer —
 same look as the scan/audit reports. Scan/audit/render require regular output
-files and return exit 2 for expected delivery failures; PDF engine bytes are
+files and return exit 2 for expected delivery failures. Other CLI text artifact
+saves use the same regular-file/UTF-8 checks and preserve analysis gate codes; PDF engine bytes are
 staged first. Final writes remain non-atomic. Choose an output file distinct from
 the source; direct/link aliases are rejected for HTML, PDF and actual fallback
 HTML writes. PDF bytes are staged first; separate final writes remain non-atomic.
