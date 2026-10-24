@@ -37,6 +37,11 @@ def scanned(resp, **kwargs):
 
 
 class TestServerPartialResponse(unittest.TestCase):
+    def test_empty_range_snapshot_retains_range_evidence_not_just_empty_text(self):
+        for resp in (response(206,body=''),response(ranged=True,body='')):
+            self.assertEqual('partial',hreflang.source_observation(resp,URL)['status'])
+        self.assertEqual('empty',hreflang.source_observation(response(body=''),URL)['status'])
+
     def test_range_body_is_not_a_complete_page_and_cannot_assert_missing_metadata(self):
         for resp in (response(206),response(ranged=True),response(206,body=''),response(ranged=True,truncated=True)):
             with mock.patch.object(scan,'gather_context',side_effect=AssertionError('No context request')), \
