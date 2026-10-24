@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- The default diff regression policy now catches existing findings escalating
+  to critical/high severity, even when the total score stays flat or improves.
+  CLI strict gates fail for these escalations; MCP returns the same verdict.
+  New-finding identities and known-incomparable verdicts retain their semantics.
 - Saved remediation plans now refuse aliases of their file-backed input report
   before truncation, retaining the scan/audit baseline needed for verification.
   Plan and diff saves share the existing identity-guarded writer, regular-output

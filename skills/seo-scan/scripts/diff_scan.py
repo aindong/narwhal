@@ -306,6 +306,7 @@ def diff_reports(old: dict, new: dict) -> dict:
     resolved.sort(key=lambda f: (_RANK.get(f.get("severity"), 99), json.dumps(_key(f))))
     new_bad = [f for f in added if f.get("severity") in ("critical", "high")]
     score_dropped = n["score"] < o["score"]
+    severe_escalation = any(f["to"] in ("critical", "high") for f in worsened)
 
     return {
         "url": n["url"],
@@ -317,8 +318,8 @@ def diff_reports(old: dict, new: dict) -> dict:
         "worsened": worsened,
         "improved": improved,
         "unchanged": len(okeys & nkeys) - len(worsened) - len(improved),
-        # a regression = score dropped, or a brand-new critical/high finding
-        "regression": score_dropped or bool(new_bad),
+        # Severe escalation matters even when other fixes offset its score cost.
+        "regression": score_dropped or bool(new_bad) or severe_escalation,
         "new_critical_high": new_bad,
         "comparison": comparison,
         'finding_identity': {
@@ -343,13 +344,17 @@ def _verdict(d: dict) -> str:
             why.append(f"score dropped {abs(delta)}")
         if d["new_critical_high"]:
             why.append(f"{len(d['new_critical_high'])} new high-severity issue(s)")
+        escalated = sum(f['to'] in ('critical', 'high') for f in d['worsened'])
+        if escalated:
+            why.append(f"{escalated} existing finding(s) escalated to critical/high severity")
         return "**Regressed** — " + ", ".join(why) + "."
     if d['worsened']:
         if delta > 0 or d['resolved'] or d['improved']:
             return ('**Mixed reported finding changes** — severity worsened alongside other '
                     'reported improvements; inspect both before claiming a fix.')
         return ('**Worsened reported severity** — review the changes below. The regression flag '
-                'still uses score drops or new critical/high findings.')
+                'also catches score drops, new critical/high findings and escalations to critical/high; '
+                'this lower-severity change alone does not trigger it.')
     if delta > 0 or d["resolved"] or d["improved"]:
         return "**Improved reported findings** — not proof of improved overall page health."
     return "**No material change** since the previous run."
@@ -475,8 +480,8 @@ def main(argv=None) -> int:
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("-o", "--output", help='save to a regular file distinct from both input snapshots')
     ap.add_argument("--fail-on-regression", action="store_true",
-                    help="exit non-zero if the score dropped or a new "
-                         "critical/high finding appeared; exit 2 for known "
+                    help="exit non-zero for a score drop, new critical/high finding, "
+                         "or existing finding escalated to critical/high; exit 2 for known "
                          "incomparable coverage (for CI gating)")
     args = ap.parse_args(argv)
 
@@ -518,8 +523,8 @@ def main(argv=None) -> int:
               "auditor selections, successful page fetches and full HTML coverage.", file=sys.stderr)
         return 2
     if args.fail_on_regression and d["regression"]:
-        print("FAIL: regression detected (score dropped or new high-severity "
-              "finding).", file=sys.stderr)
+        print("FAIL: regression detected (score dropped, new high-severity finding, "
+              "or existing finding escalated to critical/high).", file=sys.stderr)
         return 1
     return 0
 

@@ -41,7 +41,9 @@ fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
   severity and stable representative rather than the last repeated entry.
   Counts disclose aggregation; individual nodes are not matched and recorded
   scores remain. True mixed/worsened severity changes stay visible in headlines,
-  while the existing score-drop/new-critical-high gate policy is preserved.
+  and the regression gate also catches existing findings escalating to
+  critical/high, even when other fixes offset their score cost. Lower-severity
+  escalation alone does not fail the gate; known incomparability withholds a verdict.
 - **Manual grouping boundary:** source-edit groups cannot absorb external,
   ownerless or verification-only tasks. Those tasks retain their actions and
   evidence without becoming shared template edits through grouping.

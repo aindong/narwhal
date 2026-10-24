@@ -209,7 +209,8 @@ def _diff(old_json: str, new_json: str) -> dict:
         new_json: The later report as a JSON string.
 
     Returns the score delta and new / resolved / worsened / improved findings,
-    plus a ``regression`` flag (score dropped or a new critical/high finding).
+    plus a ``regression`` flag (score dropped, a new critical/high finding,
+    or an existing finding escalated to critical/high).
     ``comparison.status`` records auditor-scope comparability. Known mismatched,
     rendering/image-check settings, incomplete/truncated coverage or explicit crawl hard failures yield null delta/regression and no change
     classifications; legacy scope remains explicitly unknown. Matching scope

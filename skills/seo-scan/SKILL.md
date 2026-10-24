@@ -206,7 +206,9 @@ python scripts/diff_scan.py before.json after.json
 The diff reports the score delta and which findings are **new**, **resolved**,
 **worsened**, or **improved** (dynamic titles like "Thin content (210 words)" are
 matched across runs). Add `--fail-on-regression` for a CI gate: it exits non-zero
-if the score dropped or a new critical/high finding appeared. Works on `audit`
+if the score dropped, a new critical/high finding appeared, or an existing
+finding escalated to critical/high (even with an offsetting score improvement).
+Known incomparable coverage also fails the gate. Works on `audit`
 JSON too (uses the overall score + homepage findings).
 
 **Map findings to source before editing** (read-only, no changes applied):
