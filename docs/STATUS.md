@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Manifest evidence:** the planner retains usable actions when package JSON
+  or dependency shapes are unsupported, with bounded warnings and independent
+  config/sibling evidence. Non-string version values cannot certify dependency
+  declarations; this does not validate or install packages.
 - **Bounded source suggestions:** remediation candidates must remain literal
   relative paths inside the repository without symlink components. Unsafe URL
   paths are omitted with a warning, hidden names remain intact, and actions

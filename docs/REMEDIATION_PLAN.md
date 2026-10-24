@@ -43,6 +43,15 @@ Actions with no candidates are manual, including structural declarations that
 would otherwise be safely automatable. Containment is a read-only planning
 check, not a filesystem lock: verify paths and ownership again before any edit.
 
+Framework detection treats package declarations as evidence only when
+`package.json` is a supported JSON object and the relevant `dependencies` or
+`devDependencies` entry is a non-empty string. Malformed/unreadable/oversized
+manifests and unsupported sections or values produce bounded warnings without
+echoing manifest contents. Valid sibling declarations and independent config
+files still contribute; unavailable dependency evidence does not stop planning.
+This is not package-manager validation, installed-package inspection or version
+resolution. Confirm the framework and source ownership before applying edits.
+
 ## Verification templates
 
 `verification` contains ordered human instructions and command templates, not

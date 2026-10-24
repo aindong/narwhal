@@ -353,7 +353,7 @@ def _read_small(root: Path, rel: str) -> str:
         return ""
 
 
-def detect_framework(root: Path, files: list) -> dict:
+def detect_framework(root: Path, files: list, warnings=None) -> dict:
     """Identify one primary framework from concrete repository signals."""
     file_set = set(files)
     scores = {name: 0 for name in ("nextjs", "astro", "nuxt", "hugo", "jekyll", "plain_html")}
@@ -364,12 +364,30 @@ def detect_framework(root: Path, files: list) -> dict:
         evidence[name].append(message)
 
     package = {}
+    warnings = [] if warnings is None else warnings
     if "package.json" in file_set:
         try:
             package = json.loads(_read_small(root, "package.json"))
-        except json.JSONDecodeError:
+        except (ValueError, RecursionError):
+            warnings.append('package.json could not be read as supported JSON within planner limits; '
+                            'dependency evidence is unverified. Confirm the framework manually.')
             package = {}
-    deps = {**package.get("dependencies", {}), **package.get("devDependencies", {})}
+        if not isinstance(package, dict):
+            warnings.append('package.json is not a JSON object; dependency evidence is unverified. '
+                            'Confirm the framework manually.')
+            package = {}
+    deps = set()
+    for field in ('dependencies', 'devDependencies'):
+        values = package.get(field, {})
+        if not isinstance(values, dict):
+            warnings.append(f'package.json {field} is not an object; this dependency section was skipped. '
+                            'Confirm the framework manually.')
+            continue
+        valid = {name for name, version in values.items() if isinstance(version, str) and version.strip()}
+        deps.update(valid)
+        if len(valid) != len(values):
+            warnings.append(f'package.json {field} contains unsupported dependency values; '
+                            'only non-empty string declarations were used. Confirm the framework manually.')
     if "next" in deps:
         mark("nextjs", 8, "package.json depends on next")
     if any(f.startswith("next.config.") for f in files):
@@ -863,8 +881,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
     normalized = normalize_report(report)
     root = safe_repo_root(repo)
     inv = inventory(root, max_files=max(1, min(int(max_files), MAX_REPO_FILES)))
-    framework = detect_framework(root, inv["files"])
     warnings = list(inv["warnings"])
+    framework = detect_framework(root, inv["files"], warnings)
     if normalized["report_schema_version"] == "legacy":
         warnings.append("Legacy report has no schema_version; rule IDs were derived from titles.")
     if framework["name"] == "unknown":

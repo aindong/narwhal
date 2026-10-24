@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation planning survives malformed or unsupported package manifests and
+  dependency sections, disclosing unavailable evidence without echoing file
+  contents. Valid sibling declarations and independent framework config signals
+  remain; null/non-string dependency values no longer claim a framework.
 - Remediation source suggestions omit traversal, ambiguous drive/stream paths
   and symlink components, including proposed files not yet present. Warnings
   disclose omissions; hidden route names retain their spelling. Ownerless
