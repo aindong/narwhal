@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Generated JSON-LD script blocks escape literal less-than characters so supplied closing-script text cannot break into HTML. JSON values round-trip unchanged, including nested keys/values; bare JSON and MCP objects retain their original representation.
+
 - Remediation planning rejects malformed consumed finding/report evidence with field-specific errors before repository inventory or output writes, rather than silently dropping findings or emitting invalid action fields. Legacy omissions remain supported; invalid UTF-8 and JSON parser-limit failures produce bounded CLI errors.
 
 - Planner page-scan verification templates preserve valid recorded auditor selections, requested rendering and disabled image checks. Scan handoffs explicitly require restoring unrecorded configuration/access/resource limits; page receipts do not fabricate a full site-audit invocation.
