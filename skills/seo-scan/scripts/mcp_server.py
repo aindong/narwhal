@@ -70,7 +70,7 @@ def _crawl(url: str, max_pages: int = 15, check_links: bool = False,
 
     Args:
         url: The site URL to start from.
-        max_pages: Maximum pages to scan (polite crawler; honors robots.txt).
+        max_pages: Maximum pages to scan (clamped to 1–100; honors robots.txt).
         check_links: Also HEAD-check outbound links for 4xx/5xx/dead.
         timeout: Per-request timeout in seconds (1–120).
         concurrency: Concurrent page requests (1–8).
@@ -93,7 +93,7 @@ def _audit(url: str, max_pages: int = 15, render: bool = False,
 
     Args:
         url: The site URL to audit.
-        max_pages: Maximum pages for the crawl portion.
+        max_pages: Maximum pages for the crawl portion (clamped to 1–100).
         render: Render JavaScript with Playwright (expensive; use for SPAs).
         timeout: Per-request timeout in seconds (1–120).
         concurrency: Concurrent crawl requests (1–8).

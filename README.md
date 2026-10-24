@@ -573,6 +573,10 @@ are unchanged; absent flags do not certify unchecked or unmeasured conditions.
   ```bash
   python skills/seo-scan/scripts/audit.py https://example.com --vitals --format pdf -o audit.pdf
   ```
+- Crawl/audit `--max-pages` and `--concurrency` require positive integers,
+  including configured defaults; invalid values fail before fetching (CLI exit
+  2). CLI/API limits are not silently capped. MCP keeps its documented page
+  (1–100) and worker (1–8) clamps.
 - Crawl `--delay SECONDS` spaces parallel page-scan starts; sequential mode
   retains its post-scan pause. The value must be finite and nonnegative. This
   paces page scans, not discovery, site resources or optional probe requests.

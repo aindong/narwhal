@@ -294,6 +294,13 @@ def summarize_ecommerce(pages: list) -> dict:
             "merchant_pages_count": len(merchant_pages)}
 
 
+def validate_budgets(*, max_pages, concurrency):
+    """Require usable crawl limits before standalone or composite audit I/O."""
+    for name, value in (('max_pages', max_pages), ('concurrency', concurrency)):
+        if type(value) is not int or value < 1:
+            raise ValueError(f'{name} must be a positive integer.')
+
+
 def _delay_seconds(value):
     """Validate pacing before discovery or HTTP, including configured defaults."""
     try:
@@ -311,6 +318,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           timeout=20, delay=0.0, concurrency=4, obey_robots=True,
           check_links=False, max_links=200, detect_dupes=True,
           dup_threshold=90.0, config=None) -> dict:
+    validate_budgets(max_pages=max_pages, concurrency=concurrency)
     delay = _delay_seconds(delay)
     base = http.normalize_url(base)
     config = config or configlib.Config()
@@ -729,7 +737,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Site-level SEO + GEO/LLMO scan",
                                  parents=[configlib.config_arg_parser()])
     ap.add_argument("url", help="base URL of the site")
-    ap.add_argument("--max-pages", type=int, default=d["max_pages"])
+    ap.add_argument("--max-pages", type=int, default=d["max_pages"],
+                    help="positive maximum pages to scan")
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("-o", "--output")
@@ -739,7 +748,7 @@ def main(argv=None) -> int:
                     help="seconds between parallel page-scan starts (post-scan pause in sequential mode); "
                          "does not pace discovery, site resources or optional probes")
     ap.add_argument("--concurrency", type=int, default=d["concurrency"], metavar="N",
-                    help="number of pages to scan in parallel (default 4)")
+                    help="positive number of pages to scan in parallel")
     ap.add_argument("--ignore-robots", action="store_true",
                     help="do NOT skip URLs disallowed by robots.txt (off by default)")
     ap.add_argument("--check-links", action="store_true",
@@ -761,6 +770,7 @@ def main(argv=None) -> int:
         pass
 
     try:
+        validate_budgets(max_pages=args.max_pages, concurrency=args.concurrency)
         delay = _delay_seconds(args.delay)
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
