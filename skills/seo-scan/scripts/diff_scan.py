@@ -98,6 +98,10 @@ def _comparison(o: dict, n: dict) -> dict:
     reasons = []
     if o["kind"] != n["kind"]:
         reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
+    samples = [_crawl_sample(item["crawl"]) for item in (o, n)]
+    if all(sample is not None for sample in samples) and samples[0] != samples[1]:
+        reasons.append("Recorded audit crawl page samples differ (exact URLs or multiplicities); "
+                       "a changed page mix is not site-fix evidence.")
     graph_bases = []
     for item in (o, n):
         crawl = item['crawl'] if isinstance(item['crawl'], dict) else {}
@@ -212,8 +216,8 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base/HTML hreflang gaps, page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
-                 "identical URLs, other configuration, tool rules or site-wide samples. Missing settings are not inferred or certified.",
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base/HTML hreflang gaps, complete recorded audit crawl samples (exact URL multiplicities), page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
+                 "identical response destinations, other configuration, tool rules or unrecorded site-wide samples. Missing settings are not inferred or certified. Incomplete/malformed crawl samples are not inferred or certified.",
     }
 
 
@@ -229,6 +233,16 @@ def _recorded_settings(meta, rendered=None):
     if isinstance(fingerprint, str) and re.fullmatch(r"[0-9a-fA-F]{64}", fingerprint):
         result["rule_config"] = fingerprint.lower()
     return result
+
+
+def _crawl_sample(crawl):
+    """Keep exact URL multiplicities; incomplete legacy lists certify no sample."""
+    pages = crawl.get('pages') if isinstance(crawl, dict) else None
+    if not isinstance(pages, list) or any(
+            not isinstance(page, dict) or not isinstance(page.get('url'), str)
+            or not page['url'].strip() for page in pages):
+        return None
+    return sorted(page['url'] for page in pages)
 
 
 def _crawl_settings(crawl):

@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Crawl population evidence:** audit diffs with different complete recorded
+  URL samples or multiplicities withhold score/finding verdicts; strict gates
+  exit 2. Order does not matter; URLs are not normalized or mapped across hosts.
+  Legacy/malformed sample lists remain unverified, not inferred to match.
 - **Explicit scan selection:** API/CLI/MCP reject unsupported or empty auditor
   entries before HTTP; the CLI exits 2 without a traceback or artifact write.
   Empty/default selection still runs all four; MCP no longer drops comma-entry

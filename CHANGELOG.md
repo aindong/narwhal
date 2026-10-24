@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Audit diffs with different complete recorded crawl page samples now withhold
+  score/finding verdicts and fail strict gates with exit 2. Exact URL
+  multiplicities preserve average-score weighting; page ordering is irrelevant.
+  Missing/malformed legacy samples remain unverified rather than guessed to
+  match. This prevents a changed page mix from masquerading as a site fix.
 - Invalid scan auditor selections now return CLI usage failure without a
   traceback or output artifact. API/CLI/MCP reject unknown names and empty
   comma-separated entries before fetching; MCP no longer silently drops them.
