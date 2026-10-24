@@ -175,24 +175,24 @@ class TestDiffSettings(unittest.TestCase):
         self.assertEqual(2, invoke(good, changed, '--fail-on-regression')[0])
 
     def test_crawl_settings_do_not_infer_missing_or_outside_sample_modes(self):
-        before = {'site': URL, 'homepage': configured(), 'crawl': {'pages': [None, {'url': URL}]}}
+        before = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': {'pages': [None, {'url': URL}]}}
         after = copy.deepcopy(before)
         after['crawl']['pages'] = [{'url': URL + '/other', 'scan_settings': SETTINGS}]
         self.assertEqual('comparable', diff_scan.diff_reports(before, after)['comparison']['status'])
 
     def test_contradictory_duplicate_crawl_modes_are_not_last_wins(self):
-        data = {'site': URL, 'homepage': configured(), 'crawl': {'pages': [
+        data = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': {'pages': [
             {'url': URL, 'scan_settings': SETTINGS},
             {'url': URL, 'scan_settings': dict(SETTINGS, rendered=True)}]}}
         self.assert_not_comparable(data, data)
 
     def test_known_crawl_contradictions_block_with_unknown_or_outside_sample_other(self):
-        data = {'site': URL, 'homepage': configured(), 'crawl': {'pages': [
+        data = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': {'pages': [
             {'url': URL, 'scan_settings': SETTINGS},
             {'url': URL, 'scan_settings': dict(SETTINGS, rendered=True)}]}}
         for crawl in (None, {'pages': [{'url': URL}]},
                       {'pages': [{'url': URL + '/other', 'scan_settings': SETTINGS}]}):
-            unknown = {'site': URL, 'homepage': configured(), 'crawl': crawl}
+            unknown = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': crawl}
             self.assert_not_comparable(data, unknown)
             self.assert_not_comparable(unknown, data)
             self.assertEqual(2, invoke(data, unknown, '--fail-on-regression')[0])

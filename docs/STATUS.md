@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Diff input evidence:** malformed core report data cannot become invented
+  score gains, skipped findings or passing gates. Explicit scan/audit metrics,
+  finding identities and decode boundaries fail clearly before output writes;
+  diagnostics omit supplied values. This is not full schema validation or
+  authenticated measurement; legacy execution uncertainty remains explicit.
 - **Repeated diff evidence:** rule-level comparison uses the worst observed
   severity and stable representative rather than the last repeated entry.
   Counts disclose aggregation; individual nodes are not matched and recorded

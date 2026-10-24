@@ -209,9 +209,14 @@ def _diff(old_json: str, new_json: str) -> dict:
     Repeated category/rule identities use worst observed severity and a stable
     representative; ``finding_identity`` discloses entry counts, not individual
     instance matches. Recorded scores and regression-gate criteria remain.
+    Malformed JSON or invalid consumed scores/findings raise bounded ValueError
+    diagnostics instead of returning a diff; missing audit scores are not
+    substituted with homepage scores. This is not full schema validation or
+    report authentication.
     """
     import diff_scan as diff_mod
-    return diff_mod.diff_reports(json.loads(old_json), json.loads(new_json))
+    return diff_mod.diff_reports(diff_mod._decode_report_json(old_json, 'Earlier report'),
+                                 diff_mod._decode_report_json(new_json, 'Later report'))
 
 
 def _plan(report: dict, repo: str = ".", max_files: int = 5000) -> dict:

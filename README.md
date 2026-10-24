@@ -789,6 +789,20 @@ instances. Input report scores are retained without recalculation. Severity
 transitions retain their rule IDs when available, and mixed/worsened headlines
 remain visible even when the existing regression-gate criteria are not met.
 
+Diffs require explicit finite numeric scores in the 0–100 range: `score` for a
+scan, `overall_score` for an audit. A missing site score is not replaced by the
+homepage score. Finding lists must be present, with object entries containing
+a non-empty category, supported severity, string title and usable rule/title
+identity. Invalid core evidence, ambiguous report kinds, malformed UTF-8/JSON
+and decoder-limit failures exit **2** before comparison or output writes, even
+without the regression flag. Errors identify the earlier/later field or decode
+location without echoing report values. Python APIs and the MCP callable raise
+`ValueError`.
+Legacy missing rule IDs still use titles, and missing execution metadata stays
+unknown; additive fields are preserved. This is a check of consumed evidence,
+not full report-schema validation, score authentication or proof of matching
+execution, URLs or source content.
+
 ### Real Core Web Vitals (opt-in)
 
 Everything above is local and honest about what it can measure — it will **never

@@ -212,9 +212,9 @@ class TestContentLength(unittest.TestCase):
         self.assertEqual(0, delta['score_delta'])
 
     def test_known_crawl_scope_changes_are_joined_by_page_url(self):
-        old = {'url': URL, 'overall_score': 90, 'homepage': {}, 'crawl': {
+        old = {'url': URL, 'overall_score': 90, 'homepage': {'findings': []}, 'crawl': {
             'pages': [{'url': URL, 'scan_settings': {'content_length_reviewed': True}}]}}
-        new = {'url': URL, 'overall_score': 95, 'homepage': {}, 'crawl': {
+        new = {'url': URL, 'overall_score': 95, 'homepage': {'findings': []}, 'crawl': {
             'pages': [{'url': URL, 'scan_settings': {'content_length_reviewed': False}}]}}
         delta = diff_scan.diff_reports(old, new)
         self.assertEqual('incomparable', delta['comparison']['status'])

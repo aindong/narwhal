@@ -109,7 +109,7 @@ class TestServerPartialResponse(unittest.TestCase):
 
     def test_historical_crawl_partial_observation_blocks_whole_audit_comparison(self):
         page=json.loads(scanned(response(body=FULL)).to_json())
-        value={'site':URL,'homepage':page,'crawl':{'pages':[{
+        value={'site':URL,'overall_score':min(page['score'],70),'homepage':page,'crawl':{'pages':[{
             'url':URL,'score':70,'hard_fail':False,
             'hreflang_source_observation':hreflang.source_observation(response(ranged=True),URL)}]}}
         self.assertEqual('incomparable',diff_scan.diff_reports(value,copy.deepcopy(value))['comparison']['status'])

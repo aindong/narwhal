@@ -128,7 +128,7 @@ class TestRuleConfigCoverage(unittest.TestCase):
         self.assertIsNone(result['score_delta']); self.assertEqual([], result['resolved'])
 
     def test_changed_child_configuration_blocks_audit_even_with_matching_homepage(self):
-        before = {'site': URL, 'homepage': configured(), 'crawl': {'pages': [
+        before = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': {'pages': [
             {'url': URL, 'scan_settings': {'rule_config': fingerprint()}}]}}
         after = json.loads(json.dumps(before))
         after['crawl']['pages'][0]['scan_settings']['rule_config'] = fingerprint({'ignore': {'titles': ['image']}})
