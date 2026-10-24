@@ -53,6 +53,17 @@
           "verification": {"type": "array", "minItems": 1, "items": {"type": "string"}},
           "evidence": {"type": "string"},
           "source_recommendation": {"type": "string"},
+          "automation_eligibility": {
+            "type": "object",
+            "required": ["basis", "eligible", "blockers", "scope"],
+            "properties": {
+              "basis": {"const": "explicit_structural_rule_and_existing_candidate_v1"},
+              "eligible": {"type": "boolean"},
+              "blockers": {"type": "array", "uniqueItems": true, "items": {"enum": ["unrecognized_structural_rule", "no_existing_owner_candidate", "known_incomplete_source_evidence"]}},
+              "scope": {"type": "string"}
+            },
+            "additionalProperties": false
+          },
           "confidence": {"type": "number", "minimum": 0, "maximum": 1},
           "scope": {"enum": ["page", "site", "external"]},
           "occurrences": {"type": "integer", "minimum": 1},
