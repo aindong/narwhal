@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Optional budget preflight:** crawl link caps, sitemap file/sample caps and
+  composite audit inputs reject negative/noninteger data before fetching, including
+  consumed config defaults. Zero retains scoped optional-check skips, not a
+  healthy result or an all-network-off setting. Discovery bounds remain separate.
 - **Complete CLI save boundary:** remaining text artifact commands use shared
   regular-file and encoding checks with controlled save failure. Analysis gates
   and custom success messages remain; opt-in service behavior is unchanged.

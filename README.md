@@ -577,6 +577,10 @@ are unchanged; absent flags do not certify unchecked or unmeasured conditions.
   including configured defaults; invalid values fail before fetching (CLI exit
   2). CLI/API limits are not silently capped. MCP keeps its documented page
   (1–100) and worker (1–8) clamps.
+- Link caps (`--max-links`) and sitemap file/sample caps (`--max-sitemaps`,
+  `--sample`) require nonnegative integers, including consumed config defaults.
+  Invalid caps fail before fetching (CLI exit 2). Zero skips the corresponding optional
+  checks; sitemap discovery and other audit requests have separate bounds.
 - Crawl `--delay SECONDS` spaces parallel page-scan starts; sequential mode
   retains its post-scan pause. The value must be finite and nonnegative. This
   paces page scans, not discovery, site resources or optional probe requests.

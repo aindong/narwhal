@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
+from lib.budgets import nonnegative_integer  # noqa: E402
 from lib import report as report_lib  # noqa: E402
 from lib import canonical, links, hreflang  # noqa: E402
 from lib.report import below_threshold, deliver  # noqa: E402
@@ -49,8 +50,11 @@ def run(site: str, *, max_pages=15, concurrency=4, timeout=20, allow_private=Fal
     standalone tools' — an audit is an overview, so it favors speed over an
     exhaustive link/sitemap sweep (the dedicated commands go deeper)."""
     crawl_site.validate_budgets(max_pages=max_pages, concurrency=concurrency)
+    nonnegative_integer(max_links, 'max_links')
+    nonnegative_integer(max_sitemaps, 'max_sitemaps')
     config = config or configlib.Config()
     sample = config.default("sample")
+    nonnegative_integer(sample, 'sample')
     config, _ = configlib.snapshot_rules(config)
     page = scanner.scan(site, timeout=timeout, allow_private=allow_private,
                         render=render, config=config)
@@ -305,9 +309,9 @@ def main(argv=None) -> int:
     ap.add_argument("--concurrency", type=int, default=d["concurrency"],
                     help="positive number of concurrent crawl page scans")
     ap.add_argument("--max-links", type=int, default=100,
-                    help="cap on outbound links checked (default 100)")
+                    help="nonnegative outbound-link cap (default 100; 0 skips link requests)")
     ap.add_argument("--max-sitemaps", type=int, default=12,
-                    help="cap on distinct sitemap file fetch attempts, including failures (default 12)")
+                    help="nonnegative sitemap validation file-attempt cap (default 12; 0 skips validation fetches)")
     ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--render", action="store_true")
     ap.add_argument("--ignore-robots", action="store_true")
@@ -339,6 +343,9 @@ def main(argv=None) -> int:
 
     try:
         crawl_site.validate_budgets(max_pages=args.max_pages, concurrency=args.concurrency)
+        nonnegative_integer(args.max_links, 'max_links')
+        nonnegative_integer(args.max_sitemaps, 'max_sitemaps')
+        nonnegative_integer(cfg.default('sample'), 'sample')
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2

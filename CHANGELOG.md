@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Invalid link/sitemap request caps are rejected before discovery or composite
+  audit subscans. Negative link caps can no longer become Python slices that
+  check almost all targets. CLI flags and consumed config defaults fail with
+  exit 2 without replacing reports. Integer zero retains the corresponding
+  optional-check skip; discovery has separate resource bounds.
 - Remaining crawl/comparison/brief/sitemap/llms.txt and opt-in data report saves
   use the shared regular-file/UTF-8 writer. Expected save errors exit 2 without
   success messages or tracebacks; encoding preflight retains prior output.

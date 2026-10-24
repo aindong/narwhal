@@ -22,6 +22,7 @@ from urllib.parse import urljoin, urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report_output import save_output  # noqa: E402
+from lib.budgets import nonnegative_integer  # noqa: E402
 
 from lib import http, links, sitemap as sm  # noqa: E402
 from lib import config as configlib  # noqa: E402
@@ -57,6 +58,8 @@ def discover(base: str, *, allow_private, timeout, diagnostics=None, coverage=No
 
 def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
             max_sitemaps=50) -> dict:
+    nonnegative_integer(sample, 'sample')
+    nonnegative_integer(max_sitemaps, 'max_sitemaps')
     start = http.normalize_url(start)
     http.assert_public_host(start, allow_private=allow_private)
     host = urlparse(start).netloc
@@ -232,9 +235,9 @@ def main(argv=None) -> int:
                                  parents=[configlib.config_arg_parser()])
     ap.add_argument("url", help="site URL or a sitemap URL")
     ap.add_argument("--sample", type=int, default=d["sample"],
-                    help="number of URLs to spot-check for 404 (default 10)")
+                    help="nonnegative URL sample size (0 skips URL probes)")
     ap.add_argument("--max-sitemaps", type=int, default=d["max_sitemaps"],
-                    help="cap on distinct sitemap file fetch attempts, including failures (default 50)")
+                    help="nonnegative sitemap validation file-attempt cap (0 skips validation fetches)")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("-o", "--output")
     ap.add_argument("--timeout", type=int, default=d["timeout"])
@@ -245,6 +248,13 @@ def main(argv=None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
+
+    try:
+        nonnegative_integer(args.sample, 'sample')
+        nonnegative_integer(args.max_sitemaps, 'max_sitemaps')
+    except ValueError as exc:
+        print(f'Error: {exc}', file=sys.stderr)
+        return 2
 
     result = analyze(args.url, allow_private=args.allow_private, timeout=args.timeout,
                      sample=args.sample, max_sitemaps=args.max_sitemaps)
