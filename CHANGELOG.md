@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Markdown remediation plans retain every verification step in order, including prerequisite reviews, after-scan commands and deployment scope. Shell commands use literal-safe fenced blocks in both action and shared audit sections; the baseline-saving reminder appears once.
+
 - Remediation plans reserve viewport automation candidates for the supported missing-tag rule with an existing source candidate and no known relevant source-coverage gap. Unknown viewport findings and convention-only owners require review; JSON and Markdown explain eligibility and require source inspection before editing.
 - Optional BeautifulSoup parsing preserves document heading order instead of
   grouping headings by level. Heading-jump evidence and brief H2/H3 subtopics

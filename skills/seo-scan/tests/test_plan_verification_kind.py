@@ -115,7 +115,8 @@ class TestPlanVerificationKind(unittest.TestCase):
         self.assertIn('run after deploy', markdown)
         self.assertIn('original audit configuration', markdown)
         self.assertIn('do not diff it against the audit baseline', markdown)
-        self.assertNotIn('narwhal scan', markdown)
+        self.assertIn('narwhal scan --allow-private', markdown)
+        self.assertIn('do not compare page-after.json', markdown)
 
 
 if __name__ == '__main__':
