@@ -976,10 +976,12 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
 
 
 def _groups(actions: list) -> list:
+    """Coordinate source candidates without promoting manual verification to edits."""
     buckets = {}
     for action in actions:
-        if action['rule_id'] in RESOURCE_VERIFICATION:
-            continue  # verification tasks are not shared source/template edits
+        if (action['rule_id'] in RESOURCE_VERIFICATION
+                or action['safety'] == 'manual_external' or not action['likely_files']):
+            continue  # keep manual/ownerless work in the action list, not edit groups
         key = action["artifact"]
         if key in HEAD_ARTIFACTS:
             key = "shared_head_metadata"

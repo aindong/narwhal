@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation source-edit groups exclude manual/external and ownerless actions.
+  Their evidence and manual tasks remain, without instructions to implement
+  them as shared template fixes or borrow another action's source owner.
 - Remediation planning survives malformed or unsupported package manifests and
   dependency sections, disclosing unavailable evidence without echoing file
   contents. Valid sibling declarations and independent framework config signals
