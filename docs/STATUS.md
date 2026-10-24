@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Bounded source suggestions:** remediation candidates must remain literal
+  relative paths inside the repository without symlink components. Unsafe URL
+  paths are omitted with a warning, hidden names remain intact, and actions
+  without owners stay manual. Paths must still be rechecked before editing.
 - **Complete resource bytes:** both HTTP backends reject range evidence before
   byte reads/XML decoding instead of accepting a complete-looking sitemap
   fragment. Empty range headers also keep root llms.txt candidate/absence
