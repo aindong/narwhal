@@ -959,6 +959,11 @@ branded report:
 narwhal render narwhal-audit-report.md -o report.html      # or --format pdf -o report.pdf
 ```
 
+Render output must be a regular file distinct from the file-backed Markdown
+source, including link aliases. PDF output is staged before the identity check;
+the actual HTML fallback destination is checked too. Separate final writes remain
+non-atomic; shell stdout redirection can still truncate its input before Narwhal runs.
+
 Inline code stays escaped and literal: Markdown markers, links and HTML inside
 matching backtick runs are displayed as text, not interpreted. Equal-length
 runs support literal shorter backticks inside a span; unmatched runs stay text.

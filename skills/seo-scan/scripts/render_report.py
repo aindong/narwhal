@@ -71,18 +71,24 @@ def main(argv=None) -> int:
     except (AttributeError, ValueError):
         pass
 
+    input_stats = []
     try:
         if args.input == "-":
             md = sys.stdin.read()
         else:
             with open(args.input, "r", encoding="utf-8") as fh:
+                input_stats.append(os.fstat(fh.fileno()))
                 md = fh.read()
-    except OSError as e:
+    except (OSError, UnicodeError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
 
     html = render(md, title=args.title, subtitle=args.subtitle)
-    return deliver(args.format, args.output, html, label="report")
+    try:
+        return deliver(args.format, args.output, html, label="report", input_stats=input_stats)
+    except (OSError, ValueError) as exc:
+        print(f"Error: report output: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

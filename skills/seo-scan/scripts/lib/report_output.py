@@ -2,18 +2,22 @@
 
 import os
 import stat
+from typing import Union
 
 
-def write_output(path: str, text: str, input_stats: list, *, label='Report output') -> None:
-    """Check the opened output against the snapshots actually read before truncation."""
-    try:
-        text.encode('utf-8')
-    except UnicodeError:
-        raise ValueError(f'{label} cannot be encoded as UTF-8.') from None
+def write_output(path: str, text: Union[str, bytes], input_stats: list, *, label='Report output') -> None:
+    """Write text or binary bytes after checking identity against read snapshots."""
+    binary = isinstance(text, bytes)
+    if not binary:
+        try:
+            text.encode('utf-8')
+        except UnicodeError:
+            raise ValueError(f'{label} cannot be encoded as UTF-8.') from None
     flags = os.O_WRONLY | os.O_CREAT | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0)
     descriptor = os.open(path, flags, 0o666)  # no O_TRUNC until identity is checked
     try:
-        with os.fdopen(descriptor, 'w', encoding='utf-8') as fh:
+        with os.fdopen(descriptor, 'wb' if binary else 'w',
+                       encoding=None if binary else 'utf-8') as fh:
             descriptor = None
             output_stat = os.fstat(fh.fileno())
             if not stat.S_ISREG(output_stat.st_mode):

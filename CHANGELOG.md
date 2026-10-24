@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Markdown report rendering preserves its file-backed source when HTML, PDF or
+  fallback HTML destinations alias the read input, including links and renamed
+  sources. PDF engines stage output before the guarded write; invalid UTF-8
+  input and output I/O failures return controlled errors. Distinct final writes
+  remain non-atomic and cannot protect arbitrary files or concurrent writers.
 - The default diff regression policy now catches existing findings escalating
   to critical/high severity, even when the total score stays flat or improves.
   CLI strict gates fail for these escalations; MCP returns the same verdict.

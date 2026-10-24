@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Render source preservation:** HTML/PDF rendering and actual fallback HTML
+  output cannot truncate an aliased file-backed Markdown source. PDF engines
+  stage their bytes before the shared identity guard; malformed UTF-8 and I/O
+  failures exit clearly. Distinct writes remain non-atomic; stdout redirection,
+  arbitrary files and concurrent writers are outside this protection.
 - **Saved plan baseline safety:** CLI plan output cannot replace an aliased read
   report through direct, relative or link paths. Plan and diff saves share one
   writer guard; ordinary planning content stays unchanged, while home-relative
