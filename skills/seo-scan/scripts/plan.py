@@ -1065,6 +1065,13 @@ def render_json(plan: dict) -> str:
     return json.dumps(plan, indent=2, ensure_ascii=False)
 
 
+def _command_block(command: str) -> list:
+    """Keep literal backticks in shell arguments inside the code block."""
+    longest_run = max((len(run) for run in re.findall(r'`+', command)), default=0)
+    fence = '`' * max(3, longest_run + 1)
+    return [f'{fence}sh', command, fence, '']
+
+
 def render_markdown(plan: dict) -> str:
     f = plan["framework"]
     c = plan["coverage"]
@@ -1088,7 +1095,7 @@ def render_markdown(plan: dict) -> str:
                   f'`{page_output}` separate; do not diff it against the audit baseline. '
                   'Site-level signals remain pending deployment.', '']
         steps = verification_for('server_config', plan['target'], plan['provenance']['report'], 'audit')[-3:]
-        lines += [steps[0], '', '```sh', steps[1], steps[2], '```', '']
+        lines += [steps[0], ''] + _command_block(steps[1] + '\n' + steps[2])
     for safety, label in (("manual_external", "Manual / external"),
                           ("review_required", "Review required"),
                           ("deploy_verification", "Apply, then verify after deploy"),
@@ -1128,8 +1135,15 @@ def render_markdown(plan: dict) -> str:
                       f"- **Rule:** `{action['rule_id']}`",
                       *scope_lines,
                       f"- **Likely owner:** {owners}",
-                      f"- **Change:** {action['proposed_change']}",
-                      f"- **Verify:** `{action['verification'][-1]}`", ""]
+                      f"- **Change:** {action['proposed_change']}", "",
+                      "**Verification, in order:**", ""]
+            for step in action['verification']:
+                if step == MEMORY_BASELINE_INSTRUCTION:
+                    continue  # the shared prerequisite is already visible above all actions
+                if step.startswith('narwhal '):
+                    lines += _command_block(step)
+                else:
+                    lines += [step, '']
     if plan["groups"]:
         lines += ["## Grouped template fixes", ""]
         for group in plan["groups"]:
