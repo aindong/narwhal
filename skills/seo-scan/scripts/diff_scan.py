@@ -24,7 +24,6 @@ import argparse
 import json
 import os
 import re
-import stat
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -34,6 +33,7 @@ from lib.report import recorded_llms_problem, recorded_schema_extraction_problem
 from lib.report import recorded_response_partial  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
+from lib.report_output import write_output as _write_output  # noqa: E402
 
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -467,30 +467,6 @@ def _load(path: str, label='Report', input_stats=None) -> dict:
     return _decode_report_json(text, label)
 
 
-def _write_output(path: str, text: str, input_stats: list) -> None:
-    """Check the opened output against the snapshots actually read before truncation."""
-    try:
-        text.encode('utf-8')
-    except UnicodeError:
-        raise ValueError('Diff output cannot be encoded as UTF-8.') from None
-    flags = os.O_WRONLY | os.O_CREAT | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0)
-    descriptor = os.open(path, flags, 0o666)  # no O_TRUNC until identity is checked
-    try:
-        with os.fdopen(descriptor, 'w', encoding='utf-8') as fh:
-            descriptor = None
-            output_stat = os.fstat(fh.fileno())
-            if not stat.S_ISREG(output_stat.st_mode):
-                raise ValueError('Diff output must be a regular file.')
-            if any(os.path.samestat(output_stat, source) for source in input_stats):
-                raise ValueError('Diff output aliases an input snapshot; choose a distinct output file.')
-            # shortcut: writes are non-atomic; use atomic replacement if interrupted-output recovery is required.
-            fh.truncate(0)
-            fh.write(text)
-    finally:
-        if descriptor is not None:
-            os.close(descriptor)
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Diff two narwhal JSON reports (regression tracking)")
@@ -520,7 +496,7 @@ def main(argv=None) -> int:
     out = render_json(d) if args.format == "json" else render_markdown(d)
     if args.output:
         try:
-            _write_output(args.output, out, input_stats)
+            _write_output(args.output, out, input_stats, label='Diff output')
         except ValueError as exc:
             print(f'Error: {exc}', file=sys.stderr)
             return 2

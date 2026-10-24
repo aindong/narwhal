@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib.report_output import write_output  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
@@ -1101,14 +1102,17 @@ def render_markdown(plan: dict) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _load_json(path: str) -> dict:
+def _load_json(path: str, input_stats=None) -> dict:
     candidate = Path(path).expanduser()
     if not candidate.is_file():
         raise ValueError(f"Report file not found: {path}")
     if candidate.stat().st_size > 50_000_000:
         raise ValueError("Report file exceeds the 50 MB safety limit.")
     try:
-        return json.loads(candidate.read_text(encoding="utf-8"))
+        with candidate.open('r', encoding='utf-8') as source:
+            if input_stats is not None:
+                input_stats.append(os.fstat(source.fileno()))
+            return json.loads(source.read())
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid report JSON: {exc}") from exc
 
@@ -1119,13 +1123,14 @@ def main(argv=None) -> int:
     ap.add_argument("report", help="scan/audit JSON report")
     ap.add_argument("--repo", default=".", help="site source repository (default: current directory)")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
-    ap.add_argument("-o", "--output")
+    ap.add_argument("-o", "--output", help='save to a regular file distinct from the input report')
     ap.add_argument("--max-files", type=int, default=MAX_REPO_FILES,
                     help=f"repository inventory cap (maximum {MAX_REPO_FILES})")
     args = ap.parse_args(argv)
+    input_stats = [] if args.output else None
     try:
-        report = _load_json(args.report)
-        plan = build_plan(report, args.repo, report_source=str(Path(args.report).resolve()),
+        report = _load_json(args.report, input_stats)
+        plan = build_plan(report, args.repo, report_source=str(Path(args.report).expanduser().resolve()),
                           max_files=args.max_files)
     except (ValueError, OSError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
@@ -1133,9 +1138,13 @@ def main(argv=None) -> int:
     output = render_json(plan) if args.format == "json" else render_markdown(plan)
     if args.output:
         try:
-            Path(args.output).write_text(output, encoding="utf-8")
+            write_output(args.output, output, input_stats, label='Remediation plan output')
+        except ValueError as exc:
+            print(f'Error: {exc}', file=sys.stderr)
+            return 2
         except OSError as exc:
-            print(f"Error: could not write {args.output}: {exc}", file=sys.stderr)
+            print(f'Error: Could not write remediation plan output ({type(exc).__name__}); '
+                  'check target path and permissions.', file=sys.stderr)
             return 2
         print(f"Wrote remediation plan to {args.output} ({len(plan['actions'])} actions)")
     else:

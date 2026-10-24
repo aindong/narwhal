@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Saved remediation plans now refuse aliases of their file-backed input report
+  before truncation, retaining the scan/audit baseline needed for verification.
+  Plan and diff saves share the existing identity-guarded writer, regular-output
+  policy, cleanup and controlled write/encoding failures. Separate artifact
+  writes remain non-atomic; ordinary plan contents and stdout/MCP planning stay
+  unchanged. CLI home-relative report paths expand consistently in verification
+  provenance instead of pointing at a literal `~` directory.
 - Saved diffs check the opened output against the actual read-snapshot file
   identities before truncation, refusing direct/symlink/hard-link input aliases.
   Failed handles close, non-regular outputs are withheld without FIFO blocking,
