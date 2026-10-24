@@ -32,6 +32,12 @@ Safety values mean:
 `groups` identify findings best fixed in one shared template. `conflicts` stop
 automation where canonical/index/crawler intent must be decided first.
 
+Source-edit groups exclude manual/external and ownerless actions, including
+verification-only tasks. Those actions remain in the plan's action list and
+manual section; grouping cannot promote them into template edits or borrow
+another action's source owner. Remaining groups coordinate related candidates,
+not authorization to edit or proof that every member has the same owner.
+
 Source candidates, including suggested files that do not exist yet, must be
 literal relative paths contained in the repository at planning time. Candidates
 with parent/current-directory segments, backslashes, drive/stream separators or

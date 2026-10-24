@@ -22,6 +22,9 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Manual grouping boundary:** source-edit groups cannot absorb external,
+  ownerless or verification-only tasks. Those tasks retain their actions and
+  evidence without becoming shared template edits through grouping.
 - **Manifest evidence:** the planner retains usable actions when package JSON
   or dependency shapes are unsupported, with bounded warnings and independent
   config/sibling evidence. Non-string version values cannot certify dependency
