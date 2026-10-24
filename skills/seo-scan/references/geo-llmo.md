@@ -226,6 +226,19 @@ removal when observed. Stripping credentials does not verify public access to
 those addresses. Query values and page-supplied names/descriptions are preserved;
 this is not a general secret redactor. Curate the artifact before publishing.
 
+Starter presentation keeps metadata as single-line literal text: whitespace and
+ASCII controls become separators, and the existing literal-text encoder escapes
+markup. Candidate URLs use separate [CommonMark link-destination escaping](https://spec.commonmark.org/0.31.2/#links),
+including parentheses and entity-like query text, without rewriting reserved
+characters as percent encodings. Raw whitespace/control characters in candidate
+URLs stop serialization with a bounded error; supply an encoded address. CLI
+formatting failures retain existing output. Formatting does not modify the build data.
+This controls syntax, not instruction trust, source accuracy or engine behavior;
+review the content before publishing. The bundled report renderer is a limited
+Markdown subset, not a general CommonMark conformance guarantee.
+The independent grammar test uses optional markdown-it-py, included in the
+verification extras; production generation does not import it.
+
 ## Myths worth rejecting
 - "Just add llms.txt and you'll rank in AI." — no evidence.
 - "Stuff pages with AI keywords / 'as an AI language model' bait." — spam.

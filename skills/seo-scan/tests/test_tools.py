@@ -43,7 +43,7 @@ class TestLlmsTxt(unittest.TestCase):
         self.assertIn("# Acme", out)
         self.assertIn("> A great site", out)
         self.assertIn("## Main", out)
-        self.assertIn("- [Home](https://x.com/): Welcome.", out)
+        self.assertIn(r"- [Home](https://x.com/): Welcome\.", out)
         self.assertIn("- [About](https://x.com/about)", out)  # slug title fallback
 
     def test_render_marks_missing_name(self):
