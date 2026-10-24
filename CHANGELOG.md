@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Saved diffs check the opened output against the actual read-snapshot file
+  identities before truncation, refusing direct/symlink/hard-link input aliases.
+  Failed handles close, non-regular outputs are withheld without FIFO blocking,
+  and UTF-8/write failures return controlled errors. Distinct regular output
+  rendering and CI gate behavior remain; separate output writes are non-atomic.
 - Diff inputs require explicit finite 0–100 scan/audit scores and supported
   finding structure/identity before comparison. Missing scores no longer become
   zero or borrowed homepage metrics; invalid fields and decoder/UTF-8 failures

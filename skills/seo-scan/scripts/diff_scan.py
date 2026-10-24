@@ -24,6 +24,7 @@ import argparse
 import json
 import os
 import re
+import stat
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -455,13 +456,39 @@ def _decode_report_json(text: str, label='Report') -> dict:
         raise ValueError(label + ' JSON could not be decoded within supported parser limits.') from None
 
 
-def _load(path: str, label='Report') -> dict:
+def _load(path: str, label='Report', input_stats=None) -> dict:
     with open(path, "r", encoding="utf-8") as fh:
+        if input_stats is not None:
+            input_stats.append(os.fstat(fh.fileno()))
         try:
             text = fh.read()
         except UnicodeError:
             raise ValueError(label + ' file must contain UTF-8 JSON.') from None
     return _decode_report_json(text, label)
+
+
+def _write_output(path: str, text: str, input_stats: list) -> None:
+    """Check the opened output against the snapshots actually read before truncation."""
+    try:
+        text.encode('utf-8')
+    except UnicodeError:
+        raise ValueError('Diff output cannot be encoded as UTF-8.') from None
+    flags = os.O_WRONLY | os.O_CREAT | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0)
+    descriptor = os.open(path, flags, 0o666)  # no O_TRUNC until identity is checked
+    try:
+        with os.fdopen(descriptor, 'w', encoding='utf-8') as fh:
+            descriptor = None
+            output_stat = os.fstat(fh.fileno())
+            if not stat.S_ISREG(output_stat.st_mode):
+                raise ValueError('Diff output must be a regular file.')
+            if any(os.path.samestat(output_stat, source) for source in input_stats):
+                raise ValueError('Diff output aliases an input snapshot; choose a distinct output file.')
+            # shortcut: writes are non-atomic; use atomic replacement if interrupted-output recovery is required.
+            fh.truncate(0)
+            fh.write(text)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
 
 
 def main(argv=None) -> int:
@@ -470,7 +497,7 @@ def main(argv=None) -> int:
     ap.add_argument("old", help="earlier report (scan/audit --format json)")
     ap.add_argument("new", help="later report to compare against it")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
-    ap.add_argument("-o", "--output")
+    ap.add_argument("-o", "--output", help='save to a regular file distinct from both input snapshots')
     ap.add_argument("--fail-on-regression", action="store_true",
                     help="exit non-zero if the score dropped or a new "
                          "critical/high finding appeared; exit 2 for known "
@@ -482,16 +509,25 @@ def main(argv=None) -> int:
     except (AttributeError, ValueError):
         pass
 
+    input_stats = [] if args.output else None
     try:
-        d = diff_reports(_load(args.old, 'Earlier report'), _load(args.new, 'Later report'))
+        d = diff_reports(_load(args.old, 'Earlier report', input_stats),
+                         _load(args.new, 'Later report', input_stats))
     except (OSError, ValueError, json.JSONDecodeError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
 
     out = render_json(d) if args.format == "json" else render_markdown(d)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as fh:
-            fh.write(out)
+        try:
+            _write_output(args.output, out, input_stats)
+        except ValueError as exc:
+            print(f'Error: {exc}', file=sys.stderr)
+            return 2
+        except OSError as exc:
+            print(f'Error: Could not write diff output ({type(exc).__name__}); check target path and permissions.',
+                  file=sys.stderr)
+            return 2
         print(f"Wrote {args.format} diff to {args.output} "
               f"(score {d['old_score']} → {d['new_score']})")
     else:

@@ -803,6 +803,16 @@ unknown; additive fields are preserved. This is a check of consumed evidence,
 not full report-schema validation, score authentication or proof of matching
 execution, URLs or source content.
 
+Saving a diff with `-o` checks the opened output file against the OS identities
+of both input snapshots captured while reading them. Direct, relative, symlink
+and hard-link input aliases are refused with exit **2** before truncation,
+regardless of the regression flag. Distinct regular output files retain normal
+rendering, replacement and gate behavior; a symlink to a distinct output still
+works. Write/encoding failures return a controlled error. This guards the input
+files used for that invocation, not arbitrary snapshots or concurrent external
+mutations. Separate output writes remain non-atomic; an interrupted write may
+leave a partial diff file. Stdout and the read-only MCP callable are unchanged.
+
 ### Real Core Web Vitals (opt-in)
 
 Everything above is local and honest about what it can measure — it will **never

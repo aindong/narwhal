@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Snapshot-preserving diff saves:** CLI output uses the actual input/output
+  file identities before truncation, including link aliases and renamed inputs.
+  Failed handles close; regular distinct saves and gate exits remain. This
+  protects the read snapshots, not filesystem names/concurrent writers, and
+  does not make separate output publication atomic.
 - **Diff input evidence:** malformed core report data cannot become invented
   score gains, skipped findings or passing gates. Explicit scan/audit metrics,
   finding identities and decode boundaries fail clearly before output writes;
