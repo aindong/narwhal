@@ -13,12 +13,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import re
 import sys
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -292,10 +294,24 @@ def summarize_ecommerce(pages: list) -> dict:
             "merchant_pages_count": len(merchant_pages)}
 
 
+def _delay_seconds(value):
+    """Validate pacing before discovery or HTTP, including configured defaults."""
+    try:
+        if type(value) not in (int, float):
+            raise ValueError
+        seconds = float(value)
+        if not math.isfinite(seconds) or seconds < 0:
+            raise ValueError
+    except (ValueError, OverflowError):
+        raise ValueError('delay must be a finite, nonnegative number of seconds.') from None
+    return seconds
+
+
 def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
           timeout=20, delay=0.0, concurrency=4, obey_robots=True,
           check_links=False, max_links=200, detect_dupes=True,
           dup_threshold=90.0, config=None) -> dict:
+    delay = _delay_seconds(delay)
     base = http.normalize_url(base)
     config = config or configlib.Config()
     config, _ = configlib.snapshot_rules(config)
@@ -323,7 +339,18 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     urls, skipped = select_urls(candidates, base, rt, obey_robots, max_pages)
 
+    pace_lock = Lock()
+    next_scan_at = 0.0
+
     def scan_one(u):
+        nonlocal next_scan_at
+        if concurrency > 1 and delay > 0:
+            with pace_lock:
+                remaining = next_scan_at - time.monotonic()
+                if remaining > 0:
+                    time.sleep(remaining)
+                # Schedule from the actual wakeup so late workers cannot burst.
+                next_scan_at = time.monotonic() + delay
         # collect_links is always on: link extraction is pure parsing (no extra
         # requests) and feeds the site-graph analysis even without --check-links.
         return u, scanner.scan(u, render=render, allow_private=allow_private,
@@ -709,7 +736,8 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=d["timeout"])
     ap.add_argument("--allow-private", action="store_true")
     ap.add_argument("--delay", type=float, default=d["delay"], metavar="SECONDS",
-                    help="pause between requests (sequential mode); be a polite bot")
+                    help="seconds between parallel page-scan starts (post-scan pause in sequential mode); "
+                         "does not pace discovery, site resources or optional probes")
     ap.add_argument("--concurrency", type=int, default=d["concurrency"], metavar="N",
                     help="number of pages to scan in parallel (default 4)")
     ap.add_argument("--ignore-robots", action="store_true",
@@ -732,9 +760,15 @@ def main(argv=None) -> int:
     except (AttributeError, ValueError):
         pass
 
+    try:
+        delay = _delay_seconds(args.delay)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
     result = crawl(args.url, max_pages=args.max_pages, render=args.render,
                    allow_private=args.allow_private, timeout=args.timeout,
-                   delay=args.delay, concurrency=args.concurrency,
+                   delay=delay, concurrency=args.concurrency,
                    obey_robots=not args.ignore_robots,
                    check_links=args.check_links, max_links=args.max_links,
                    detect_dupes=not args.no_dupes, dup_threshold=args.dup_threshold,

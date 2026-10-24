@@ -160,8 +160,10 @@ python scripts/crawl_site.py https://example.com --max-pages 25
 ```
 The crawler is polite by default: it **honors robots.txt** (skips disallowed URLs;
 reported in the summary), fetches site-level signals once, and scans pages in
-parallel. Tune with `--concurrency N` (default 4), `--delay SECONDS` (sequential
-rate-limit), and `--ignore-robots` to override. `--fail-under N` gates on the
+parallel. Tune with `--concurrency N` (default 4), `--delay SECONDS` (minimum
+spacing of parallel page-scan starts; sequential post-scan pause), and
+`--ignore-robots` to override. Delay must be finite and nonnegative; it does not
+pace discovery, site resources or optional probes. `--fail-under N` gates on the
 average score. Add `--check-links` to check outbound links (internal + external)
 for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
 rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).

@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl delay now spaces parallel page-scan starts instead of being ignored
+  when concurrency exceeds one. Workers can still overlap, and late wakeups do
+  not create catch-up bursts. Sequential pauses remain unchanged. Invalid
+  delays fail before URL resolution/discovery; CLI errors are controlled.
+  Discovery, site-resource and optional probe requests are outside this pacing.
 - Audit diffs with different complete recorded crawl page samples now withhold
   score/finding verdicts and fail strict gates with exit 2. Exact URL
   multiplicities preserve average-score weighting; page ordering is irrelevant.

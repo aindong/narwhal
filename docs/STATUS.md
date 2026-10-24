@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Parallel page pacing:** crawl delay schedules page-scan starts across workers
+  with a shared monotonic interval; scans can overlap and late wakeups do not
+  create catch-up bursts. Sequential pauses remain. Invalid delay values fail
+  before discovery; site resources and optional probes are not globally paced.
 - **Crawl population evidence:** audit diffs with different complete recorded
   URL samples or multiplicities withhold score/finding verdicts; strict gates
   exit 2. Order does not matter; URLs are not normalized or mapped across hosts.
