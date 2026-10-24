@@ -60,7 +60,7 @@ class TestRenderOutputSafety(unittest.TestCase):
         render = render_report.render
         def rename(*args, **kwargs):
             self.source.rename(moved)
-            self.source.write_text('replacement')
+            self.source.write_text('replacement', encoding='utf-8')
             return render(*args, **kwargs)
         with mock.patch.object(render_report, 'render', side_effect=rename):
             code, out, err = self.invoke(moved)
@@ -68,7 +68,7 @@ class TestRenderOutputSafety(unittest.TestCase):
         self.assertEqual('', out)
         self.assertIn('input snapshot', err)
         self.assertEqual(self.original, moved.read_bytes())
-        self.assertEqual('replacement', self.source.read_text())
+        self.assertEqual('replacement', self.source.read_text(encoding='utf-8'))
 
     def test_pdf_bytes_are_staged_before_source_alias_check(self):
         staged = []
@@ -117,16 +117,16 @@ class TestRenderOutputSafety(unittest.TestCase):
             code, out, err = self.invoke(target, 'pdf')
             self.assertEqual(0, code)
             self.assertIn('No PDF engine available', err)
-            self.assertEqual(render_report.render(self.original.decode()), target.with_suffix('.html').read_text())
+            self.assertEqual(render_report.render(self.original.decode()), target.with_suffix('.html').read_text(encoding='utf-8'))
 
     def test_html_and_stdout_retain_exact_content(self):
         expected = render_report.render(self.original.decode())
         code, out, err = self.invoke()
         self.assertEqual((0, expected + '\n', ''), (code, out, err))
         target = self.root / 'out.html'
-        target.write_text('old output' * 10000)
+        target.write_text('old output' * 10000, encoding='utf-8')
         self.assertEqual(0, self.invoke(target)[0])
-        self.assertEqual(expected, target.read_text())
+        self.assertEqual(expected, target.read_text(encoding='utf-8'))
         self.assertEqual(self.original, self.source.read_bytes())
 
     def test_invalid_input_and_failed_output_are_controlled(self):
