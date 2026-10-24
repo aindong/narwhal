@@ -54,6 +54,22 @@ markup. Healthy page facts, weights, default CLI exits, dependencies and fetch
 budgets remain unchanged. Root-resource coverage has its own checks; this is not
 complete HTTP conformance or independent SEO accuracy.
 
+The complete-byte downloader used for sitemap XML has the same positive range
+rule in both requests and urllib paths. After retaining normal non-2xx failure
+handling, it withholds a successful ranged response before reading encoded/plain
+body bytes or invoking decompression/XML parsing. The bounded failure text does
+not echo Content-Range; transports still close. Sitemap discovery records an
+unverified fetch, not a verified XML root or proof that the file is absent.
+Complete plain/gzip controls and existing response/decoded-byte budgets remain.
+
+Root llms.txt likewise treats the **presence** of Content-Range, including an
+empty value, as range evidence. Existing unverified-state handling remains
+unscored: no text-candidate publication pass or missing-file finding is inferred,
+while notes/comparison gates and manual planning retain uncertainty. This does
+not change robots access policy, explicit image-header range probes, generic
+2xx transport success or any fetch permission. Raw range values are not retained
+as evidence; header syntax and whole-resource validity are not certified.
+
 ## Title & meta description
 - **Title:** ~50–60 characters. Front-load the primary query; include the brand
   at the end. One title per page, unique across the site. Titles over ~65 chars

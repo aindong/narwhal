@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Complete-byte resource downloads reject HTTP 206 and any Content-Range
+  evidence before body reads or decoding in both HTTP backends. Ranged XML
+  cannot become a verified sitemap root; ordinary complete/gzip and HTTP-error
+  controls remain. Root llms.txt uses the same header-presence rule, including
+  empty markers, retaining unverified state without publication/absence claims.
 - Ranged primary HTML (HTTP 206 or any Content-Range evidence) no longer runs
   page auditors or produces missing-metadata/content verdicts from fragments.
   A bounded positive receipt explains unavailable full-page health, retained
