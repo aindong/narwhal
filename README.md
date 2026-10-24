@@ -778,6 +778,17 @@ incomparable coverage. Commit the
 JSON snapshots alongside your repo to keep a lightweight history. Works on `audit`
 JSON too.
 
+Repeated findings use one representative per category/rule ID (or the existing
+normalized-title fallback for legacy findings): the worst observed severity,
+with equal-severity ties selected by sorted-key JSON lexical order. Reordering
+repeated entries cannot invent a severity transition or hide a newly appearing
+critical/high rule behind a later low entry. `finding_identity` records raw
+entry, distinct-identity and repeated-entry counts; Markdown discloses repeats.
+These are rule-level comparisons, not matches between individual nodes or
+instances. Input report scores are retained without recalculation. Severity
+transitions retain their rule IDs when available, and mixed/worsened headlines
+remain visible even when the existing regression-gate criteria are not met.
+
 ### Real Core Web Vitals (opt-in)
 
 Everything above is local and honest about what it can measure — it will **never

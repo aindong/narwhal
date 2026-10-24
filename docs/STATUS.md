@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Repeated diff evidence:** rule-level comparison uses the worst observed
+  severity and stable representative rather than the last repeated entry.
+  Counts disclose aggregation; individual nodes are not matched and recorded
+  scores remain. True mixed/worsened severity changes stay visible in headlines,
+  while the existing score-drop/new-critical-high gate policy is preserved.
 - **Manual grouping boundary:** source-edit groups cannot absorb external,
   ownerless or verification-only tasks. Those tasks retain their actions and
   evidence without becoming shared template edits through grouping.
