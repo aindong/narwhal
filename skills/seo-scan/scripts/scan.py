@@ -28,7 +28,7 @@ from lib.sitemap_discovery import COMMON_PATHS, Discovery  # noqa: E402
 from lib import config as configlib  # noqa: E402
 from lib import llms_resource, content_length, schema_coverage, readability_observation  # noqa: E402
 from lib.cli_errors import url_errors  # noqa: E402
-from lib.report import Report, below_threshold, deliver  # noqa: E402
+from lib.report import Report, below_threshold, deliver, PARTIAL_HTML_ERROR  # noqa: E402
 
 import audit_content  # noqa: E402
 import audit_geo  # noqa: E402
@@ -139,6 +139,18 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                    "Verify the URL is public and returns 200 before auditing.")
         return report
 
+    if http.has_range_evidence(resp):
+        report.meta['coverage']['server_range'] = {'basis': http.SERVER_RANGE_BASIS, 'observed': True}
+        report.hard_fail = True
+        report.add('technical', 'critical', 'Ranged response needs full-page verification',
+                   f'Observed HTTP {resp.status} with range evidence. ' + PARTIAL_HTML_ERROR
+                   + ' No page auditors ran; the zero score is a fail-safe, not measured page health.',
+                   'Verify that a standalone request returns the intended complete HTML before auditing. '
+                   'Inspect server/CDN range handling; do not rewrite metadata, schema or content from this fragment. '
+                   'Re-scan after verifying full-page access; retain request, byte and private-host guards.',
+                   rule_id='technical.response.partial')
+        return report
+
     content_type = resp.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     if content_type and content_type not in ("text/html", "application/xhtml+xml"):
         report.hard_fail = True
@@ -220,8 +232,12 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                     report._capture_inputs['served_response'] = raw_resp
             except (OSError, http.URLInputError):
                 raw_resp = None
-            if raw_resp is None or not raw_resp.ok or raw_resp.status != 200:
+            if raw_resp is None or not raw_resp.ok:
                 receipt["reason"] = "served_html_unavailable"
+            elif http.has_range_evidence(raw_resp):
+                receipt['reason'] = 'served_html_partial'
+            elif raw_resp.status != 200:
+                receipt['reason'] = 'served_html_unavailable'
             elif raw_resp.headers.get("x-narwhal-truncated") == "true":
                 receipt["reason"] = "served_html_truncated"
             elif raw_resp.headers.get("content-type", "").split(";", 1)[0].strip().lower() not in (

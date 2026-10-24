@@ -8,6 +8,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from lib.report import Report
 from test_http_terminal_status import scanned
+from test_server_partial_response import scanned as scanned_partial, response as partial_response
 
 
 def cases():
@@ -40,6 +41,8 @@ def cases():
     # Real scanner execution (only HTTP mocked) must not score terminal bodies.
     for status in (301, 304):
         yield 'terminal-' + str(status), scanned(status, body='' if status == 304 else '<html><h1>Redirect body</h1></html>'), 'Not Measured'
+    for status, ranged in ((206, False), (200, True)):
+        yield 'ranged-' + str(status), scanned_partial(partial_response(status, ranged=ranged)), 'Not Measured'
 
 
 def main(argv=None):

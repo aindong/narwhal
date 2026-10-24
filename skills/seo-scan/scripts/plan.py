@@ -699,6 +699,11 @@ SITEMAP_VERIFICATION = {
 
 
 RESOURCE_VERIFICATION = dict(SITEMAP_VERIFICATION)
+RESOURCE_VERIFICATION['technical.response.partial'] = (
+    'Verify full standalone HTML delivery and server/CDN range handling before proposing source edits. '
+    'Do not rewrite metadata, schema or content based on a partial/ranged body.',
+    ('Inspect observed HTTP status and bounded coverage evidence without relaxing SSRF or byte limits.',
+     'Re-scan the intended full-page URL after verifying complete HTML; do not treat fail-safe score changes as SEO gains.'))
 RESOURCE_VERIFICATION['technical.hreflang.urls.review'] = (
     'Confirm intended language-page URLs and original HTML declarations before editing. '
     'Do not invent locale pages, infer HTTP failures or rewrite unrelated anchor links.',
@@ -821,7 +826,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         verification = RESOURCE_VERIFICATION.get(finding['rule_id'])
         artifact = classify_artifact(finding)
         if verification:
-            artifact = ('canonical' if finding['rule_id'] == 'technical.canonical.comparison.unverified' else
+            artifact = ('server_config' if finding['rule_id'] == 'technical.response.partial' else
+                        'canonical' if finding['rule_id'] == 'technical.canonical.comparison.unverified' else
                         'hreflang' if finding['rule_id'] == 'technical.hreflang.urls.review' else
                         'server_rendering' if finding['rule_id'] in RENDER_VERIFICATION_RULES else
                         'json_ld' if finding['rule_id'].startswith('schema.') else

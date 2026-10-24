@@ -320,6 +320,16 @@ successful final response. A 2xx status alone is not complete HTML, access,
 indexability, search acceptance or page-quality proof; consumer coverage checks
 still apply, including partial and empty response handling.
 
+For page audits, primary HTTP 206 or any Content-Range evidence leaves the full
+page unassessed before extraction. Reports retain observed status and a bounded
+positive `coverage.server_range` receipt, not the raw header, with no completed
+auditor groups and a fail-safe zero rather than measured page health. Ranged
+served baselines also cannot support served/rendered comparisons. Current and
+known historical evidence blocks comparison/brief/diff fix claims and CI gates;
+remediation stays manual, without guessed metadata owners or automatic retries.
+Complete pages and explicitly byte-limited scans keep their existing paths.
+This does not validate HTTP range syntax or certify every other response complete.
+
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a
 candidate, complete 404/410 is observed root absence, and HTML fallbacks, gates, empty,

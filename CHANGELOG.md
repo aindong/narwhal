@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Ranged primary HTML (HTTP 206 or any Content-Range evidence) no longer runs
+  page auditors or produces missing-metadata/content verdicts from fragments.
+  A bounded positive receipt explains unavailable full-page health, retained
+  fail-safe scores and manual-only verification. Partial served baselines do
+  not support rendering conclusions. Page/site notes and current/known-legacy
+  diff/compare/brief gates preserve uncertainty; complete pages and intentional
+  byte-limit scans keep their existing paths. No new requests or SEO gains.
 - Terminal HTTP 3xx responses (including 304 without a cached representation)
   no longer count as successful page/resource bodies. Unresolved redirect HTML
   cannot receive measured page-health scores or become root text resources;

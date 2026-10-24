@@ -24,6 +24,16 @@ DEFAULT_UA = (
 )
 DEFAULT_TIMEOUT = 20
 MAX_REDIRECTS = 10
+SERVER_RANGE_BASIS = 'http_206_or_content_range_v1'
+
+
+def has_range_evidence(response):
+    """Recognize range evidence, not validate its syntax or complete coverage.
+
+    A full byte range or a malformed Content-Range still needs verification;
+    neither is silently promoted to a complete standalone representation.
+    """
+    return response.status == 206 or 'content-range' in response.headers
 
 
 def _origin_headers(headers):

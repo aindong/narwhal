@@ -30,6 +30,7 @@ from lib.markdown_text import TABLE_TEXT_MARKER, table_text  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib.report import recorded_response_partial  # noqa: E402
 from lib import llms_resource  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
@@ -122,7 +123,7 @@ def discover(base: str, *, allow_private: bool, timeout: int, limit: int,
     # 2) fallback: internal links on the entry page
     if not urls:
         resp = http.fetch(base, allow_private=allow_private, timeout=timeout)
-        if resp.ok:
+        if resp.ok and not http.has_range_evidence(resp):
             doc = htmlx.parse(resp.text, base_url=resp.final_url or base)
             for observation in links.extract_links(doc, resp.final_url or base,
                                                    csp=resp.headers.get('content-security-policy', '')):
@@ -365,6 +366,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
         if isinstance(rep.meta.get('anchor_base'), dict):
             pages[-1]['anchor_base'] = dict(rep.meta['anchor_base'])
+        if recorded_response_partial(rep.meta):
+            pages[-1]['response_partial'] = True
         hreflang_receipt = hreflang.recorded(rep.meta)
         if hreflang_receipt is not None:
             pages[-1]['hreflang_extraction'] = hreflang_receipt
@@ -492,6 +495,13 @@ def anchor_base_note(result: dict) -> str:
             'Raw counts and scores are retained, not proof of site improvement.') if affected else ''
 
 
+def partial_response_note(result: dict) -> str:
+    """Do not silently mix full-page scores with unassessed range responses."""
+    affected = sum(recorded_response_partial(page) for page in result.get('pages', []))
+    return (f'{affected} sampled page(s) have partial/ranged HTML coverage; full-page health is unassessed. '
+            'Fail-safe zeros and raw scores are retained, not a comparable site-health measurement or SEO change.') if affected else ''
+
+
 def hreflang_source_note(result: dict) -> str:
     """Keep known source gaps visible even if a sampled cluster has no usable URLs."""
     affected = sum(hreflang.unverified(page) for page in result.get('pages', []))
@@ -526,6 +536,9 @@ def render_markdown(result: dict) -> str:
     hreflang_scope_note = hreflang_source_note(result)
     if hreflang_scope_note:
         lines += ['> ' + hreflang_scope_note, '']
+    partial_note = partial_response_note(result)
+    if partial_note:
+        lines += ['> ' + partial_note, '']
     sitemap_note = sm.reference_note(result.get('sitemap_references'))
     if sitemap_note:
         lines += ['> ' + sitemap_note, '']

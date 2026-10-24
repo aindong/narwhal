@@ -54,6 +54,7 @@ _QUICK_PREVIEW_NOTE = (
 TRUNCATED_HTML_ERROR = (
     "HTML response was truncated; complete HTML is required for comparisons and briefs."
 )
+PARTIAL_HTML_ERROR = 'HTML response was partial/ranged; full-page observations and comparisons are unverified.'
 UNVERIFIED_JS_COMPARISON_ERROR = (
     "JS-dependence is unverified; complete paired HTML is required for page-score comparisons."
 )
@@ -62,6 +63,7 @@ UNVERIFIED_LLMS_ERROR = 'Root llms.txt availability is unverified; GEO-score com
 _JS_COMPARISON_PROBLEMS = {
     "rendered_html_truncated": "rendered HTML was truncated",
     "served_html_truncated": "served HTML was truncated",
+    "served_html_partial": "served HTML had range evidence and was partial/unassessed",
     "served_html_unavailable": "served HTML was unavailable",
     "served_non_html": "the served baseline was not HTML",
 }
@@ -89,6 +91,29 @@ def recorded_response_truncated(meta):
     coverage = meta.get("coverage")
     return meta.get("response_truncated") is True or (
         isinstance(coverage, dict) and coverage.get("response_truncated") is True)
+
+
+def recorded_response_partial(meta):
+    """Known range/partial evidence, not an absence-of-receipt completeness pass.
+
+    Current receipts contain counts/flags, not raw Content-Range. Historical
+    snapshot receipts can expose partial evidence even if old auditors ran.
+    A contradictory known HTTP 206 receipt stays unassessed, never certified.
+    """
+    if not isinstance(meta, dict):
+        return False
+    from .http import SERVER_RANGE_BASIS
+    coverage = meta.get('coverage')
+    receipt = coverage.get('server_range') if isinstance(coverage, dict) else None
+    if meta.get('response_partial') is True or (isinstance(receipt, dict)
+            and receipt.get('basis') == SERVER_RANGE_BASIS and receipt.get('observed') is True):
+        return True
+    supplied = meta.get('hreflang_source_observation')
+    if (isinstance(supplied, dict) and supplied.get('basis') == hreflanglib.SNAPSHOT_BASIS
+            and type(supplied.get('http_status')) is int and supplied['http_status'] == 206):
+        return True
+    snapshot = hreflanglib.recorded_observation(meta)
+    return bool(snapshot and snapshot['status'] == 'partial' and not recorded_response_truncated(meta))
 
 
 def recorded_sitemap_discovery_problem(meta, *, for_score=False):
@@ -305,6 +330,8 @@ class Report:
         requested, completed = scope
         if not completed:
             return "Score unavailable"
+        if recorded_response_partial(self.meta) or self.fetched_status == 206:
+            return 'Reported-findings score'
         if set(completed) != set(requested) or set(requested) != set(CATEGORY_LABELS):
             return "Selected-check score"
         return "Health score"
@@ -318,7 +345,8 @@ class Report:
                             + (' ' + schema if schema else '')
                             + (' ' + canonical.ERROR if canonical.unverified(self.meta) else '')
                             + (' ' + linklib.BASE_ERROR if linklib.unassessed_base(self.meta) else '')
-                            + (' ' + hreflanglib.ERROR if hreflanglib.unverified(self.meta, for_score=True) else ''))
+                            + (' ' + hreflanglib.ERROR if hreflanglib.unverified(self.meta, for_score=True) else '')
+                            + (' ' + PARTIAL_HTML_ERROR if recorded_response_partial(self.meta) or self.fetched_status == 206 else ''))
         if scope is None:
             if self.hard_fail:
                 return "The zero score is a fail-safe, not measured page health; auditor selection was not recorded." + discovery_suffix

@@ -37,6 +37,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import config as configlib  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
+from lib.report import PARTIAL_HTML_ERROR, recorded_response_partial  # noqa: E402
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
@@ -271,6 +272,8 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
     rep = scanner.scan(url, timeout=timeout, allow_private=allow_private,
                        render=render, config=config, max_bytes=max_bytes)
     doc = getattr(rep, "_doc", None)
+    if recorded_response_partial(rep.meta):
+        raise RuntimeError(PARTIAL_HTML_ERROR)
     if rep.fetched_status != 200 or doc is None:
         raise RuntimeError(f"HTTP {rep.fetched_status}")
     if recorded_response_truncated(rep.meta):
