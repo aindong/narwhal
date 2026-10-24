@@ -7,6 +7,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from lib.report import Report
+from test_http_terminal_status import scanned
 
 
 def cases():
@@ -36,6 +37,9 @@ def cases():
         if name in ('unmeasured', 'no-completed'):
             report.meta['scan_scope']['completed'] = []
         yield name, report, expected
+    # Real scanner execution (only HTTP mocked) must not score terminal bodies.
+    for status in (301, 304):
+        yield 'terminal-' + str(status), scanned(status, body='' if status == 304 else '<html><h1>Redirect body</h1></html>'), 'Not Measured'
 
 
 def main(argv=None):

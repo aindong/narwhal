@@ -312,6 +312,14 @@ do not seed probes. A final page can still be scanned normally after a redirect;
 its facts and score are not reassigned as proof of annotations at the old URL.
 See [hreflang scope](skills/seo-scan/references/technical-seo.md#hreflang-reciprocity-cross-page).
 
+Transport success requires a final 2xx response without a recorded fetch error.
+Terminal 3xx responses, including a 304 without a cached representation, do not
+receive measured page-health scores or become successful plain-text resources.
+Normal redirects are still followed within existing guards/budgets and use the
+successful final response. A 2xx status alone is not complete HTML, access,
+indexability, search acceptance or page-quality proof; consumer coverage checks
+still apply, including partial and empty response handling.
+
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a
 candidate, complete 404/410 is observed root absence, and HTML fallbacks, gates, empty,

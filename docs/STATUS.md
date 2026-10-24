@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Terminal HTTP status:** unresolved 3xx/304 responses no longer become
+  measured page-health reports or successful text resources. Ordinary followed
+  redirects still use their successful final response; 2xx alone does not
+  certify complete HTML, indexability or page quality.
 - **Crawled hreflang acquisition:** sampled pages and optional probes share the
   same complete HTML/requested-identity checks. Redirected identities, empty
   bytes and unknown media types stay unassessed for relationships without
