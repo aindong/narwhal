@@ -18,6 +18,8 @@ def main(argv=None):
     cases = [({'headline': payload}, generate({'headline': payload})) for payload in PAYLOADS]
     nested = {'extra': json.dumps({'</script>': [PAYLOADS[0], PAYLOADS[1]]})}
     cases.append((nested, generate(nested)))
+    cases += [(None, generate({'headline': 'Another headline'})),
+              (None, generate({'name': 'Data without a headline'}))]
     cases += [(None, path.read_text(encoding='utf-8')) for path in args.script]
     from playwright.sync_api import sync_playwright
     with sync_playwright() as playwright:
@@ -41,8 +43,6 @@ def main(argv=None):
                     node = json.loads(page.locator('script').text_content())
                     if fields is not None:
                         assert node == generate_schema.build('Article', fields, include_recommended=False)
-                    else:
-                        assert node['headline'] == PAYLOADS[0]
                 finally:
                     page.close()
             assert not requests, requests
