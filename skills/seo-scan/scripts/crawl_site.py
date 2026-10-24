@@ -340,13 +340,13 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     urls, skipped = select_urls(candidates, base, rt, obey_robots, max_pages)
 
     pace_lock = Lock()
-    next_scan_at = 0.0
+    next_scan_at = None
 
     def scan_one(u):
         nonlocal next_scan_at
         if concurrency > 1 and delay > 0:
             with pace_lock:
-                remaining = next_scan_at - time.monotonic()
+                remaining = 0 if next_scan_at is None else next_scan_at - time.monotonic()
                 if remaining > 0:
                     time.sleep(remaining)
                 # Schedule from the actual wakeup so late workers cannot burst.

@@ -18,8 +18,8 @@ URLS = [URL, URL + 'two', URL + 'three']
 
 
 class Clock:
-    def __init__(self, overshoot=0):
-        self.value = 0.0
+    def __init__(self, overshoot=0, start=0.0):
+        self.value = start
         self.sleeps = []
         self.overshoot = overshoot
 
@@ -52,6 +52,11 @@ class TestCrawlPacing(unittest.TestCase):
         clock = Clock()
         starts = self.run_crawl(3, .25, clock, overlap=True)
         self.assertEqual([0, .25, .5], starts)
+        self.assertEqual([.25, .25], clock.sleeps)
+
+    def test_first_scan_does_not_depend_on_clock_origin(self):
+        clock = Clock(start=-10)
+        self.assertEqual([-10, -9.75, -9.5], self.run_crawl(3, .25, clock, overlap=True))
         self.assertEqual([.25, .25], clock.sleeps)
 
     def test_late_wakeup_does_not_schedule_catchup_burst(self):
