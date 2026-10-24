@@ -370,6 +370,8 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- The llms.txt generator stops before discovery/output when homepage metadata comes from a failed, ranged, truncated, empty or explicitly non-HTML response. Unusable selected pages are omitted with selected-fetch counts in build coverage and CLI/MCP curation notes; healthy starter text is unchanged.
+
 - Generated JSON-LD script blocks escape literal less-than characters so supplied closing-script text cannot break into HTML. JSON values round-trip unchanged, including nested keys/values; bare JSON and MCP objects retain their original representation.
 
 - Remediation planning rejects malformed consumed finding/report evidence with field-specific errors before repository inventory or output writes, rather than silently dropping findings or emitting invalid action fields. Legacy omissions remain supported; invalid UTF-8 and JSON parser-limit failures produce bounded CLI errors.
