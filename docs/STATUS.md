@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Uniform report delivery:** scan/audit/render share regular-output checks,
+  encoding preflight, staged PDF engines and controlled exit 2 on expected
+  delivery failures. Partial PDF generation cannot replace the destination;
+  final writer interruptions remain non-atomic and can leave partial files.
 - **Crawl budget preflight:** standalone and composite audits reject invalid
   page/worker limits before I/O, including CLI config defaults. Zero no longer
   means one scanned page or sequential fallback. Valid CLI/API ranges remain;

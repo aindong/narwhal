@@ -84,11 +84,7 @@ def main(argv=None) -> int:
         return 2
 
     html = render(md, title=args.title, subtitle=args.subtitle)
-    try:
-        return deliver(args.format, args.output, html, label="report", input_stats=input_stats)
-    except (OSError, ValueError) as exc:
-        print(f"Error: report output: {exc}", file=sys.stderr)
-        return 2
+    return deliver(args.format, args.output, html, label="report", input_stats=input_stats)
 
 
 if __name__ == "__main__":

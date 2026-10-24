@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Scan/audit report delivery now uses regular-file and UTF-8 preflight checks
+  and stages PDF engine output before final writes, matching Markdown rendering.
+  Expected delivery failures return exit 2 without a success message or
+  traceback; incomplete engine output cannot replace an existing PDF. Fallback
+  HTML uses the same writer. Separate final writes remain non-atomic.
 - Crawl and audit reject nonpositive/noninteger page and worker budgets before
   URL resolution or any subscan. Invalid CLI flags/config defaults exit 2
   without replacing reports, instead of scanning despite a zero-page limit or
