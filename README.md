@@ -577,6 +577,12 @@ are unchanged; absent flags do not certify unchecked or unmeasured conditions.
   including configured defaults; invalid values fail before fetching (CLI exit
   2). CLI/API limits are not silently capped. MCP keeps its documented page
   (1–100) and worker (1–8) clamps.
+- Sitemap URL probes select distinct exact URL strings at deterministic evenly
+  spaced positions across parsed-file order, including endpoints when at least
+  two are selected. A one-URL sample selects the first. `sample_selection` records
+  the policy, requested cap and eligible distinct count; raw URL totals remain.
+  This is not random or statistically representative, and a new selection can
+  expose different failures on an unchanged sitemap.
 - Link caps (`--max-links`) and sitemap file/sample caps (`--max-sitemaps`,
   `--sample`) require nonnegative integers, including consumed config defaults.
   Invalid caps fail before fetching (CLI exit 2). Zero skips the corresponding optional

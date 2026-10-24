@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Sitemap URL probes now sample distinct exact URL strings at deterministic
+  evenly spaced positions, including first/last when at least two are selected.
+  Duplicate entries no longer consume repeated HEAD requests, and awkward
+  budgets no longer select only a prefix. JSON/Markdown record the bounded
+  policy; raw URL totals remain. Different sampled failures on an unchanged
+  sitemap reflect selection changes, not a measured site regression.
 - Invalid link/sitemap request caps are rejected before discovery or composite
   audit subscans. Negative link caps can no longer become Python slices that
   check almost all targets. CLI flags and consumed config defaults fail with

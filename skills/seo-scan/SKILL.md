@@ -168,7 +168,10 @@ limits must be positive integers (including config defaults); invalid limits
 fail before fetching with CLI exit 2. Link and sitemap file/sample caps require
 nonnegative integers; zero retains scoped optional-check skips, not an all-network
 off switch. Consumed config defaults follow the same preflight. MCP retains its
-page/worker clamps. `--fail-under N` gates on the
+page/worker clamps. Sitemap probes sample distinct exact URL strings at evenly
+spaced positions in parsed-file order (endpoints when selecting at least two;
+one selects the first). JSON/Markdown record the policy. This bounded sample is
+not random or representative; changed selection is not evidence of a site change. `--fail-under N` gates on the
 average score. Add `--check-links` to check outbound links (internal + external)
 for 4xx/5xx/dead — reported grouped by source page (`--max-links N` caps how many;
 rate-limited/bot-blocked codes like 429/403 are treated as gated, not broken).
