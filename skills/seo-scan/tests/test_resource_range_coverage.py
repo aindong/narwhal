@@ -1,8 +1,10 @@
 """Complete-resource APIs must not certify ranged XML or empty range markers."""
 import gzip
 import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 import sys
+import threading
 import unittest
 from unittest import mock
 
@@ -12,6 +14,65 @@ from lib.report import recorded_llms_problem
 from lib.sitemap_discovery import Discovery
 from test_sitemap_fetch_completeness import XML,URL,REQUESTS,Stream,requests_response,fetch
 from test_llms_resource import response as llms_response,report_for
+
+
+class ResourceHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = gzip.compress(XML) if self.path == '/gzip' else XML
+        self.send_response(206 if self.path == '/partial' else 200)
+        self.send_header('Content-Length', str(len(body)))
+        if self.path in ('/range', '/empty-range'):
+            self.send_header('CoNtEnT-RaNgE', '' if self.path == '/empty-range' else 'bytes 0-80/900')
+        if self.path == '/gzip':
+            self.send_header('Content-Encoding', 'gzip')
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+class TestLiveResourceRangeCoverage(unittest.TestCase):
+    """Exercise native header containers and sockets, without public networking."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.server = HTTPServer(('127.0.0.1', 0), ResourceHandler)
+        cls.worker = threading.Thread(target=cls.server.serve_forever, kwargs={'poll_interval': 0.01}, daemon=True)
+        cls.worker.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.worker.join(timeout=5)
+
+    def check_transport(self, requests_module):
+        root = 'http://127.0.0.1:' + str(self.server.server_port)
+        with mock.patch.dict(sys.modules, {'requests': requests_module}):
+            for path in ('/partial', '/range', '/empty-range'):
+                with self.subTest(path=path):
+                    url = root + path
+                    self.assertEqual((None, http.PARTIAL_RESOURCE_ERROR),
+                                     http.fetch_bytes(url, allow_private=True, timeout=2))
+                    reader = Discovery('crawl_candidates')
+                    self.assertIsNone(reader.read(url, allow_private=True, timeout=2))
+                    self.assertEqual(0, reader.receipt()['verified_files'])
+                    self.assertEqual(1, reader.receipt()['unverified_files'])
+                    self.assertEqual(0, reader.receipt()['absent_files'])
+            for path in ('/plain', '/gzip'):
+                with self.subTest(path=path):
+                    self.assertEqual((XML, None), http.fetch_bytes(root + path, allow_private=True, timeout=2))
+
+    def test_real_urllib_range_headers_and_complete_controls(self):
+        self.check_transport(None)
+
+    def test_real_requests_range_headers_and_complete_controls(self):
+        try:
+            import requests
+        except ImportError:
+            self.skipTest('Optional requests backend is not installed')
+        self.check_transport(requests)
 
 
 def ranged(provider,status=200,marker='bytes 900-980/4000',encoded=False):
