@@ -526,7 +526,7 @@ pip install -r skills/seo-scan/requirements.txt
 python skills/seo-scan/scripts/scan.py https://example.com/page
 
 # 3. audit a whole site (polite crawler: honors robots.txt, parallel, rate-limited)
-python skills/seo-scan/scripts/crawl_site.py https://example.com --max-pages 25 --concurrency 4
+python skills/seo-scan/scripts/crawl_site.py https://example.com --max-pages 25 --concurrency 4 --delay 0.5
 
 # 4. generate valid schema.org JSON-LD
 python skills/seo-scan/scripts/generate_schema.py Article \
@@ -573,6 +573,9 @@ are unchanged; absent flags do not certify unchecked or unmeasured conditions.
   ```bash
   python skills/seo-scan/scripts/audit.py https://example.com --vitals --format pdf -o audit.pdf
   ```
+- Crawl `--delay SECONDS` spaces parallel page-scan starts; sequential mode
+  retains its post-scan pause. The value must be finite and nonnegative. This
+  paces page scans, not discovery, site resources or optional probe requests.
 - `--only technical,content,schema,geo` — choose auditor groups; duplicates run
   once. For example, `--only schema` produces a focused structured-data report.
   Unknown names and empty comma-separated entries are rejected before fetching

@@ -111,7 +111,7 @@ Used when the corresponding flag isn't passed.
 | `concurrency` | 4 | `crawl` |
 | `max_pages` | 15 | `crawl` |
 | `max_links` | 200 | `crawl --check-links` |
-| `delay` | 0.0 | `crawl` |
+| `delay` | 0.0 | `crawl`: finite, nonnegative seconds between parallel page-scan starts; sequential post-scan pause |
 | `sample` | 10 | `sitemap` |
 | `max_sitemaps` | 50 | `sitemap` |
 | `dup_threshold` | 90.0 | `crawl` (near-duplicate % similarity) |
