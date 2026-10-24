@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Crawled hreflang acquisition:** sampled pages and optional probes share the
+  same complete HTML/requested-identity checks. Redirected identities, empty
+  bytes and unknown media types stay unassessed for relationships without
+  altering final-page scan facts or generating probes from withheld sources.
 - **Hreflang source safety and scope:** malformed or unsupported URLs no longer
   crash scans or become fabricated absolute annotations. Source counts/omissions
   remain visible; partial/omitted snapshots cannot prove missing return tags or

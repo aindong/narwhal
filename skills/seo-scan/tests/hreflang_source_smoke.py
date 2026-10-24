@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import audit
 import crawl_site
-from lib import htmlx, hreflang, sitegraph
+from lib import htmlx, hreflang, sitegraph, http
 from lib.report import html_document, md_to_html
 from test_hreflang_source_syntax import BASE, VALID, alts, page_report, receipt, source
 
@@ -23,6 +23,9 @@ def main(argv=None):
     report = page_report('http://secret:password@[broken', VALID)
     measured = hreflang.analyze({BASE: alts(BASE, VALID), VALID: []},
                                 coverage={BASE: receipt(BASE, VALID), VALID: receipt('/en/')})
+    measured['sampled_source_observations'] = [
+        {'target': BASE, **hreflang.source_observation(http.Response(BASE, BASE, 200, {'content-type': 'text/html'}, source(BASE, VALID), 1), BASE)},
+        {'target': VALID, **hreflang.source_observation(http.Response(VALID, BASE, 200, {'content-type': 'text/html'}, source(BASE), 1), VALID)}]
     site = {'base': BASE, 'pages_scanned': 2, 'avg_score': report.score(), 'recurring': Counter(),
             'hreflang_policy_basis': hreflang.EXTRACTION_BASIS, 'hreflang': measured,
             'pages': [{'url': BASE, 'score': report.score(), 'hreflang_extraction': receipt(BASE, VALID), 'hreflang_comparison_unverified': False},
@@ -39,6 +42,9 @@ def main(argv=None):
     docs.append(('legacy', wrap('\n'.join(hreflang.render_markdown(legacy)))))
     hostile = hreflang.analyze({BASE: [{'lang': '<img src=x onerror=alert(1)>', 'href': BASE},
                                       {'lang': 'fr', 'href': VALID + '?x=![](https://outside.test/track)'}], VALID: []})
+    hostile['sampled_source_observations'] = [
+        {'target': VALID + '?x=![](https://outside.test/track)', 'status': 'non_html', 'http_status': 200,
+         'acquisition': 'guarded_http', 'basis': hreflang.SNAPSHOT_BASIS} for _ in range(8)]
     docs.append(('literal', wrap('\n'.join(hreflang.render_markdown(hostile)))))
     assert before == report.to_json() and graph_before == measured
     docs += [('installed-' + str(i), path.read_text(encoding='utf-8')) for i, path in enumerate(args.html)]
@@ -69,8 +75,13 @@ def main(argv=None):
                     if name in ('crawl', 'audit-native', 'audit-markdown', 'cluster'):
                         assert 'Unassessed due to source gaps/partial snapshots: 1 directed pair(s)' in body, name
                         assert 'Missing return tags' not in body, name
+                        assert 'Crawled source observations: 1 of 2' in body, name
+                        assert 'final URL identity unverified/unassessed' in body, name
                     if name == 'legacy': assert 'coverage was not recorded' in body
-                    if name == 'literal': assert '<img src=x onerror=alert(1)>' in body
+                    if name == 'literal':
+                        assert '<img src=x onerror=alert(1)>' in body
+                        assert '+3 more (see JSON)' in body
+                        assert page.locator('img[src^="http"]').count() == 0
                     if name in ('cluster', 'legacy', 'literal'): assert '🟢' not in body
                     if not name.startswith('installed-'):
                         assert 'password' not in body, name

@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawled hreflang responses now share bounded acquisition checks with optional
+  probes: redirected identities, empty bytes, unknown media types and partial or
+  unavailable snapshots cannot establish missing return tags or seed extra
+  probes. Explicit source receipts preserve final-page scan facts and qualify
+  sampled relationship output, without changing page scoring or fetch budgets.
 - HTML hreflang extraction survives malformed URLs and retains supported source
   annotations without inventing absolute URLs from relative references. Explicit
   source counts, omission reasons and scoped relationship/probe receipts replace

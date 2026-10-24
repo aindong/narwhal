@@ -19,6 +19,11 @@ CODE = re.compile(r"^[a-z]{2,3}(-[a-z]{4})?(-([a-z]{2}|\d{3}))?$", re.I)
 PROBE_CAP = 5
 EXTRACTION_BASIS = 'html_hreflang_absolute_http_source_v1'
 ANALYSIS_BASIS = 'supported_html_hreflang_pairs_v1'
+SNAPSHOT_BASIS = 'html_hreflang_response_snapshot_v1'
+_SNAPSHOT_STATUSES = ('source_observed', 'unavailable', 'empty', 'partial', 'non_html', 'identity_changed')
+_OBSERVATION_LABELS = {'source_observed': 'parsed source snapshot', 'unavailable': 'response unavailable/unassessed',
+                       'empty': 'empty body/unassessed', 'partial': 'partial body/unassessed',
+                       'non_html': 'HTML media type unverified/unassessed', 'identity_changed': 'final URL identity unverified/unassessed'}
 ERROR = 'HTML hreflang URL coverage is unassessed; technical/overall score comparisons are unverified.'
 _REASONS = ('missing_href', 'not_fully_qualified', 'non_http', 'syntax', 'unsupported_reference')
 
@@ -114,6 +119,35 @@ def note(meta):
               'HTTP-header/sitemap coverage or search-engine acceptance.')
 
 
+def source_observation(response, target):
+    """Qualify a response for requested-identity relationship checks, not page health.
+
+    A page scan can still audit a redirect's final page. This receipt only keeps
+    its HTML from establishing annotations at an unobserved requested identity.
+    No request, redirect permission, raw error or final URL is added here.
+    """
+    content_type = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
+    status = ('unavailable' if not response.ok or not 200 <= response.status < 300 else 'empty' if not response.text else
+              'partial' if response.headers.get('x-narwhal-truncated') == 'true' else
+              'non_html' if content_type not in ('text/html', 'application/xhtml+xml') else
+              'identity_changed' if href_problem(response.final_url) is not None or href_problem(target) is not None
+              or norm(response.final_url) != norm(target) else 'source_observed')
+    return {'basis': SNAPSHOT_BASIS, 'status': status,
+            'acquisition': 'rendered_snapshot' if response.rendered else 'guarded_http', 'http_status': response.status}
+
+
+def recorded_observation(meta):
+    """Recognize a bounded response receipt, without authenticating imported data."""
+    value = meta.get('hreflang_source_observation') if isinstance(meta, dict) else None
+    if (not isinstance(value, dict) or value.get('basis') != SNAPSHOT_BASIS
+            or value.get('status') not in _SNAPSHOT_STATUSES
+            or value.get('acquisition') not in ('guarded_http', 'rendered_snapshot')
+            or type(value.get('http_status')) is not int or not 0 <= value['http_status'] <= 599
+            or (value.get('status') != 'unavailable' and not 200 <= value['http_status'] < 300)):
+        return None
+    return value
+
+
 def probe(pages_alts: dict, *, allow_private=False, timeout=8, cap=PROBE_CAP,
           fetch_text=None, diagnostics=None, observations=None) -> dict:
     """Fetch up to ``cap`` same-host alternate URLs we didn't crawl and extract
@@ -152,14 +186,8 @@ def probe(pages_alts: dict, *, allow_private=False, timeout=8, cap=PROBE_CAP,
                 observation['status'] = 'unavailable'
                 if observations is not None: observations.append(observation)
                 continue
-            content_type = (response.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
-            observation['http_status'] = response.status
-            reason = ('unavailable' if not response.ok else 'empty' if not response.text else
-                      'partial' if response.headers.get('x-narwhal-truncated') == 'true' else
-                      'non_html' if content_type not in ('text/html', 'application/xhtml+xml') else
-                      'identity_changed' if href_problem(response.final_url) is not None or norm(response.final_url) != norm(t) else None)
-            if reason:
-                observation['status'] = reason
+            observation.update(source_observation(response, t))
+            if observation['status'] != 'source_observed':
                 if observations is not None: observations.append(observation)
                 continue  # unavailable/partial/other-identity snapshots do not establish absent annotations
             body = response.text
@@ -278,17 +306,36 @@ def render_markdown(r: dict) -> list:
     observations = r.get('probe_observations')
     if isinstance(observations, list):
         lines += [f"- **Probe observations:** {len(observations)} selected target(s); this is not a count of redirect/network hops."]
-        labels = {'source_observed': 'parsed source snapshot', 'unavailable': 'response unavailable/unassessed',
-                  'empty': 'empty body/unassessed', 'partial': 'partial body/unassessed',
-                  'non_html': 'HTML media type unverified/unassessed', 'identity_changed': 'final URL identity unverified/unassessed'}
         for observation in observations[:5]:
-            label = labels.get(observation.get('status'), 'unrecorded/unsupported observation')
+            label = _OBSERVATION_LABELS.get(observation.get('status'), 'unrecorded/unsupported observation')
             code = observation.get('http_status')
             transport = 'guarded HTTP' if observation.get('acquisition') == 'guarded_http' else 'supplied body; not HTTP verification'
             lines += ['  - ' + _literal(observation.get('target', '')) + ': ' + label + '; ' + transport
                       + (f'; HTTP {code}' if type(code) is int else '')]
         if len(observations) > 5:
             lines += [f"  - … +{len(observations) - 5} more (see JSON)"]
+    sampled = r.get('sampled_source_observations')
+    if isinstance(sampled, list):
+        usable = sum(bool(recorded_observation({'hreflang_source_observation': item}))
+                     and item.get('status') == 'source_observed' for item in sampled)
+        unassessed = [item for item in sampled if not recorded_observation({'hreflang_source_observation': item})
+                      or item.get('status') != 'source_observed']
+        lines += [f"- **Crawled source observations:** {usable} of {len(sampled)} supplied response(s) qualified "
+                  f"for requested-identity relationship checks; {len(unassessed)} unassessed. "
+                  'This is not page-health, translation or search-acceptance verification.']
+        rendered = sum(bool(recorded_observation({'hreflang_source_observation': item}))
+                       and item.get('acquisition') == 'rendered_snapshot' for item in sampled)
+        if rendered:
+            lines += [f"  - {rendered} rendered snapshot(s), not original served HTML; this does not prove search-crawler rendering."]
+        for item in unassessed[:5]:
+            value = item if isinstance(item, dict) else {}
+            observation = recorded_observation({'hreflang_source_observation': value})
+            label = _OBSERVATION_LABELS[observation['status']] if observation else 'unrecorded/unsupported observation'
+            lines += ['  - ' + _literal(value.get('target', '')) + ': ' + label]
+        if len(unassessed) > 5:
+            lines += [f"  - … +{len(unassessed) - 5} more (see JSON)"]
+    else:
+        lines += ['- Crawled response acquisition coverage is unrecorded; source counts alone do not establish requested URL identity or a complete HTML response.']
     if r["missing_return"]:
         lines.append(f"- **Missing return tags ({len(r['missing_return'])})** — recorded "
                      'within supported supplied snapshots, not search-acceptance proof:')

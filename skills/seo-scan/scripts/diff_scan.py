@@ -87,6 +87,9 @@ def _comparison(o: dict, n: dict) -> dict:
             bases = [item[source].get('hreflang_policy_basis') if isinstance(item[source], dict) else None for item in (o, n)]
             if hreflang.EXTRACTION_BASIS in bases and any(basis != hreflang.EXTRACTION_BASIS for basis in bases):
                 reasons.append('HTML hreflang source policy differs or is unrecorded; changed technical observations are not site-fix evidence.')
+        acquisition_bases = [item['crawl'].get('hreflang_acquisition_basis') if isinstance(item['crawl'], dict) else None for item in (o, n)]
+        if hreflang.SNAPSHOT_BASIS in acquisition_bases and any(basis != hreflang.SNAPSHOT_BASIS for basis in acquisition_bases):
+            reasons.append('Crawled hreflang response-acquisition policy differs or is unrecorded; changed relationships are not site-fix evidence.')
     for label, item, scope in zip(("Earlier", "Later"), (o, n), scopes):
         if scope is not None and (not scope[1] or set(scope[0]) != set(scope[1])):
             reasons.append(label + " report did not complete all requested auditor groups.")

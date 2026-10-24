@@ -408,6 +408,28 @@ HTTP status when available, without raw exception/final-URL claims. `probed`
 counts usable snapshot entries, not all attempts or redirect/network hops.
 Reports display at most five probe observations with explicit omissions.
 
+Already crawled pages use the same response classifier before relationship
+analysis. `hreflang_source_observation` records the explicit
+`html_hreflang_response_snapshot_v1` basis, bounded status, HTTP status and
+guarded-HTTP versus rendered-snapshot acquisition kind. Unknown/malformed
+receipts stay unassessed, not inferred complete. `source_observed` means a
+nonempty, untruncated 2xx HTML/XHTML response with matching requested/final URL
+identity under Narwhal's literal URL policy, not canonical/server equivalence
+or search acceptance. A complete HTML document without alternates can establish
+an observed missing return; an empty byte body cannot.
+
+A scan can still audit the final page after a redirect. Its source counts,
+findings and score remain final-page facts. For requested-URL relationships,
+unqualified source tags are withheld from the map and cannot seed additional
+probes. Sampled entries remain known/unassessed and are not re-fetched. Crawl
+`sampled_source_observations` retains the acquisition receipts, including early
+hard failures; the report shows the qualified/total counts and up to five
+unassessed literals with explicit omissions. Rendered snapshot counts are
+disclosed separately, not treated as original served HTML or crawler behavior.
+The crawl `hreflang_acquisition_basis` distinguishes current/legacy relationship
+measurement; changed policy is not evidence of a repaired site. These response
+receipts add no scoring deduction, request, retry or new network permission.
+
 Page/site notes expose known gaps and counts. Known current versus missing/
 different policy, or known omissions relevant to selected technical scoring,
 withhold diff/compare/brief improvement verdicts (CI diff gates exit 2).
