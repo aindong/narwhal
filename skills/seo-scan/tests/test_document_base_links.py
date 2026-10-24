@@ -239,7 +239,7 @@ class TestDocumentBaseLinks(unittest.TestCase):
         before = json.loads(page.to_json())
         self.assertEqual('incomparable', diff_scan.diff_reports(before, after)['comparison']['status'])
         self.assertEqual('comparable', diff_scan.diff_reports(after, copy.deepcopy(after))['comparison']['status'])
-        old_audit = {'site': BASE, 'homepage': before, 'crawl': {'pages': []}}
+        old_audit = {'site': BASE, 'overall_score': before['score'], 'homepage': before, 'crawl': {'pages': []}}
         prior = copy.deepcopy(old_audit); prior['crawl']['link_resolution_basis'] = links.LEGACY_RESOLUTION_BASIS
         self.assertEqual('incomparable', diff_scan.diff_reports(old_audit, prior)['comparison']['status'])
         current = copy.deepcopy(prior); current['crawl']['link_resolution_basis'] = links.RESOLUTION_BASIS
@@ -252,7 +252,8 @@ class TestDocumentBaseLinks(unittest.TestCase):
         payload = json.loads(page.to_json())
         self.assertEqual('incomparable', diff_scan.diff_reports(payload, payload)['comparison']['status'])
         plain = json.loads(Report(BASE, fetched_status=200).to_json())
-        audit = {'site': BASE, 'homepage': plain, 'crawl': {'pages': [{'anchor_base': page.meta['anchor_base']}]}}
+        audit = {'site': BASE, 'overall_score': plain['score'], 'homepage': plain,
+                 'crawl': {'pages': [{'anchor_base': page.meta['anchor_base']}]}}
         self.assertEqual('incomparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
 
     def test_compare_and_brief_do_not_promote_unassessed_page_scores(self):

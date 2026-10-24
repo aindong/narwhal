@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff inputs require explicit finite 0–100 scan/audit scores and supported
+  finding structure/identity before comparison. Missing scores no longer become
+  zero or borrowed homepage metrics; invalid fields and decoder/UTF-8 failures
+  produce bounded, labeled errors without output writes or passing CI verdicts.
+  Valid legacy identities and unrecorded execution metadata retain their paths.
 - Scan/audit diffs compare repeated rule identities by worst observed severity
   with stable representatives and ordering. Later low entries cannot hide a new
   high rule or create order-only severity changes. Entry-count receipts disclose

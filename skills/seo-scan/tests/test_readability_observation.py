@@ -184,8 +184,8 @@ class TestReadabilityObservation(unittest.TestCase):
     def test_known_scope_change_is_not_reported_as_a_fix_in_page_or_crawl_diff(self):
         old=scanned('Useful instructions.');new=copy.deepcopy(old)
         new['meta']['scan_settings']['readability_reviewed']=False
-        for a,b in [(old,new),({'homepage':old,'crawl':{'pages':[{'url':URL,'scan_settings':old['meta']['scan_settings']}]}},
-                              {'homepage':old,'crawl':{'pages':[{'url':URL,'scan_settings':new['meta']['scan_settings']}]}})]:
+        for a,b in [(old,new),({'overall_score':old['score'],'homepage':old,'crawl':{'pages':[{'url':URL,'scan_settings':old['meta']['scan_settings']}]}},
+                              {'overall_score':old['score'],'homepage':old,'crawl':{'pages':[{'url':URL,'scan_settings':new['meta']['scan_settings']}]}})]:
             result=diff_scan.diff_reports(a,b)
             self.assertEqual('incomparable',result['comparison']['status'])
             self.assertFalse(result['resolved'])
@@ -218,7 +218,7 @@ class TestReadabilityObservation(unittest.TestCase):
         data=scanned('Useful instructions.')
         settings=data['meta']['scan_settings']
         other={**settings,'readability_reviewed':False}
-        value={'homepage':data,'crawl':{'pages':[{'url':URL,'scan_settings':settings},{'url':URL,'scan_settings':other}]}}
+        value={'overall_score':data['score'],'homepage':data,'crawl':{'pages':[{'url':URL,'scan_settings':settings},{'url':URL,'scan_settings':other}]}}
         result=diff_scan.diff_reports(value,copy.deepcopy(value))
         self.assertEqual('incomparable',result['comparison']['status'])
         self.assertTrue(any('contradictory readability_reviewed' in r for r in result['comparison']['reasons']))

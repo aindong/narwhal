@@ -134,7 +134,7 @@ class TestCrawledHreflangAcquisition(unittest.TestCase):
         site, _ = crawl(response)
         with mock.patch.object(http, 'fetch', return_value=response):
             page = json.loads(scan.scan(TARGET, ctx={}, check_images=False).to_json())
-        current = {'site': BASE, 'homepage': page, 'crawl': site}
+        current = {'site': BASE, 'overall_score': min(page['score'], site['avg_score']), 'homepage': page, 'crawl': site}
         legacy = copy.deepcopy(current); legacy['crawl'].pop('hreflang_acquisition_basis')
         self.assertEqual('incomparable', diff_scan.diff_reports(legacy, current)['comparison']['status'])
         self.assertEqual('comparable', diff_scan.diff_reports(current, copy.deepcopy(current))['comparison']['status'])

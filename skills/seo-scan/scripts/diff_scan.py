@@ -42,24 +42,52 @@ _CATS = {"technical": "Technical SEO", "content": "Content & E-E-A-T",
          "schema": "Structured data", "geo": "GEO / LLMO"}
 
 
-def _normalize(data: dict) -> dict:
-    """Keep score/findings and recorded execution provenance for comparisons."""
-    if "findings" in data:  # single-page scan report
-        return {"url": data.get("final_url") or data.get("url", ""),
-                "score": data.get("score", 0),
-                "findings": data.get("findings", []),
-                "kind": "scan", "meta": data.get("meta", {}), "crawl": None,
-                "rendered": data.get("rendered"), 'status': data.get('status')}
-    if "homepage" in data:  # comprehensive audit report
-        hp = data.get("homepage", {})
-        return {"url": data.get("site") or hp.get("url", ""),
-                "score": data.get("overall_score", hp.get("score", 0)),
-                "findings": hp.get("findings", []),
-                "kind": "audit", "meta": hp.get("meta", {}), "crawl": data.get("crawl"),
-                "rendered": hp.get("rendered"), 'status': hp.get('status')}
-    raise ValueError(
-        "Unrecognized report JSON — expected `narwhal scan` or `narwhal audit` "
-        "output produced with `--format json`.")
+def _normalize(data: dict, label='Report') -> dict:
+    """Validate consumed evidence without repairing it or inferring missing metrics."""
+    if not isinstance(data, dict):
+        raise ValueError(label + ' must be a JSON object.')
+    if 'findings' in data and 'homepage' in data:
+        raise ValueError(label + ' has ambiguous scan/audit fields; supply one report kind.')
+    if 'findings' in data:
+        page, kind, score_field, finding_field = data, 'scan', 'score', 'findings'
+        target = data.get('final_url') or data.get('url', '')
+    elif 'homepage' in data:
+        page = data['homepage']
+        if not isinstance(page, dict):
+            raise ValueError(label + '.homepage must be a JSON object.')
+        kind, score_field, finding_field = 'audit', 'overall_score', 'homepage.findings'
+        target = data.get('site') or page.get('url', '')
+    else:
+        raise ValueError(label + ' is unrecognized; expected scan/audit --format json output.')
+    score = data.get(score_field)
+    # A bounded numeric interval also excludes NaN/infinity without converting
+    # huge JSON integers to floats. Booleans are not measured numeric scores.
+    if type(score) not in (int, float) or not 0 <= score <= 100:
+        raise ValueError(label + '.' + score_field + ' must be a finite number between 0 and 100.')
+    findings = page.get('findings')
+    if not isinstance(findings, list):
+        raise ValueError(label + '.' + finding_field + ' must be a list.')
+    for index, finding in enumerate(findings):
+        location = f'{label}.{finding_field}[{index}]'
+        if not isinstance(finding, dict):
+            raise ValueError(location + ' must be an object.')
+        category, title = finding.get('category'), finding.get('title')
+        if not isinstance(category, str) or not category.strip():
+            raise ValueError(location + '.category must be a non-empty string.')
+        if not isinstance(title, str):
+            raise ValueError(location + '.title must be a string.')
+        if not isinstance(finding.get('severity'), str) or finding['severity'] not in SEVERITY:
+            raise ValueError(location + '.severity must be critical, high, medium, low or good.')
+        rule = finding.get('rule_id')
+        if rule is not None and (not isinstance(rule, str) or (rule and not rule.strip())):
+            raise ValueError(location + '.rule_id must be a string or null; blank whitespace is unsupported.')
+        if not rule and not _key(finding)[1]:
+            raise ValueError(location + ' needs a non-empty rule_id or usable normalized legacy title.')
+    if not isinstance(target, str):
+        raise ValueError(label + ' URL label must be a string.')
+    return {'url': target, 'score': score, 'findings': findings, 'kind': kind,
+            'meta': page.get('meta', {}), 'crawl': data.get('crawl') if kind == 'audit' else None,
+            'rendered': page.get('rendered'), 'status': page.get('status')}
 
 
 def _comparison(o: dict, n: dict) -> dict:
@@ -247,7 +275,7 @@ def _index_findings(findings: list) -> dict:
 
 
 def diff_reports(old: dict, new: dict) -> dict:
-    o, n = _normalize(old), _normalize(new)
+    o, n = _normalize(old, 'Earlier report'), _normalize(new, 'Later report')
     comparison = _comparison(o, n)
     if comparison["status"] == "incomparable":
         # Absence from a narrower/unmeasured run is not evidence of resolution.
@@ -415,9 +443,25 @@ def render_json(d: dict) -> str:
     return json.dumps(d, indent=2, ensure_ascii=False)
 
 
-def _load(path: str) -> dict:
+def _decode_report_json(text: str, label='Report') -> dict:
+    """Turn known decoder failures into bounded diagnostics without body excerpts."""
+    if not isinstance(text, str):
+        raise ValueError(label + ' JSON input must be a string.')
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f'{label} JSON is invalid at line {exc.lineno}, column {exc.colno}.') from None
+    except (ValueError, RecursionError):
+        raise ValueError(label + ' JSON could not be decoded within supported parser limits.') from None
+
+
+def _load(path: str, label='Report') -> dict:
     with open(path, "r", encoding="utf-8") as fh:
-        return json.load(fh)
+        try:
+            text = fh.read()
+        except UnicodeError:
+            raise ValueError(label + ' file must contain UTF-8 JSON.') from None
+    return _decode_report_json(text, label)
 
 
 def main(argv=None) -> int:
@@ -439,7 +483,7 @@ def main(argv=None) -> int:
         pass
 
     try:
-        d = diff_reports(_load(args.old), _load(args.new))
+        d = diff_reports(_load(args.old, 'Earlier report'), _load(args.new, 'Later report'))
     except (OSError, ValueError, json.JSONDecodeError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2

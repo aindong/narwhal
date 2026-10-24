@@ -317,7 +317,7 @@ class TestHreflangSourceSyntax(unittest.TestCase):
 
     def test_content_only_audit_does_not_gain_a_false_hreflang_score_gap(self):
         report = json.loads(page_report('/fr/', only=['content']).to_json())
-        value = {'site': BASE, 'homepage': report, 'crawl': {
+        value = {'site': BASE, 'overall_score': report['score'], 'homepage': report, 'crawl': {
             'hreflang_policy_basis': hreflang.EXTRACTION_BASIS,
             'pages': [{'hreflang_comparison_unverified': False, 'hreflang_extraction': receipt('/fr/')}]}}
         self.assertEqual('comparable', diff_scan.diff_reports(value, copy.deepcopy(value))['comparison']['status'])
