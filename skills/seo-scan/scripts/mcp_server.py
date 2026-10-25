@@ -176,8 +176,8 @@ def _compare(your_url: str, competitor_urls: list, render: bool = False,
 
 
 def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
-           use_gsc: bool = False, max_bytes: int = 5_000_000) -> dict:
-    """Build a content brief from supplied pages, with optional own-page GSC queries.
+           use_gsc: bool = False, max_bytes: int = 5_000_000, gsc_site: str = "") -> dict:
+    """Build a content brief from supplied pages, with optional owned-site GSC queries.
 
     Args:
         your_url: The page you're rewriting (omit when planning a new page).
@@ -187,6 +187,8 @@ def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
             credentials in the environment; degrades to a labeled
             structure-only brief without them).
         max_bytes: HTML bytes retained per page/snapshot (64KB–20MB; default 5MB).
+        gsc_site: Explicit topic-mode opt-in for queries from your owned site;
+            ignored when your_url is supplied. Empty by default.
 
     Returns target queries (real GSC data only — never invented), competitor
     gaps, compared-heading review candidates (legacy ``missing_subtopics``),
@@ -198,7 +200,8 @@ def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
     import brief as brief_mod
     max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     return brief_mod.run(your_url or None, list(competitor_urls or []),
-                         topic=topic or None, use_gsc=use_gsc, max_bytes=max_bytes)
+                         topic=topic or None, use_gsc=use_gsc, max_bytes=max_bytes,
+                         gsc_site=gsc_site or None)
 
 
 def _diff(old_json: str, new_json: str) -> dict:

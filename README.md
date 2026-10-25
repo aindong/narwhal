@@ -76,7 +76,7 @@ And yes, it works as a backronym too:
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | sampled click depth and start coverage, orphan-page candidates (sitemap vs crawl), inbound-link counts (not measured link equity) — observations stay visible even with zero inter-page edges |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, structure, social packaging, with separate neutral length and statistic/citation-pattern observations (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
-| **Content briefs** | `narwhal brief <you> <rival…>`: a page-grounded writing plan — competitor gaps, heading-review candidates, questions, schema and structure candidates. Add `--gsc` to opt into your page's real striking-distance queries; default briefs do not query account services |
+| **Content briefs** | `narwhal brief <you> <rival…>`: a page-grounded writing plan — competitor gaps, heading-review candidates, questions, schema and structure candidates. Add `--gsc` for own-page queries, or `--topic "…" --gsc-site <your-site>` for adjacent topic queries (Python/MCP: `gsc_site`). Matching question queries feed the writing plan; default briefs do not query account services |
 
 GEO text-cue checks expose literal counts and limits in `meta.geo_text_cues`.
 English-oriented patterns do not measure answer accuracy, actual paragraphs,

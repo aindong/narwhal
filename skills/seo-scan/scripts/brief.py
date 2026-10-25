@@ -303,12 +303,13 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
 
 
 def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None,
-        use_gsc: bool = False, days: int = 28, min_impressions: int = 50,
+        use_gsc: bool = False, gsc_site: str = None, days: int = 28, min_impressions: int = 50,
         timeout: int = 20, allow_private: bool = False, render: bool = False,
         config=None, max_bytes: int = 5_000_000) -> dict:
     """Fetch everything and build the brief. Failed competitor fetches are
     reported and skipped; a failed own-page fetch is an error. ``max_bytes`` is
-    the per-snapshot HTML limit (64KB–20MB), shared by all pages."""
+    the per-snapshot HTML limit (64KB–20MB), shared by all pages. ``gsc_site``
+    explicitly opts topic mode into queries for that owned site."""
     max_bytes = max(64_000, min(int(max_bytes), 20_000_000))
     config = config or configlib.Config()
     config, _ = configlib.snapshot_rules(config)
@@ -336,7 +337,10 @@ def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None
                          "no page-grounded brief was measured."}
 
     gsc_data = None
-    if use_gsc:
+    if not your_url and topic and gsc_site:
+        gsc_data = run_topic_gsc(gsc_site, days=days, min_impressions=min_impressions,
+                                 timeout=timeout)
+    elif use_gsc:
         if your_url:  # GSC only knows *your* property — never query rivals'
             import gsc as gsclib  # noqa: PLC0415
             gsc_data = gsclib.gather(your_url, days=days, timeout=timeout,
@@ -602,24 +606,10 @@ def main(argv=None) -> int:
               f"(got {len(competitors)}).", file=sys.stderr)
 
     b = run(your_url, competitors, topic=args.topic, use_gsc=args.gsc,
+            gsc_site=args.gsc_site if not args.no_gsc else None,
             days=args.days, min_impressions=args.min_impressions,
             timeout=args.timeout, allow_private=args.allow_private,
             render=args.render, config=cfg, max_bytes=args.max_bytes)
-    # Topic mode with an explicit GSC site: fold real adjacent demand in.
-    if args.topic and args.gsc_site and not args.no_gsc and not b.get("error"):
-        g = run_topic_gsc(args.gsc_site, days=args.days,
-                          min_impressions=args.min_impressions,
-                          timeout=args.timeout)
-        if g.get("found"):
-            b["gsc"] = {"found": True, "property": g.get("property"),
-                        "window": g.get("window"),
-                        "striking": topic_queries(g, args.topic),
-                        "laggard": None, "decaying": None, "cannibalized": []}
-            if b["gsc"]["striking"]:
-                b["grounding"] = "queries+pages"
-        else:
-            b["gsc"] = {"found": False, "note": g.get("error")}
-
     out = render_json(b) if args.format == "json" else render_markdown(b)
     if args.output:
         if not save_output(args.output, out, label='brief'):

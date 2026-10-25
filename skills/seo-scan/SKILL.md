@@ -119,9 +119,13 @@ no keyword APIs, no invented volumes):
 python scripts/brief.py https://you.com/page https://rival.com/page
 python scripts/brief.py https://you.com/page https://rival.com/page --gsc  # explicit Search Console opt-in
 python scripts/brief.py --topic "widget calibration" https://rival.com/guide
+python scripts/brief.py --topic "widget calibration" https://rival.com/guide --gsc-site https://you.com  # explicit topic-query opt-in
 ```
-By default, uses supplied pages without querying account services. Explicit
-`--gsc` (Python/MCP `use_gsc=True`) adds the page's own **striking-distance GSC queries** (positions 8–20 —
+By default, uses supplied pages without querying account services. Topic
+`--gsc-site` (Python/MCP `gsc_site`) explicitly opts into your site's recorded queries
+before deriving question and schema-review candidates; review relevance and
+visible content before implementing suggestions.
+Explicit `--gsc` (Python/MCP `use_gsc=True`) adds the page's own **striking-distance GSC queries** (positions 8–20 —
 demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **compared-heading review candidates** (a lexical
 H2/H3 term filter, not verified missing semantic coverage), **question-shaped candidates**

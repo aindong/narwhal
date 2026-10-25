@@ -31,6 +31,56 @@ def services():
 
 
 class TestServiceOptIn(unittest.TestCase):
+    def test_python_and_mcp_topic_site_opt_in_uses_shared_synthesis(self):
+        question = 'Why do widgets wobble?'
+        query = {'query': question, 'page': BASE, 'impressions': 120, 'position': 9}
+        for call in (brief.run, mcp_server._brief):
+            with services() as (queries, _), mock.patch.object(brief, '_page', return_value=page(RIVAL, OWN_HTML)):
+                queries.return_value = {'found': True, 'striking': [query]}
+                default = call(competitor_urls=[RIVAL], topic='widgets')
+                queries.assert_not_called()
+                self.assertEqual('pages-only', default['grounding'])
+                data = call(competitor_urls=[RIVAL], topic='widgets', gsc_site=BASE)
+                self.assertNotIn('you', data)
+                self.assertEqual('queries+pages', data['grounding'])
+                self.assertEqual([question], [q['question'] for q in data['questions']])
+                self.assertEqual('gsc_query', data['questions'][0]['source_kind'])
+                self.assertEqual(['FAQPage'], [s['type'] for s in data['schema']])
+                queries.assert_called_once()
+                self.assertEqual(BASE, queries.call_args.args[0])
+                queries.reset_mock()
+                data = call(BASE, topic='widgets', gsc_site=RIVAL)
+                queries.assert_not_called()
+                self.assertFalse(data['gsc']['found'])
+
+    def test_topic_queries_feed_question_and_schema_candidates_before_rendering(self):
+        question = 'Why do widgets wobble?'
+        query = {'query': question, 'page': BASE, 'impressions': 120, 'position': 9}
+        window = {'start': '2026-01-01', 'end': '2026-01-28'}
+        cases = (({'found': True, 'property': 'fixture', 'window': window, 'striking': [query]}, True),
+                 ({'found': True, 'property': 'fixture', 'window': window,
+                   'striking': [{**query, 'query': 'Why do bicycles wobble?'}]}, False),
+                 ({'found': False, 'error': 'fixture credentials unavailable'}, False))
+        for result, matched in cases:
+            with self.subTest(result=result), services() as (queries, _), \
+                    mock.patch.object(brief, '_page', return_value=page(RIVAL, OWN_HTML)), \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
+                queries.return_value = result
+                self.assertEqual(0, cli.main(['brief', '--topic', 'widgets', RIVAL,
+                                             '--gsc-site', BASE, '--no-config', '--format', 'json']))
+                data = json.loads(output.getvalue())
+                self.assertEqual('queries+pages' if matched else 'pages-only', data['grounding'])
+                self.assertEqual([question] if matched else [], [q['question'] for q in data['questions']])
+                self.assertEqual(['FAQPage'] if matched else [], [s['type'] for s in data['schema']])
+                self.assertIs(result['found'], data['gsc']['found'])
+                if result['found']:
+                    self.assertEqual('fixture', data['gsc']['property'])
+                    self.assertEqual(window, data['gsc']['window'])
+                    self.assertEqual([query] if matched else [], data['gsc']['striking'])
+                else:
+                    self.assertEqual(result['error'], data['gsc']['note'])
+                self.assertEqual(BASE, queries.call_args.args[0])
+
     def test_brief_guidance_distinguishes_opt_in_from_authentication(self):
         data = brief.synthesize(page(BASE, OWN_HTML), [], None)
         rendered = brief.render_markdown(data)
@@ -59,7 +109,9 @@ class TestServiceOptIn(unittest.TestCase):
             if schema is None:
                 schema = tool.input_schema
             self.assertIs(False, schema['properties']['use_gsc']['default'])
-            for arguments, expected in (({}, 0), ({'use_gsc': True}, 1)):
+            self.assertEqual('', schema['properties']['gsc_site']['default'])
+            for arguments, expected in (({}, 0), ({'use_gsc': True}, 1),
+                    ({'your_url': '', 'competitor_urls': [RIVAL], 'topic': 'widgets', 'gsc_site': BASE}, 1)):
                 with services() as (queries, _), mock.patch.object(brief, '_page', return_value=page(BASE, OWN_HTML)):
                     await server.call_tool('content_brief', {'your_url': BASE, **arguments})
                     self.assertEqual(expected, queries.call_count)
