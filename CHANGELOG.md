@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner-generated link-check and sitemap-sample witnesses omit credential-like
+  target/source labels using the existing marker rule. Explicit reasons retain
+  bounded source positions, observation totals and response classifications;
+  the input report and safe literal labels are unchanged.
 - Audit remediation plans retain bounded crawl target labels for recorded
   unprefixed HTTP-header restrictions, including their receipt count and basis.
   Unsupported or named-crawler-only observations do not imply affected targets;
