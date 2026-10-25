@@ -165,6 +165,8 @@ def assert_public_host(url: str, allow_private: bool = False) -> None:
         raise SSRFError(f"Cannot resolve host {host!r}: {exc}") from exc
     except UnicodeError as exc:
         raise URLInputError(f"Invalid host encoding: {exc}") from exc
+    if not infos:
+        raise SSRFError(f"Cannot resolve host {host!r}: no addresses returned")
     for info in infos:
         ip = info[4][0]
         if _is_blocked_ip(ip):

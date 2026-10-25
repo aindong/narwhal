@@ -1162,6 +1162,7 @@ both current major lines.
 - **SSRF-safe.** DNS checks reject private, loopback, link-local, shared IPv4
   (`100.64.0.0/10`), IPv6 site-local and other non-global addresses unless you
   explicitly pass `--allow-private`. Existing reserved/multicast checks remain.
+  An empty DNS result is rejected before fetching.
 - **Fix-first output.** Reports lead with the highest-severity, highest-leverage
   changes — not a data dump.
 

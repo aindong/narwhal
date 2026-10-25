@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- An empty DNS resolution result no longer passes the public-host guard.
+  Primary fetches and redirects reject it before transport access; optional
+  resource checks retain their controlled error results. The explicit
+  private-host override remains unchanged.
 - Default host checks reject shared IPv4 and IPv6 site-local addresses that
   `is_private` does not cover. Mixed DNS answers and redirects retain the same
   guard; the explicit private-host opt-in remains. No blocked endpoint is fetched
