@@ -851,6 +851,8 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
                         if f'src/pages/index.{extension}' in files]
             if framework == 'nuxt':
                 return [rel for rel in ('app/pages/index.vue', 'pages/index.vue') if rel in files]
+            if framework == 'hugo':
+                return ['content/_index.md'] if 'content/_index.md' in files else []
         return []
     if not _portable_source_path(path):
         if warnings is not None:
@@ -881,7 +883,10 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
     if framework in ("hugo", "jekyll"):
         prefix = "content" if framework == "hugo" else ""
         base = f"{prefix}/{path}".strip("/")
-        return [f"{base}.md", f"{base}/index.md", f"{slug}.md"]
+        routes = [f"{base}.md", f"{base}/index.md", f"{slug}.md"]
+        if framework == 'hugo' and f'{base}/_index.md' in files:
+            routes.append(f'{base}/_index.md')
+        return routes
     return []
 
 
