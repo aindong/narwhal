@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Image range probes close requests responses after stream failures and urllib
+  HTTP-error bodies without reading them. Existing prefix/error results are
+  preserved; failed streams still cannot supply partial image evidence.
 - Automatic mutation CI includes both integer budget validators and transport
   preflight regressions: the default gate now kills 69/69 mutants across five
   functions, with no runtime dependency or behavior changes.

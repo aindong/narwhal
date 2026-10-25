@@ -681,13 +681,15 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
             r, _, _ = _requests_safe(
                 requests, "GET", url, timeout=timeout, headers=headers,
                 allow_private=allow_private, stream=True)
-            buf = b""
-            for chunk in r.iter_content(chunk_size=8192):
-                buf += chunk
-                if len(buf) >= n:
-                    break
-            r.close()
-            return buf[:n], None if r.status_code < 400 else f"HTTP {r.status_code}"
+            try:
+                buf = b""
+                for chunk in r.iter_content(chunk_size=8192):
+                    buf += chunk
+                    if len(buf) >= n:
+                        break
+                return buf[:n], None if r.status_code < 400 else f"HTTP {r.status_code}"
+            finally:
+                r.close()
         except (requests.RequestException, SSRFError, ValueError) as exc:
             return None, type(exc).__name__
     except ImportError:
@@ -700,6 +702,7 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
         with fh:
             return fh.read(n), None
     except urllib.error.HTTPError as exc:
+        exc.close()
         return None, f"HTTP {exc.code}"
     except Exception as exc:  # noqa: BLE001
         return None, type(exc).__name__
