@@ -117,6 +117,29 @@ class TestCrawlRuleDiff(unittest.TestCase):
                     self.assertEqual(int(better), len(receipt['improved']))
                     self.assertEqual([], receipt['count_changed'])
 
+    def test_strict_gate_requires_verified_crawl_rules_without_breaking_legacy_viewing(self):
+        for change in ('missing', 'malformed', 'sample_missing', 'empty_sample'):
+            old, new = report([]), report([])
+            if change == 'missing':
+                old['crawl'].pop('recurring')
+            elif change == 'malformed':
+                new['crawl']['recurring'] = [dict(row(), count=True)]
+            elif change == 'sample_missing':
+                old['crawl'].pop('pages')
+            else:
+                old['crawl']['pages'] = new['crawl']['pages'] = []
+            with self.subTest(change=change):
+                code, output, error = cli(old, new, '--require-comparable', '--fail-on-regression', '--format', 'json')
+                self.assertEqual(2, code)
+                self.assertEqual('unverified', json.loads(output)['crawl_rule_changes']['status'])
+                self.assertIn('crawl-rule', error)
+                for flags in ((), ('--fail-on-regression',)):
+                    code, _, error = cli(old, new, *flags)
+                    self.assertEqual(0, code)
+                    self.assertIn('WARNING: crawl-rule', error)
+        self.assertEqual(0, cli(report([]), report([]), '--require-comparable', '--fail-on-regression')[0])
+        self.assertEqual(1, cli(report([]), report([row()]), '--require-comparable', '--fail-on-regression')[0])
+
 
 if __name__ == '__main__':
     unittest.main()

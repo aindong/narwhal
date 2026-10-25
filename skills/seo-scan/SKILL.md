@@ -231,6 +231,9 @@ coverage and nonempty exact crawl samples. New critical/high rules and severity
 escalations trigger the regression gate even without a score drop. Removed rules
 mean no longer observed in that sample, not per-page fixes or complete site
 coverage. Missing, legacy or unsupported rollups remain explicitly unverified.
+For audits, `--require-comparable` also requires a verified crawl-rule comparison;
+missing/unsupported rollups or absent/empty crawl samples exit 2. Ordinary viewing
+and the non-strict regression flag retain legacy behavior with a warning.
 
 **Map findings to source before editing** (read-only, no changes applied):
 ```

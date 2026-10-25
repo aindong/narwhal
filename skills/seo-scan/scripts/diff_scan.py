@@ -612,12 +612,16 @@ def main(argv=None) -> int:
         print(out)
 
     status = d["comparison"]["status"]
+    crawl_unverified = ('crawl_rule_changes' in d and d['crawl_rule_changes']['status'] != 'compared')
     if status == "unknown":
         print("WARNING: auditor coverage is unverified; legacy finding/score comparison "
               "does not prove matching checks.", file=sys.stderr)
-    if args.require_comparable and status != "comparable":
+    if crawl_unverified:
+        print('WARNING: crawl-rule comparison is unverified; inspect crawl_rule_changes.reason.', file=sys.stderr)
+    if args.require_comparable and (status != "comparable" or crawl_unverified):
         print("FAIL: comparable recorded report coverage is required; restore matching completed "
-              "auditor execution and verify the comparison reasons before accepting a fix.", file=sys.stderr)
+              "auditor execution and verified crawl-rule evidence for audits; inspect the comparison "
+              "reasons before accepting a fix.", file=sys.stderr)
         return 2
     if args.fail_on_regression and status == "incomparable":
         print("FAIL: report coverage is not comparable; re-scan with matching completed "
