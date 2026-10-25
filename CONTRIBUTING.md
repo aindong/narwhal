@@ -141,9 +141,8 @@ untested, skipped, timed-out, suspicious, interrupted and unknown outcomes fail.
 
 Include selected functions/tests, killed/total counts, exclusions and remaining
 limits in the PR. Expand the committed scope when an area has a stable, fast
-baseline. The gate currently runs locally; automatic CI integration is pending
-permission to publish the workflow. Other functions require a focused local
-run. Keep the full test suite and the
+baseline. GitHub Actions runs the default gate on pull requests and pushes to
+main; other functions require a focused local run. Keep the full test suite and the
 review → fix → review → green CI → merge flow.
 
 ## Pull requests
