@@ -208,6 +208,16 @@ files, duplicate entries within one action, and excluded manual actions do not
 create existing-candidate overlap evidence. Markdown labels the union and
 multiple-action candidates explicitly; absent legacy overlap data is unrecorded.
 
+Markdown shows up to 600 characters of each selected `source_recommendation`
+as reported guidance requiring review, using a literal text block separate from
+planner-authored change and verification instructions. Supplied command-looking
+text remains data. A truncation note points to the full unchanged JSON field;
+empty or absent legacy fields produce no recommendation section. Rules with
+contextual editorial/verification overrides keep their original recommendation
+in JSON only; Markdown directs readers to the calibrated guidance instead of
+reintroducing unsupported legacy advice. Evidence
+previews retain the same bound and literal-block behavior.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.
