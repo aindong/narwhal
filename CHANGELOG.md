@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner source suggestions prioritize existing route conventions for page
+  content and plain-HTML head changes over alphabetical homepage fallbacks.
+  Framework head/discovery ordering and missing-file suggestion order remain.
 - Repository inventory caps require an observed additional eligible file.
   Exact-budget repositories retain complete scoped inventory and viewport
   candidacy; later traversal errors still record incomplete coverage.

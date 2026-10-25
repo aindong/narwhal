@@ -805,15 +805,19 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
         return []
     file_set = set(files)
     config = FRAMEWORK_CANDIDATES.get(framework, FRAMEWORK_CANDIDATES["unknown"])
+    routes = ([] if artifact in ('robots_txt', 'sitemap', 'llms_txt') else
+              _route_candidates(target, framework, warnings))
+    preferred_routes = set(routes) if (artifact in ('content', 'headings', 'image_alt')
+                                      or framework == 'plain_html' and artifact in HEAD_ARTIFACTS) else set()
     if artifact in ("robots_txt", "sitemap"):
         candidates = list(config.get(artifact, []))
     elif artifact == "llms_txt":
         base = (config.get("static") or ["."])[0]
         candidates = [("llms.txt" if base == "." else f"{base}/llms.txt")]
     elif artifact in HEAD_ARTIFACTS:
-        candidates = list(config.get("head", [])) + _route_candidates(target, framework, warnings)
+        candidates = list(config.get("head", [])) + routes
     else:
-        candidates = _route_candidates(target, framework, warnings) + list(config.get("content", []))
+        candidates = routes + list(config.get("content", []))
 
     # Include existing convention-matching files, not just canonical names.
     if artifact in HEAD_ARTIFACTS:
@@ -836,11 +840,13 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
         out.append({
             "path": rel,
             "exists": exists,
-            "confidence": 0.9 if exists and rel in candidates[:4] else (0.72 if exists else 0.42),
-            "reason": ("Existing framework convention" if exists else
+            "confidence": 0.9 if exists and (rel in preferred_routes or rel in candidates[:4]) else (0.72 if exists else 0.42),
+            "reason": ("Existing route convention; confirm source ownership" if exists and rel in routes else
+                       "Existing framework convention" if exists else
                        "Framework convention; create or confirm generated owner"),
         })
-    out.sort(key=lambda item: (not item["exists"], -item["confidence"], item["path"]))
+    out.sort(key=lambda item: (not item["exists"], -item["confidence"],
+                               not (item["exists"] and item["path"] in preferred_routes), item["path"]))
     return out[:8]
 
 
