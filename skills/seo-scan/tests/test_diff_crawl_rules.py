@@ -140,6 +140,25 @@ class TestCrawlRuleDiff(unittest.TestCase):
         self.assertEqual(0, cli(report([]), report([]), '--require-comparable', '--fail-on-regression')[0])
         self.assertEqual(1, cli(report([]), report([row()]), '--require-comparable', '--fail-on-regression')[0])
 
+    def test_explicit_page_count_must_match_the_recorded_sample(self):
+        for count in (True, '2', 2.0, -1, 0, 1, 3, 99):
+            for side in ('old', 'new'):
+                old, new = report([]), report([])
+                (old if side == 'old' else new)['crawl']['pages_scanned'] = count
+                with self.subTest(count=count, side=side):
+                    original = copy.deepcopy((old, new))
+                    result = diff_scan.diff_reports(old, new)
+                    self.assertEqual('unverified', result['crawl_rule_changes']['status'])
+                    self.assertIn('pages_scanned', result['crawl_rule_changes']['reason'])
+                    self.assertIsNone(result['crawl_rule_changes']['regression'])
+                    self.assertEqual(2, cli(old, new, '--require-comparable')[0])
+                    self.assertEqual(original, (old, new))
+        old, new = report([]), report([])
+        for data in (old, new):
+            data['crawl']['pages_scanned'] = 2
+        self.assertEqual('compared', diff_scan.diff_reports(old, new)['crawl_rule_changes']['status'])
+        self.assertEqual(0, cli(old, new, '--require-comparable')[0])
+
 
 if __name__ == '__main__':
     unittest.main()
