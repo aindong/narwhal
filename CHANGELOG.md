@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Automatic mutation CI includes both integer budget validators and transport
+  preflight regressions: the default gate now kills 69/69 mutants across five
+  functions, with no runtime dependency or behavior changes.
 - Primary HTML and range-probe byte budgets reject invalid values before DNS,
   browser startup or transport setup. Negative values cannot reach urllib's
   read-all behavior. Zero HTML retention remains supported; range/raw-byte

@@ -11,7 +11,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TARGETS = ('lib.links.x_http_check_state__mutmut_*', 'lib.links.x_is_broken__mutmut_*',
-                   'lib.urlpaths.x_remove_dot_segments__mutmut_*')
+                   'lib.urlpaths.x_remove_dot_segments__mutmut_*',
+                   'lib.budgets.x_nonnegative_integer__mutmut_*',
+                   'lib.budgets.x_positive_integer__mutmut_*')
 
 
 def check_results(records, patterns):

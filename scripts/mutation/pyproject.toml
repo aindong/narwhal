@@ -1,10 +1,11 @@
 [tool.mutmut]
 source_paths = ["src/"]
-only_mutate = ["src/lib/links.py", "src/lib/urlpaths.py"]
+only_mutate = ["src/lib/links.py", "src/lib/urlpaths.py", "src/lib/budgets.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_sitemap_response_states.py",
   "skills/seo-scan/tests/test_auditors.py::TestLinks::test_is_broken",
   "skills/seo-scan/tests/test_auditors.py::TestLinks::test_gated_codes_not_broken",
   "skills/seo-scan/tests/test_relative_link_paths.py",
+  "skills/seo-scan/tests/test_transport_byte_preflight.py",
 ]
