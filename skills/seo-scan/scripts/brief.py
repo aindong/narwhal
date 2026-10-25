@@ -237,7 +237,9 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
             {"striking": topic_queries(gsc, topic), "laggard": None,
              "decaying": None, "cannibalized": []}
         brief["gsc"] = {"found": True, "property": gsc.get("property"),
-                        "window": gsc.get("window"), **full}
+                        "window": gsc.get("window"),
+                        "capped": gsc.get("capped") if type(gsc.get("capped")) is bool else None,
+                        **full}
         striking = full["striking"]
     else:
         brief["gsc"] = {"found": False,
@@ -388,7 +390,7 @@ def render_markdown(b: dict) -> str:
                   "compared pages' HTML snapshots._", ""]
     elif gsc.get("found"):
         lines += [f"_Search Console is connected (`{gsc.get('property', '?')}`)"
-                  " but has no striking-distance queries for this page yet — "
+                  " but no matching striking-distance queries were observed in the retrieved rows — "
                   "the plan below is grounded in the compared pages' HTML "
                   "snapshots. No queries are invented._", ""]
     else:
@@ -400,6 +402,13 @@ def render_markdown(b: dict) -> str:
                   + (f" ({gsc['note']})" if gsc.get("note") else "")
                   + ". Target queries are omitted rather than invented; "
                   + guidance + "._", ""]
+    if gsc.get('found'):
+        if gsc.get('capped') is True:
+            lines += ['_Search Console reached the row limit in either query window; '
+                      'query observations may be incomplete. Missing matches do not prove absent demand._', '']
+        elif type(gsc.get('capped')) is not bool:
+            lines += ['_Search Console row-limit status was not recorded; '
+                      'query coverage is unverified._', '']
     for f in b.get("failed", []):
         detail = f" — {f['error']}" if f.get("error") else ""
         lines.append(f"_Skipped competitor: {f['url']}{detail}_")

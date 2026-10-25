@@ -125,6 +125,10 @@ By default, uses supplied pages without querying account services. Topic
 `--gsc-site` (Python/MCP `gsc_site`) explicitly opts into your site's recorded queries
 before deriving question and schema-review candidates; review relevance and
 visible content before implementing suggestions.
+Brief `gsc.capped` preserves the collector's row-limit flag (null if unknown).
+A cap in either query window can limit observations; no matching retrieved
+queries does not prove absent demand. An uncapped response is not proof of
+exhaustive Search Console coverage.
 Explicit `--gsc` (Python/MCP `use_gsc=True`) adds the page's own **striking-distance GSC queries** (positions 8–20 —
 demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **compared-heading review candidates** (a lexical
