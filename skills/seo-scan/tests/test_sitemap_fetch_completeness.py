@@ -229,6 +229,37 @@ class TestSitemapFetchCompleteness(unittest.TestCase):
         response = requests_response([XML], length='000' + str(len(XML)))
         self.assertEqual((XML, None), fetch('requests', response, budget=len(XML)))
 
+    def test_malformed_or_missing_declared_lengths_do_not_establish_excess(self):
+        for value in (None, '', ' \t', '-100', '+100', '1e9', '1.0', '100,100',
+                      '9:', 'A', '/', '\uff11\uff12\uff13', '\u0661\u0662\u0663'):
+            with self.subTest(value=value):
+                self.assertIs(False, http._declared_length_exceeds(value, 1))
+
+    def test_declared_length_comparison_matches_small_integer_boundaries(self):
+        for number in (0, 1, 9, 10, 99, 100, 199, 200, 201):
+            for budget in (0, 1, 8, 9, 10, 99, 100, 199, 200, 201):
+                for value in (str(number), '000' + str(number), ' \t00' + str(number) + ' '):
+                    with self.subTest(value=value, budget=budget):
+                        self.assertIs(number > budget, http._declared_length_exceeds(value, budget))
+        self.assertIs(True, http._declared_length_exceeds('9' * 10_000, 1_000_000))
+        self.assertIs(False, http._declared_length_exceeds('0' * 10_000, 0))
+
+    def test_limit_probe_uses_only_valid_declared_lengths_and_discards_overflow(self):
+        for declared, expected_chunks in (('4', 1), ('3A', 2), ('\uff14', 2), (None, 2)):
+            with self.subTest(declared=declared):
+                yielded = []
+                def chunks():
+                    for chunk in (b'abc', b'X'):
+                        yielded.append(chunk)
+                        yield chunk
+                response = requests_response([], length=declared)
+                response.iter_content.return_value = chunks()
+                body, error = fetch('requests', response, budget=3)
+                self.assertIsNone(body)
+                self.assertIn('raw byte limit', error)
+                self.assertEqual(expected_chunks, len(yielded))
+                response.close.assert_called_once()
+
     def test_http_error_handles_are_closed_without_reading_their_body(self):
         source = io.BytesIO(XML)
         error = urllib.error.HTTPError(URL, 404, 'not found', {}, source)
