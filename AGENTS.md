@@ -71,7 +71,8 @@ For toolkit development, run the normal offline suite, then the focused mutation
 gate before review/merge: `python scripts/mutation_test.py` in the Python 3.12
 environment from `requirements-mutation.txt`. See `CONTRIBUTING.md` for setup,
 selecting changed functions/tests and reviewing survivors. The default scope
-is `lib.links.http_check_state` and `lib.links.is_broken`, not the whole
+is `lib.links.http_check_state`, `lib.links.is_broken` and
+`lib.urlpaths.remove_dot_segments`, not the whole
 repository. For behavior changes,
 mutation-test affected functions as well, strengthen assertions for real
 survivors, and report scope and killed/total counts. Empty/untested/incomplete

@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Mutation coverage includes literal URL dot-segment handling. Terminal-dot,
+  repeated-separator and empty-root assertions catch four previously surviving
+  mutations; the focused default gate now kills 57/57 mutants across three
+  helpers. Production URL resolution and scanner behavior are unchanged.
 - The focused mutation gate also exercises the existing broken-link predicate
   assertions, covering two status-0 mutations missed by response-state tests
   alone. Multiple requested function patterns must each match mutants;
