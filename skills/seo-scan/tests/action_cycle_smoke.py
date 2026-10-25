@@ -298,7 +298,14 @@ def main(use_mcp=False):
                 (root / 'audit-inconsistent.json').write_text(json.dumps(inconsistent), encoding='utf-8')
                 run(['diff', 'audit-inconsistent.json', 'audit-after.json', '--require-comparable',
                      '--fail-on-regression', '--format', 'json', '-o', 'audit-inconsistent-diff.json'], expected=2)
-                assert read('audit-inconsistent-diff.json')['crawl_rule_changes']['status'] == 'unverified'
+                inconsistent_diff = read('audit-inconsistent-diff.json')
+                assert inconsistent_diff['crawl_rule_changes']['status'] == 'unverified'
+                assert inconsistent_diff['comparison']['status'] == 'incomparable'
+                assert inconsistent_diff['score_delta'] is None and inconsistent_diff['resolved'] == [], inconsistent_diff
+                run(['diff', 'audit-inconsistent.json', 'audit-after.json', '--fail-on-regression'], expected=2)
+                if use_mcp:
+                    assert inconsistent_diff == mcp_tool('diff_reports', {
+                        'old_json': json.dumps(inconsistent), 'new_json': json.dumps(audit_after)}, root)
                 incomplete = json.loads(json.dumps(audit_before))
                 incomplete['crawl']['pages'][1]['scan_scope'] = {'requested': ['technical'], 'completed': []}
                 (root / 'audit-incomplete-scope.json').write_text(json.dumps(incomplete), encoding='utf-8')

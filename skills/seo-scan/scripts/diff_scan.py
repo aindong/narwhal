@@ -103,6 +103,8 @@ def _comparison(o: dict, n: dict) -> dict:
     samples = [_crawl_sample(item["crawl"]) for item in (o, n)]
     for label, item, sample in zip(('Earlier', 'Later'), (o, n), samples):
         crawl = item['crawl']
+        if _crawl_count_problem(crawl):
+            reasons.append(label + ' audit has unusable pages_scanned evidence; its overall score is not comparable.')
         if isinstance(crawl, dict) and 'pages' in crawl and sample is None:
             reasons.append(label + ' audit has a malformed recorded crawl page sample; '
                            'its overall score is not comparable.')
@@ -256,6 +258,15 @@ def _recorded_settings(meta, rendered=None):
     return result
 
 
+def _crawl_count_problem(crawl):
+    """An explicit count must agree with its recorded list; absence stays legacy."""
+    if not isinstance(crawl, dict) or 'pages_scanned' not in crawl:
+        return False
+    pages = crawl.get('pages')
+    count = crawl['pages_scanned']
+    return type(count) is not int or not isinstance(pages, list) or count != len(pages)
+
+
 def _crawl_sample(crawl):
     """Keep exact URL multiplicities; incomplete legacy lists certify no sample."""
     pages = crawl.get('pages') if isinstance(crawl, dict) else None
@@ -323,16 +334,15 @@ def _crawl_rule_changes(o, n, comparison):
               'scope': 'Recorded crawl aggregates only; removed means no longer observed in this sample, '
                        'not a per-page fix or complete site coverage. Counts are finding observations.'}
     samples = [_crawl_sample(item['crawl']) for item in (o, n)]
+    if any(_crawl_count_problem(item['crawl']) for item in (o, n)):
+        result['reason'] = 'Recorded pages_scanned disagrees with the complete crawl sample or is not an integer.'
+        return result
     if comparison['status'] != 'comparable' or not samples[0] or samples[0] != samples[1]:
         result['reason'] = 'Matching completed report coverage and nonempty exact crawl samples are required.'
         return result
     indexes = []
     for item in (o, n):
         crawl = item['crawl']
-        if 'pages_scanned' in crawl and (
-                type(crawl['pages_scanned']) is not int or crawl['pages_scanned'] != len(crawl['pages'])):
-            result['reason'] = 'Recorded pages_scanned disagrees with the complete crawl sample or is not an integer.'
-            return result
         rows = item['crawl'].get('recurring')
         completed = recorded_scan_scope(item['meta'])[1]
         if not isinstance(rows, list) or any(

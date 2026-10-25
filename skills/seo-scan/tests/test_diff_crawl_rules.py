@@ -140,14 +140,36 @@ class TestCrawlRuleDiff(unittest.TestCase):
         self.assertEqual(0, cli(report([]), report([]), '--require-comparable', '--fail-on-regression')[0])
         self.assertEqual(1, cli(report([]), report([row()]), '--require-comparable', '--fail-on-regression')[0])
 
+    def test_recorded_count_requires_a_list_but_omission_stays_legacy(self):
+        for crawl in ({}, {'pages': []}, {'pages': [], 'pages_scanned': 0}):
+            data = report([]); data['crawl'] = crawl
+            self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+        for crawl in ({'pages_scanned': 0}, {'pages_scanned': 2}, {'pages_scanned': None},
+                      {'pages_scanned': 0, 'pages': {}}, {'pages_scanned': 0, 'pages': None}):
+            data = report([]); data['crawl'] = crawl
+            result = diff_scan.diff_reports(data, data)
+            self.assertEqual('incomparable', result['comparison']['status'])
+            self.assertIsNone(result['score_delta'])
+            self.assertEqual(2, cli(data, data, '--fail-on-regression')[0])
+
     def test_explicit_page_count_must_match_the_recorded_sample(self):
         for count in (True, '2', 2.0, -1, 0, 1, 3, 99):
             for side in ('old', 'new'):
                 old, new = report([]), report([])
+                old['overall_score'], new['overall_score'] = 0, 100
+                old['homepage']['findings'] = [{'category': 'technical', 'severity': 'high',
+                    'title': 'Missing title', 'rule_id': 'technical.title.missing'}]
                 (old if side == 'old' else new)['crawl']['pages_scanned'] = count
                 with self.subTest(count=count, side=side):
                     original = copy.deepcopy((old, new))
                     result = diff_scan.diff_reports(old, new)
+                    self.assertEqual('incomparable', result['comparison']['status'])
+                    self.assertIsNone(result['score_delta'])
+                    self.assertIsNone(result['regression'])
+                    self.assertEqual([], result['resolved'])
+                    self.assertEqual([], result['added'])
+                    self.assertEqual(result, mcp_server._diff(json.dumps(old), json.dumps(new)))
+                    self.assertEqual(2, cli(old, new, '--fail-on-regression')[0])
                     self.assertEqual('unverified', result['crawl_rule_changes']['status'])
                     self.assertIn('pages_scanned', result['crawl_rule_changes']['reason'])
                     self.assertIsNone(result['crawl_rule_changes']['regression'])
