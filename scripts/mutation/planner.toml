@@ -9,6 +9,7 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_next_discovery_owners.py",
  "skills/seo-scan/tests/test_plan_owner_contract.py",
  "skills/seo-scan/tests/test_plan_owner_preview.py",
+ "skills/seo-scan/tests/test_plan_literal_paths.py",
  "skills/seo-scan/tests/test_plan_astro_page_routes.py",
  "skills/seo-scan/tests/test_plan_nuxt_page_routes.py",
  "skills/seo-scan/tests/test_plan_hugo_page_routes.py",

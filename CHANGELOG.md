@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Plan owner and related-action path previews reuse literal code-span encoding,
+  preserving filenames with backticks/Markdown punctuation instead of formatting
+  fragments of them. Original JSON paths, source files and edit authority remain
+  unchanged; ordinary related-action paths are now consistently code-formatted.
 - Markdown remediation plans label inventoried versus uninventoried source
   candidates and disclose omitted preview entries. Capped inventories do not
   turn unobserved paths into missing-file claims; full JSON/ownership authority

@@ -255,6 +255,8 @@ and permalinks before choosing an owner.
 Owner previews label inventory status and disclose candidates beyond the first
 three; the complete list remains in plan JSON. Uninventoried paths are not proven
 missing, and inventoried files are not proven active source owners.
+Owner and related-action path previews use literal code spans, including names
+with backticks or Markdown punctuation; original path strings remain in JSON.
 Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.

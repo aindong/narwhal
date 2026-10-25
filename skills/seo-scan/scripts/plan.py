@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
 from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
                         recorded_response_partial, recorded_response_truncated, recorded_scan_scope, _http_robots_notes,
-                        recorded_image_weight_problem)
+                        recorded_image_weight_problem, _literal_preview_code)
 from lib.report_output import write_output  # noqa: E402
 from crawl_site import _link_coverage  # noqa: E402
 
@@ -1460,7 +1460,7 @@ def render_markdown(plan: dict) -> str:
         lines += [f"## {label}", ""]
         for action in members:
             owners = ", ".join(
-                f"`{x['path']}` ({'in file inventory' if x['exists'] else 'not in file inventory'})"
+                f"{_literal_preview_code(x['path'])} ({'in file inventory' if x['exists'] else 'not in file inventory'})"
                 for x in action["likely_files"][:3]) or "owner not located"
             if len(action['likely_files']) > 3:
                 owners += f"; additional candidates in JSON: {len(action['likely_files']) - 3}"
@@ -1527,9 +1527,9 @@ def render_markdown(plan: dict) -> str:
         lines += ["## Related actions to review", ""]
         for group in plan["groups"]:
             overlaps = group.get('candidate_file_overlaps')
-            overlap_paths = ', '.join(item['path'] for item in overlaps) if overlaps is not None else 'unrecorded'
+            overlap_paths = ', '.join(_literal_preview_code(item['path']) for item in overlaps) if overlaps is not None else 'unrecorded'
             lines.append(f"- **{group['artifact']}** — {len(group['rule_ids'])} findings; "
-                         f"existing candidate union: {', '.join(group['likely_shared_files']) or 'none recorded'}; "
+                         f"existing candidate union: {', '.join(_literal_preview_code(path) for path in group['likely_shared_files']) or 'none recorded'}; "
                          f"candidates in multiple actions: {overlap_paths or 'none recorded'}. "
                          "Confirm actual owners before coordinating edits.")
         lines.append("")
