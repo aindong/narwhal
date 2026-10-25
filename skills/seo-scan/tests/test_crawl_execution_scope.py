@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import crawl_site
@@ -25,7 +26,9 @@ class TestCrawlExecutionScope(unittest.TestCase):
         pages[0].meta['scan_scope'] = copy.deepcopy(SCOPE)
         pages[1].meta['scan_scope'] = dict(SCOPE, completed=[])
         original = copy.deepcopy([p.meta for p in pages])
-        result = json.loads(crawl_site.render_json(crawl_reports(pages)))
+        with mock.patch.object(crawl_site.time, 'sleep', side_effect=AssertionError('Default zero-delay crawl must not sleep')) as sleep:
+            result = json.loads(crawl_site.render_json(crawl_reports(pages)))
+        sleep.assert_not_called()
         self.assertEqual(SCOPE, result['pages'][0]['scan_scope'])
         self.assertEqual([], result['pages'][1]['scan_scope']['completed'])
         self.assertNotIn('scan_scope', result['pages'][2])
