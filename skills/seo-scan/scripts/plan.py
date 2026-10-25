@@ -841,11 +841,14 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
             warnings.append(SOURCE_CANDIDATE_WARNING)
         return []
     if not path:
-        if (framework == 'nextjs' and parsed.scheme in ('http', 'https')
-                and parsed.netloc and url_path in ('', '/')):
-            return [f'{stem}.{extension}' for extension in ('tsx', 'ts', 'jsx', 'js')
-                    for stem in ('src/app/page', 'app/page', 'src/pages/index', 'pages/index')
-                    if f'{stem}.{extension}' in files]
+        if parsed.scheme in ('http', 'https') and parsed.netloc and url_path in ('', '/'):
+            if framework == 'nextjs':
+                return [f'{stem}.{extension}' for extension in ('tsx', 'ts', 'jsx', 'js')
+                        for stem in ('src/app/page', 'app/page', 'src/pages/index', 'pages/index')
+                        if f'{stem}.{extension}' in files]
+            if framework == 'astro':
+                return [f'src/pages/index.{extension}' for extension in ('astro', 'md', 'mdx', 'html')
+                        if f'src/pages/index.{extension}' in files]
         return []
     if not _portable_source_path(path):
         if warnings is not None:
@@ -866,7 +869,10 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
                    if f"{stem}.{extension}" in files]
         return routes
     if framework == "astro":
-        return [f"src/pages/{path}.astro", f"src/pages/{path}/index.astro"]
+        return [f"src/pages/{path}.astro", f"src/pages/{path}/index.astro"] + [
+            f'{stem}.{extension}' for extension in ('md', 'mdx', 'html')
+            for stem in (f'src/pages/{path}', f'src/pages/{path}/index')
+            if f'{stem}.{extension}' in files]
     if framework == "nuxt":
         return [f"pages/{path}.vue", f"pages/{path}/index.vue"]
     if framework in ("hugo", "jekyll"):

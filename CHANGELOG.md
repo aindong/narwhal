@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Astro plans prioritize observed Markdown, MDX and HTML page sources at root,
+  direct and directory-index routes, before unrelated capped content fallbacks.
+  Missing alternatives are not proposed for creation; shared head priority and
+  manual confirmation of integrations/generated routes remain unchanged.
 - Remediation-plan schema enforces the producer's eight-candidate limit and
   rejects duplicated owner objects. Behavioral regressions cover bounded,
   distinct source suggestions, valid confidence/existence receipts, manual
