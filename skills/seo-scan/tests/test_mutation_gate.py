@@ -37,6 +37,24 @@ class TestMutationGate(unittest.TestCase):
         with self.assertRaises(KeyError):
             gate.check_results([{'renamed_result_field': {'target': 1}}], 'target')
 
+    def test_every_requested_target_must_match_even_when_another_is_killed(self):
+        records = [{'exit_code_by_key': {'first_1': 1}}]
+        with self.assertRaisesRegex(ValueError, 'second'):
+            gate.check_results(records, ['first_*', 'second_*'])
+        with self.assertRaises(ValueError):
+            gate.check_results(records, [])
+
+    def test_multiple_and_overlapping_targets_count_unique_mutants_and_preserve_failures(self):
+        records = [{'exit_code_by_key': {'first_1': 1, 'second_1': 0, 'other': 1}}]
+        results, failures = gate.check_results(records, ['first_*', '*_1', 'second_*'])
+        self.assertEqual({'first_1': 1, 'second_1': 0}, results)
+        self.assertEqual({'second_1': 0}, failures)
+
+    def test_duplicate_records_are_not_hidden_by_overlapping_patterns(self):
+        with self.assertRaisesRegex(ValueError, 'Duplicate'):
+            gate.check_results([{'exit_code_by_key': {'first_1': 0}},
+                                {'exit_code_by_key': {'first_1': 1}}], ['first_*', '*_1'])
+
 
 if __name__ == '__main__':
     unittest.main()

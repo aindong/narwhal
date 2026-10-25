@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- The focused mutation gate also exercises the existing broken-link predicate
+  assertions, covering two status-0 mutations missed by response-state tests
+  alone. Multiple requested function patterns must each match mutants;
+  overlapping patterns count unique results once. Scanner behavior is unchanged.
 - Mutation runs preserve repository-relative test/fixture paths while importing
   only the staged scanner source. The default gate now runs the full sitemap
   response-state module, including MCP fixture access, without adapting tests.

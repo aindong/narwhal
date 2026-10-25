@@ -98,9 +98,14 @@ python3.12 -m venv .venv-mutation
 .venv-mutation/bin/python scripts/mutation_test.py
 ```
 
-The default gate covers `lib.links.http_check_state` using the complete sitemap
-response-state test module, including its shared report/planner matrix and MCP
-handoff. Initially, 21 of 27 mutants were killed.
+The default gate covers `lib.links.http_check_state` and `lib.links.is_broken`:
+the complete sitemap response-state module exercises the report/planner matrix
+and MCP handoff, and existing direct link tests cover status 0 and all gated
+codes. The combined scope kills 34/34 mutants. The response-state tests alone
+missed two status-0 mutations in `is_broken`; including its existing direct
+assertions kills both without changing scanner behavior.
+
+Initially, 21 of 27 response-classifier mutants were killed.
 Six survived because the matrix omitted HTTP 300, 400 and 600; boundary
 assertions now kill all 27 without changing production behavior.
 
@@ -111,6 +116,10 @@ Mutmut function pattern, for example:
 ```bash
 .venv-mutation/bin/python scripts/mutation_test.py 'lib.links.x_http_check_state__mutmut_*'
 ```
+
+Pass multiple quoted patterns to gate several functions in one fresh run. Every
+requested pattern must match at least one mutant; a valid target cannot mask an
+empty/misspelled second target. Overlapping patterns count each mutant once.
 
 Configuration paths use `src/` for scanner scripts and retain
 `skills/seo-scan/tests/` for tests and fixtures.
