@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Shared execution-scope validation checks optional `not_selected` receipts
+  against the requested auditor complement. Malformed or contradictory values
+  leave scope unverified, block strict proof gates and withhold planner automation;
+  legacy receipts omitting the field remain supported.
 - Planner automation requires review for explicitly malformed response
   completeness flags. Such values remain unverified rather than being
   reclassified as measured truncation/partial content; owner candidates remain.

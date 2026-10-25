@@ -253,6 +253,12 @@ def recorded_scan_scope(meta):
         return None
     if not set(completed) <= set(requested):
         return None
+    if 'not_selected' in scope:
+        skipped = scope['not_selected']
+        if (not isinstance(skipped, list) or any(not isinstance(name, str) for name in skipped)
+                or len(set(skipped)) != len(skipped)
+                or set(skipped) != set(CATEGORY_LABELS) - set(requested)):
+            return None
     return requested, completed
 
 

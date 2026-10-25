@@ -40,6 +40,8 @@ The fixture uses a non-default 6 MB HTML budget and requires all generated
 page scans to retain it.
 Malformed scope, HTTP-status and response-completeness fixtures must withhold automation
 while keeping planning read-only.
+Contradictory `not_selected` receipts must also block strict CLI proof and leave
+MCP comparisons unverified.
 Reversing the reports must fail the regression gate. This is local,
 page-level workflow evidence, not real-site SEO gains or deployment proof.
 A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),
@@ -187,6 +189,15 @@ profile is an optional diagnostic, not a default CI gate. Record fresh killed/to
 counts and unresolved outcomes with each PR; past counts do not score new source
 or tests. Unresolved results keep the gate nonzero. Its schema-file
 test is omitted because references are not staged; full suites/MCP CI retain it.
+
+The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
+and their report/diff/planner consumers. The existing mutation CI job runs it
+alongside the default corpus:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/scope.toml \
+  'lib.report.x_recorded_scan_scope__mutmut_*'
+```
 
 The optional [service profile](scripts/mutation/services.toml) checks brief
 entry points, account opt-in, and shared scoring-rule ownership across pages.

@@ -1,0 +1,11 @@
+# Optional shared execution-scope receipt validation profile.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/lib/report.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_scan_scope.py",
+  "skills/seo-scan/tests/test_scope_selection_consistency.py",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]
