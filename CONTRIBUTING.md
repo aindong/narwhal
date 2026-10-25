@@ -20,6 +20,19 @@ python -m unittest discover -s skills/seo-scan/tests -v
 python skills/seo-scan/scripts/scan.py https://example.com
 ```
 
+After installing a built wheel in your test environment, run the installed CLI
+action-cycle smoke check from the repository root:
+
+```bash
+python skills/seo-scan/tests/action_cycle_smoke.py
+```
+
+Packaging CI runs this separately from the offline unit suite. It serves a
+disposable loopback fixture, verifies the read-only plan and likely source owner,
+applies one explicit fixture edit, and proves the rescan/diff resolves only that
+issue. Reversing the reports must fail the regression gate. This is local,
+page-level workflow evidence, not real-site SEO gains or deployment proof.
+
 ## Project layout
 
 ```
