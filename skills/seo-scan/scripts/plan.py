@@ -673,6 +673,8 @@ ARTIFACT_RULES = (
 
 def classify_artifact(finding: dict) -> str:
     rid = finding["rule_id"].lower()
+    if rid in ('technical.links.with.no.anchor.text', 'technical.generic.anchor.text'):
+        return 'content'
     if rid.startswith('technical.http.robots.'):
         return 'server_config'  # header owner, never an HTML robots-meta edit
     title = str(finding.get("title", "")).lower()
@@ -890,6 +892,14 @@ READABILITY_REVIEW_GUIDANCE = (
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    'technical.links.with.no.anchor.text':
+        'Review the recorded anchors, intended link labels and destination context. Add useful visible text '
+        'or meaningful image alt text where appropriate; preserve valid accessible labeling. '
+        'This source check is not a full accessibility audit or proof of destination reachability.',
+    'technical.generic.anchor.text':
+        'Review surrounding text and destination purpose. Make labels descriptive where useful, preserving '
+        'concise navigation and intentional repeated wording. Do not insert keywords or promise ranking '
+        'gains solely to change the phrase count.',
     'technical.canonical.points.elsewhere':
         'Review the original canonical, document base, final fetched URL and actual variants in context. '
         'Preserve intended consolidation; edit only a verified wrong target. Do not force self-reference, '
