@@ -56,6 +56,7 @@ import compare  # noqa: E402
 import scan as scanner  # noqa: E402
 
 MAX_COMPETITORS = compare.MAX_COMPETITORS
+MAX_TOPIC_QUERIES = 15
 _QUESTION_WORDS = audit_geo._QUESTION_WORDS
 
 # Boilerplate headings that aren't subtopics — suggesting "cover: Comments"
@@ -124,9 +125,10 @@ def page_queries(gsc: dict, url: str) -> dict:
             "cannibalized": cannibalized}
 
 
-def topic_queries(gsc: dict, topic: str, *, top: int = 15) -> list:
+def topic_queries(gsc: dict, topic: str, *, top: int = MAX_TOPIC_QUERIES) -> list:
     """Site-wide striking-distance queries that share a term with the topic —
-    real demand adjacent to a page that doesn't exist yet. Pure."""
+    real demand adjacent to a page that doesn't exist yet. ``top=None`` retains
+    all matching input rows for the selection receipt. Pure."""
     want = _terms(topic)
     if not want:
         return []
@@ -234,9 +236,16 @@ def synthesize(you: dict | None, rivals: list, gsc: dict | None,
 
     gsc_ok = bool(gsc and gsc.get("found"))
     if gsc_ok:
-        full = page_queries(gsc, you["url"]) if you else \
-            {"striking": topic_queries(gsc, topic), "laggard": None,
-             "decaying": None, "cannibalized": []}
+        if you:
+            full = page_queries(gsc, you["url"])
+        else:
+            matches = topic_queries(gsc, topic, top=None)
+            retained = matches[:MAX_TOPIC_QUERIES]
+            full = {"striking": retained, "laggard": None, "decaying": None, "cannibalized": [],
+                    "topic_query_selection": {
+                        "basis": "topic_term_overlap", "input_rows": len(gsc.get('striking', [])),
+                        "matching_rows": len(matches), "retained_rows": len(retained),
+                        "omitted_rows": len(matches) - len(retained), "limit": MAX_TOPIC_QUERIES}}
         brief["gsc"] = {"found": True, "property": gsc.get("property"),
                         "window": gsc.get("window"),
                         "capped": gsc.get("capped") if type(gsc.get("capped")) is bool else None,
@@ -410,6 +419,16 @@ def render_markdown(b: dict) -> str:
         elif type(gsc.get('capped')) is not bool:
             lines += ['_Search Console row-limit status was not recorded; '
                       'query coverage is unverified._', '']
+        if not b.get('you'):
+            selection = gsc.get('topic_query_selection')
+            if isinstance(selection, dict) and selection.get('basis') == 'topic_term_overlap':
+                lines += [f"_Topic query selection: {selection['retained_rows']} of "
+                          f"{selection['matching_rows']} matching retrieved rows retained; "
+                          f"{selection['omitted_rows']} omitted (limit {selection['limit']}). "
+                          "Filter: lexical term overlap, not verified semantic relevance "
+                          "or exhaustive query demand._", '']
+            else:
+                lines += ['_Topic query-selection counts were not recorded; omitted matches are unverified._', '']
     for f in b.get("failed", []):
         detail = f" — {f['error']}" if f.get("error") else ""
         lines.append(f"_Skipped competitor: {f['url']}{detail}_")

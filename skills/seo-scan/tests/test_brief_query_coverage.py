@@ -10,6 +10,32 @@ from test_brief_grounding import page, BASE, OWN_HTML, RIVAL
 
 
 class TestBriefQueryCoverage(unittest.TestCase):
+    def test_topic_selection_records_matching_retained_and_omitted_rows(self):
+        for count in (0, 14, 15, 16, 20):
+            with self.subTest(count=count):
+                rows = [{'query': f'widgets guide {i}', 'page': BASE,
+                         'position': 9, 'impressions': 120} for i in range(count)]
+                measured = {'found': True, 'capped': False,
+                            'striking': rows + [{'query': 'bicycle maintenance', 'page': BASE}]}
+                data = brief.synthesize(None, [page(RIVAL, OWN_HTML)], measured, topic='widgets')
+                self.assertEqual(rows[:15], data['gsc']['striking'])
+                self.assertEqual({'basis': 'topic_term_overlap', 'input_rows': count + 1,
+                                  'matching_rows': count, 'retained_rows': min(count, 15),
+                                  'omitted_rows': max(0, count - 15), 'limit': 15},
+                                 data['gsc']['topic_query_selection'])
+                self.assertIs(False, data['gsc']['capped'])
+                output = brief.render_markdown(data)
+                self.assertIn(f'{min(count, 15)} of {count} matching retrieved rows retained', output)
+                self.assertIn(f'{max(0, count - 15)} omitted', output)
+                self.assertIn('lexical term overlap', output)
+                self.assertIn('not verified semantic relevance', output)
+                self.assertEqual(rows, brief.topic_queries(measured, 'widgets', top=None))
+        self.assertNotIn('topic_query_selection', self.data(False)['gsc'])
+        for selection in (None, {'basis': 'unsupported'}):
+            data = self.data(False, topic=True)
+            data['gsc']['topic_query_selection'] = selection
+            self.assertIn('omitted matches are unverified', brief.render_markdown(data))
+
     def data(self, capped, *, topic=False, queries=True):
         query = {'query': 'Why do widgets wobble?', 'page': BASE,
                  'position': 9, 'impressions': 120}

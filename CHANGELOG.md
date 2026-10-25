@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Topic briefs record input, matching, retained and omitted query-row counts
+  separately from the API row-cap flag. The existing first-15 selection is
+  labeled as lexical term overlap, not verified semantic relevance or demand.
 - Target-query tables keep query punctuation, line breaks and Markdown syntax
   as literal cell text, so pipes cannot shift position/impression columns.
   Original query evidence remains unchanged in JSON.

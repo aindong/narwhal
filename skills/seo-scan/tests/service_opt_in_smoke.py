@@ -82,6 +82,8 @@ def main():
                              '--no-config', '--format', 'json']) == 0
             data = json.loads(output.getvalue())
             assert data['gsc']['capped'] is True
+            assert data['gsc']['topic_query_selection']['matching_rows'] == 1
+            assert data['gsc']['topic_query_selection']['omitted_rows'] == 0
             assert '<td>' + question + '</td>' in md_to_html(brief.render_markdown(data))
             assert [q['question'] for q in data['questions']] == [question]
             assert [s['type'] for s in data['schema']] == ['FAQPage']
