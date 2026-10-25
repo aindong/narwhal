@@ -32,6 +32,13 @@ def invoke(main, args):
 
 
 class TestCLIURLRejections(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(socket.socket, 'connect',
+                                    side_effect=AssertionError('URL-input unit tests must stay offline'))
+        connect = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(connect.assert_not_called)
+
     def test_expected_errors_keep_valueerror_and_ssrf_exception_contracts(self):
         self.assertTrue(issubclass(http.URLInputError, ValueError))
         self.assertTrue(issubclass(http.SSRFError, http.URLInputError))
