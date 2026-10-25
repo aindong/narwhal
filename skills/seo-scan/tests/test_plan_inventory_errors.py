@@ -19,17 +19,18 @@ def report():
         {'rule_id': RULE, 'category': 'technical', 'severity': 'medium', 'title': 'No responsive viewport tag'}]}
 
 
-def failing_walk(original):
+def failing_walk(repo):
+    entries = list(plan.os.walk(str(Path(repo).resolve()), followlinks=False))
+
     def walk(root, *, followlinks, onerror):
         onerror(PermissionError(13, 'denied', str(Path(root) / 'unreadable')))
-        return original(root, followlinks=followlinks, onerror=onerror)
+        return iter(entries)
     return walk
 
 
 class TestPlanInventoryErrors(unittest.TestCase):
     def test_walk_failure_is_counted_even_when_known_owner_was_found(self):
-        original_walk = plan.os.walk
-        with mock.patch.object(plan.os, 'walk', side_effect=failing_walk(original_walk)):
+        with mock.patch.object(plan.os, 'walk', side_effect=failing_walk(REPO)):
             built = plan.build_plan(report(), REPO)
         self.assertEqual(1, built['coverage']['file_inventory_walk_errors'])
         self.assertFalse(built['coverage']['file_inventory_capped'])
@@ -86,8 +87,8 @@ class TestPlanInventoryErrors(unittest.TestCase):
         self.assertIn('could not traverse 7', warnings)
 
     def test_mcp_preserves_error_receipt_and_read_only_plan(self):
-        data = report(); original = copy.deepcopy(data); original_walk = plan.os.walk
-        with mock.patch.object(plan.os, 'walk', side_effect=failing_walk(original_walk)), \
+        data = report(); original = copy.deepcopy(data)
+        with mock.patch.object(plan.os, 'walk', side_effect=failing_walk(REPO)), \
                 mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
             built = mcp_server._plan(data, REPO)
         self.assertEqual(1, built['coverage']['file_inventory_walk_errors'])
