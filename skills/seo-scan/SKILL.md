@@ -243,6 +243,9 @@ rewrites and custom page extensions still need manual ownership confirmation.
 Astro candidates include observed `.astro`, `.md`, `.mdx` and `.html` root,
 direct and directory-index pages in `src/pages/`. Confirm MDX integration,
 dynamic routes and content-collection ownership manually before editing.
+Nuxt candidates include observed `app/pages/` routes alongside legacy `pages/`,
+including root and directory-index Vue files. Confirm custom source directories,
+layers, route overrides and actual page ownership manually.
 Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.

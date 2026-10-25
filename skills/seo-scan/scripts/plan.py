@@ -849,6 +849,8 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
             if framework == 'astro':
                 return [f'src/pages/index.{extension}' for extension in ('astro', 'md', 'mdx', 'html')
                         if f'src/pages/index.{extension}' in files]
+            if framework == 'nuxt':
+                return [rel for rel in ('app/pages/index.vue', 'pages/index.vue') if rel in files]
         return []
     if not _portable_source_path(path):
         if warnings is not None:
@@ -874,7 +876,8 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
             for stem in (f'src/pages/{path}', f'src/pages/{path}/index')
             if f'{stem}.{extension}' in files]
     if framework == "nuxt":
-        return [f"pages/{path}.vue", f"pages/{path}/index.vue"]
+        return [f"pages/{path}.vue", f"pages/{path}/index.vue"] + [
+            rel for rel in (f'app/pages/{path}.vue', f'app/pages/{path}/index.vue') if rel in files]
     if framework in ("hugo", "jekyll"):
         prefix = "content" if framework == "hugo" else ""
         base = f"{prefix}/{path}".strip("/")
