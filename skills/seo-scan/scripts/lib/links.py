@@ -176,3 +176,15 @@ def is_broken(status: int) -> bool:
     if status in UNDETERMINED:
         return False
     return status >= 400
+
+
+def http_check_state(status, error):
+    """Classify a reported response; unsupported/error outcomes stay unverified."""
+    no_error = error is None or (isinstance(error, str) and not error)
+    if type(status) is not int or not no_error:
+        return 'unverified'
+    if 200 <= status < 300:
+        return 'successful_2xx'
+    if 400 <= status < 600 and is_broken(status):
+        return 'broken'
+    return 'unverified'

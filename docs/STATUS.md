@@ -22,6 +22,11 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Inspectable uncertain link checks:** crawl JSON retains all checked
+  unverified target records, with bounded Markdown previews and manual planner
+  witnesses. Shared classification keeps errored/gated/unsupported outcomes
+  separate from successful or failing HTTP evidence. Legacy rows remain and
+  no-response overlap is not double-counted; checks and source safety remain.
 - **Crawl link handoff:** audit plans preserve reported failing HTTP targets and
   referring pages, separately from uncertain/capped/unrecorded check coverage.
   Bounded manual actions infer no source ownership, link removal or edit group.

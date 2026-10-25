@@ -47,6 +47,12 @@ Comprehensive-audit `crawl.links` observations produce manual `links` actions:
 `technical.links.http.failures` for reported failing 4xx/5xx responses without
 request errors (gated codes excluded; unsupported error shapes stay unverified), and `technical.links.coverage.unverified`
 for uncertain responses, capped checks or unrecorded/inconsistent coverage.
+New `crawl.links.unverified` records retain checked uncertain targets, including
+gating, unsupported responses and request errors. The planner consumes a
+count-consistent record set without double-counting no-response rows retained in
+the legacy `broken` list. Absent legacy identities are not inferred. Errored
+HTTP responses are unverified even if retained in that compatibility list. The
+arrays may overlap; use the coverage counters rather than adding their lengths.
 Missing/disabled checks and complete successful or zero-target checks do not
 invent findings. Empty plans do not certify site-wide link health.
 

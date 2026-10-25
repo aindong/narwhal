@@ -204,30 +204,27 @@ def check_broken_links(pages_links: dict, *, allow_private, timeout,
             for u, (status, err) in ex.map(check, targets):
                 statuses[u] = (status, err)
 
-    broken = []
-    successful, request_failures = 0, 0
+    broken, unverified = [], []
+    counts = {'successful_2xx': 0, 'broken': 0, 'unverified': 0}
+    request_failures = 0
     for u in targets:
         status, err = statuses[u]
-        if status == 0:
+        state = links.http_check_state(status, err)
+        counts[state] += 1
+        if type(status) is int and status == 0:
             request_failures += 1
-        if type(status) is int and 200 <= status < 300 and not err:
-            successful += 1
-        if links.is_broken(status):
-            broken.append({
-                "url": u,
-                "status": status,
-                "error": err,
-                "internal": registry[u]["internal"],
-                "sources": sorted(registry[u]["sources"]),
-            })
+        observation = {"url": u, "status": status, "error": err,
+                       "internal": registry[u]["internal"], "sources": sorted(registry[u]["sources"])}
+        if type(status) is int and links.is_broken(status):
+            broken.append(observation)  # preserve the legacy problem-target list
+        if state == 'unverified':
+            unverified.append(observation)
     broken.sort(key=lambda b: (not b["internal"], b["url"]))  # internal first
     return {"unique_links": len(order), "checked": len(targets),
             "skipped_over_cap": max(0, len(order) - len(targets)),
-            "broken": broken,
+            "broken": broken, "unverified": unverified,
             "coverage": {"basis": "head_responses", "scope": "checked_targets",
-                         "successful_2xx": successful, "broken": len(broken) - request_failures,
-                         "unverified": len(targets) - successful - len(broken) + request_failures,
-                         "request_failures": request_failures}}
+                         **counts, "request_failures": request_failures}}
 
 
 def _link_coverage(info):
@@ -235,14 +232,36 @@ def _link_coverage(info):
     if (not isinstance(receipt, dict) or receipt.get('basis') != 'head_responses'
             or receipt.get('scope') != 'checked_targets'):
         return None
+    records = info.get('broken', [])
+    if not isinstance(records, list) or any(not isinstance(row, dict) for row in records):
+        return None
     values = [receipt.get(key) for key in ('successful_2xx', 'broken', 'unverified')]
     request_failures = receipt.get('request_failures')
     if (any(type(value) is not int or value < 0 for value in values)
             or type(request_failures) is not int or not 0 <= request_failures <= receipt['unverified']
             or type(info.get('checked')) is not int or sum(values) != info['checked']
-            or request_failures != sum(entry.get('status') == 0 for entry in info.get('broken', []))
-            or receipt['broken'] + request_failures != len(info.get('broken', []))):
+            or request_failures != sum(type(row.get('status')) is int and row['status'] == 0 for row in records)
+            or receipt['broken'] != sum(links.http_check_state(row.get('status'), row.get('error')) == 'broken'
+                                        for row in records)):
         return None
+    if 'unverified' in info:
+        rows = info['unverified']
+        if (not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows)
+                or len(rows) != receipt['unverified']
+                or any(links.http_check_state(row.get('status'), row.get('error')) != 'unverified' for row in rows)
+                or any(not isinstance(row.get('url'), str) or not row['url'].strip() for row in rows)):
+            return None
+        by_url = {row['url']: row for row in rows}
+        if len(by_url) != len(rows):
+            return None
+        for row in records:
+            if links.http_check_state(row.get('status'), row.get('error')) != 'unverified':
+                continue
+            url = row.get('url')
+            retained = by_url.get(url) if isinstance(url, str) else None
+            if retained is None or any(retained.get(key) != row.get(key)
+                                       for key in ('status', 'error', 'internal', 'sources')):
+                return None
     return receipt
 
 
@@ -682,11 +701,32 @@ def render_markdown(result: dict) -> str:
                       "|:--:|:--|:--|:--|"]
             for b in broken:
                 status = b["status"] or (b["error"] or "unreachable")
+                if b["status"] and links.http_check_state(b["status"], b.get("error")) == 'unverified':
+                    status = f"{status} (unverified)"
                 kind = "internal" if b["internal"] else "external"
                 src = b["sources"][0]
                 more = f" (+{len(b['sources']) - 1})" if len(b["sources"]) > 1 else ""
                 lines.append(f"| {table_text(status)} | {kind} | {table_text(b['url'])} | {table_text(src)}{more} |")
             lines.append("")
+
+    if link_info is not None and receipt is not None and link_info.get('unverified'):
+        rows = link_info['unverified']
+        lines += [f"### Unverified checked targets (first {min(20, len(rows))} of {len(rows)})", '',
+                  'These responses do not establish dead destinations. Rows may overlap the problem table above; '
+                  'they are the same checks. URL previews are bounded; full records remain in JSON.', '',
+                  TABLE_TEXT_MARKER, '| Reported status | Target URL | Linked from |', '|:--|:--|:--|']
+        for row in rows[:20]:
+            status = row.get('status')
+            label = f'{status} (unverified)' if type(status) is int and status else 'no HTTP response / unrecorded'
+            target = row.get('url') if isinstance(row.get('url'), str) else '(unrecorded)'
+            sources = row.get('sources')
+            sources = [value for value in sources if isinstance(value, str)] if isinstance(sources, list) else []
+            source = sources[0] if sources else '(unrecorded)'
+            more = f' (+{len(sources) - 1})' if len(sources) > 1 else ''
+            target = target[:240] + ('…' if len(target) > 240 else '')
+            source = source[:240] + ('…' if len(source) > 240 else '')
+            lines.append(f'| {table_text(label)} | {table_text(target)} | {table_text(source)}{more} |')
+        lines.append('')
 
     dupes = result.get("duplicates")
     if dupes is not None:
