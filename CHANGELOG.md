@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- JPEG dimension probes stop at scan/end markers and reject impossible segment
+  and frame-header lengths. Frame-like bytes beyond those boundaries stay
+  unassessed; minimum grayscale and existing color headers still work.
 - JPEG dimension probes skip legal FF marker-fill bytes before application,
   table and frame markers. Baseline/progressive images with fill retain their
   dimensions; incomplete prefixes still remain unknown, within existing budgets.
