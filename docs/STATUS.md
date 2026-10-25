@@ -860,3 +860,5 @@ Planner inventories record traversal failures and bounded directory witnesses; k
 Exact-budget planner inventories are capped only after an extra eligible file is observed; subsequent traversal failures still withhold automatic candidacy.
 
 Existing route conventions outrank homepage fallbacks for page content and plain-HTML head suggestions; shared framework-head/discovery policies remain unchanged.
+
+Plain-HTML URL-to-source conventions include literal HTML/HTM file paths while preserving trailing-slash directory behavior and existing source safety guards.

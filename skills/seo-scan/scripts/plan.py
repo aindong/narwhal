@@ -771,7 +771,8 @@ def _route_candidates(target: str, framework: str, warnings=None) -> list:
             warnings.append(SOURCE_CANDIDATE_WARNING)
         return []
     try:
-        path = urlparse(target).path.strip("/")
+        url_path = urlparse(target).path
+        path = url_path.strip("/")
     except ValueError:
         if warnings is not None:
             warnings.append(SOURCE_CANDIDATE_WARNING)
@@ -784,7 +785,8 @@ def _route_candidates(target: str, framework: str, warnings=None) -> list:
         return []
     slug = path.split("/")[-1]
     if framework == "plain_html":
-        return [f"{path}.html", f"{path}/index.html"]
+        direct = [path] if not url_path.endswith('/') and path.lower().endswith(('.html', '.htm')) else []
+        return direct + [f"{path}.html", f"{path}/index.html"]
     if framework == "nextjs":
         return [f"src/app/{path}/page.tsx", f"app/{path}/page.tsx",
                 f"src/pages/{path}.tsx", f"pages/{path}.tsx"]
