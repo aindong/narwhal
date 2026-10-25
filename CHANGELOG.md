@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Next.js remediation plans recognize observed `.ts`, `.jsx` and `.js` page
+  sources and Pages Router directory indexes, including `src/` projects.
+  Page-content candidates take precedence over unrelated fallbacks; additional
+  filenames are not suggested for creation when absent from the inventory.
 - Both MCP SDK CI jobs exercise the installed stdio server through the local
   action cycle: read-only source planning, positive/reversed/incomplete diffs
   matching CLI output, and manual verification when rescan coverage is lost.

@@ -237,6 +237,9 @@ links stable finding IDs to likely owning files; groups shared-template fixes;
 and separates safe candidates, review-required work, external/manual work, and
 changes that require post-deploy verification. Treat file matches as evidence-
 backed candidates, not permission to edit blindly; inspect warnings and conflicts.
+Next.js page candidates include observed default-extension sources and Pages
+Router directory indexes under `app/`, `pages/`, or `src/`. Dynamic routes,
+rewrites and custom page extensions still need manual ownership confirmation.
 Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.

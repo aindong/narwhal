@@ -827,7 +827,7 @@ def _safe_source_candidate(root: Path, rel: str) -> bool:
     return True
 
 
-def _route_candidates(target: str, framework: str, warnings=None) -> list:
+def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -> list:
     if any(ord(char) < 32 for char in target):
         if warnings is not None:
             warnings.append(SOURCE_CANDIDATE_WARNING)
@@ -850,8 +850,15 @@ def _route_candidates(target: str, framework: str, warnings=None) -> list:
         direct = [path] if not url_path.endswith('/') and path.lower().endswith(('.html', '.htm')) else []
         return direct + [f"{path}.html", f"{path}/index.html"]
     if framework == "nextjs":
-        return [f"src/app/{path}/page.tsx", f"app/{path}/page.tsx",
-                f"src/pages/{path}.tsx", f"pages/{path}.tsx"]
+        routes = [f"src/app/{path}/page.tsx", f"app/{path}/page.tsx",
+                  f"src/pages/{path}.tsx", f"pages/{path}.tsx"]
+        # Additional spellings locate observed owners, not duplicate routes to create.
+        routes += [f"{stem}.{extension}" for extension in ('tsx', 'ts', 'jsx', 'js')
+                   for stem in (f"src/app/{path}/page", f"app/{path}/page",
+                                f"src/pages/{path}", f"pages/{path}",
+                                f"src/pages/{path}/index", f"pages/{path}/index")
+                   if f"{stem}.{extension}" in files]
+        return routes
     if framework == "astro":
         return [f"src/pages/{path}.astro", f"src/pages/{path}/index.astro"]
     if framework == "nuxt":
@@ -870,7 +877,7 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
     file_set = set(files)
     config = FRAMEWORK_CANDIDATES.get(framework, FRAMEWORK_CANDIDATES["unknown"])
     routes = ([] if artifact in ('robots_txt', 'sitemap', 'llms_txt') else
-              _route_candidates(target, framework, warnings))
+              _route_candidates(target, framework, warnings, files=file_set))
     preferred_routes = set(routes) if (artifact in ('content', 'headings', 'image_alt')
                                       or framework == 'plain_html' and artifact in HEAD_ARTIFACTS) else set()
     if artifact in ("robots_txt", "sitemap"):
