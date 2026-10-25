@@ -739,6 +739,7 @@ def _head_requests(url, timeout, user_agent, allow_private=False):
     try:
         r, _, _ = _requests_safe(requests, "HEAD", url, timeout=timeout,
                                   headers=headers, allow_private=allow_private)
+        r.close()
         if r.status_code in (403, 405, 501):  # some servers refuse HEAD
             r, _, _ = _requests_safe(requests, "GET", url, timeout=timeout,
                                       headers=headers, allow_private=allow_private,
@@ -754,9 +755,13 @@ def _head_urllib(url, timeout, user_agent, allow_private=False):
     import urllib.request  # noqa: PLC0415
 
     def _try(method):
-        fh, _, _ = _urllib_safe_open(
-            url, timeout=timeout, headers={"User-Agent": user_agent},
-            allow_private=allow_private, method=method)
+        try:
+            fh, _, _ = _urllib_safe_open(
+                url, timeout=timeout, headers={"User-Agent": user_agent},
+                allow_private=allow_private, method=method)
+        except urllib.error.HTTPError as exc:
+            exc.close()
+            raise
         with fh:
             return fh.status, None
 
