@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Nuxt plans recognize observed `app/pages/` root, direct and directory-index
+  Vue sources alongside legacy `pages/`, before unrelated capped fallbacks.
+  Missing alternatives are not suggested for creation; shared head priority,
+  containment and review-required authority remain unchanged.
 - Astro plans prioritize observed Markdown, MDX and HTML page sources at root,
   direct and directory-index routes, before unrelated capped content fallbacks.
   Missing alternatives are not proposed for creation; shared head priority and
