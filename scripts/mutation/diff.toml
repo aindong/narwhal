@@ -13,6 +13,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_crawl_execution_scope.py",
   "skills/seo-scan/tests/test_diff_settings.py",
   "skills/seo-scan/tests/test_crawl_rule_handoff.py",
+  "skills/seo-scan/tests/test_crawl_pacing.py",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
