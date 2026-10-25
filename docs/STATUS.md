@@ -856,3 +856,5 @@ Repeated planner rules retain coherent worst-severity evidence across homepage/r
 Repeated planner actions disclose representative-selection counts/basis without implying distinct pages or matched instances; singleton actions stay compact.
 
 Planner inventories record traversal failures and bounded directory witnesses; known errors/caps withhold automatic viewport candidacy while preserving source review candidates.
+
+Exact-budget planner inventories are capped only after an extra eligible file is observed; subsequent traversal failures still withhold automatic candidacy.

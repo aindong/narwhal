@@ -544,10 +544,10 @@ def inventory(root: Path, max_files=MAX_REPO_FILES) -> dict:
             except (OSError, ValueError):
                 warnings.append(f"Skipped path outside repository: {candidate}")
                 continue
-            files.append(candidate.relative_to(root).as_posix())
             if len(files) >= max_files:
                 capped = True
                 break
+            files.append(candidate.relative_to(root).as_posix())
         if capped:
             break
     if capped:
