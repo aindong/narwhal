@@ -6,6 +6,7 @@ also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_diff_crawl_rules.py",
   "skills/seo-scan/tests/test_diff_crawl_sample.py",
+  "skills/seo-scan/tests/test_diff_crawl_coverage.py",
   "skills/seo-scan/tests/test_diff_severe_escalation.py",
   "skills/seo-scan/tests/test_diff_scope.py",
   "skills/seo-scan/tests/test_diff_execution_evidence.py",
@@ -25,6 +26,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_scores_are_not_invalidated_by_unselected_technical_checks",
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_audit_does_not_gain_a_false_hreflang_score_gap",
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_policy_mismatch_isolated_from_extraction_failure",
+  "skills/seo-scan/tests/test_document_base_links.py::TestDocumentBaseLinks::test_known_unassessed_base_blocks_identical_report_site_fix_claims",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
