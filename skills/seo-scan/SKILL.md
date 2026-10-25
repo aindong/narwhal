@@ -240,6 +240,9 @@ backed candidates, not permission to edit blindly; inspect warnings and conflict
 Next.js page candidates include observed default-extension sources and Pages
 Router directory indexes under `app/`, `pages/`, or `src/`. Dynamic routes,
 rewrites and custom page extensions still need manual ownership confirmation.
+Next.js robots/sitemap candidates include observed JavaScript and static app
+metadata files alongside TypeScript/public owners. Inspect the actual source
+before edits and verify the generated resource after deploy.
 Astro candidates include observed `.astro`, `.md`, `.mdx` and `.html` root,
 direct and directory-index pages in `src/pages/`. Confirm MDX integration,
 dynamic routes and content-collection ownership manually before editing.

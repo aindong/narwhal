@@ -902,6 +902,10 @@ def likely_files(root: Path, files: list, framework: str, artifact: str,
                                       or framework == 'plain_html' and artifact in HEAD_ARTIFACTS) else set()
     if artifact in ("robots_txt", "sitemap"):
         candidates = list(config.get(artifact, []))
+        if framework == 'nextjs':
+            filenames = ('robots.js', 'robots.txt') if artifact == 'robots_txt' else ('sitemap.js', 'sitemap.xml')
+            candidates += [f'{base}/{name}' for base in ('src/app', 'app') for name in filenames
+                           if f'{base}/{name}' in file_set]
     elif artifact == "llms_txt":
         base = (config.get("static") or ["."])[0]
         candidates = [("llms.txt" if base == "." else f"{base}/llms.txt")]

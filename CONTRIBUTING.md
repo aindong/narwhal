@@ -163,8 +163,9 @@ owner checks across the supported frameworks:
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does
 not infer function targets: pass their quoted patterns explicitly. The planner
-profile currently kills 320/343 mutants, with 23 unresolved survivors; it is an
-optional diagnostic that exits nonzero, not a passing CI gate. Its schema-file
+profile is an optional diagnostic, not a default CI gate. Record fresh killed/total
+counts and unresolved outcomes with each PR; past counts do not score new source
+or tests. Unresolved results keep the gate nonzero. Its schema-file
 test is omitted because references are not staged; full suites/MCP CI retain it.
 
 Pass multiple quoted patterns to gate several functions in one fresh run. Every

@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Next.js discovery-file plans recognize observed JavaScript generators and
+  static robots/sitemap metadata under `app/` or `src/app/`, alongside existing
+  TypeScript/public candidates. Source plans remain read-only and require
+  deployed-resource verification; missing alternatives are not invented.
 - Mutation runner accepts `--config PATH` for reproducible focused profiles
   without replacing tracked configuration. A committed planner profile preserves
   the focused owner checks and their disclosed survivors; the default CI gate
