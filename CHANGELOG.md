@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner automation requires review for explicitly malformed response
+  completeness flags. Such values remain unverified rather than being
+  reclassified as measured truncation/partial content; owner candidates remain.
 - Planner automation eligibility rejects explicitly unusable response statuses
   and malformed failure flags while retaining source-owner candidates for
   review. Absent legacy fields keep their existing candidate classification;
