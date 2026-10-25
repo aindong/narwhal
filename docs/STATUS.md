@@ -852,3 +852,5 @@ Planner verification templates combine `--fail-on-regression` and `--require-com
 Diffs retain both target labels (`old_url`, later `url`) and highlight differences for manual mapping review without blocking local-preview verification.
 
 Repeated planner rules retain coherent worst-severity evidence across homepage/recurring observations, deterministic ties, maximum occurrence counts and recorded site scope.
+
+Repeated planner actions disclose representative-selection counts/basis without implying distinct pages or matched instances; singleton actions stay compact.
