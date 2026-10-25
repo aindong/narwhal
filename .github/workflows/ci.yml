@@ -49,6 +49,8 @@ jobs:
           pip install --no-deps dist/*.whl
           narwhal --version
           python -c 'from importlib.metadata import version; import narwhal, narwhal.cli; from narwhal.lib.report import TOOL_VERSION; assert version("narwhal-seo") == narwhal.__version__ == narwhal.cli.__version__ == TOOL_VERSION'
+      - name: Verify installed audit-plan-edit-rescan cycle
+        run: python skills/seo-scan/tests/action_cycle_smoke.py
 
   # Prove it also works with the optional parsing/rendering extras installed.
   with-extras:

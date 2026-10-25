@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Packaging CI exercises the installed CLI through a local scan, read-only plan,
+  inspected fixture edit and verified rescan/diff. It checks the planned owner,
+  one resolved issue and rejection of the reversed regression, without external
+  requests or adding network calls to the offline unit suite.
 - JPEG dimension probes stop at scan/end markers and reject impossible segment
   and frame-header lengths. Frame-like bytes beyond those boundaries stay
   unassessed; minimum grayscale and existing color headers still work.
