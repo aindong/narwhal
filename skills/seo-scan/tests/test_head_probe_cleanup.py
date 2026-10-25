@@ -108,7 +108,7 @@ class TestHeadProbeCleanup(unittest.TestCase):
                         mock.patch.dict(sys.modules, {'requests': None}), \
                         mock.patch.object(http, 'assert_public_host'), \
                         mock.patch.object(http, '_urllib_safe_open', autospec=True, side_effect=opened):
-                    self.assertEqual((status, None) if failure else (206, None),
+                    self.assertEqual((410, None) if failure else (206, None),
                                      http.head(URL, timeout=7, user_agent='probe-test', allow_private=True))
                 body.close.assert_called_once()
                 body.read.assert_not_called()
