@@ -1459,7 +1459,11 @@ def render_markdown(plan: dict) -> str:
             continue
         lines += [f"## {label}", ""]
         for action in members:
-            owners = ", ".join(f"`{x['path']}`" for x in action["likely_files"][:3]) or "owner not located"
+            owners = ", ".join(
+                f"`{x['path']}` ({'in file inventory' if x['exists'] else 'not in file inventory'})"
+                for x in action["likely_files"][:3]) or "owner not located"
+            if len(action['likely_files']) > 3:
+                owners += f"; additional candidates in JSON: {len(action['likely_files']) - 3}"
             if action['rule_id'] in RESOURCE_VERIFICATION:
                 owners = 'not assigned (verification only)'
             scope_lines = []

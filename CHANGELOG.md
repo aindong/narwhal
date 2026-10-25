@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Markdown remediation plans label inventoried versus uninventoried source
+  candidates and disclose omitted preview entries. Capped inventories do not
+  turn unobserved paths into missing-file claims; full JSON/ownership authority
+  and verification-only handling stay unchanged.
 - Next.js discovery-file plans recognize observed JavaScript generators and
   static robots/sitemap metadata under `app/` or `src/app/`, alongside existing
   TypeScript/public candidates. Source plans remain read-only and require
