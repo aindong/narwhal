@@ -20,7 +20,8 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
+from lib import links as linkslib, sitemap as sitemaplib, finding_urls  # noqa: E402
+from lib.http import normalize_url, URLInputError  # noqa: E402
 from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
                         recorded_response_partial, recorded_response_truncated, recorded_scan_scope, _http_robots_notes,
                         recorded_image_weight_problem, _literal_preview_code)
@@ -1226,6 +1227,57 @@ def verification_for(artifact: str, target: str, report_source: str,
     return prerequisites + commands
 
 
+def _rule_page_witnesses(report, target):
+    """Index bounded per-rule labels, without inferring page severity or completeness."""
+    # Audit retains bare-host input; normalize context, never imported URL labels.
+    try:
+        target = normalize_url(target)
+    except URLInputError:
+        return {}
+    samples = {}
+    crawl_rules = set()
+    for row in report.get('crawl', {}).get('recurring', []):
+        rule = _legacy_rule_id(row)
+        crawl_rules.add(rule)
+        sample = finding_urls.read(row, target)
+        if sample is not None:
+            for url in sample['urls']:
+                finding_urls.record(samples, rule, url)
+    page = report.get('homepage', {})
+    page_url = page.get('final_url') or page.get('url') or target
+    if not _automation_source_gap(page) and finding_urls.same_origin_label(page_url, target):
+        for row in page.get('findings', []):
+            rule = _legacy_rule_id(row)
+            if row.get('severity') != 'good' and rule in crawl_rules:
+                finding_urls.record(samples, rule, page_url)
+    return {rule: sample['urls'] for rule, sample in samples.items()}
+
+
+def _witness_owners(root, files, framework, artifact, targets, warnings):
+    """Keep observed candidates for witnessed pages, never an unrelated home fallback."""
+    local = artifact in ('content', 'headings', 'image_alt') or framework == 'plain_html'
+    matches, candidates = set(), {}
+    file_set = set(files)
+    for target in targets:
+        routes = set(_route_candidates(target, framework, warnings, files=file_set))
+        if urlparse(target).path in ('', '/'):
+            routes.update(FRAMEWORK_CANDIDATES.get(framework, {}).get('content', []))
+        matches.update(routes)
+        located = False
+        for owner in likely_files(root, files, framework, artifact, target, warnings):
+            if not owner['exists'] or local and owner['path'] not in routes:
+                continue
+            located = True
+            previous = candidates.get(owner['path'])
+            if previous is None or owner['confidence'] > previous['confidence']:
+                candidates[owner['path']] = owner
+        if not located:
+            warnings.append('A recorded recurring-rule URL has no inventoried source candidate; '
+                            'locate it manually before claiming site-wide remediation.')
+    return sorted(candidates.values(), key=lambda owner: (
+        -owner['confidence'], not (local and owner['path'] in matches), owner['path']))[:8]
+
+
 def build_plan(report: dict, repo: str, *, report_source="<memory>",
                max_files=MAX_REPO_FILES) -> dict:
     normalized = normalize_report(report)
@@ -1233,6 +1285,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
     inv = inventory(root, max_files=max(1, min(int(max_files), MAX_REPO_FILES)))
     warnings = list(inv["warnings"])
     framework = detect_framework(root, inv["files"], warnings)
+    page_witnesses = (_rule_page_witnesses(report, normalized['target'])
+                      if normalized['kind'] == 'audit' else {})
     if normalized["report_schema_version"] == "legacy":
         warnings.append("Legacy report has no schema_version; rule IDs were derived from titles.")
     if framework["name"] == "unknown":
@@ -1261,8 +1315,15 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         safety, requires_deploy = safety_for(artifact, finding["rule_id"])
         if verification:
             safety, requires_deploy = 'manual_external', False
-        owners = ([] if verification else likely_files(root, inv["files"], framework["name"], artifact,
-                                                     normalized["target"], warnings))
+        site_page = (finding['rule_id'] in normalized['crawl_rule_ids'] and not verification
+                     and artifact in HEAD_ARTIFACTS | {'content', 'headings', 'image_alt'})
+        targets = page_witnesses.get(finding['rule_id'], [])
+        if verification:
+            owners = []
+        elif site_page:
+            owners = _witness_owners(root, inv['files'], framework['name'], artifact, targets, warnings)
+        else:
+            owners = likely_files(root, inv['files'], framework['name'], artifact, normalized['target'], warnings)
         eligibility = None
         if artifact == 'viewport':
             blockers = []
@@ -1312,6 +1373,14 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "provenance": {"source": "narwhal_finding", "report": report_source,
                            "report_schema_version": normalized["report_schema_version"]},
         })
+        if site_page:
+            note = ('Recorded URL label witnesses for this rule across audit page/crawl observations; '
+                    'not a complete affected-page list, per-page severity or proof of ownership. '
+                    'Confirm current source and URL behavior before editing.\n' + json.dumps(targets, ensure_ascii=False)
+                    if targets else
+                    'Recurring rule page locations are unverified. Re-run the audit or confirm affected URLs '
+                    'before selecting source files; aggregate counts do not locate a page owner.')
+            actions[-1]['evidence'] += ('\n\n' if actions[-1]['evidence'] else '') + note
         if normalized['kind'] == 'audit' and finding['rule_id'] in HTTP_ROBOTS_REVIEW_RULES:
             targets = _header_target_evidence(report.get('crawl', {}), finding['rule_id'])
             if targets:

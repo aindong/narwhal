@@ -237,6 +237,15 @@ links stable finding IDs to likely owning files; groups shared-template fixes;
 and separates safe candidates, review-required work, external/manual work, and
 changes that require post-deploy verification. Treat file matches as evidence-
 backed candidates, not permission to edit blindly; inspect warnings and conflicts.
+Fresh crawl/audit JSON includes up to five sorted, distinct URL-label witnesses
+per recurring rule observation, with truncation/omission receipts. They use the
+recorded final URL when present and otherwise the requested label, not proof of
+response destinations, successful access or the full affected-page set. Counts
+and scores are unchanged. Labels over 4,096 characters and shared credential-like
+markers are omitted from these samples, not truncated into new URLs. For recurring page-local actions, plans use supported
+same-origin witnesses to locate inventoried route sources instead of a healthy
+homepage fallback. Unsupported/legacy unlocated rollups require manual source
+confirmation or a fresh audit; shared-framework head candidates remain heuristic.
 Next.js page candidates include observed default-extension sources and Pages
 Router directory indexes under `app/`, `pages/`, or `src/`. Dynamic routes,
 rewrites and custom page extensions still need manual ownership confirmation.

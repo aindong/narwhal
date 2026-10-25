@@ -47,6 +47,12 @@ class TestPlanSchemaContract(unittest.TestCase):
         partial['findings'] = [{'rule_id': 'technical.response.partial', 'category': 'technical',
                                 'severity': 'critical', 'title': 'Ranged response needs full-page verification'}]
         self.cases['manual_verification'] = plan.build_plan(partial, str(root))
+        recurring = dict(report['findings'][0], count=1, url_sample={
+            'basis': 'recorded_crawl_rule_url_labels_v1', 'urls': ['https://example.test/other.html'],
+            'truncated': False, 'omitted': 0})
+        self.cases['audit_inner_page'] = plan.build_plan({
+            'site': 'https://example.test/', 'homepage': {'url': 'https://example.test/', 'findings': []},
+            'crawl': {'recurring': [recurring]}}, str(root))
 
     def test_emitted_inventory_and_action_fields_are_declared(self):
         action_properties = SCHEMA['properties']['actions']['items']['properties']

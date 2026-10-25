@@ -37,6 +37,11 @@ Reversing the reports must fail the regression gate. This is local,
 page-level workflow evidence, not real-site SEO gains or deployment proof.
 A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),
 with no score delta/resolved fixes and a read-only, manual verification plan.
+The same fixture then audits a healthy homepage and an inner page missing its
+title. Its recurring rule must carry the inner URL witness and plan only that
+page's inventoried source. An explicit title edit removes the recurring finding
+and improves the comparable overall audit score. Audit diff finding lists still
+describe homepage changes; inner resolution is checked directly in crawl rows.
 With the optional MCP SDK installed, add `--mcp` to exercise the installed stdio
 server for both plans and all three diffs. Both SDK CI jobs run this mode and
 require MCP diff output to match the CLI. Local scans use the CLI's explicit

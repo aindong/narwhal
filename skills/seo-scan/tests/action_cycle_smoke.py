@@ -176,6 +176,46 @@ def main(use_mcp=False):
                       'score {} -> {}; reverse regression rejected; partial rescan withheld fix claims '
                       'and requested manual verification; MCP stdio {}.'.format(
                           before['score'], after['score'], 'verified' if use_mcp else 'not requested'))
+                server.partial_html = False
+                pricing_url = url + 'pricing/'
+                pricing = site / 'pricing/index.html'
+                pricing.parent.mkdir()
+                pricing_html = html.replace('<title>Local workflow verification for Narwhal development</title>', '')
+                pricing_html = pricing_html.replace('</head>', VIEWPORT + '</head>').replace(
+                    'href="' + url + '"', 'href="' + pricing_url + '"')
+                pricing.write_text(pricing_html, encoding='utf-8')
+                (site / 'sitemap.xml').write_text(
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    '<url><loc>' + url + '</loc></url><url><loc>' + pricing_url + '</loc></url></urlset>', encoding='utf-8')
+                audit_options = ['audit', url, '--allow-private', '--max-pages', '2', '--no-config', '--format', 'json']
+                run(audit_options + ['-o', 'audit-before.json'])
+                audit_before = read('audit-before.json')
+                source_bytes = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                if use_mcp:
+                    audit_plan = mcp_tool('plan_remediation', {'report': audit_before, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'audit-before.json', '--repo', str(site), '--format', 'json', '-o', 'audit-plan.json'])
+                    audit_plan = read('audit-plan.json')
+                title_rule = 'technical.missing.title'
+                title_action = next(a for a in audit_plan['actions'] if a['rule_id'] == title_rule)
+                assert [owner['path'] for owner in title_action['likely_files']] == ['pricing/index.html'], title_action
+                assert title_action['safety'] == 'review_required', title_action
+                assert pricing_url in title_action['evidence'], title_action
+                assert source_bytes == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                row = next(r for r in audit_before['crawl']['recurring'] if r['rule_id'] == title_rule)
+                assert row['count'] == 1 and row['url_sample']['urls'] == [pricing_url], row
+                pricing.write_text(pricing_html.replace('</head>',
+                    '<title>Pricing and plans for local workflow verification</title></head>'), encoding='utf-8')
+                run(audit_options + ['-o', 'audit-after.json'])
+                audit_after = read('audit-after.json')
+                assert title_rule not in {r['rule_id'] for r in audit_after['crawl']['recurring']}, audit_after['crawl']['recurring']
+                run(['diff', 'audit-before.json', 'audit-after.json', '--require-comparable', '--fail-on-regression',
+                     '--format', 'json', '-o', 'audit-diff.json'])
+                audit_diff = read('audit-diff.json')
+                assert audit_diff['comparison']['status'] == 'comparable' and audit_diff['score_delta'] > 0, audit_diff
+                # Audit diff finding classifications cover the homepage; inner resolution is checked above in the rollup.
+                print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
+                      'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))
             finally:
                 server.shutdown()
                 thread.join(timeout=5)

@@ -99,6 +99,8 @@ class TestAutomationEligibility(unittest.TestCase):
         data = {'site': URL, 'homepage': page, 'crawl': {'pages': [{'hard_fail': True}], 'recurring': []}}
         self.assertEqual('safely_automatable', self.action(data)['safety'])
         data['crawl']['recurring'] = [dict(page['findings'][0], count=3)]
+        data['crawl']['recurring'][0]['url_sample'] = {
+            'basis': 'recorded_crawl_rule_url_labels_v1', 'urls': [URL], 'truncated': False, 'omitted': 0}
         action = self.action(data)
         self.assertEqual('review_required', action['safety'])
         self.assertEqual(3, action['occurrences'])
@@ -117,6 +119,8 @@ class TestAutomationEligibility(unittest.TestCase):
         page['hard_fail'] = True
         data = {'site': URL, 'homepage': page,
                 'crawl': {'pages': [{'hard_fail': False}], 'recurring': [dict(finding, count=2)]}}
+        data['crawl']['recurring'][0]['url_sample'] = {
+            'basis': 'recorded_crawl_rule_url_labels_v1', 'urls': [URL], 'truncated': False, 'omitted': 0}
         self.assertEqual('safely_automatable', self.action(data)['safety'])
 
     def test_legacy_title_ids_remain_candidates_without_certifying_missing_metadata(self):
