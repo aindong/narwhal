@@ -23,3 +23,7 @@ jobs:
         run: python -m pip install -r requirements-mutation.txt
       - name: Require every selected mutant to be killed
         run: python scripts/mutation_test.py
+      - name: Require every execution-scope validator mutant to be killed
+        run: >-
+          python scripts/mutation_test.py --config scripts/mutation/scope.toml
+          'lib.report.x_recorded_scan_scope__mutmut_*'

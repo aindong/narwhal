@@ -190,8 +190,9 @@ counts and unresolved outcomes with each PR; past counts do not score new source
 or tests. Unresolved results keep the gate nonzero. Its schema-file
 test is omitted because references are not staged; full suites/MCP CI retain it.
 
-The optional [scope profile](scripts/mutation/scope.toml) checks shared execution
-receipts and their report/diff/planner consumers:
+The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
+and their report/diff/planner consumers. The existing mutation CI job runs it
+alongside the default corpus:
 
 ```bash
 .venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/scope.toml \
