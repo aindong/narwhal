@@ -25,11 +25,12 @@ class TestNextPageRoutes(unittest.TestCase):
                         path = root / rel
                         path.parent.mkdir(parents=True, exist_ok=True)
                         path.write_text('Fixture source', encoding='utf-8')
-                    for target in ('https://example.test/', 'https://example.test?review=1'):
+                    for target in ('https://example.test/', 'https://example.test?review=1', 'http://example.test/'):
                         for artifact in ('content', 'headings', 'image_alt'):
                             owners = plan.likely_files(root, paths, 'nextjs', artifact, target)
                             self.assertEqual(route, owners[0]['path'])
                             self.assertTrue(owners[0]['exists'])
+                            self.assertTrue(owners[0]['reason'].startswith('Existing route convention;'))
                             self.assertTrue(all(0 <= owner['confidence'] <= 1 for owner in owners))
 
     def test_missing_or_non_web_target_does_not_imply_a_homepage(self):
