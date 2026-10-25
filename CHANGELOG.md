@@ -12,9 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Stdlib reachability probes report the actual GET fallback result after a
+  rejected HEAD, matching requests. GET 404/5xx responses remain measured
+  failures; transport/SSRF failures return status 0 with a controlled error
+  instead of reusing the HEAD rejection. Sitemap response coverage uses that
+  outcome while both attempts retain explicit cleanup.
 - Reachability probes close their initial HEAD responses before GET fallback
-  and close urllib HTTP-error bodies on both attempts. Existing fallback status
-  reporting is preserved without consuming error bodies.
+  and close urllib HTTP-error bodies on both attempts without consuming them.
 - Image range probes close requests responses after stream failures and urllib
   HTTP-error bodies without reading them. Existing prefix/error results are
   preserved; failed streams still cannot supply partial image evidence.

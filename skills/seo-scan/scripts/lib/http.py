@@ -713,7 +713,8 @@ def head(url: str, *, timeout: int = DEFAULT_TIMEOUT, user_agent: str = DEFAULT_
     """Check a URL's reachability cheaply. Returns ``(status, error)``.
 
     Uses HEAD (falling back to GET when a server rejects it) and follows
-    redirects. ``status == 0`` means unreachable (DNS/timeout/SSRF-blocked); the
+    redirects. When GET is attempted, its outcome replaces the HEAD rejection.
+    ``status == 0`` means unreachable (DNS/timeout/SSRF-blocked); the
     error string carries the reason. Never raises — safe for bulk link checking.
     """
     try:
@@ -771,8 +772,10 @@ def _head_urllib(url, timeout, user_agent, allow_private=False):
         if exc.code in (403, 405, 501):
             try:
                 return _try("GET")
-            except Exception:  # noqa: BLE001
-                return exc.code, None
+            except urllib.error.HTTPError as fallback:
+                return fallback.code, None
+            except Exception as fallback:  # noqa: BLE001
+                return 0, type(fallback).__name__
         return exc.code, None
     except Exception as exc:  # noqa: BLE001
         return 0, type(exc).__name__
