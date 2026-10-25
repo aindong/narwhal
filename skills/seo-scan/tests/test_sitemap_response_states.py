@@ -51,7 +51,7 @@ class TestSitemapResponseStates(unittest.TestCase):
                 self.assertEqual(expected == 'successful_2xx', sitemap._sample_succeeded(entry))
                 failures, unverified = plan._sitemap_sample_evidence({'sample': [entry]})
                 self.assertEqual([entry] if expected == 'broken' else [], failures)
-                self.assertEqual(int(expected == 'unverified'), unverified)
+                self.assertEqual([entry] if expected == 'unverified' else [], unverified)
 
     def test_unsupported_or_errored_problem_records_stay_raw_but_unverified(self):
         for status, error in ((700, None), (404, 'incomplete'), (404, False)):
