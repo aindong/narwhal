@@ -219,6 +219,12 @@ def main(use_mcp=False):
                 if use_mcp:
                     assert audit_diff == mcp_tool('diff_reports', {
                         'old_json': json.dumps(audit_before), 'new_json': json.dumps(audit_after)}, root)
+                legacy = json.loads(json.dumps(audit_before))
+                legacy['crawl'].pop('recurring')
+                (root / 'audit-unverified.json').write_text(json.dumps(legacy), encoding='utf-8')
+                run(['diff', 'audit-unverified.json', 'audit-after.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'audit-unverified-diff.json'], expected=2)
+                assert read('audit-unverified-diff.json')['crawl_rule_changes']['status'] == 'unverified'
                 # Removed crawl rules are sample observations, not individual page-resolution classifications.
                 print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
                       'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))

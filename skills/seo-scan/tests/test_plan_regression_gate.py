@@ -25,7 +25,8 @@ def page():
 
 def wrap(value, kind):
     return value if kind == 'scan' else {'schema_version': '2.0', 'site': value['url'],
-        'overall_score': value['score'], 'homepage': value, 'crawl': {}, 'sitemap': {}}
+        'overall_score': value['score'], 'homepage': value,
+        'crawl': {'pages': [{'url': value['url']}], 'recurring': []}, 'sitemap': {}}
 
 
 def execute(before, after, kind):
@@ -73,6 +74,11 @@ class TestPlanRegressionGate(unittest.TestCase):
                 if not after_known:
                     after.pop('meta')
                 self.assertEqual(2, execute(wrap(before, kind), wrap(after, kind), kind))
+
+    def test_generated_audit_gate_rejects_missing_crawl_rule_evidence(self):
+        before, after = wrap(page(), 'audit'), wrap(page(), 'audit')
+        after['crawl'].pop('recurring')
+        self.assertEqual(2, execute(before, after, 'audit'))
 
     def test_mcp_and_markdown_preserve_strict_gate_and_existing_safety(self):
         data = page()

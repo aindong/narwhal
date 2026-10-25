@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Strict audit diff gates (`--require-comparable`) reject unverified crawl-rule
+  evidence with exit 2 instead of passing on homepage execution coverage alone.
+  Legacy viewing remains available with an explicit warning.
 - Audit diffs separately compare native recurring rule aggregates when recorded
   coverage and nonempty exact crawl samples match. New critical/high rules and
   severity escalations trigger the regression gate even without a score drop;
