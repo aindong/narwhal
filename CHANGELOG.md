@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation-plan JSON schema accepts current inventory-error coverage,
+  incomplete-inventory blockers and repeated-observation selection receipts.
+  Contract checks compare actual plans with the schema; both MCP SDK CI jobs
+  validate complete plans without adding a scanner dependency.
 - Installed action-cycle CI also verifies loss of rescan coverage: a real local
   HTTP 206 preview cannot claim resolved fixes or measured score changes, and
   its plan stays read-only/manual without guessed source owners.
