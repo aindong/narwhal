@@ -9,6 +9,13 @@ import plan
 
 
 class TestPlanLocalPairs(unittest.TestCase):
+    def test_scan_settings_prerequisite_is_present_once_before_local_or_deployed_scans(self):
+        for artifact in ('title', 'json_ld', 'sitemap', 'server_config'):
+            steps = plan.verification_for(artifact, 'https://example.test', 'before.json')
+            self.assertEqual(1, steps.count(plan.SCAN_SETTINGS_INSTRUCTION))
+            scan = next(i for i, step in enumerate(steps) if step.startswith('narwhal scan '))
+            self.assertLess(steps.index(plan.SCAN_SETTINGS_INSTRUCTION), scan)
+
     def test_local_scans_pair_before_edits_and_original_target_waits_for_deploy(self):
         for kind in ('scan', 'audit'):
             steps = plan.verification_for('title', 'https://example.test/page', 'original.json', kind)
