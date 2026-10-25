@@ -206,6 +206,21 @@ class TestCrawlPageOwners(unittest.TestCase):
         self.assertFalse(action['automation_eligibility']['eligible'])
         self.assertIn('no_existing_owner_candidate', action['automation_eligibility']['blockers'])
 
+    def test_partly_unlocated_viewport_withholds_automation_until_all_witnesses_located(self):
+        data = copy.deepcopy(self.data)
+        row = next(r for r in data['crawl']['recurring'] if r['rule_id'] == RULE)
+        row.update(rule_id='technical.no.responsive.viewport.tag', title='No responsive viewport tag')
+        (self.repo / 'pricing/index.html').unlink()
+        action = next(a for a in plan.build_plan(data, str(self.repo))['actions'] if a['artifact'] == 'viewport')
+        self.assertEqual(['docs/index.html'], [o['path'] for o in action['likely_files']])
+        self.assertEqual(['unlocated_page_witness'], action['automation_eligibility']['blockers'])
+        self.assertFalse(action['automation_eligibility']['eligible'])
+        self.assertEqual('review_required', action['safety'])
+        (self.repo / 'pricing/index.html').write_text('Located source', encoding='utf-8')
+        action = next(a for a in plan.build_plan(data, str(self.repo))['actions'] if a['artifact'] == 'viewport')
+        self.assertTrue(action['automation_eligibility']['eligible'])
+        self.assertEqual([], action['automation_eligibility']['blockers'])
+
 
 if __name__ == '__main__':
     unittest.main()

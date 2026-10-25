@@ -53,6 +53,13 @@ class TestPlanSchemaContract(unittest.TestCase):
         self.cases['audit_inner_page'] = plan.build_plan({
             'site': 'https://example.test/', 'homepage': {'url': 'https://example.test/', 'findings': []},
             'crawl': {'recurring': [recurring]}}, str(root))
+        recurring['count'] = 2
+        recurring['url_sample']['urls'].append('https://example.test/unlocated/')
+        self.cases['audit_unlocated_page'] = plan.build_plan({
+            'site': 'https://example.test/', 'homepage': {'url': 'https://example.test/', 'findings': []},
+            'crawl': {'recurring': [recurring]}}, str(root))
+        self.assertIn('unlocated_page_witness',
+                      self.cases['audit_unlocated_page']['actions'][0]['automation_eligibility']['blockers'])
 
     def test_emitted_inventory_and_action_fields_are_declared(self):
         action_properties = SCHEMA['properties']['actions']['items']['properties']

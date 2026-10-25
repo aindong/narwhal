@@ -246,6 +246,8 @@ markers are omitted from these samples, not truncated into new URLs. For recurri
 same-origin witnesses to locate inventoried route sources instead of a healthy
 homepage fallback. Unsupported/legacy unlocated rollups require manual source
 confirmation or a fresh audit; shared-framework head candidates remain heuristic.
+Viewport automation eligibility is blocked by `unlocated_page_witness` when any
+recorded page label has no inventoried source candidate, even if others do.
 Next.js page candidates include observed default-extension sources and Pages
 Router directory indexes under `app/`, `pages/`, or `src/`. Dynamic routes,
 rewrites and custom page extensions still need manual ownership confirmation.

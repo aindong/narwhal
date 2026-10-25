@@ -1253,7 +1253,7 @@ def _rule_page_witnesses(report, target):
     return {rule: sample['urls'] for rule, sample in samples.items()}
 
 
-def _witness_owners(root, files, framework, artifact, targets, warnings):
+def _witness_owners(root, files, framework, artifact, targets, warnings, unlocated=None):
     """Keep observed candidates for witnessed pages, never an unrelated home fallback."""
     local = artifact in ('content', 'headings', 'image_alt') or framework == 'plain_html'
     matches, candidates = set(), {}
@@ -1265,13 +1265,15 @@ def _witness_owners(root, files, framework, artifact, targets, warnings):
         matches.update(routes)
         located = False
         for owner in likely_files(root, files, framework, artifact, target, warnings):
-            if not owner['exists'] or local and owner['path'] not in routes:
+            if not owner['exists'] or (local and owner['path'] not in routes):
                 continue
             located = True
             previous = candidates.get(owner['path'])
             if previous is None or owner['confidence'] > previous['confidence']:
                 candidates[owner['path']] = owner
         if not located:
+            if unlocated is not None:
+                unlocated.append(target)
             warnings.append('A recorded recurring-rule URL has no inventoried source candidate; '
                             'locate it manually before claiming site-wide remediation.')
     return sorted(candidates.values(), key=lambda owner: (
@@ -1318,10 +1320,11 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         site_page = (finding['rule_id'] in normalized['crawl_rule_ids'] and not verification
                      and artifact in HEAD_ARTIFACTS | {'content', 'headings', 'image_alt'})
         targets = page_witnesses.get(finding['rule_id'], [])
+        unlocated = []
         if verification:
             owners = []
         elif site_page:
-            owners = _witness_owners(root, inv['files'], framework['name'], artifact, targets, warnings)
+            owners = _witness_owners(root, inv['files'], framework['name'], artifact, targets, warnings, unlocated)
         else:
             owners = likely_files(root, inv['files'], framework['name'], artifact, normalized['target'], warnings)
         eligibility = None
@@ -1331,6 +1334,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                 blockers.append('unrecognized_structural_rule')
             if inv['capped'] or inv['walk_errors']:
                 blockers.append('incomplete_repository_inventory')
+            if unlocated:
+                blockers.append('unlocated_page_witness')
             if not any(owner.get('exists') is True for owner in owners):
                 blockers.append('no_existing_owner_candidate')
             if ((finding.get('scope', 'page') != 'site' and normalized['page_automation_gap'])
