@@ -157,12 +157,19 @@ def _crawl_link_findings(crawl):
     failures, uncertain = [], []
     for row in records:
         status = row.get('status')
-        error = row.get('error')
-        no_error = error is None or (isinstance(error, str) and not error)
-        confirmed = (type(status) is int and 400 <= status < 600
-                     and no_error and linkslib.is_broken(status))
+        confirmed = linkslib.http_check_state(status, row.get('error')) == 'broken'
         (failures if confirmed else uncertain).append(row)
     receipt = _link_coverage(dict(info, broken=records))
+    if 'unverified' in info:
+        rows = info['unverified']
+        if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+            raise ValueError('Report.crawl.links.unverified must be a list of objects.')
+        if receipt:
+            uncertain = list(rows)
+        else:
+            for row in rows:
+                if row not in uncertain:
+                    uncertain.append(row)
     if (receipt and (receipt['broken'] != len(failures)
                     or any(type(row.get('status')) is not int for row in records))):
         receipt = None
@@ -196,7 +203,7 @@ def _crawl_link_findings(crawl):
                   if receipt else 'Link-response coverage is unrecorded or inconsistent; ')
         detail += (f'{skipped} target(s) omitted by cap.' if budget_known else
                    'request-budget coverage is unrecorded or inconsistent.')
-        detail += ' This does not establish dead destinations; some unverified target identities are absent from the rollup.'
+        detail += ' This does not establish dead destinations; target identities may be absent for legacy or capped checks.'
         if uncertain:
             detail += '\n' + witnesses(uncertain)
         findings.append({'category': 'technical', 'severity': 'low', 'scope': 'site',

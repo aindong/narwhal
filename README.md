@@ -487,7 +487,11 @@ an explicit total; the original report retains the rest. These are observations,
 not rechecks or edit authorization. Comprehensive-audit crawl link checks also
 produce manual actions for reported HTTP failures and separately for unverified
 responses, capped or unknown coverage. Bounded witnesses retain referring pages;
-no source owner or automatic link edit is inferred. It proposes work but never edits.
+no source owner or automatic link edit is inferred. New crawl link JSON retains
+all checked unverified outcomes in `links.unverified`, including gated targets,
+with status and referrers. Markdown shows up to 20 rows with bounded URL previews;
+the planner uses these identities for manual follow-up. Legacy reports do not
+invent missing targets, and capped targets remain unchecked. It proposes work but never edits.
 See the [remediation-plan contract](docs/REMEDIATION_PLAN.md).
 
 ## Real search data (Google Search Console, opt-in)

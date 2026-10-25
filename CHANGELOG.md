@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl link reports retain checked unverified targets/statuses/referrers in an
+  additive `unverified` list and a bounded Markdown table. Planner handoffs
+  preserve those identities without duplicating legacy no-response entries.
+  Shared response classification keeps gated, unsupported and errored outcomes
+  unverified, including errored 4xx/5xx. Check budgets and legacy problem-target
+  records remain; missing legacy target identities are not invented.
 - Audit crawl link checks now survive into remediation plans as separate manual
   HTTP-failure and unverified-coverage actions, retaining bounded target/status/
   referring-page witnesses. Gated/no-response/capped checks do not become dead
