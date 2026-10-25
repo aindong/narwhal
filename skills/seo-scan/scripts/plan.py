@@ -31,7 +31,7 @@ MAX_REPO_FILES = 5000
 MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
 EVIDENCE_PREVIEW_CHARS = 600
-SITEMAP_FAILURE_WITNESSES = 5
+SITEMAP_SAMPLE_WITNESSES = 5
 LINK_TARGET_WITNESSES = 5
 LINK_SOURCE_WITNESSES = 3
 MEMORY_BASELINE_INSTRUCTION = (
@@ -128,7 +128,7 @@ def _sitemap_sample_evidence(sitemap):
     for item in broken if isinstance(broken, list) else [broken]:
         if item not in observed:
             observed.append(item)
-    failures, unverified = [], 0
+    failures, unverified = [], []
     for item in observed:
         status = item.get('status') if isinstance(item, dict) else None
         error = item.get('error') if isinstance(item, dict) else None
@@ -138,7 +138,7 @@ def _sitemap_sample_evidence(sitemap):
         elif state == 'successful_2xx':
             continue
         else:
-            unverified += 1
+            unverified.append(item)
     return failures, unverified
 
 
@@ -408,7 +408,7 @@ def normalize_report(data: dict) -> dict:
             if failed_samples:
                 witnesses = [{'status': item['status'],
                               'url': item.get('url') if isinstance(item.get('url'), str) else None}
-                             for item in failed_samples[:SITEMAP_FAILURE_WITNESSES]]
+                             for item in failed_samples[:SITEMAP_SAMPLE_WITNESSES]]
                 detail += (f"\nReported HTTP failure witnesses (first {len(witnesses)} of {len(failed_samples)}; "
                            "not rechecked; null URL means unrecorded):\n"
                            + json.dumps(witnesses, indent=2, ensure_ascii=True))
@@ -420,14 +420,22 @@ def normalize_report(data: dict) -> dict:
                 "recommendation": "Fix the reported sitemap entries and validate again.",
             })
         if unverified_samples:
+            witnesses = [{'status': item.get('status') if type(item.get('status')) is int else None,
+                          'url': item.get('url') if isinstance(item.get('url'), str) else None}
+                         if isinstance(item, dict) else {'status': None, 'url': None}
+                         for item in unverified_samples[:SITEMAP_SAMPLE_WITNESSES]]
+            detail = (f'{len(unverified_samples)} recorded sample(s) lack a confirmed successful or failing HTTP response. '
+                      'Gated, unsupported or no-response probes do not establish a dead URL.'
+                      f'\nReported unverified witnesses (first {len(witnesses)} of {len(unverified_samples)}; '
+                      'not rechecked; null means unrecorded or unsupported field type):\n'
+                      + json.dumps(witnesses, indent=2, ensure_ascii=True))
             findings.append({
                 'category': 'technical', 'severity': 'low', 'scope': 'site',
                 'rule_id': 'technical.sitemap.sample.unverified',
                 'title': 'Sampled sitemap URL reachability is unverified',
-                'detail': f'{unverified_samples} recorded sample(s) lack a confirmed successful or failing HTTP response. '
-                          'Gated, unsupported or no-response probes do not establish a dead URL.',
+                'detail': detail,
                 'recommendation': 'Verify endpoint access and request outcomes before editing sitemap locations.',
-                'occurrences': unverified_samples,
+                'occurrences': len(unverified_samples),
             })
         parse_coverage = sitemaplib.recorded_parse_coverage(sitemap.get('parse_coverage'),
                                                            sitemap.get('sitemaps_fetched'))

@@ -12,6 +12,7 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation plans retain the first five unverified sitemap target/status witnesses and their total, without granting source-edit authority.
 - Sitemap sample reporting and remediation planning share the crawler
   response-state classifier. Unsupported statuses and falsey non-string error
   fields remain unverified instead of becoming healthy probes or source-repair

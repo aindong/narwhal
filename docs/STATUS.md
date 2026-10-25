@@ -844,3 +844,5 @@ Only begin the steps below when the owner explicitly requests a release.
 
 Versioning is additive-minor / patch-fix; the plugin rename in 1.2.0 only changed
 the *install string* (`narwhal@narwhal`), not behavior.
+
+Unverified sitemap planning actions retain up to five recorded target/status witnesses and the total; manual verification remains required.

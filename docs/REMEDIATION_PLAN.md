@@ -41,6 +41,8 @@ HTTP status/URL witnesses and the total observation count. The original report
 retains remaining witnesses; a null witness URL means unrecorded or unsupported
 input shape, not an inferred address. Sitemap and crawl probes share response
 classification: supported error-free 2xx or failing 4xx/5xx (gated codes excluded).
+Unverified sitemap sample actions retain the first five recorded target/status witnesses and the total. Null fields mean unrecorded or unsupported field types; witnesses are not rechecked and do not establish dead URLs.
+
 Unsupported statuses, non-string falsey error fields and request errors stay
 unverified. Gated/unsupported/no-response samples remain separate verification-only
 actions; retained compatibility `broken_sample` rows alone do not prove a source
