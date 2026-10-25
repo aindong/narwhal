@@ -27,3 +27,7 @@ jobs:
         run: >-
           python scripts/mutation_test.py --config scripts/mutation/scope.toml
           'lib.report.x_recorded_scan_scope__mutmut_*'
+      - name: Require every crawl-count validator mutant to be killed
+        run: >-
+          python scripts/mutation_test.py --config scripts/mutation/diff.toml
+          'diff_scan.x__crawl_count_problem__mutmut_*'
