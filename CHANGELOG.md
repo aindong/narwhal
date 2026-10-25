@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Brief regression tests verify CLI page modes and transport settings for both
+  own and competitor pages, plus explicit local-preview access through the host
+  guard while MCP remains public-only.
 - The focused brief/service mutation corpus includes existing rule-ownership
   regressions to check lost or inconsistent page scoring policies across scans.
 - Service integration opt-in is consistent across agent audit guidance and
