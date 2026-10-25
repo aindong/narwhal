@@ -252,8 +252,11 @@ class TestDocumentBaseLinks(unittest.TestCase):
         payload = json.loads(page.to_json())
         self.assertEqual('incomparable', diff_scan.diff_reports(payload, payload)['comparison']['status'])
         plain = json.loads(Report(BASE, fetched_status=200).to_json())
+        plain['meta']['scan_scope'] = copy.deepcopy(page.meta['scan_scope'])
         audit = {'site': BASE, 'overall_score': plain['score'], 'homepage': plain,
-                 'crawl': {'pages': [{'anchor_base': page.meta['anchor_base']}]}}
+                 'crawl': {'pages': [{'url': BASE, 'anchor_base': page.meta['anchor_base']}]}}
+        clean = copy.deepcopy(audit); clean['crawl']['pages'][0].pop('anchor_base')
+        self.assertEqual('comparable', diff_scan.diff_reports(clean, clean)['comparison']['status'])
         self.assertEqual('incomparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
 
     def test_compare_and_brief_do_not_promote_unassessed_page_scores(self):
