@@ -112,7 +112,7 @@ wall of raw output.
 ## If `$1` is `fix` → close the audit → fix loop
 
 Apply the findings as real code edits in the current workspace, then re-scan and
-diff to **prove** the score moved. Never claim improvement without a diff.
+diff matching report kinds to measure the outcome. Never promise a score gain.
 
 **Step 1 — Baseline.** If a fresh scan/audit JSON for `$2` already exists in the
 CWD (e.g. `narwhal-audit.json` from a recent `/narwhal audit`), reuse it.
@@ -120,6 +120,8 @@ Otherwise run:
 ```
 python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" $2 --format json -o narwhal-fix-before.json
 ```
+Keep the original JSON and invocation settings. Identify whether the baseline is
+a page scan or a composite audit; their scores and finding scopes differ.
 
 **Step 2 — Confirm the source is here.** Verify the current workspace contains
 the site's source: grep for distinctive strings the scan saw (the `<title>`, a
@@ -154,33 +156,47 @@ Anything unreachable from this repo (server/CDN redirect config, DNS, real Core
 Web Vitals, an external service) goes in a **"needs manual action"** list —
 never silently dropped.
 
+**Before editing — local page baseline.** If a preview is available, confirm the
+local route corresponds to the affected source and scan it **before** edits:
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" http://localhost:<port>/<page> --allow-private --format json -o narwhal-page-before.json
+```
+Use matching auditor selections, configuration, rendering and image-check options
+for both local scans. Repeat with distinct snapshot names for each affected page.
+This page baseline is separate from any reused audit JSON.
+
 **Step 4 — Apply.** Make the edits, minimal and idiomatic to the detected
 framework (Next/Nuxt/Astro/Hugo/Jekyll/plain HTML…). Keep a list of every file
 touched. Do not commit — the user reviews via git.
 
-**Step 5 — Verify.** If the site can be previewed locally (dev server, or a
-static build via `python -m http.server`), re-scan the local URL and diff:
+**Step 5 — Verify.** Re-scan the same preview route using the same options, then
+compare the paired local page scans:
 ```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" http://localhost:<port>/<page> --allow-private --format json -o narwhal-fix-after.json
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/diff_scan.py" narwhal-fix-before.json narwhal-fix-after.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/scan.py" http://localhost:<port>/<page> --allow-private --format json -o narwhal-page-after.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/diff_scan.py" narwhal-page-before.json narwhal-page-after.json --require-comparable --fail-on-regression
 ```
-(diff against whichever baseline Step 1 used — `narwhal-fix-before.json` or the
-reused audit JSON.)
+Use the plan's verification commands for the original baseline: a scan needs a
+matching scan; an audit needs a matching audit, restoring its original crawl,
+sitemap, link-check and other invocation settings. Never compare a page scan to
+an audit overall score. Run deployment verification only when deployed; otherwise
+report it as pending and provide the commands.
 
 **Honesty rule:** a localhost scan verifies **page-level** fixes (title, meta,
 schema, alt, OG, headings). **Site-level** signals — robots.txt, sitemap, HTTPS,
 canonical host, llms.txt — come from the *local server's* origin, not the
 deployed site, so label those **verify after deploy**, not fixed or regressed.
-In a prod-baseline → localhost-after diff, expect the raw verdict to say
-"Regressed" with new critical/high findings like "not served over HTTPS" / "no
-robots.txt" / "no sitemap" — those are localhost artifacts; discount them and
-judge by the page-level findings that resolved. If no local preview is possible,
-report **"applied, pending deploy"** and give the exact re-scan + diff commands
-to run post-deploy.
+Report the local result with its preview URL and scope. Do not override a
+regression or withheld/incomparable verdict to claim success. Inspect the reasons
+and restore comparable evidence; without a pre-edit local scan, a later preview
+is a current-state check, not a measured before/after improvement. If no local
+preview is possible, report **"applied, pending deploy"** with the re-scan and
+strict diff commands to run post-deploy.
 
 **Step 6 — Report.** Deliver: the score delta (or "pending deploy"), findings
 resolved (from the diff), files changed, the verify-after-deploy list, and the
-manual-action list. Never fabricate a score.
+manual-action list. Audit homepage findings and `crawl_rule_changes` are separate:
+a rule no longer observed in the crawl sample is not proof of each page's repair
+or complete site coverage. Never fabricate a score or treat exit 2 as a pass.
 
 ---
 
