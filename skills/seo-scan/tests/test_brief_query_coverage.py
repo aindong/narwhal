@@ -43,13 +43,17 @@ class TestBriefQueryCoverage(unittest.TestCase):
                 self.assertEqual(before, data)
         data = self.data(None)
         del data['gsc']['capped']
-        self.assertIn('row-limit status was not recorded', brief.render_markdown(data))
+        output = brief.render_markdown(data)
+        self.assertIn('row-limit status was not recorded', output)
+        self.assertTrue(output.startswith('# Content brief'))
         for value in ('false', 0, 1):
             data['gsc']['capped'] = value
             self.assertIn('row-limit status was not recorded', brief.render_markdown(data))
         data['gsc'] = {'found': False, 'note': 'GSC skipped', 'capped': True}
         self.assertNotIn('row limit', brief.render_markdown(data))
-        self.assertNotIn('may be incomplete', brief.render_markdown(self.data(False)))
+        output = brief.render_markdown(self.data(False))
+        self.assertNotIn('may be incomplete', output)
+        self.assertNotIn('row-limit status was not recorded', output)
 
 
 if __name__ == '__main__':
