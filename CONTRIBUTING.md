@@ -203,6 +203,17 @@ alongside the default corpus:
   'lib.report.x_recorded_scan_scope__mutmut_*'
 ```
 
+The same CI job requires every crawl-count validator mutant to be killed using
+the [diff profile](scripts/mutation/diff.toml):
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/diff.toml \
+  'diff_scan.x__crawl_count_problem__mutmut_*'
+```
+
+Other diff-profile targets remain optional diagnostics; passing the count gate
+does not certify the broader comparison corpus.
+
 For acquisition-evidence changes, use the same profile with
 `'lib.report.x_recorded_execution_problem__mutmut_*'` and record the scoped
 results and any surviving variants; its text diagnostics are not the scope CI gate.
