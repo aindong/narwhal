@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Audit remediation plans retain bounded crawl target labels for recorded
+  unprefixed HTTP-header restrictions, including their receipt count and basis.
+  Unsupported or named-crawler-only observations do not imply affected targets;
+  credential-like labels are omitted. Header ownership remains manual/external,
+  without new requests, score changes or HTML edit suggestions.
 - Development flow adds a focused Mutmut gate for shared HTTP-response
   classification, failing on survivors or incomplete/empty runs. Boundary
   assertions now catch six mutations missed by the existing status matrix.

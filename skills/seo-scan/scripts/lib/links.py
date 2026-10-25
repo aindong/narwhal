@@ -8,6 +8,7 @@ decide which HTTP results count as broken.
 from __future__ import annotations
 
 import re
+import unicodedata
 from urllib.parse import urljoin, urlparse, urlsplit, urlunsplit
 
 from .urlpaths import remove_dot_segments
@@ -86,6 +87,12 @@ def document_base(doc, base_url: str, *, csp=''):
     except ValueError:
         return None, dict(receipt, status='unverified', reason='syntax')
     return effective, dict(receipt, status='declared_http')
+
+
+def has_credential_like_marker(value: str) -> bool:
+    """Conservatively match source markers; this is not a general secret detector."""
+    spelling = unicodedata.normalize('NFKC', value)
+    return '@' in spelling or '%40' in spelling
 
 
 def resolve_anchor(href: str, base_url: str, effective_base, *, diagnostics=None):
