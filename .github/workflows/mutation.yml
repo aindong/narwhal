@@ -1,0 +1,25 @@
+name: Mutation testing
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Link classification mutations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install development tools
+        run: python -m pip install -r requirements-mutation.txt
+      - name: Require every selected mutant to be killed
+        run: python scripts/mutation_test.py
