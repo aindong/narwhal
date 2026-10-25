@@ -41,7 +41,7 @@ class TestRangeProbeCleanup(unittest.TestCase):
             response.close.assert_called_once()
 
     def test_requests_keeps_bounded_stream_and_caller_transport_options(self):
-        for status in (399, 400):
+        for status in (200, 299):
             for private in (False, True):
                 def chunks(chunk_size):
                     self.assertIsInstance(chunk_size, int)
@@ -56,7 +56,7 @@ class TestRangeProbeCleanup(unittest.TestCase):
                 with self.subTest(status=status, private=private), \
                         mock.patch.dict(sys.modules, {'requests': client}), \
                         mock.patch.object(http, 'assert_public_host') as guard:
-                    self.assertEqual((b'abc', None if status == 399 else 'HTTP 400'),
+                    self.assertEqual((b'abc', None),
                                      http.fetch_range('example.test/image', 3, timeout=7, user_agent='probe-test', **options))
                 guard.assert_called_once_with(URL, allow_private=private)
                 args, kwargs = client.request.call_args
@@ -112,14 +112,15 @@ class TestRangeProbeCleanup(unittest.TestCase):
                 self.assertEqual((None, 'ProbeError'), http.fetch_range(URL, 16))
                 response.close.assert_called_once()
 
-    def test_requests_http_failure_keeps_existing_result_and_closes_response(self):
+    def test_requests_http_failure_discards_body_and_closes_response(self):
         response = mock.Mock(status_code=404)
         response.iter_content.return_value = [b'not found']
         with mock.patch.dict(sys.modules, {'requests': types.SimpleNamespace(RequestException=ProbeError)}), \
                 mock.patch.object(http, 'assert_public_host'), \
                 mock.patch.object(http, '_requests_safe', return_value=(response, URL, [])):
-            self.assertEqual((b'not', 'HTTP 404'), http.fetch_range(URL, 3))
+            self.assertEqual((None, 'HTTP 404'), http.fetch_range(URL, 3))
         response.close.assert_called_once()
+        response.iter_content.assert_not_called()
 
     def test_urllib_http_error_closes_body_without_reading_it(self):
         for status in (404, 503):

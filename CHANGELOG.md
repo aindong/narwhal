@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Range probes reject non-2xx requests responses before reading their bodies.
+  PNG-looking error bodies and terminal redirects cannot become social-image
+  dimensions or healthy-image findings. Successful 200/206 prefixes retain
+  their byte budgets and response cleanup.
 - Image weight/format findings require an error-free HTTP 200 image HEAD with
   a complete, bounded ASCII Content-Length. Failed, gated, partial, non-image
   and unknown-length probes cannot become optimization or all-clear claims.
