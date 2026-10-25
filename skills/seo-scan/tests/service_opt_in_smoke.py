@@ -28,7 +28,7 @@ def main():
     import compare
     import gsc
     from lib import htmlx
-    from lib.report import Report
+    from lib.report import Report, md_to_html
     assert Path(brief.__file__).parent == installed
     url = 'https://example.test/guide'
     doc = htmlx.parse('<title>Guide</title><h1>Guide</h1><p>Useful guidance.</p>', base_url=url)
@@ -73,7 +73,7 @@ def main():
                 assert cli.main(['brief', url, '--no-config', '--format', 'json', *flags]) == 0
                 assert json.loads(output.getvalue())['gsc']['found'] is expected
                 assert queries.call_count == int(expected)
-        question = 'Why do widgets wobble?'
+        question = 'Why do widgets | tools wobble?'
         measured = {'found': True, 'capped': True, 'striking': [
             {'query': question, 'page': url, 'impressions': 120, 'position': 9}]}
         with mock.patch.object(gsc, 'gather', return_value=measured), \
@@ -82,6 +82,7 @@ def main():
                              '--no-config', '--format', 'json']) == 0
             data = json.loads(output.getvalue())
             assert data['gsc']['capped'] is True
+            assert '<td>' + question + '</td>' in md_to_html(brief.render_markdown(data))
             assert [q['question'] for q in data['questions']] == [question]
             assert [s['type'] for s in data['schema']] == ['FAQPage']
             for call in (brief.run, mcp_server._brief):

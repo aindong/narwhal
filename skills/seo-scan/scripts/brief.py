@@ -37,6 +37,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report_output import save_output  # noqa: E402
+from lib.markdown_text import TABLE_TEXT_MARKER, table_text  # noqa: E402
 
 from lib import config as configlib  # noqa: E402
 from lib.report import TRUNCATED_HTML_ERROR, recorded_response_truncated  # noqa: E402
@@ -432,8 +433,8 @@ def render_markdown(b: dict) -> str:
         lines += ["## Target queries — real, from your Search Console", "",
                   f"{label} — positions 8–20 with impressions; landing these "
                   "on page 1 is the point of the rewrite:", "",
-                  "| Query | Position | Impressions |", "|:--|--:|--:|"]
-        lines += [f"| {s['query']} | {s['position']} | {s['impressions']} |"
+                  TABLE_TEXT_MARKER, "| Query | Position | Impressions |", "|:--|--:|--:|"]
+        lines += [f"| {table_text(s['query'])} | {table_text(s['position'])} | {table_text(s['impressions'])} |"
                   for s in striking]
         lines.append("")
     if gsc.get("laggard"):
