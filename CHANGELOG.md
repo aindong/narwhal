@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff root-page scope validation distinguishes explicitly invalid receipts from
+  absent legacy metadata. Invalid scan/audit homepage scope now withholds
+  score/fix claims and fails the regression gate instead of showing legacy gains.
 - Skill, command and README guidance distinguish malformed crawl evidence from
   absent legacy receipts and recommend both strict flags when verifying fixes.
 - Audit diffs with contradictory or malformed `pages_scanned` receipts now

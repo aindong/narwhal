@@ -140,6 +140,8 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + " report did not complete all requested auditor groups.")
         crawl = item["crawl"]
         meta_base = item['meta'] if isinstance(item['meta'], dict) else {}
+        if 'scan_scope' in meta_base and scope is None:
+            reasons.append(label + ' report has invalid recorded auditor scope; fix claims are unverified.')
         if links.unassessed_base(meta_base):
             reasons.append(label + ' page has unassessed declared anchor-base coverage.')
         if hreflang.unverified(meta_base, for_score=True):

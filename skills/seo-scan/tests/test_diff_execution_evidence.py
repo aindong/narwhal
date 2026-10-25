@@ -66,6 +66,33 @@ class TestDiffExecutionEvidence(unittest.TestCase):
                 with self.subTest(change=change, kind=kind, gate=True):
                     self.assertEqual(2, invoke(old, new, '--require-comparable', '--fail-on-regression')[0])
 
+    def test_explicit_invalid_root_scope_cannot_support_fix_claims(self):
+        for scope in (None, [], {}, {'requested': [], 'completed': []},
+                      {'requested': ALL, 'completed': 'technical'},
+                      {'requested': ALL + ['schema'], 'completed': ALL},
+                      {'requested': ALL, 'completed': ['other']},
+                      {'requested': ALL, 'completed': ALL, 'not_selected': ['technical']}):
+            bad = report(findings=[FINDING], score=0)
+            bad['meta']['scan_scope'] = copy.deepcopy(scope)
+            good = report(ALL)
+            for kind in ('scan', 'audit'):
+                old, new = bad, good
+                if kind == 'audit':
+                    old = {'site': bad['url'], 'overall_score': 0, 'homepage': bad}
+                    new = {'site': good['url'], 'overall_score': 100, 'homepage': good}
+                for before, after in ((old, new), (new, old)):
+                    with self.subTest(scope=scope, kind=kind, reverse=before is new):
+                        original = copy.deepcopy((before, after))
+                        result = diff_scan.diff_reports(before, after)
+                        self.assertEqual('incomparable', result['comparison']['status'])
+                        self.assertIsNone(result['score_delta'])
+                        self.assertIsNone(result['regression'])
+                        self.assertEqual([], result['resolved'])
+                        self.assertEqual([], result['added'])
+                        self.assertEqual(result, mcp_server._diff(json.dumps(before), json.dumps(after)))
+                        self.assertEqual(original, (before, after))
+                        self.assertEqual(2, invoke(before, after, '--fail-on-regression')[0])
+
     def test_absent_legacy_and_valid_success_fields_remain_comparable(self):
         for values in ({}, {'status': 200, 'hard_fail': False}, {'status': 201}, {'status': 299}):
             data = report(ALL)
