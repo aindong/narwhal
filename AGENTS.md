@@ -83,11 +83,19 @@ When the site's **source is in the current workspace**, close the loop instead o
 stopping at the report:
 1. Baseline: `python scan.py <url> --format json -o before.json`.
 2. Run `python plan.py before.json --repo . --format json -o plan.json`; inspect
-   its likely owners, safety class, conflicts, and coverage. Then apply minimal,
+   its likely owners, safety class, conflicts, and coverage. Before editing,
+   capture `page-before.json` from each affected local preview route when
+   available, using distinct snapshot names for multiple pages. Then apply minimal,
    framework-idiomatic edits. Use `generate_schema.py` / `generate_llms.py` for
    generated artifacts.
-3. Re-scan a local preview (`--allow-private`) as `after.json`, then
-   `python diff_scan.py before.json after.json` to show resolved findings + delta.
+3. Re-scan the same local route (`--allow-private`) with matching options as
+   `page-after.json`, then run
+   `python diff_scan.py page-before.json page-after.json --require-comparable --fail-on-regression`.
+   For the original baseline, follow the plan's matching-kind verification:
+   scan → scan or audit → audit with restored settings/limits after deployment.
+   Never compare an audit overall score with a page scan. A preview without a
+   pre-edit scan is a current-state check; preserve regression/incomparable
+   verdicts instead of discounting them to claim success.
 
 Honesty: a localhost re-scan verifies **page-level** fixes only — mark site-level
 signals (robots.txt, sitemap, HTTPS, canonical host, llms.txt) *verify after

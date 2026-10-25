@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Fix-workflow instructions keep pre-edit/post-edit local page scans separate
+  from original audit baselines, preserve strict diff verdicts and route
+  deployed verification through matching report kinds and original settings.
 - Crawl-rule diffs withhold classifications when an explicit `pages_scanned`
   receipt is malformed or disagrees with the recorded URL sample; strict audit
   gates reject that unverified evidence rather than certifying a partial list.
