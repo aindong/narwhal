@@ -39,8 +39,12 @@ reverification or permission to edit. Empty evidence creates no receipt.
 Synthesized sitemap validation actions retain the first five reported failing
 HTTP status/URL witnesses and the total observation count. The original report
 retains remaining witnesses; a null witness URL means unrecorded or unsupported
-input shape, not an inferred address. Gated/no-response samples remain separate
-verification-only actions. Source ownership and safety classifications do not
+input shape, not an inferred address. Sitemap and crawl probes share response
+classification: supported error-free 2xx or failing 4xx/5xx (gated codes excluded).
+Unsupported statuses, non-string falsey error fields and request errors stay
+unverified. Gated/unsupported/no-response samples remain separate verification-only
+actions; retained compatibility `broken_sample` rows alone do not prove a source
+defect. Their length is not a count of confirmed HTTP failures. Source ownership and safety classifications do not
 change.
 
 Comprehensive-audit `crawl.links` observations produce manual `links` actions:

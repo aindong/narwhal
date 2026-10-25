@@ -239,6 +239,9 @@ Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.
 Consult the original report for remaining witnesses and verify before editing.
+Sitemap sample reporting/planning uses the shared crawl HTTP classification;
+unsupported statuses or malformed/error fields remain unverified even when raw
+compatibility problem rows retain them.
 Audit crawl link failures and uncertain/capped/unknown coverage produce separate
 manual actions with bounded target/source witnesses. They assign no source owner
 or automatic link edit; verify HEAD/GET behavior and anchor intent first. New

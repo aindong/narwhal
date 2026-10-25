@@ -166,8 +166,7 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
 
 
 def _sample_succeeded(entry: dict) -> bool:
-    status = entry.get('status')
-    return type(status) is int and 200 <= status < 300 and not entry.get('error')
+    return links.http_check_state(entry.get('status'), entry.get('error')) == 'successful_2xx'
 
 
 def render_markdown(r: dict) -> str:
@@ -214,7 +213,8 @@ def render_markdown(r: dict) -> str:
                      "Not random or statistically representative.")
     if r["sample"]:
         ok = sum(_sample_succeeded(entry) for entry in r['sample'])
-        unverified = max(0, len(r['sample']) - ok - len(r['broken_sample']))
+        unverified = sum(links.http_check_state(entry.get('status'), entry.get('error')) == 'unverified'
+                         for entry in r['sample'])
         lines.append(f"- **Sample check:** {ok}/{len(r['sample'])} URLs returned successful 2xx"
                      + (f"; {unverified} response(s) leave reachability unverified" if unverified else ""))
     elif r['total_urls']:
@@ -222,9 +222,12 @@ def render_markdown(r: dict) -> str:
     lines.append("")
 
     if r["broken_sample"]:
-        lines += ["## Broken sampled URLs", "", "| Status | URL |", "|:--:|:--|"]
+        lines += ["## Reported problem samples", "", "| Status | URL |", "|:--:|:--|"]
         for b in r["broken_sample"]:
-            lines.append(f"| {b['status'] or b['error']} | {b['url']} |")
+            status = b['status'] or b['error'] or 'unrecorded response'
+            if links.http_check_state(b.get('status'), b.get('error')) == 'unverified':
+                status = f'{status} (unverified)'
+            lines.append(f"| {status} | {b['url']} |")
         lines.append("")
     if r["errors"]:
         lines += ["## Notes", ""] + [f"- {e}" for e in r["errors"]] + [""]

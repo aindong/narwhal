@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Consistent sample outcomes:** sitemap reports and plans share the HTTP
+  classification used for crawl checks. Supported error-free 2xx and failing
+  4xx/5xx remain distinct from gating, unsupported statuses and invalid/error
+  fields. Compatibility rows remain raw; uncertainty cannot authorize source fixes.
 - **Inspectable uncertain link checks:** crawl JSON retains all checked
   unverified target records, with bounded Markdown previews and manual planner
   witnesses. Shared classification keeps errored/gated/unsupported outcomes
