@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Image metadata HEAD probes explicitly close requests responses and urllib
+  HTTP-error bodies while preserving status, lowercase headers and controlled
+  errors. Header-processing failures also release the acquired response.
 - Stdlib reachability probes report the actual GET fallback result after a
   rejected HEAD, matching requests. GET 404/5xx responses remain measured
   failures; transport/SSRF failures return status 0 with a controlled error
