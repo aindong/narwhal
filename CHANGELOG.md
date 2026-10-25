@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diffs and planner eligibility share checks for explicitly failed or unusable
+  acquisition evidence. Page/audit comparisons with failed or malformed
+  execution fields withhold score deltas and fix claims, including before/after
+  reversals; absent legacy fields keep their existing treatment.
 - Shared execution-scope validation checks optional `not_selected` receipts
   against the requested auditor complement. Malformed or contradictory values
   leave scope unverified, block strict proof gates and withhold planner automation;

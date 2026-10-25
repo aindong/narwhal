@@ -94,6 +94,31 @@ def recorded_response_truncated(meta):
         isinstance(coverage, dict) and coverage.get("response_truncated") is True)
 
 
+def recorded_execution_problem(page):
+    """Acquisition failures or malformed execution data; absence is not completeness.
+
+    Callers retain their separate measured partial/truncation coverage checks.
+    """
+    if not isinstance(page, dict):
+        return 'has unsupported page execution evidence.'
+    if page.get('hard_fail') is True:
+        return 'records a hard-failed page acquisition.'
+    if 'hard_fail' in page and type(page['hard_fail']) is not bool:
+        return 'has a malformed acquisition failure flag.'
+    status = page.get('status')
+    if 'status' in page and (type(status) is not int or status == 206 or not 200 <= status < 300):
+        return 'records an unusable acquisition status.'
+    meta = page.get('meta', page)
+    meta = meta if isinstance(meta, dict) else {}
+    flags = [meta[key] for key in ('response_truncated', 'response_partial') if key in meta]
+    coverage = meta.get('coverage')
+    if isinstance(coverage, dict) and 'response_truncated' in coverage:
+        flags.append(coverage['response_truncated'])
+    if any(type(value) is not bool for value in flags):
+        return 'has malformed response-completeness flags.'
+    return None
+
+
 def recorded_response_partial(meta):
     """Known range/partial evidence, not an absence-of-receipt completeness pass.
 

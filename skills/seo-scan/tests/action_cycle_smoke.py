@@ -121,26 +121,29 @@ def main(use_mcp=False):
                 invalid_completeness['meta']['coverage']['response_truncated'] = 'false'
                 invalid_selection = read('before.json')
                 invalid_selection['meta']['scan_scope']['not_selected'].append('technical')
+                invalid_failure = read('before.json')
+                invalid_failure.update(status=503, hard_fail=True)
                 for label, invalid in (('scope', invalid_scope), ('status', invalid_status),
-                                       ('completeness', invalid_completeness), ('selection', invalid_selection)):
+                                       ('completeness', invalid_completeness), ('selection', invalid_selection),
+                                       ('failure', invalid_failure)):
+                    source, output = 'invalid-' + label + '.json', 'invalid-' + label + '-plan.json'
+                    (root / source).write_text(json.dumps(invalid), encoding='utf-8')
                     if use_mcp:
                         invalid_plan = mcp_tool('plan_remediation', {'report': invalid, 'repo': 'site'}, root)
                     else:
-                        source, output = 'invalid-' + label + '.json', 'invalid-' + label + '-plan.json'
-                        (root / source).write_text(json.dumps(invalid), encoding='utf-8')
                         run(['plan', source, '--repo', str(site), '--format', 'json', '-o', output])
                         invalid_plan = read(output)
                     invalid_action = next(a for a in invalid_plan['actions'] if a['rule_id'] == RULE)
                     assert invalid_action['automation_eligibility']['eligible'] is False, invalid_action
                     assert 'known_incomplete_source_evidence' in invalid_action['automation_eligibility']['blockers']
-                (root / 'invalid-selection.json').write_text(json.dumps(invalid_selection), encoding='utf-8')
-                run(['diff', 'invalid-selection.json', 'before.json', '--require-comparable', '--fail-on-regression',
-                     '--format', 'json', '-o', 'invalid-selection-diff.json'], expected=2)
-                assert read('invalid-selection-diff.json')['comparison']['status'] != 'comparable'
-                if use_mcp:
-                    invalid_diff = mcp_tool('diff_reports', {'old_json': json.dumps(invalid_selection),
-                        'new_json': json.dumps(read('before.json'))}, root)
-                    assert invalid_diff['comparison']['status'] != 'comparable'
+                    comparison = 'invalid-' + label + '-diff.json'
+                    run(['diff', source, 'before.json', '--require-comparable', '--fail-on-regression',
+                         '--format', 'json', '-o', comparison], expected=2)
+                    assert read(comparison)['comparison']['status'] != 'comparable'
+                    if use_mcp:
+                        invalid_diff = mcp_tool('diff_reports', {'old_json': json.dumps(invalid),
+                            'new_json': json.dumps(read('before.json'))}, root)
+                        assert invalid_diff['comparison']['status'] != 'comparable'
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original
                 # Only this generated fixture's templates are executed, as argv without a shell.
                 verification = [shlex.split(step, comments=True) for step in action['verification']

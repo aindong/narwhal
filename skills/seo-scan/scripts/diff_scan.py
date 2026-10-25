@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
-from lib.report import recorded_response_partial  # noqa: E402
+from lib.report import recorded_response_partial, recorded_execution_problem  # noqa: E402
 from lib.report import recorded_image_weight_problem  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
@@ -88,6 +88,7 @@ def _normalize(data: dict, label='Report') -> dict:
     if not isinstance(target, str):
         raise ValueError(label + ' URL label must be a string.')
     return {'url': target, 'score': score, 'findings': findings, 'kind': kind,
+            'execution_problem': recorded_execution_problem(page),
             'meta': page.get('meta', {}), 'crawl': data.get('crawl') if kind == 'audit' else None,
             'rendered': page.get('rendered'), 'status': page.get('status')}
 
@@ -126,6 +127,8 @@ def _comparison(o: dict, n: dict) -> dict:
         if hreflang.SNAPSHOT_BASIS in acquisition_bases and any(basis != hreflang.SNAPSHOT_BASIS for basis in acquisition_bases):
             reasons.append('Crawled hreflang response-acquisition policy differs or is unrecorded; changed relationships are not site-fix evidence.')
     for label, item, scope in zip(("Earlier", "Later"), (o, n), scopes):
+        if item['execution_problem']:
+            reasons.append(label + ' report ' + item['execution_problem'])
         if scope is not None and (not scope[1] or set(scope[0]) != set(scope[1])):
             reasons.append(label + " report did not complete all requested auditor groups.")
         crawl = item["crawl"]
@@ -151,6 +154,9 @@ def _comparison(o: dict, n: dict) -> dict:
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("hard_fail") is True
                                            for page in pages):
             reasons.append(label + " audit contains a hard-failed crawl page; its overall score is not comparable.")
+        if isinstance(pages, list) and any(isinstance(page, dict) and page.get('hard_fail') is not True
+                and recorded_execution_problem(page) for page in pages):
+            reasons.append(label + ' audit contains unusable crawl execution evidence; its overall score is not comparable.')
         if isinstance(pages, list) and any(recorded_response_partial(page) for page in pages):
             reasons.append(label + ' audit contains partial/ranged HTML coverage; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get("response_truncated") is True

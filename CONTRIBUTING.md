@@ -42,6 +42,8 @@ Malformed scope, HTTP-status and response-completeness fixtures must withhold au
 while keeping planning read-only.
 Contradictory `not_selected` receipts must also block strict CLI proof and leave
 MCP comparisons unverified.
+Explicitly failed or malformed acquisition evidence must withhold score deltas
+and fix claims in both CLI and MCP comparisons, even with a claimed completed scope.
 Reversing the reports must fail the regression gate. This is local,
 page-level workflow evidence, not real-site SEO gains or deployment proof.
 A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),
@@ -198,6 +200,10 @@ alongside the default corpus:
 .venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/scope.toml \
   'lib.report.x_recorded_scan_scope__mutmut_*'
 ```
+
+For acquisition-evidence changes, use the same profile with
+`'lib.report.x_recorded_execution_problem__mutmut_*'` and record the scoped
+results and any surviving variants; its text diagnostics are not the scope CI gate.
 
 The optional [service profile](scripts/mutation/services.toml) checks brief
 entry points, account opt-in, and shared scoring-rule ownership across pages.
