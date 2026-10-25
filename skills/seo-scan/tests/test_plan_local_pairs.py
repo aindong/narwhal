@@ -10,7 +10,7 @@ import plan
 
 class TestPlanLocalPairs(unittest.TestCase):
     def test_recorded_byte_budget_is_preserved_only_for_valid_scan_evidence(self):
-        for value in (64_000, 6_000_000, 20_000_000, None, True, '6000000',
+        for value in (64_000, 6_000_000, 20_000_000, None, True, '6000000', 6_000_000.0,
                       63_999, 20_000_001, 0, -1):
             with self.subTest(value=value):
                 page = {'meta': {'coverage': {'response_byte_limit': value}}}
@@ -29,6 +29,11 @@ class TestPlanLocalPairs(unittest.TestCase):
                 self.assertEqual(before, repr(page))
         for coverage in (None, [], True, '6000000', {}):
             self.assertEqual((), plan._recorded_scan_options({'meta': {'coverage': coverage}}))
+        page = {'meta': {'scan_scope': {'requested': ['technical'], 'completed': ['technical']},
+                         'scan_settings': {'render_requested': True, 'image_checks': False},
+                         'coverage': {'response_byte_limit': 6_000_000}}}
+        self.assertEqual(('--only', 'technical', '--render', '--no-image-checks', '--max-bytes', '6000000'),
+                         plan._recorded_scan_options(page))
 
     def test_scan_settings_prerequisite_is_present_once_before_local_or_deployed_scans(self):
         for artifact in ('title', 'json_ld', 'sitemap', 'server_config'):
