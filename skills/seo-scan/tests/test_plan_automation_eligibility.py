@@ -6,10 +6,12 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import audit_technical
 import plan
+import mcp_server
 from lib import htmlx, http
 from lib.report import Report
 
@@ -80,7 +82,7 @@ class TestAutomationEligibility(unittest.TestCase):
 
     def test_known_partial_truncated_failed_or_unexecuted_source_withholds_automation(self):
         for change in (
-            {'status': 206}, {'status': 503}, {'hard_fail': True},
+            {'status': 1}, {'status': 199}, {'status': 206}, {'status': 300}, {'status': 503}, {'hard_fail': True},
             {'meta': {'coverage': {'server_range': {'basis': http.SERVER_RANGE_BASIS, 'observed': True}}}},
             {'meta': {'response_truncated': True}},
             {'meta': {'scan_scope': {'requested': ['technical'], 'completed': []}}},
@@ -93,6 +95,44 @@ class TestAutomationEligibility(unittest.TestCase):
                 self.assertEqual('review_required', action['safety'])
                 self.assertIn('known_incomplete_source_evidence', action['automation_eligibility']['blockers'])
                 self.assertTrue(action['likely_files'])  # retain review candidates, not an automatic edit
+
+    def test_explicit_invalid_scope_blocks_page_and_crawl_without_repairing_legacy(self):
+        invalid = (None, [], {}, {'requested': 'technical', 'completed': []},
+                   {'requested': ['technical'], 'completed': ['technical', 'technical']},
+                   {'requested': ['technical'], 'completed': ['schema']},
+                   {'requested': ['future'], 'completed': ['future']})
+        for scope in invalid:
+            for kind in ('scan', 'audit'):
+                page = baseline()
+                if kind == 'scan':
+                    page['meta']['scan_scope'] = scope
+                    data = page
+                else:
+                    finding = page['findings'].pop()
+                    recurring = dict(finding, count=1, url_sample={
+                        'basis': 'recorded_crawl_rule_url_labels_v1', 'urls': [URL],
+                        'truncated': False, 'omitted': 0})
+                    data = {'site': URL, 'homepage': page, 'crawl': {
+                        'pages': [{'url': URL, 'scan_scope': scope}], 'recurring': [recurring]}}
+                original = copy.deepcopy(data)
+                with self.subTest(scope=scope, kind=kind):
+                    action = next(a for a in plan.build_plan(data, str(self.repo),
+                                  report_source='<mcp-object>')['actions'] if a['rule_id'] == RULE)
+                    self.assertFalse(action['automation_eligibility']['eligible'])
+                    self.assertEqual('review_required', action['safety'])
+                    self.assertIn('known_incomplete_source_evidence', action['automation_eligibility']['blockers'])
+                    self.assertEqual(['index.html'], [owner['path'] for owner in action['likely_files']])
+                    with mock.patch.object(Path, 'cwd', return_value=self.repo.parent), \
+                            mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                        received = mcp_server._plan(data, self.repo.name)
+                    self.assertEqual(action, next(a for a in received['actions'] if a['rule_id'] == RULE))
+                    self.assertEqual(original, data)
+        legacy = baseline()
+        legacy['meta'].pop('scan_scope')
+        self.assertTrue(self.action(legacy)['automation_eligibility']['eligible'])
+        for metadata in (None, [], 'unrecorded'):
+            legacy['meta'] = metadata
+            self.assertTrue(self.action(legacy)['automation_eligibility']['eligible'])
 
     def test_uncertain_crawl_rollups_withhold_only_their_own_automation(self):
         page = baseline()

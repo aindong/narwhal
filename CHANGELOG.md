@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner automation eligibility treats an explicitly malformed execution scope
+  as unusable source evidence rather than silently accepting it as absent legacy
+  metadata. Page/crawl owner candidates remain available for manual review.
 - The opt-in audit/crawl mutation corpus includes existing pacing regressions
   for parallel start spacing, scan overlap, late wakeups and zero-delay behavior.
 - Crawl/audit page rows retain auditor execution scope. Audit diffs withhold

@@ -265,6 +265,10 @@ homepage fallback. Unsupported/legacy unlocated rollups require manual source
 confirmation or a fresh audit; shared-framework head candidates remain heuristic.
 Viewport automation eligibility is blocked by `unlocated_page_witness` when any
 recorded page label has no inventoried source candidate, even if others do.
+An explicitly malformed `scan_scope` blocks automation with
+`known_incomplete_source_evidence`; it is not treated as absent legacy metadata.
+Missing legacy scope still does not certify ownership, completeness or permission
+to edit. Known source candidates remain available for review.
 Next.js page candidates include observed default-extension sources and Pages
 Router directory indexes under `app/`, `pages/`, or `src/`. Dynamic routes,
 rewrites and custom page extensions still need manual ownership confirmation.
