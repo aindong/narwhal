@@ -8,6 +8,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -33,7 +34,7 @@ class FixtureHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    with tempfile.TemporaryDirectory(prefix='narwhal-action-cycle-') as directory:
+    with tempfile.TemporaryDirectory(prefix='narwhal action cycle-') as directory:
         root = Path(directory)
         site = root / 'site'
         site.mkdir()
@@ -73,6 +74,7 @@ def main():
                 options = ['scan', url, '--allow-private', '--only', 'technical', '--no-image-checks',
                            '--no-config', '--format', 'json']
                 run(options + ['-o', 'before.json'])
+                baseline = (root / 'before.json').read_bytes()
                 run(['plan', 'before.json', '--repo', str(site), '--format', 'json', '-o', 'plan.json'])
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original, 'Planning changed source files'
                 action = next(a for a in read('plan.json')['actions'] if a['rule_id'] == RULE)
@@ -80,9 +82,22 @@ def main():
                 assert action['manual_action'] is False, action
                 assert any(owner['path'] == 'index.html' and owner['exists'] is True
                            for owner in action['likely_files']), action
+                # Only this generated fixture's templates are executed, as argv without a shell.
+                verification = [shlex.split(step) for step in action['verification']
+                                if step.startswith('narwhal ')]
+                assert [command[:2] for command in verification] == [['narwhal', 'scan'], ['narwhal', 'diff']], verification
+                scan_command, diff_command = [command[1:] for command in verification]
+                assert scan_command.count('<local-preview-url>') == 1, scan_command
+                scan_command = [url if token == '<local-preview-url>' else token for token in scan_command]
+                # Restore the baseline's unrecorded configuration choice, as the plan instructs.
+                scan_command.insert(scan_command.index('--'), '--no-config')
+                assert '--fail-on-regression' in diff_command and '--require-comparable' in diff_command, diff_command
+                separator = diff_command.index('--')
+                diff_command[separator:separator] = ['--format', 'json', '-o', 'diff.json']
                 target.write_text(html.replace('</head>', VIEWPORT + '</head>'), encoding='utf-8')
-                run(options + ['-o', 'after.json'])
-                run(['diff', 'before.json', 'after.json', '--fail-on-regression', '--format', 'json', '-o', 'diff.json'])
+                run(scan_command)
+                run(diff_command)
+                assert (root / 'before.json').read_bytes() == baseline, 'Verification overwrote the baseline'
                 before, after, diff = read('before.json'), read('after.json'), read('diff.json')
                 old = {f['rule_id'] for f in before['findings'] if f['severity'] != 'good'}
                 new = {f['rule_id'] for f in after['findings'] if f['severity'] != 'good'}
@@ -116,7 +131,7 @@ def main():
                     assert action['manual_action'] is True and action['likely_files'] == [], action
                     assert action['requires_deploy'] is False, action
                     assert not (action.get('automation_eligibility') or {}).get('eligible'), action
-                print('Installed action cycle passed: planned owner -> explicit fixture edit -> one resolved issue; '
+                print('Installed action cycle passed: planned owner -> explicit fixture edit -> generated verification commands -> one resolved issue; '
                       'score {} -> {}; reverse regression rejected; partial rescan withheld fix claims '
                       'and requested manual verification.'.format(before['score'], after['score']))
             finally:
