@@ -24,6 +24,7 @@ from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
 from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
                         recorded_response_partial, recorded_response_truncated, recorded_scan_scope)
 from lib.report_output import write_output  # noqa: E402
+from crawl_site import _link_coverage  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
@@ -31,6 +32,8 @@ MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
 EVIDENCE_PREVIEW_CHARS = 600
 SITEMAP_FAILURE_WITNESSES = 5
+LINK_TARGET_WITNESSES = 5
+LINK_SOURCE_WITNESSES = 3
 MEMORY_BASELINE_INSTRUCTION = (
     'Save the original input report JSON, keeping all fields, to a fresh before.json '
     'before edits or reruns. If using an existing saved report, point the diff at that '
@@ -136,6 +139,71 @@ def _sitemap_sample_evidence(sitemap):
         else:
             unverified += 1
     return failures, unverified
+
+
+def _crawl_link_findings(crawl):
+    """Carry reported link failures and measurement gaps into manual actions."""
+    info = crawl.get('links')
+    if info is None:
+        return []  # link checking was not recorded/run
+    if not isinstance(info, dict):
+        raise ValueError('Report.crawl.links must be an object or null.')
+    records = info.get('broken', [])
+    if not isinstance(records, list) or any(not isinstance(row, dict) for row in records):
+        raise ValueError('Report.crawl.links.broken must be a list of objects.')
+    for key in ('unique_links', 'checked', 'skipped_over_cap'):
+        if key in info and (type(info[key]) is not int or info[key] < 0):
+            raise ValueError('Report.crawl.links.' + key + ' must be a nonnegative integer.')
+    failures, uncertain = [], []
+    for row in records:
+        status = row.get('status')
+        error = row.get('error')
+        no_error = error is None or (isinstance(error, str) and not error)
+        confirmed = (type(status) is int and 400 <= status < 600
+                     and no_error and linkslib.is_broken(status))
+        (failures if confirmed else uncertain).append(row)
+    receipt = _link_coverage(dict(info, broken=records))
+    if (receipt and (receipt['broken'] != len(failures)
+                    or any(type(row.get('status')) is not int for row in records))):
+        receipt = None
+    budget_known = (all(key in info for key in ('unique_links', 'checked', 'skipped_over_cap'))
+                    and info['unique_links'] == info['checked'] + info['skipped_over_cap'])
+
+    def witnesses(rows):
+        selected = []
+        for row in rows[:LINK_TARGET_WITNESSES]:
+            sources = row.get('sources')
+            sources = [value for value in sources if isinstance(value, str)] if isinstance(sources, list) else None
+            selected.append({'status': row.get('status') if type(row.get('status')) is int else None,
+                             'url': row.get('url') if isinstance(row.get('url'), str) else None,
+                             'internal': row.get('internal') if type(row.get('internal')) is bool else None,
+                             'sources': sources[:LINK_SOURCE_WITNESSES] if sources is not None else None,
+                             'source_count': len(sources) if sources is not None else None})
+        return (f'Reported witnesses (first {len(selected)} of {len(rows)}; up to {LINK_SOURCE_WITNESSES} source URLs each; '
+                'not rechecked; null means unrecorded):\n' + json.dumps(selected, indent=2, ensure_ascii=True))
+
+    findings = []
+    if failures:
+        findings.append({'category': 'technical', 'severity': 'medium', 'scope': 'site',
+                         'rule_id': 'technical.links.http.failures',
+                         'title': 'Reported failing HTTP link checks',
+                         'detail': f'{len(failures)} reported failing HTTP response(s).\n' + witnesses(failures),
+                         'occurrences': len(failures)})
+    unverified = receipt['unverified'] if receipt else len(uncertain)
+    skipped = info['skipped_over_cap'] if budget_known else 0
+    if receipt is None or not budget_known or unverified or skipped:
+        detail = (f"Recorded checked-target responses: {info['checked']} checked, {unverified} unverified; "
+                  if receipt else 'Link-response coverage is unrecorded or inconsistent; ')
+        detail += (f'{skipped} target(s) omitted by cap.' if budget_known else
+                   'request-budget coverage is unrecorded or inconsistent.')
+        detail += ' This does not establish dead destinations; some unverified target identities are absent from the rollup.'
+        if uncertain:
+            detail += '\n' + witnesses(uncertain)
+        findings.append({'category': 'technical', 'severity': 'low', 'scope': 'site',
+                         'rule_id': 'technical.links.coverage.unverified',
+                         'title': 'Link-check coverage needs manual verification', 'detail': detail,
+                         'occurrences': max(1, unverified + skipped)})
+    return findings
 
 
 def _automation_source_gap(page):
@@ -319,6 +387,7 @@ def normalize_report(data: dict) -> dict:
             else:
                 findings.append(finding)
                 seen[finding["rule_id"]] = finding
+        findings.extend(_crawl_link_findings(crawl))
         sitemap = data.get("sitemap", {})
         findings.extend(_sitemap_note_findings(sitemap, data.get('schema_version')))
         failed_samples, unverified_samples = _sitemap_sample_evidence(sitemap)
@@ -893,6 +962,17 @@ SITEMAP_VERIFICATION = {
 
 
 RESOURCE_VERIFICATION = dict(SITEMAP_VERIFICATION)
+RESOURCE_VERIFICATION['technical.links.http.failures'] = (
+    'Recheck reported targets and referring anchors, including HEAD/GET support and intended access. '
+    'Repair destinations or target behavior only after confirming the defect and actual source ownership.',
+    ('Inspect the recorded status, target and referring-page witnesses in the original audit; this plan has not fetched them.',
+     'Verify target responses and intended anchor behavior manually. Inspect actual source before any edit; '
+     'rerun the bounded crawl/audit link check after a confirmed fix.'))
+RESOURCE_VERIFICATION['technical.links.coverage.unverified'] = (
+    'Review request coverage, access policy and the deliberate link cap before rerunning. '
+    'Gated, no-response or capped links do not establish dead destinations.',
+    ('Review the original audit and source anchors; unverified target identities may be absent from the rollup.',
+     'Recheck within an intentional request budget and verify HEAD/GET support; do not remove links solely to clear measurement gaps.'))
 RESOURCE_VERIFICATION['technical.response.partial'] = (
     'Verify full standalone HTML delivery and server/CDN range handling before proposing source edits. '
     'Do not rewrite metadata, schema or content based on a partial/ranged body.',
@@ -1021,7 +1101,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         verification = RESOURCE_VERIFICATION.get(finding['rule_id'])
         artifact = classify_artifact(finding)
         if verification:
-            artifact = ('server_config' if finding['rule_id'] == 'technical.response.partial' else
+            artifact = ('links' if finding['rule_id'].startswith('technical.links.') else
+                        'server_config' if finding['rule_id'] == 'technical.response.partial' else
                         'canonical' if finding['rule_id'] == 'technical.canonical.comparison.unverified' else
                         'hreflang' if finding['rule_id'] == 'technical.hreflang.urls.review' else
                         'server_rendering' if finding['rule_id'] in RENDER_VERIFICATION_RULES else

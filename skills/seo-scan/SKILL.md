@@ -239,6 +239,9 @@ Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.
 Consult the original report for remaining witnesses and verify before editing.
+Audit crawl link failures and uncertain/capped/unknown coverage produce separate
+manual actions with bounded target/source witnesses. They assign no source owner
+or automatic link edit; verify HEAD/GET behavior and anchor intent first.
 
 **Real Core Web Vitals** (opt-in; the one tool that calls an external service).
 Everything else is local and must never fabricate field metrics — for the *real*

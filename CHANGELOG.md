@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Audit crawl link checks now survive into remediation plans as separate manual
+  HTTP-failure and unverified-coverage actions, retaining bounded target/status/
+  referring-page witnesses. Gated/no-response/capped checks do not become dead
+  links or automatic source edits. Disabled/healthy checks add no findings;
+  malformed consumed data fails clearly. Planning remains read-only.
 - Remediation plans retain the first five reported failing sitemap HTTP
   status/URL witnesses with an explicit observation count. Uncertain probes
   remain verification-only. Markdown now shows literal evidence previews
