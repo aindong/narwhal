@@ -189,6 +189,13 @@ budget. Known traversal errors or a capped file inventory add
 source candidates remain reviewable; zero recorded traversal errors does not
 certify all source contents or ignored directories.
 
+Existing route-convention files take priority for content, headings and image
+alt changes across supported frameworks, and for plain-HTML head changes.
+Template-framework head ordering and site-wide discovery candidates retain their
+existing policy. Missing routes do not displace existing fallbacks; route paths
+still pass the same containment/symlink guards. A route match is a convention,
+not proven source ownership; inspect the file before editing.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

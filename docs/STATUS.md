@@ -858,3 +858,5 @@ Repeated planner actions disclose representative-selection counts/basis without 
 Planner inventories record traversal failures and bounded directory witnesses; known errors/caps withhold automatic viewport candidacy while preserving source review candidates.
 
 Exact-budget planner inventories are capped only after an extra eligible file is observed; subsequent traversal failures still withhold automatic candidacy.
+
+Existing route conventions outrank homepage fallbacks for page content and plain-HTML head suggestions; shared framework-head/discovery policies remain unchanged.
