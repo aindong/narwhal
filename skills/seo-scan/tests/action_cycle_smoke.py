@@ -1,10 +1,12 @@
 """Installed-CLI action cycle on a disposable local site; not an offline unit test.
 
 Run after installing the wheel: python skills/seo-scan/tests/action_cycle_smoke.py
+Add --mcp with an MCP SDK installed to verify planning/diffs over real stdio.
 The planner stays read-only. This fixture explicitly applies one inspected edit.
 """
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -16,6 +18,31 @@ import threading
 
 RULE = 'technical.no.responsive.viewport.tag'
 VIEWPORT = '<meta name="viewport" content="width=device-width, initial-scale=1">'
+
+
+def mcp_tool(name, arguments, root):
+    """Exercise the installed server's real stdio boundary when explicitly requested."""
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
+    async def call(errors):
+        params = StdioServerParameters(command=sys.executable, args=['-I', '-m', 'narwhal', 'mcp'], cwd=str(root))
+        async with stdio_client(params, errlog=errors) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = (await session.call_tool(name, arguments)).model_dump(by_alias=True)
+                assert not result['isError'], result
+                if result.get('structuredContent') is not None:
+                    return result['structuredContent']
+                return json.loads(next(item['text'] for item in result['content'] if item['type'] == 'text'))
+
+    with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as errors:
+        try:
+            return asyncio.run(asyncio.wait_for(call(errors), timeout=30))
+        except Exception:
+            errors.seek(0)
+            sys.stderr.write(errors.read()[-4000:])
+            raise
 
 
 class FixtureHandler(SimpleHTTPRequestHandler):
@@ -33,7 +60,7 @@ class FixtureHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
-def main():
+def main(use_mcp=False):
     with tempfile.TemporaryDirectory(prefix='narwhal action cycle-') as directory:
         root = Path(directory)
         site = root / 'site'
@@ -75,7 +102,11 @@ def main():
                            '--no-config', '--format', 'json']
                 run(options + ['-o', 'before.json'])
                 baseline = (root / 'before.json').read_bytes()
-                run(['plan', 'before.json', '--repo', str(site), '--format', 'json', '-o', 'plan.json'])
+                if use_mcp:
+                    planned = mcp_tool('plan_remediation', {'report': read('before.json'), 'repo': 'site'}, root)
+                    (root / 'plan.json').write_text(json.dumps(planned), encoding='utf-8')
+                else:
+                    run(['plan', 'before.json', '--repo', str(site), '--format', 'json', '-o', 'plan.json'])
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original, 'Planning changed source files'
                 action = next(a for a in read('plan.json')['actions'] if a['rule_id'] == RULE)
                 assert action['automation_eligibility']['eligible'] is True, action
@@ -99,6 +130,8 @@ def main():
                 run(diff_command)
                 assert (root / 'before.json').read_bytes() == baseline, 'Verification overwrote the baseline'
                 before, after, diff = read('before.json'), read('after.json'), read('diff.json')
+                if use_mcp:
+                    assert mcp_tool('diff_reports', {'old_json': json.dumps(before), 'new_json': json.dumps(after)}, root) == diff
                 old = {f['rule_id'] for f in before['findings'] if f['severity'] != 'good'}
                 new = {f['rule_id'] for f in after['findings'] if f['severity'] != 'good'}
                 assert old - new == {RULE} and not new - old, (old, new)
@@ -108,6 +141,8 @@ def main():
                 run(['diff', 'after.json', 'before.json', '--fail-on-regression',
                      '--format', 'json', '-o', 'regression.json'], expected=1)
                 regression = read('regression.json')
+                if use_mcp:
+                    assert mcp_tool('diff_reports', {'old_json': json.dumps(after), 'new_json': json.dumps(before)}, root) == regression
                 assert regression['comparison']['status'] == 'comparable', regression
                 assert regression['score_delta'] == -diff['score_delta'], regression
                 server.partial_html = True
@@ -118,10 +153,16 @@ def main():
                 run(['diff', 'before.json', 'partial.json', '--fail-on-regression',
                      '--format', 'json', '-o', 'unverified.json'], expected=2)
                 unverified = read('unverified.json')
+                if use_mcp:
+                    assert mcp_tool('diff_reports', {'old_json': json.dumps(before), 'new_json': json.dumps(partial_report)}, root) == unverified
                 assert unverified['comparison']['status'] == 'incomparable', unverified
                 assert unverified['score_delta'] is None and unverified['resolved'] == [], unverified
                 fixed_sources = {path.name: path.read_bytes() for path in site.iterdir()}
-                run(['plan', 'partial.json', '--repo', str(site), '--format', 'json', '-o', 'partial-plan.json'])
+                if use_mcp:
+                    planned = mcp_tool('plan_remediation', {'report': partial_report, 'repo': 'site'}, root)
+                    (root / 'partial-plan.json').write_text(json.dumps(planned), encoding='utf-8')
+                else:
+                    run(['plan', 'partial.json', '--repo', str(site), '--format', 'json', '-o', 'partial-plan.json'])
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == fixed_sources, 'Partial plan changed sources'
                 actions = read('partial-plan.json')['actions']
                 assert RULE not in {a['rule_id'] for a in actions}, actions
@@ -133,7 +174,8 @@ def main():
                     assert not (action.get('automation_eligibility') or {}).get('eligible'), action
                 print('Installed action cycle passed: planned owner -> explicit fixture edit -> generated verification commands -> one resolved issue; '
                       'score {} -> {}; reverse regression rejected; partial rescan withheld fix claims '
-                      'and requested manual verification.'.format(before['score'], after['score']))
+                      'and requested manual verification; MCP stdio {}.'.format(
+                          before['score'], after['score'], 'verified' if use_mcp else 'not requested'))
             finally:
                 server.shutdown()
                 thread.join(timeout=5)
@@ -141,4 +183,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--mcp', action='store_true', help='Also exercise installed MCP planning and diffs over stdio')
+    main(use_mcp=parser.parse_args().mcp)
