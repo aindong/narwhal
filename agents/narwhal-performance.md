@@ -26,8 +26,10 @@ numbers — those require real field data (CrUX) or lab runs (Lighthouse/PageSpe
 Say clearly: "these are hygiene risks; confirm with real field data."
 
 For the **real** numbers, Narwhal has `narwhal vitals <url> --crux-key KEY` (the CrUX
-API — real Chrome-user LCP/INP/CLS at p75). If the user has a `CRUX_API_KEY` set, you
-may run it and fold the actual field verdict into your report; otherwise recommend it.
+API — real Chrome-user LCP/INP/CLS at p75). Use an existing requested `vitals`
+block, or run the lookup only with explicit or established user opt-in. A
+configured key alone is not permission. Without opt-in, keep the source-based
+hygiene review and offer the optional measurement; do not call CrUX/PageSpeed.
 
 ## Reference (2026)
 LCP good <2.5s / poor >4s · INP good <200ms / poor >500ms · CLS good <0.1 / poor >0.25.

@@ -76,7 +76,7 @@ And yes, it works as a backronym too:
 | **Search performance** *(opt-in)* | real Google Search Console query data: striking-distance queries, CTR laggards, decaying pages, keyword cannibalization |
 | **Site structure** | sampled click depth and start coverage, orphan-page candidates (sitemap vs crawl), inbound-link counts (not measured link equity) — observations stay visible even with zero inter-page edges |
 | **Competitor gaps** | `narwhal compare <you> <rival…>`: same auditors on every page, then a gap analysis — schema types, meta strategy, structure, social packaging, with separate neutral length and statistic/citation-pattern observations (local-first; on-page facts only). Your first URL must load as HTML; failed competitors can be skipped, but never become "You". |
-| **Content briefs** | `narwhal brief <you> <rival…>`: a data-driven writing plan — your page's real striking-distance GSC queries + competitor gaps, heading-review candidates, questions to review, schema and structure candidates. No keyword APIs; without GSC it's a clearly labeled structure-only brief |
+| **Content briefs** | `narwhal brief <you> <rival…>`: a page-grounded writing plan — competitor gaps, heading-review candidates, questions, schema and structure candidates. Add `--gsc` to opt into your page's real striking-distance queries; default briefs do not query account services |
 
 GEO text-cue checks expose literal counts and limits in `meta.geo_text_cues`.
 English-oriented patterns do not measure answer accuracy, actual paragraphs,
@@ -877,10 +877,10 @@ leave a partial diff file. Stdout and the read-only MCP callable are unchanged.
 
 ### Real Core Web Vitals (opt-in)
 
-Everything above is local and honest about what it can measure — it will **never
-fabricate** field metrics. When you want *real* Core Web Vitals (what actual Chrome
+Default page audits do not measure field performance or fabricate field metrics.
+When you want *real* Core Web Vitals (what actual Chrome
 users experience), Narwhal can query Google's **Chrome UX Report (CrUX) API**. This
-is the one feature that calls an external service, so it's **opt-in** and needs a
+uses an external service, like Search Console, so it's **opt-in** and needs a
 free API key.
 
 > **CrUX vs. PageSpeed Insights.** Both surface Core Web Vitals, but they're
@@ -991,7 +991,7 @@ command:
 /narwhal llms example.com       # generate a starter llms.txt
 /narwhal vitals example.com     # real Core Web Vitals from CrUX (needs a key — see below)
 /narwhal compare you.com rival.com   # side-by-side competitor gap analysis
-/narwhal brief you.com/page rival.com/page   # data-driven content brief (GSC + gaps)
+/narwhal brief you.com/page rival.com/page   # page-grounded brief; request GSC explicitly to add queries
 /narwhal plan before.json        # read-only finding-to-source remediation plan
 ```
 

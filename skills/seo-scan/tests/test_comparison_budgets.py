@@ -10,6 +10,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import brief
+import gsc
 import compare
 import mcp_server
 import scan
@@ -32,6 +33,7 @@ def fixture():
         return http.Response(url, url, 200, headers, body, 1,
                              rendered=bool(kwargs.get('render')))
     with mock.patch.object(scan, 'gather_context', return_value={}), \
+            mock.patch.object(gsc, 'gather', side_effect=AssertionError('Structure-only fixture queried account')), \
             mock.patch.object(http, 'fetch', side_effect=fetch) as calls:
         yield calls
 

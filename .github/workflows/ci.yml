@@ -51,6 +51,8 @@ jobs:
           python -c 'from importlib.metadata import version; import narwhal, narwhal.cli; from narwhal.lib.report import TOOL_VERSION; assert version("narwhal-seo") == narwhal.__version__ == narwhal.cli.__version__ == TOOL_VERSION'
       - name: Verify installed audit-plan-edit-rescan cycle
         run: python skills/seo-scan/tests/action_cycle_smoke.py
+      - name: Verify installed service opt-in policy
+        run: python skills/seo-scan/tests/service_opt_in_smoke.py
 
   # Prove it also works with the optional parsing/rendering extras installed.
   with-extras:
@@ -84,10 +86,11 @@ jobs:
         run: pip install "mcp==${{ matrix.mcp-version }}"
       - name: Run MCP and planner contract tests
         run: python -m unittest discover -s skills/seo-scan/tests -v
-      - name: Verify installed MCP action cycle over stdio
+      - name: Verify installed MCP action cycle and service policy
         run: |
           pip install --no-deps .
           python skills/seo-scan/tests/action_cycle_smoke.py --mcp
+          python skills/seo-scan/tests/service_opt_in_smoke.py
 
   # Prove the --render (Playwright) path actually executes JavaScript end to end.
   render-smoke:
