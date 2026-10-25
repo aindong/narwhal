@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Inspectable plan evidence:** sitemap failure actions retain bounded reported
+  status/URL witnesses; uncertain probes keep verification-only actions. Action
+  Markdown exposes literal 600-character evidence previews with truncation and
+  full-JSON provenance. Ownership, safety and source-edit permissions remain.
 - **Distinct spread sitemap probes:** URL sampling deduplicates exact strings
   and spreads a bounded selection across parsed-file order, including endpoints
   when selecting at least two. Raw totals remain; a receipt describes the policy

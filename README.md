@@ -480,7 +480,11 @@ read-only remediation contract. It detects plain HTML, Next.js, Astro, Nuxt,
 Hugo, or Jekyll; maps stable finding IDs to likely route/layout/static owners;
 groups shared-template fixes; flags policy conflicts; and separates safe,
 review-required, external, and post-deploy work. Use `--format json` for agents
-or the concise Markdown default for humans. It proposes work but never edits.
+or the concise Markdown default for humans. Markdown includes literal evidence
+previews (600 characters); full action evidence remains in JSON. Synthesized
+sitemap failure actions retain the first five reported status/URL witnesses with
+an explicit total; the original report retains the rest. These are observations,
+not rechecks or edit authorization. It proposes work but never edits.
 See the [remediation-plan contract](docs/REMEDIATION_PLAN.md).
 
 ## Real search data (Google Search Console, opt-in)

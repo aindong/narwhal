@@ -31,6 +31,18 @@ Every non-passing finding becomes one action linked by stable `rule_id`. Older
 reports without IDs receive deterministic compatibility IDs derived from their
 category and title, with a coverage warning.
 
+Action `evidence` stays a string in contract 1.0. Markdown shows up to 600
+characters in a literal text fence beside the change, with an explicit truncation
+notice; JSON keeps the full action evidence. Evidence is reported input, not
+reverification or permission to edit. Empty evidence creates no receipt.
+
+Synthesized sitemap validation actions retain the first five reported failing
+HTTP status/URL witnesses and the total observation count. The original report
+retains remaining witnesses; a null witness URL means unrecorded or unsupported
+input shape, not an inferred address. Gated/no-response samples remain separate
+verification-only actions. Source ownership and safety classifications do not
+change.
+
 Safety values mean:
 
 - `safely_automatable`: structural change with no editorial or owner-intent value.
