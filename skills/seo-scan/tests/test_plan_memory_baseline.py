@@ -32,7 +32,7 @@ class TestPlanMemoryBaseline(unittest.TestCase):
                         self.assertIn('distinct fresh verification output paths', steps[0])
                         self.assertIn('Do not overwrite files or substitute a new scan', steps[0])
                         self.assertIn('has not saved a baseline', steps[0])
-                        self.assertEqual('narwhal diff --fail-on-regression -- before.json after.json', steps[-1])
+                        self.assertEqual('narwhal diff --fail-on-regression --require-comparable -- before.json after.json', steps[-1])
 
     def test_file_backed_reports_do_not_get_a_fictitious_save_requirement(self):
         for source in ('before.json', '/reports/after.json', r'C:\reports\page-after.json'):
@@ -69,7 +69,7 @@ class TestPlanMemoryBaseline(unittest.TestCase):
         code = markdown.split('```sh\n', 1)[1].split('```', 1)[0].strip().splitlines()
         self.assertEqual(2, len(code))
         self.assertTrue(code[0].startswith('narwhal audit '))
-        self.assertEqual('narwhal diff --fail-on-regression -- before.json after.json', code[1])
+        self.assertEqual('narwhal diff --fail-on-regression --require-comparable -- before.json after.json', code[1])
         self.assertNotIn(plan.MEMORY_BASELINE_INSTRUCTION, '\n'.join(code))
 
     def test_manual_only_and_empty_plans_do_not_invent_an_audit_diff(self):

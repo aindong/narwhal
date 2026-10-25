@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff supports `--require-comparable` to exit 2 for unknown or incomparable
+  coverage. Planner verification combines it with the existing regression gate;
+  legacy informational and regression-only behavior remain unchanged.
 - Planner verification commands use the existing strict diff gate: measured
   regressions exit 1 and known incomparable coverage exits 2.
 - Remediation plans retain the first five unverified sitemap target/status witnesses and their total, without granting source-edit authority.

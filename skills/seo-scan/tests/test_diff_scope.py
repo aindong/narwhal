@@ -169,6 +169,32 @@ class TestDiffScope(unittest.TestCase):
         rc, _, _ = invoke(report(), report(findings=[FINDING], score=94), '--fail-on-regression')
         self.assertEqual(1, rc)
 
+    def test_required_comparability_rejects_unknown_scope_before_regression_verdict(self):
+        for old, new in ((report(), report()), (report(ALL), report()),
+                         (report(), report(ALL)),
+                         (report(), report(findings=[FINDING], score=94))):
+            rc, out, err = invoke(old, new, '--require-comparable', '--fail-on-regression', '--format', 'json')
+            self.assertEqual(2, rc)
+            self.assertEqual('unknown', json.loads(out)['comparison']['status'])
+            self.assertIn('comparable recorded report coverage is required', err)
+            self.assertNotIn('FAIL: regression detected', err)
+
+    def test_required_comparability_preserves_comparable_regression_policy(self):
+        for after, flags, expected in ((report(ALL), [], 0),
+                (report(ALL, score=90), [], 0),
+                (report(ALL, score=90), ['--fail-on-regression'], 1),
+                (report(['schema']), [], 2)):
+            rc, _, _ = invoke(report(ALL), after, '--require-comparable', *flags)
+            self.assertEqual(expected, rc)
+
+    def test_required_comparability_writes_diagnostic_before_failing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'diagnostic.json'
+            rc, _, err = invoke(report(), report(), '--require-comparable', '--format', 'json', '-o', str(output))
+            self.assertEqual(2, rc)
+            self.assertEqual('unknown', json.loads(output.read_text())['comparison']['status'])
+            self.assertIn('FAIL:', err)
+
     def test_comparison_does_not_mutate_input_reports(self):
         old, new = report(ALL, findings=[FINDING]), report(['schema'])
         saved = copy.deepcopy((old, new))

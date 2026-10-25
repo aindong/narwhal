@@ -64,6 +64,16 @@ class TestPlanRegressionGate(unittest.TestCase):
             after['meta']['scan_scope']['completed'] = []
             self.assertEqual(2, execute(wrap(before, kind), wrap(after, kind), kind))
 
+    def test_unknown_legacy_coverage_cannot_pass_generated_gate(self):
+        for kind in ('scan', 'audit'):
+            for before_known, after_known in ((False, False), (False, True), (True, False)):
+                before, after = page(), page()
+                if not before_known:
+                    before.pop('meta')
+                if not after_known:
+                    after.pop('meta')
+                self.assertEqual(2, execute(wrap(before, kind), wrap(after, kind), kind))
+
     def test_mcp_and_markdown_preserve_strict_gate_and_existing_safety(self):
         data = page()
         data['findings'] = [{'category': 'technical', 'severity': 'high',
@@ -73,6 +83,7 @@ class TestPlanRegressionGate(unittest.TestCase):
         for action in built['actions']:
             command = next(step for step in action['verification'] if step.startswith('narwhal diff '))
             self.assertIn('--fail-on-regression', shlex.split(command))
+            self.assertIn('--require-comparable', shlex.split(command))
             self.assertIn(command, plan.render_markdown(built))
         self.assertTrue(built['actions'])
         self.assertEqual(original, data)

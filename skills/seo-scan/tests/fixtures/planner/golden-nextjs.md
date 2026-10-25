@@ -25,7 +25,7 @@ narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### HIGH — Missing <title>
@@ -41,7 +41,7 @@ narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### MEDIUM — No structured data (JSON-LD)
@@ -59,7 +59,7 @@ narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### MEDIUM — Images missing alt text
@@ -75,7 +75,7 @@ narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### MEDIUM — No canonical URL
@@ -91,7 +91,7 @@ narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### LOW — Incomplete Open Graph tags
@@ -107,7 +107,7 @@ narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ## Apply, then verify after deploy
@@ -125,7 +125,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### MEDIUM — No XML sitemap found
@@ -141,7 +141,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ### LOW — No llms.txt
@@ -157,7 +157,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 ```
 
 ```sh
-narwhal diff --fail-on-regression -- before.json after.json
+narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
 ## Grouped template fixes
