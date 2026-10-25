@@ -497,6 +497,9 @@ def main(argv=None) -> int:
                     help="exit non-zero for a score drop, new critical/high finding, "
                          "or existing finding escalated to critical/high; exit 2 for known "
                          "incomparable coverage (for CI gating)")
+    ap.add_argument("--require-comparable", action="store_true",
+                    help="exit 2 unless recorded report coverage is comparable; "
+                         "combine with --fail-on-regression to gate regression and recorded comparability")
     args = ap.parse_args(argv)
 
     try:
@@ -532,6 +535,10 @@ def main(argv=None) -> int:
     if status == "unknown":
         print("WARNING: auditor coverage is unverified; legacy finding/score comparison "
               "does not prove matching checks.", file=sys.stderr)
+    if args.require_comparable and status != "comparable":
+        print("FAIL: comparable recorded report coverage is required; restore matching completed "
+              "auditor execution and verify the comparison reasons before accepting a fix.", file=sys.stderr)
+        return 2
     if args.fail_on_regression and status == "incomparable":
         print("FAIL: report coverage is not comparable; re-scan with matching completed "
               "auditor selections, successful page fetches and full HTML coverage.", file=sys.stderr)

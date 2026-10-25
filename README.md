@@ -814,6 +814,10 @@ The diff shows the **score delta** and which findings are **new**, **resolved**,
 matched across runs). Add `--fail-on-regression` as a **CI gate** — it exits
 non-zero for a measured score drop, a new critical/high finding, an existing
 finding escalating to critical/high severity, or known incomparable coverage.
+Add `--require-comparable` to also exit 2 when recorded auditor coverage is
+unknown (including legacy reports). Planner verification templates use both
+flags. Comparability certifies only the recorded comparison basis, not identical
+unrecorded settings or complete site coverage.
 Severe escalation fails even when other fixes offset its score cost; escalation
 ending below high severity alone does not trigger the gate. Commit the
 JSON snapshots alongside your repo to keep a lightweight history. Works on `audit`

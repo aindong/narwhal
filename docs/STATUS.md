@@ -847,4 +847,4 @@ the *install string* (`narwhal@narwhal`), not behavior.
 
 Unverified sitemap planning actions retain up to five recorded target/status witnesses and the total; manual verification remains required.
 
-Planner verification templates use the strict diff gate for measured regressions and known incomparable coverage; unknown legacy coverage remains unverified.
+Planner verification templates combine `--fail-on-regression` and `--require-comparable`: measured regressions fail, and unknown/incomparable coverage exits 2. Comparability covers only recorded evidence.

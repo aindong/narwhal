@@ -34,7 +34,7 @@ class TestPlanCommandQuoting(unittest.TestCase):
                     fetch = shlex.split(commands[-2], comments=True)
                     diff = shlex.split(commands[-1])
                     self.assertEqual(['narwhal', kind, '--format', 'json', '-o', 'after.json', '--', target], fetch)
-                    self.assertEqual(['narwhal', 'diff', '--fail-on-regression', '--', source, 'after.json'], diff)
+                    self.assertEqual(['narwhal', 'diff', '--fail-on-regression', '--require-comparable', '--', source, 'after.json'], diff)
 
     @unittest.skipUnless(os.name == 'posix' and shutil.which('sh'), 'POSIX shell probe')
     def test_actual_shell_does_not_expand_controlled_variables_or_substitutions(self):
@@ -56,7 +56,7 @@ class TestPlanCommandQuoting(unittest.TestCase):
         for kind in ('scan', 'audit'):
             commands = plan.verification_for('sitemap', '--help', '--format', kind)
             self.assertEqual(['--', '--help'], shlex.split(commands[-2], comments=True)[-2:])
-            self.assertEqual(['narwhal', 'diff', '--fail-on-regression', '--', '--format', 'after.json'],
+            self.assertEqual(['narwhal', 'diff', '--fail-on-regression', '--require-comparable', '--', '--format', 'after.json'],
                              shlex.split(commands[-1]))
 
     def test_local_placeholder_and_memory_baseline_remain_explicit(self):
@@ -65,7 +65,7 @@ class TestPlanCommandQuoting(unittest.TestCase):
             self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
             self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
                               '-o', output, '--', '<local-preview-url>'], shlex.split(next(step for step in commands if step.startswith('narwhal scan '))))
-            self.assertEqual('narwhal diff --fail-on-regression -- before.json after.json', commands[-1])
+            self.assertEqual('narwhal diff --fail-on-regression --require-comparable -- before.json after.json', commands[-1])
 
     def test_actual_diff_parser_accepts_leading_dash_filename_after_separator(self):
         report = {'url': 'https://example.test', 'score': 100, 'findings': [],
