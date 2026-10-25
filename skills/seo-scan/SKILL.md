@@ -240,6 +240,9 @@ backed candidates, not permission to edit blindly; inspect warnings and conflict
 Next.js page candidates include observed default-extension sources and Pages
 Router directory indexes under `app/`, `pages/`, or `src/`. Dynamic routes,
 rewrites and custom page extensions still need manual ownership confirmation.
+Astro candidates include observed `.astro`, `.md`, `.mdx` and `.html` root,
+direct and directory-index pages in `src/pages/`. Confirm MDX integration,
+dynamic routes and content-collection ownership manually before editing.
 Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.
