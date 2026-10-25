@@ -1,5 +1,5 @@
 [tool.mutmut]
 source_paths = ["src/"]
 only_mutate = ["src/lib/links.py"]
-also_copy = ["tests/"]
-pytest_add_cli_args_test_selection = ["tests/test_sitemap_response_states.py::TestSitemapResponseStates::test_report_and_planner_match_shared_explicit_status_matrix"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = ["skills/seo-scan/tests/test_sitemap_response_states.py"]

@@ -50,7 +50,8 @@ def main():
         work = Path(directory)
         shutil.copytree(ROOT / 'skills/seo-scan/scripts', work / 'src',
                         ignore=shutil.ignore_patterns('__pycache__'))
-        shutil.copytree(ROOT / 'skills/seo-scan/tests', work / 'tests',
+        # Preserve fixture paths without adding an unmutated source copy beside tests.
+        shutil.copytree(ROOT / 'skills/seo-scan/tests', work / 'skills/seo-scan/tests',
                         ignore=shutil.ignore_patterns('__pycache__'))
         shutil.copyfile(ROOT / 'scripts/mutation/pyproject.toml', work / 'pyproject.toml')
         subprocess.run([str(executable), 'run', '--max-children', '4', args.target],
