@@ -8,7 +8,6 @@ hreflang, images, links, and a few HTTP-header hygiene checks.
 from __future__ import annotations
 
 import json
-import unicodedata
 from urllib.parse import urljoin, urlparse
 
 try:
@@ -317,8 +316,7 @@ def _anchor_evidence(count, witnesses):
     safe_witnesses = []
     for witness in witnesses:
         item = dict(witness)
-        spelling = unicodedata.normalize('NFKC', item['href'])
-        if '@' in spelling or '%40' in spelling:
+        if links.has_credential_like_marker(item['href']):
             item['href'] = None
             item['href_omitted'] = 'credential_like_marker'
         safe_witnesses.append(item)

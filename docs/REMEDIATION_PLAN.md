@@ -254,6 +254,17 @@ requires page/crawler-scope and owner review, and calls for deployed-header
 verification rather than HTML-meta edits. HTML robots-meta findings retain their
 source-review behavior.
 
+For these header actions, audit plans append up to five matching crawl target
+labels and the total number of supported matching receipt rows. Matching uses
+the recorded unprefixed directive, supported receipt version/basis, positive
+header-field count and non-failed page observations. Named-crawler-only,
+unsupported or missing receipts do not name targets; recurring counts alone
+cannot establish affected URLs. Existing selected finding evidence is retained.
+Labels are literal crawl labels, not verified response destinations or distinct
+pages, and are not re-fetched. Missing/non-string labels and credential-like
+marker spellings are explicitly omitted without dropping their receipt count.
+Ownership remains manual/external, with no HTML edit candidates or edit groups.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
 from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
-                        recorded_response_partial, recorded_response_truncated, recorded_scan_scope)
+                        recorded_response_partial, recorded_response_truncated, recorded_scan_scope, _http_robots_notes)
 from lib.report_output import write_output  # noqa: E402
 from crawl_site import _link_coverage  # noqa: E402
 
@@ -216,6 +216,39 @@ def _crawl_link_findings(crawl):
                          'title': 'Link-check coverage needs manual verification', 'detail': detail,
                          'occurrences': max(1, unverified + skipped)})
     return findings
+
+
+def _header_target_evidence(crawl, rule_id):
+    """Match supported unprefixed header receipts, never infer affected targets."""
+    directive = rule_id.rpartition('.')[2]
+    witnesses, matched = [], 0
+    for page in crawl.get('pages', []):
+        if page.get('hard_fail') or not _http_robots_notes(page):
+            continue
+        receipt = page['http_robots']
+        generic = receipt.get('generic')
+        if (type(receipt.get('field_count')) is not int or receipt['field_count'] < 1
+                or not isinstance(generic, list)
+                or any(value not in ('noindex', 'nofollow') for value in generic)
+                or directive not in generic):
+            continue
+        matched += 1
+        if len(witnesses) >= LINK_TARGET_WITNESSES:
+            continue
+        target = page.get('url')
+        row = {'crawl_target_label': target if isinstance(target, str) and target else None,
+               'header_basis': receipt['basis']}
+        if row['crawl_target_label'] is None:
+            row['url_omitted'] = 'unrecorded_or_unsupported'
+        elif linkslib.has_credential_like_marker(target):
+            row['crawl_target_label'] = None
+            row['url_omitted'] = 'credential_like_marker'
+        witnesses.append(row)
+    if not matched:
+        return ''
+    return (f'Matching recorded header receipts (first {len(witnesses)} of {matched}; '
+            'crawl target labels, not verified response destinations or distinct pages; not re-fetched):\n'
+            + json.dumps(witnesses))
 
 
 def _automation_source_gap(page):
@@ -1219,6 +1252,10 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "provenance": {"source": "narwhal_finding", "report": report_source,
                            "report_schema_version": normalized["report_schema_version"]},
         })
+        if normalized['kind'] == 'audit' and finding['rule_id'] in HTTP_ROBOTS_REVIEW_RULES:
+            targets = _header_target_evidence(report.get('crawl', {}), finding['rule_id'])
+            if targets:
+                actions[-1]['evidence'] += ('\n\n' if actions[-1]['evidence'] else '') + targets
         if eligibility is not None:
             actions[-1]['automation_eligibility'] = eligibility
         observation_count = normalized['finding_observation_counts'][finding['rule_id']]
