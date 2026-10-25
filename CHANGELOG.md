@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- The opt-in audit/crawl mutation corpus includes existing pacing regressions
+  for parallel start spacing, scan overlap, late wakeups and zero-delay behavior.
 - Crawl/audit page rows retain auditor execution scope. Audit diffs withhold
   score and finding verdicts for recorded incomplete, invalid, changed or
   one-sided page scopes instead of treating missing checks as resolved issues.
