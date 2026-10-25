@@ -280,6 +280,7 @@ def _automation_source_gap(page):
     return (page.get('hard_fail') is True
             or (isinstance(status, int) and status > 0 and (status == 206 or not 200 <= status < 300))
             or recorded_response_partial(meta) or recorded_response_truncated(meta)
+            or ('scan_scope' in meta and scope is None)
             or (scope is not None and 'technical' not in scope[1]))
 
 
