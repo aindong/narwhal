@@ -9,6 +9,27 @@ import plan
 
 
 class TestPlanLocalPairs(unittest.TestCase):
+    def test_recorded_byte_budget_is_preserved_only_for_valid_scan_evidence(self):
+        for value in (64_000, 6_000_000, 20_000_000, None, True, '6000000',
+                      63_999, 20_000_001, 0, -1):
+            with self.subTest(value=value):
+                page = {'meta': {'coverage': {'response_byte_limit': value}}}
+                before = repr(page)
+                options = plan._recorded_scan_options(page)
+                valid = type(value) is int and 64_000 <= value <= 20_000_000
+                self.assertEqual(('--max-bytes', str(value)) if valid else (), options)
+                steps = plan.verification_for('title', 'https://example.test', 'before.json',
+                                               scan_options=options)
+                scans = [shlex.split(step, comments=True) for step in steps if step.startswith('narwhal scan ')]
+                self.assertEqual(3, len(scans))
+                for command in scans:
+                    self.assertEqual(valid, '--max-bytes' in command)
+                    if valid:
+                        self.assertEqual(str(value), command[command.index('--max-bytes') + 1])
+                self.assertEqual(before, repr(page))
+        for coverage in (None, [], True, '6000000', {}):
+            self.assertEqual((), plan._recorded_scan_options({'meta': {'coverage': coverage}}))
+
     def test_scan_settings_prerequisite_is_present_once_before_local_or_deployed_scans(self):
         for artifact in ('title', 'json_ld', 'sitemap', 'server_config'):
             steps = plan.verification_for(artifact, 'https://example.test', 'before.json')

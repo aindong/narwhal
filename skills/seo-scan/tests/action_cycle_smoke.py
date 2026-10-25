@@ -99,7 +99,7 @@ def main(use_mcp=False):
             thread.start()
             try:
                 options = ['scan', url, '--allow-private', '--only', 'technical', '--no-image-checks',
-                           '--no-config', '--format', 'json']
+                           '--max-bytes', '6000000', '--no-config', '--format', 'json']
                 run(options + ['-o', 'before.json'])
                 baseline = (root / 'before.json').read_bytes()
                 if use_mcp:
@@ -129,6 +129,9 @@ def main(use_mcp=False):
                 verification = [shlex.split(step, comments=True) for step in action['verification']
                                 if step.startswith('narwhal ')]
                 assert [command[1] for command in verification] == ['scan', 'scan', 'diff', 'scan', 'diff'], verification
+                for command in verification:
+                    if command[1] == 'scan':
+                        assert command[command.index('--max-bytes') + 1] == '6000000', command
                 local_before, local_after, local_diff, original_after, original_diff = verification
                 def scan_arguments(command):
                     args = [url if token == '<local-preview-url>' else token for token in command[1:]]
@@ -151,6 +154,8 @@ def main(use_mcp=False):
                 run(scan_arguments(local_after))
                 run(diff_arguments(local_diff, 'page-diff.json'))
                 page_diff = read('page-diff.json')
+                for name in ('page-before.json', 'page-after.json'):
+                    assert read(name)['meta']['coverage']['response_byte_limit'] == 6_000_000
                 assert page_diff['comparison']['status'] == 'comparable', page_diff
                 assert {item['rule_id'] for item in page_diff['resolved']} == {RULE}, page_diff
                 assert (root / 'page-before.json').read_bytes() == page_baseline
@@ -159,6 +164,7 @@ def main(use_mcp=False):
                 run(diff_command)
                 assert (root / 'before.json').read_bytes() == baseline, 'Verification overwrote the baseline'
                 before, after, diff = read('before.json'), read('after.json'), read('diff.json')
+                assert before['meta']['coverage']['response_byte_limit'] == after['meta']['coverage']['response_byte_limit'] == 6_000_000
                 if use_mcp:
                     assert mcp_tool('diff_reports', {'old_json': json.dumps(before), 'new_json': json.dumps(after)}, root) == diff
                 old = {f['rule_id'] for f in before['findings'] if f['severity'] != 'good'}

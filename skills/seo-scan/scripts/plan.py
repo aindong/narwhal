@@ -45,8 +45,8 @@ MEMORY_BASELINE_INSTRUCTION = (
 )
 SCAN_SETTINGS_INSTRUCTION = (
     'Restore the original scan configuration, access settings and resource limits before '
-    'running this template. Recorded auditor selection, requested rendering and image-check '
-    'options are included when known; the report does not record the complete invocation. '
+    'running this template. Recorded auditor selection, rendering, image-check '
+    'and HTML byte-budget options are included when known; the report does not record the complete invocation. '
     'Matching known options alone does not establish comparable coverage.'
 )
 SKIP_DIRS = {
@@ -298,6 +298,10 @@ def _recorded_scan_options(page: dict) -> tuple:
             options.append('--render')
         if settings.get('image_checks') is False:
             options.append('--no-image-checks')
+    coverage = meta.get('coverage')
+    budget = coverage.get('response_byte_limit') if isinstance(coverage, dict) else None
+    if type(budget) is int and 64_000 <= budget <= 20_000_000:
+        options += ['--max-bytes', str(budget)]
     return tuple(options)
 
 
