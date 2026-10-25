@@ -43,6 +43,7 @@ from lib.report import PARTIAL_HTML_ERROR, recorded_response_partial  # noqa: E4
 from lib.report import UNVERIFIED_JS_COMPARISON_ERROR, recorded_js_comparison_problem  # noqa: E402
 from lib.report import UNVERIFIED_SITEMAP_DISCOVERY_ERROR, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import UNVERIFIED_LLMS_ERROR, recorded_llms_problem  # noqa: E402
+from lib.report import recorded_image_weight_problem  # noqa: E402
 from lib import text as textlib  # noqa: E402
 from lib import length_observation, evidence_observation, question_observation  # noqa: E402
 from lib import schema_appearance, schema_coverage, subtopic_observation  # noqa: E402
@@ -287,6 +288,9 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
         raise RuntimeError(UNVERIFIED_SITEMAP_DISCOVERY_ERROR)
     if recorded_llms_problem(rep.meta, for_score=True):
         raise RuntimeError(UNVERIFIED_LLMS_ERROR)
+    image_problem = recorded_image_weight_problem(rep.meta, for_score=True)
+    if image_problem:
+        raise RuntimeError(image_problem)
     if canonical.unverified(rep.meta):
         raise RuntimeError(canonical.ERROR)
     if linklib.unassessed_base(rep.meta):

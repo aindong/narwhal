@@ -22,7 +22,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib import links as linkslib, sitemap as sitemaplib  # noqa: E402
 from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
-                        recorded_response_partial, recorded_response_truncated, recorded_scan_scope, _http_robots_notes)
+                        recorded_response_partial, recorded_response_truncated, recorded_scan_scope, _http_robots_notes,
+                        recorded_image_weight_problem)
 from lib.report_output import write_output  # noqa: E402
 from crawl_site import _link_coverage  # noqa: E402
 
@@ -390,6 +391,11 @@ def normalize_report(data: dict) -> dict:
         finding.setdefault("scope", "page")
         findings.append(finding)
     page_meta = page.get('meta')
+    image_problem = recorded_image_weight_problem(page_meta, for_score=True)
+    if image_problem:
+        findings.append({'category': 'technical', 'severity': 'low', 'scope': 'page',
+                         'rule_id': 'technical.images.weight.unverified',
+                         'title': 'Image weights need manual verification', 'detail': image_problem})
     schema_page_uncertain = _schema_uncertain(page_meta, findings)
     schema_page_verification = any(f['rule_id'] in SCHEMA_VERIFICATION_RULES for f in findings)
     if schema_page_uncertain:
@@ -1099,6 +1105,11 @@ RESOURCE_VERIFICATION['geo.llms.txt.availability.unverified'] = (
     'Do not create or rewrite llms.txt solely because this observation was unverified.',
     ('Review the recorded HTTP status, media type and completeness; retain access/SSRF/body limits.',
      'Re-scan the deployed root endpoint after resolving a verified cause; subpath files and engine behavior remain separate checks.'))
+RESOURCE_VERIFICATION['technical.images.weight.unverified'] = (
+    'Verify intended image responses and bounded HEAD weight evidence before proposing optimization edits. '
+    'Do not resize, replace or remove an image solely because its weight was unverified.',
+    ('Review HTTP status, media type and complete Content-Length evidence with existing access/budget guards.',
+     'Re-scan after verifying the response; unknown weights cannot establish resolved optimization findings or score gains.'))
 for _rule in sorted(SCHEMA_VERIFICATION_RULES):
     RESOURCE_VERIFICATION[_rule] = (
         'Verify the original structured data and supported extraction scope before proposing source changes. '
@@ -1207,6 +1218,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         artifact = classify_artifact(finding)
         if verification:
             artifact = ('links' if finding['rule_id'].startswith('technical.links.') else
+                        'static' if finding['rule_id'] == 'technical.images.weight.unverified' else
                         'server_config' if finding['rule_id'] == 'technical.response.partial' else
                         'canonical' if finding['rule_id'] == 'technical.canonical.comparison.unverified' else
                         'hreflang' if finding['rule_id'] == 'technical.hreflang.urls.review' else

@@ -60,6 +60,7 @@ UNVERIFIED_JS_COMPARISON_ERROR = (
 )
 UNVERIFIED_SITEMAP_DISCOVERY_ERROR = 'Sitemap availability was not verified from a supported XML root; technical-score comparison is unverified.'
 UNVERIFIED_LLMS_ERROR = 'Root llms.txt availability is unverified; GEO-score comparison is unverified.'
+UNVERIFIED_IMAGE_WEIGHT_ERROR = 'Image weights need verification; technical/overall score comparisons are unverified.'
 _JS_COMPARISON_PROBLEMS = {
     "rendered_html_truncated": "rendered HTML was truncated",
     "served_html_truncated": "served HTML was truncated",
@@ -128,6 +129,25 @@ def recorded_sitemap_discovery_problem(meta, *, for_score=False):
         if receipt and receipt['verified_files']:
             return None  # availability of at least one supported root was measured
     return note
+
+
+def recorded_image_weight_problem(meta, *, for_score=False):
+    """Use explicit image-weight coverage; do not infer legacy measurements."""
+    scope = recorded_scan_scope(meta) if isinstance(meta, dict) else None
+    if for_score and scope is not None and 'technical' not in scope[0]:
+        return None
+    if not isinstance(meta, dict) or 'images' not in meta:
+        return None
+    receipt = meta['images']
+    if not isinstance(receipt, dict):
+        return UNVERIFIED_IMAGE_WEIGHT_ERROR
+    if not {'weight_verified', 'weight_unverified'} & receipt.keys():
+        return None
+    checked, verified, unknown = (receipt.get(key) for key in ('checked', 'weight_verified', 'weight_unverified'))
+    if (any(type(value) is not int or value < 0 for value in (checked, verified, unknown))
+            or verified + unknown != checked or unknown):
+        return UNVERIFIED_IMAGE_WEIGHT_ERROR
+    return None
 
 
 def recorded_llms_problem(meta, *, for_score=False):
@@ -341,8 +361,10 @@ class Report:
         discovery = recorded_sitemap_discovery_problem(self.meta)
         llms = recorded_llms_problem(self.meta)
         schema = recorded_schema_extraction_problem(self.meta, for_score=True)
+        image_weight = recorded_image_weight_problem(self.meta, for_score=True)
         discovery_suffix = ((' ' + discovery if discovery else '') + (' ' + llms if llms else '')
                             + (' ' + schema if schema else '')
+                            + (' ' + image_weight if image_weight else '')
                             + (' ' + canonical.ERROR if canonical.unverified(self.meta) else '')
                             + (' ' + linklib.BASE_ERROR if linklib.unassessed_base(self.meta) else '')
                             + (' ' + hreflanglib.ERROR if hreflanglib.unverified(self.meta, for_score=True) else '')

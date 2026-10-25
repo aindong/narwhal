@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 
 from . import http
-from .links import UNDETERMINED
+from .links import UNDETERMINED, http_check_state
 
 MAX_IMAGES = 10            # HEAD budget per page
 HEAVY_KB = 200             # a page image above this is "heavy"
@@ -76,6 +76,30 @@ def probe_dimensions(data: bytes):
     return None
 
 
+def _weight_kb(status, headers, error):
+    """HEAD-declared image weight; unsupported evidence stays unknown.
+
+    Cap significant length digits at 20 to bound origin integer conversion.
+    """
+    if http_check_state(status, error) != 'successful_2xx' or status != 200:
+        return None
+    if 'content-range' in headers or 'transfer-encoding' in headers:
+        return None
+    media_type = (headers.get('content-type') or '').split(';')[0].strip().lower()
+    if not media_type.startswith('image/'):
+        return None
+    size = headers.get('content-length')
+    if not isinstance(size, str):
+        return None
+    size = size.strip(' \t')
+    if not size or not size.isascii() or not size.isdigit():
+        return None
+    size = size.lstrip('0') or '0'
+    if len(size) > 20:
+        return None
+    return round(int(size) / 1024)
+
+
 def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
                  max_images=MAX_IMAGES, head_info=None, fetch_range=None) -> dict:
     """Collect image facts for a page (network-capped; helpers injectable)."""
@@ -105,10 +129,9 @@ def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
         def one(u):
             status, headers, err = head_info(u, timeout=timeout,
                                              allow_private=allow_private)
-            size = headers.get("content-length")
             return {"url": u, "status": status,
-                    "type": (headers.get("content-type") or "").split(";")[0],
-                    "kb": round(int(size) / 1024) if (size or "").isdigit() else None,
+                    "type": (headers.get("content-type") or "").split(";")[0].strip().lower(),
+                    "kb": _weight_kb(status, headers, err),
                     "srcset": srcset_map.get(u, False)}
         with ThreadPoolExecutor(max_workers=min(8, len(targets))) as ex:
             checked = list(ex.map(one, targets))
@@ -117,6 +140,7 @@ def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
                    key=lambda c: -c["kb"])
     legacy = [c for c in checked if c["type"] in _LEGACY_TYPES
               and (c["kb"] or 0) >= LEGACY_MIN_KB]
+    weight_verified = sum(c['kb'] is not None for c in checked)
 
     # --- og:image validation -------------------------------------------------
     og = {"present": False}
@@ -137,6 +161,7 @@ def audit_images(doc, base_url: str, *, allow_private=False, timeout=8,
 
     return {"total_imgs": len(doc.images), "missing_dims": missing_dims,
             "checked": len(checked), "unchecked": max(0, len(srcs) - len(targets)),
+            "weight_verified": weight_verified, "weight_unverified": len(checked) - weight_verified,
             "heavy": heavy, "legacy": legacy, "og_image": og}
 
 
@@ -158,7 +183,7 @@ def findings(facts: dict, report) -> None:
         listing = ", ".join(f"{h['url'].rsplit('/', 1)[-1]} ({h['kb']} KB)"
                             for h in heavy[:4])
         report.add(cat, sev, f"Heavy images ({len(heavy)} over {HEAVY_KB} KB)",
-                   f"Largest: {worst['kb']} KB. Checked {facts['checked']} of "
+                   f"Largest: {worst['kb']} KB. Measured weights for {facts['weight_verified']} of "
                    f"{facts['checked'] + facts['unchecked']} images (HEAD on the "
                    "raw src)."
                    + (" All carry srcset, so browsers likely fetch smaller "
@@ -169,7 +194,7 @@ def findings(facts: dict, report) -> None:
                    + (" Also lighten the src fallback (it's what scrapers and "
                       "srcset-unaware clients download)." if all_srcset else ""),
                    evidence=listing)
-    elif facts["checked"]:
+    elif facts["checked"] and not facts['unchecked'] and facts['weight_verified'] == facts['checked']:
         report.ok(cat, "No heavy images detected",
                   f"{facts['checked']} checked, all under {HEAVY_KB} KB")
 

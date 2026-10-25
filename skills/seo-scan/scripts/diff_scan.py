@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib.report import recorded_response_partial  # noqa: E402
+from lib.report import recorded_image_weight_problem  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
 from lib.report_output import write_output as _write_output  # noqa: E402
@@ -176,6 +177,9 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + ' report did not verify supported sitemap availability; technical-score comparison is unverified.')
         if recorded_llms_problem(meta, for_score=True):
             reasons.append(label + ' report did not verify root llms.txt availability; GEO-score comparison is unverified.')
+        image_problem = recorded_image_weight_problem(meta, for_score=True)
+        if image_problem:
+            reasons.append(label + ' report: ' + image_problem)
         if recorded_schema_extraction_problem(meta, for_score=True):
             reasons.append(label + ' report has unverified structured-data extraction; schema/overall score comparison is unverified.')
         if meta.get("response_truncated") is True or (
