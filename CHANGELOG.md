@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner scan commands reproduce valid recorded HTML byte budgets for local
+  pairs and original-target scans. Missing, malformed or out-of-range values
+  retain the manual resource-settings prerequisite rather than guessing a limit.
 - Planner page-action commands capture paired local scans before/after edits
   and compare those snapshots separately from matching-kind original-target
   verification after deployment. Local baseline filenames avoid known input
