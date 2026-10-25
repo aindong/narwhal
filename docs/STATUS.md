@@ -848,3 +848,5 @@ the *install string* (`narwhal@narwhal`), not behavior.
 Unverified sitemap planning actions retain up to five recorded target/status witnesses and the total; manual verification remains required.
 
 Planner verification templates combine `--fail-on-regression` and `--require-comparable`: measured regressions fail, and unknown/incomparable coverage exits 2. Comparability covers only recorded evidence.
+
+Diffs retain both target labels (`old_url`, later `url`) and highlight differences for manual mapping review without blocking local-preview verification.
