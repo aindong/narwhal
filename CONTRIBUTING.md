@@ -84,6 +84,54 @@ multi-agent orchestration) and the release process.
 Create `audit_<name>.py` exposing `audit(doc, resp, report, ctx)`, register it in
 `AUDITORS` in `scan.py`, and add a `references/<name>.md`.
 
+## Mutation testing
+
+After normal tests pass, mutation-test changed behavior before review and merge.
+Mutation testing deliberately changes production code and checks whether tests
+detect it. It exposes weak assertions; it does not prove all tests are correct.
+Tools are development-only: use Python 3.12 on Linux or macOS. Scanner runtime
+dependencies and Python 3.8 support are unchanged.
+
+```bash
+python3.12 -m venv .venv-mutation
+.venv-mutation/bin/python -m pip install -r requirements-mutation.txt
+.venv-mutation/bin/python scripts/mutation_test.py
+```
+
+The default gate covers `lib.links.http_check_state` using the shared
+sitemap/report/planner status matrix. Initially, 21 of 27 mutants were killed.
+Six survived because the matrix omitted HTTP 300, 400 and 600; boundary
+assertions now kill all 27 without changing production behavior.
+
+For behavior changes, select affected files and relevant offline tests in
+[the mutation configuration](scripts/mutation/pyproject.toml), then run a quoted
+Mutmut function pattern, for example:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py 'lib.links.x_http_check_state__mutmut_*'
+```
+
+Configuration paths use `src/` for scanner scripts and `tests/` for their tests.
+Each run stages fresh temporary copies, ensuring tests import mutated source,
+leaving the working tree unchanged and avoiding stale cached results.
+Repository-relative fixture paths may need adapting when adding tests; a
+failing baseline stops the run.
+
+Review each surviving diff printed by the gate. Strengthen assertions for
+observable behavior and rerun. Do not change correct behavior to improve the
+score. Equivalent mutants require explicit, narrowly justified review before
+any exclusion; do not lower thresholds or blanket-ignore files. Only recorded
+pytest test-failure exits pass. The runner reads the pinned tool's metadata:
+pytest internal errors fail even though Mutmut labels them killed. Empty,
+untested, skipped, timed-out, suspicious, interrupted and unknown outcomes fail.
+
+Include selected functions/tests, killed/total counts, exclusions and remaining
+limits in the PR. Expand the committed scope when an area has a stable, fast
+baseline. The gate currently runs locally; automatic CI integration is pending
+permission to publish the workflow. Other functions require a focused local
+run. Keep the full test suite and the
+review → fix → review → green CI → merge flow.
+
 ## Pull requests
 
 Keep normal improvements under `Unreleased` in the changelog. Passing tests,
