@@ -132,9 +132,10 @@ def _sitemap_sample_evidence(sitemap):
     for item in observed:
         status = item.get('status') if isinstance(item, dict) else None
         error = item.get('error') if isinstance(item, dict) else None
-        if type(status) is int and not error and status > 0 and linkslib.is_broken(status):
+        state = linkslib.http_check_state(status, error)
+        if state == 'broken':
             failures.append(item)
-        elif type(status) is int and not error and 200 <= status < 300:
+        elif state == 'successful_2xx':
             continue
         else:
             unverified += 1
@@ -424,7 +425,7 @@ def normalize_report(data: dict) -> dict:
                 'rule_id': 'technical.sitemap.sample.unverified',
                 'title': 'Sampled sitemap URL reachability is unverified',
                 'detail': f'{unverified_samples} recorded sample(s) lack a confirmed successful or failing HTTP response. '
-                          'Gated/no-response probes do not establish a dead URL.',
+                          'Gated, unsupported or no-response probes do not establish a dead URL.',
                 'recommendation': 'Verify endpoint access and request outcomes before editing sitemap locations.',
                 'occurrences': unverified_samples,
             })
@@ -961,10 +962,10 @@ SITEMAP_VERIFICATION = {
          'Rerun supported sitemap verification on the deployed endpoint; verify source ownership only if a defect is established.')),
     'technical.sitemap.sample.unverified': (
         'Verify sampled endpoint access, HTTP/HEAD support and request outcomes manually. '
-        'Do not remove sitemap URLs solely on gated, incomplete or no-response probes.',
+        'Do not remove sitemap URLs solely on gated, unsupported, incomplete or no-response probes.',
         ('Review sampled status/error evidence and intended access policy.',
          'Recheck sampled endpoints and deployed sitemap reachability after any confirmed fix; '
-         'do not equate gated/no-response results with dead URLs.')),
+         'do not equate gated/unsupported/no-response results with dead URLs.')),
 }
 
 

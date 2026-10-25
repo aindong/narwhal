@@ -588,6 +588,11 @@ are unchanged; absent flags do not certify unchecked or unmeasured conditions.
   including configured defaults; invalid values fail before fetching (CLI exit
   2). CLI/API limits are not silently capped. MCP keeps its documented page
   (1–100) and worker (1–8) clamps.
+- Sitemap URL outcomes use the same conservative classification as crawl link
+  checks: supported error-free 2xx, confirmed failing 4xx/5xx excluding gated
+  codes, and unverified outcomes. Unsupported statuses or malformed/error fields
+  do not become source-repair evidence. Raw sample/problem records remain;
+  `sample_response_coverage` records classified counts for selected targets.
 - Sitemap URL probes select distinct exact URL strings at deterministic evenly
   spaced positions across parsed-file order, including endpoints when at least
   two are selected. A one-URL sample selects the first. `sample_selection` records
