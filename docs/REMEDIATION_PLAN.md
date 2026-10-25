@@ -121,7 +121,9 @@ baseline, source actions may first suggest a local page scan to `page-after.json
 That scan verifies page-level changes only: it must not be diffed against an audit
 overall score or treated as deployed site verification. The final template runs
 `narwhal audit` after deployment, then diffs that audit against the audit baseline.
-Scan baselines retain the page-scan/diff workflow. Generated diff commands use
+Scan baselines retain the page-scan/diff workflow. Diff `old_url`/`url` preserve
+earlier/later target labels; review differing labels and confirm the intended
+local-preview mapping. Labels alone neither prove identity nor block comparisons. Generated diff commands use
 `--fail-on-regression --require-comparable`: measured regressions exit 1;
 known incomparable or unknown legacy coverage exits 2. Comparability covers only
 recorded checks; exit 0 does not certify unrecorded settings or site-wide coverage.

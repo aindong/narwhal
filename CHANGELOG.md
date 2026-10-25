@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff JSON/MCP retains the earlier `old_url` alongside the later `url`.
+  Markdown highlights differing target labels for manual mapping verification;
+  local preview comparisons and existing gate behavior remain available.
 - Diff supports `--require-comparable` to exit 2 for unknown or incomparable
   coverage. Planner verification combines it with the existing regression gate;
   legacy informational and regression-only behavior remain unchanged.

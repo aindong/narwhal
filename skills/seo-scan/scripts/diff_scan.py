@@ -294,7 +294,7 @@ def diff_reports(old: dict, new: dict) -> dict:
     comparison = _comparison(o, n)
     if comparison["status"] == "incomparable":
         # Absence from a narrower/unmeasured run is not evidence of resolution.
-        return {"url": n["url"], "old_score": o["score"], "new_score": n["score"],
+        return {"url": n["url"], "old_url": o["url"], "old_score": o["score"], "new_score": n["score"],
                 "score_delta": None, "added": [], "resolved": [], "worsened": [],
                 "improved": [], "unchanged": 0, "regression": None,
                 "new_critical_high": [], "comparison": comparison,
@@ -324,6 +324,7 @@ def diff_reports(old: dict, new: dict) -> dict:
 
     return {
         "url": n["url"],
+        "old_url": o["url"],
         "old_score": o["score"],
         "new_score": n["score"],
         "score_delta": n["score"] - o["score"],
@@ -386,6 +387,14 @@ def render_markdown(d: dict) -> str:
         _verdict(d),
         "",
     ]
+    if 'old_url' in d and d['old_url'] != d['url']:
+        labels = json.dumps({'earlier': d['old_url'], 'later': d['url']}, indent=2, ensure_ascii=True)
+        # Encode backticks so recorded labels cannot close this JSON code block.
+        labels = labels.replace('`', '\\u0060')
+        lines += ['## Target labels differ', '',
+                  'Verify that these recorded labels represent the intended before/after page or site. '
+                  'Local preview mappings are not inferred; matching labels do not prove identical response destinations.', '',
+                  '```json', labels, '```', '']
     comparison = d.get("comparison", {})
     status = comparison.get("status", "unknown")
     lines.append("**Auditor coverage: " + {"comparable": "matching recorded scope",

@@ -809,6 +809,11 @@ samples; keep those controlled when using a diff to verify a fix.
 Missing/malformed legacy settings are not guessed from findings or score changes;
 the older scope-based diff behavior remains, with those settings unverified.
 
+Diff JSON retains `old_url` (earlier target label) and `url` (later target
+label). Markdown highlights differing labels so you can verify the intended
+baseline-to-preview mapping. Labels are recorded evidence, not proof of matching
+page identity or response destinations; differing labels alone do not block a diff.
+
 The diff shows the **score delta** and which findings are **new**, **resolved**,
 **worsened**, or **improved** (dynamic titles like `Thin content (210 words)` are
 matched across runs). Add `--fail-on-regression` as a **CI gate** — it exits
