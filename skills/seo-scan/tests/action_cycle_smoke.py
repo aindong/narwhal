@@ -123,9 +123,11 @@ def main(use_mcp=False):
                 invalid_selection['meta']['scan_scope']['not_selected'].append('technical')
                 invalid_failure = read('before.json')
                 invalid_failure.update(status=503, hard_fail=True)
+                invalid_mixed = read('before.json')
+                invalid_mixed['response_truncated'] = 'false'
                 for label, invalid in (('scope', invalid_scope), ('status', invalid_status),
                                        ('completeness', invalid_completeness), ('selection', invalid_selection),
-                                       ('failure', invalid_failure)):
+                                       ('failure', invalid_failure), ('mixed-completeness', invalid_mixed)):
                     source, output = 'invalid-' + label + '.json', 'invalid-' + label + '-plan.json'
                     (root / source).write_text(json.dumps(invalid), encoding='utf-8')
                     if use_mcp:

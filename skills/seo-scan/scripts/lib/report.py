@@ -108,14 +108,20 @@ def recorded_execution_problem(page):
     status = page.get('status')
     if 'status' in page and (type(status) is not int or status == 206 or not 200 <= status < 300):
         return 'records an unusable acquisition status.'
-    meta = page.get('meta', page)
-    meta = meta if isinstance(meta, dict) else {}
-    flags = [meta[key] for key in ('response_truncated', 'response_partial') if key in meta]
-    coverage = meta.get('coverage')
-    if isinstance(coverage, dict) and 'response_truncated' in coverage:
-        flags.append(coverage['response_truncated'])
-    if any(type(value) is not bool for value in flags):
-        return 'has malformed response-completeness flags.'
+    contexts = [page]
+    if isinstance(page.get('meta'), dict):
+        contexts.append(page['meta'])
+    for meta in contexts:
+        flags = [meta[key] for key in ('response_truncated', 'response_partial') if key in meta]
+        coverage = meta.get('coverage')
+        if isinstance(coverage, dict) and 'response_truncated' in coverage:
+            flags.append(coverage['response_truncated'])
+        if any(type(value) is not bool for value in flags):
+            return 'has malformed response-completeness flags.'
+        if recorded_response_partial(meta):
+            return 'records partial/ranged HTML coverage.'
+        if recorded_response_truncated(meta):
+            return 'records truncated HTML coverage.'
     return None
 
 

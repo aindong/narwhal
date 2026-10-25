@@ -21,6 +21,10 @@ class TestDiffExecutionEvidence(unittest.TestCase):
         for raw in ({'response_truncated': 'false'}, {'response_partial': 0},
                     {'coverage': {'response_truncated': None}}):
             self.assertIsNotNone(recorded_execution_problem(raw))
+            self.assertIsNotNone(recorded_execution_problem({**raw, 'meta': {}}))
+        for raw in ({'response_truncated': True}, {'response_partial': True},
+                    {'coverage': {'response_truncated': True}}):
+            self.assertIsNotNone(recorded_execution_problem({**raw, 'meta': {}}))
 
     def test_failed_or_unusable_page_and_crawl_evidence_withholds_deltas(self):
         changes = [{'hard_fail': value} for value in (True, None, 'false', 'true', 0, [])]
@@ -28,6 +32,10 @@ class TestDiffExecutionEvidence(unittest.TestCase):
         changes += [{'meta': {'response_truncated': 'false'}},
                     {'meta': {'response_partial': None}},
                     {'meta': {'coverage': {'response_truncated': 0}}}]
+        changes += [{'meta': {}, **raw} for raw in (
+            {'response_truncated': 'false'}, {'response_partial': 0},
+            {'coverage': {'response_truncated': None}}, {'response_truncated': True},
+            {'response_partial': True}, {'coverage': {'response_truncated': True}})]
         for change in changes:
             for kind in ('scan', 'audit', 'crawl'):
                 bad = report(ALL, findings=[FINDING], score=0)
