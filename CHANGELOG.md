@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Brief rendering withholds topic-selection coverage claims for missing,
+  malformed or contradictory counts, including counts that disagree with the
+  retained query rows; observed rows and original JSON remain available.
 - Topic briefs record input, matching, retained and omitted query-row counts
   separately from the API row-cap flag. The existing first-15 selection is
   labeled as lexical term overlap, not verified semantic relevance or demand.

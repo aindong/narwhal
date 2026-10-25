@@ -138,6 +138,22 @@ def topic_queries(gsc: dict, topic: str, *, top: int = MAX_TOPIC_QUERIES) -> lis
 
 # ---------------------------------------------------------------- coverage
 
+def recorded_topic_selection(gsc: dict) -> bool:
+    """Check receipt consistency with retained rows, not upstream completeness."""
+    selection = gsc.get('topic_query_selection')
+    if not isinstance(selection, dict) or selection.get('basis') != 'topic_term_overlap':
+        return False
+    counts = [selection.get(key) for key in
+              ('input_rows', 'matching_rows', 'retained_rows', 'omitted_rows', 'limit')]
+    if any(type(value) is not int or value < 0 for value in counts):
+        return False
+    inputs, matching, retained, omitted, limit = counts
+    rows = gsc.get('striking')
+    return (isinstance(rows, list) and limit > 0 and inputs >= matching
+            and retained == len(rows) and retained == min(matching, limit)
+            and matching == retained + omitted)
+
+
 def subtopic_gaps(you: dict, rivals: list) -> list:
     """Compared H2/H3 labels below a lexical match cutoff, not semantic gaps.
 
@@ -421,14 +437,14 @@ def render_markdown(b: dict) -> str:
                       'query coverage is unverified._', '']
         if not b.get('you'):
             selection = gsc.get('topic_query_selection')
-            if isinstance(selection, dict) and selection.get('basis') == 'topic_term_overlap':
+            if recorded_topic_selection(gsc):
                 lines += [f"_Topic query selection: {selection['retained_rows']} of "
                           f"{selection['matching_rows']} matching retrieved rows retained; "
                           f"{selection['omitted_rows']} omitted (limit {selection['limit']}). "
                           "Filter: lexical term overlap, not verified semantic relevance "
                           "or exhaustive query demand._", '']
             else:
-                lines += ['_Topic query-selection counts were not recorded; omitted matches are unverified._', '']
+                lines += ['_Topic query-selection counts are missing or inconsistent; omitted matches are unverified._', '']
     for f in b.get("failed", []):
         detail = f" — {f['error']}" if f.get("error") else ""
         lines.append(f"_Skipped competitor: {f['url']}{detail}_")
