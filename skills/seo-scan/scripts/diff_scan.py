@@ -306,6 +306,11 @@ def _crawl_rule_changes(o, n, comparison):
         return result
     indexes = []
     for item in (o, n):
+        crawl = item['crawl']
+        if 'pages_scanned' in crawl and (
+                type(crawl['pages_scanned']) is not int or crawl['pages_scanned'] != len(crawl['pages'])):
+            result['reason'] = 'Recorded pages_scanned disagrees with the complete crawl sample or is not an integer.'
+            return result
         rows = item['crawl'].get('recurring')
         completed = recorded_scan_scope(item['meta'])[1]
         if not isinstance(rows, list) or any(

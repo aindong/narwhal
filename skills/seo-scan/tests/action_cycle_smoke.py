@@ -225,6 +225,12 @@ def main(use_mcp=False):
                 run(['diff', 'audit-unverified.json', 'audit-after.json', '--require-comparable',
                      '--fail-on-regression', '--format', 'json', '-o', 'audit-unverified-diff.json'], expected=2)
                 assert read('audit-unverified-diff.json')['crawl_rule_changes']['status'] == 'unverified'
+                inconsistent = json.loads(json.dumps(audit_before))
+                inconsistent['crawl']['pages_scanned'] += 1
+                (root / 'audit-inconsistent.json').write_text(json.dumps(inconsistent), encoding='utf-8')
+                run(['diff', 'audit-inconsistent.json', 'audit-after.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'audit-inconsistent-diff.json'], expected=2)
+                assert read('audit-inconsistent-diff.json')['crawl_rule_changes']['status'] == 'unverified'
                 # Removed crawl rules are sample observations, not individual page-resolution classifications.
                 print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
                       'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))

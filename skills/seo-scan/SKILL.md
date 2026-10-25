@@ -234,6 +234,9 @@ coverage. Missing, legacy or unsupported rollups remain explicitly unverified.
 For audits, `--require-comparable` also requires a verified crawl-rule comparison;
 missing/unsupported rollups or absent/empty crawl samples exit 2. Ordinary viewing
 and the non-strict regression flag retain legacy behavior with a warning.
+An explicit `pages_scanned` must be an integer matching the recorded sample
+length; contradictions withhold crawl-rule claims. Missing counts are not filled
+in or treated as independent evidence of sample completeness.
 
 **Map findings to source before editing** (read-only, no changes applied):
 ```
