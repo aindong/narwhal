@@ -213,4 +213,4 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ## Related actions to review
 
 - **public_discovery_files** — 3 findings; existing candidate union: none recorded; candidates in multiple actions: none recorded. Confirm actual owners before coordinating edits.
-- **shared_head_metadata** — 5 findings; existing candidate union: app/guides/widget/page.tsx, app/layout.tsx; candidates in multiple actions: app/guides/widget/page.tsx, app/layout.tsx. Confirm actual owners before coordinating edits.
+- **shared_head_metadata** — 5 findings; existing candidate union: `app/guides/widget/page.tsx`, `app/layout.tsx`; candidates in multiple actions: `app/guides/widget/page.tsx`, `app/layout.tsx`. Confirm actual owners before coordinating edits.
