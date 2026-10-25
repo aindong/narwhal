@@ -277,7 +277,12 @@ def _automation_source_gap(page):
         meta = {}
     status = page.get('status', 0)
     scope = recorded_scan_scope(meta)
-    return (page.get('hard_fail') is True
+    flags = [meta[key] for key in ('response_truncated', 'response_partial') if key in meta]
+    coverage = meta.get('coverage')
+    if isinstance(coverage, dict) and 'response_truncated' in coverage:
+        flags.append(coverage['response_truncated'])
+    return (any(type(value) is not bool for value in flags)
+            or page.get('hard_fail') is True
             or ('hard_fail' in page and type(page['hard_fail']) is not bool)
             or ('status' in page and (type(status) is not int or status == 206 or not 200 <= status < 300))
             or recorded_response_partial(meta) or recorded_response_truncated(meta)

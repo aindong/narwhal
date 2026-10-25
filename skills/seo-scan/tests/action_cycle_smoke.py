@@ -117,7 +117,10 @@ def main(use_mcp=False):
                 invalid_scope['meta']['scan_scope'] = {'requested': 'technical', 'completed': []}
                 invalid_status = read('before.json')
                 invalid_status['status'] = '200'
-                for label, invalid in (('scope', invalid_scope), ('status', invalid_status)):
+                invalid_completeness = read('before.json')
+                invalid_completeness['meta']['coverage']['response_truncated'] = 'false'
+                for label, invalid in (('scope', invalid_scope), ('status', invalid_status),
+                                       ('completeness', invalid_completeness)):
                     if use_mcp:
                         invalid_plan = mcp_tool('plan_remediation', {'report': invalid, 'repo': 'site'}, root)
                     else:

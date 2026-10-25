@@ -27,9 +27,13 @@ def baseline():
 
 
 class TestAutomationEligibility(unittest.TestCase):
-    def test_explicit_unusable_status_or_failure_flag_withholds_automation(self):
+    def test_explicit_unusable_execution_evidence_withholds_automation(self):
         changes = [{'status': value} for value in (None, '200', '503', False, True, 0, -1, 200.0, [], {})]
         changes += [{'hard_fail': value} for value in (None, 'false', 0, 1, [], {})]
+        for value in (None, 'false', 0, 1, [], {}):
+            changes += [{'meta': {'response_truncated': value}},
+                        {'meta': {'response_partial': value}},
+                        {'meta': {'coverage': {'response_truncated': value}}}]
         for change in changes:
             for kind in ('scan', 'audit', 'crawl'):
                 with self.subTest(change=change, kind=kind):
@@ -51,6 +55,9 @@ class TestAutomationEligibility(unittest.TestCase):
                     self.assertEqual('review_required', action['safety'])
                     self.assertIn('known_incomplete_source_evidence', action['automation_eligibility']['blockers'])
                     self.assertTrue(any(item['exists'] for item in action['likely_files']))
+                    if 'meta' in change:
+                        self.assertFalse(plan.recorded_response_truncated(change['meta']))
+                        self.assertFalse(plan.recorded_response_partial(change['meta']))
                     with mock.patch.object(Path, 'cwd', return_value=self.repo.parent), \
                             mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
                         received = mcp_server._plan(data, self.repo.name)
@@ -67,6 +74,8 @@ class TestAutomationEligibility(unittest.TestCase):
                 data.pop('hard_fail', None)
             else:
                 data.update(status=status, hard_fail=False)
+            data['meta'].update(response_truncated=False, response_partial=False,
+                                coverage={'response_truncated': False})
             self.assertTrue(self.action(data)['automation_eligibility']['eligible'])
 
     def setUp(self):
