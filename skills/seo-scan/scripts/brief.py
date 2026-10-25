@@ -388,12 +388,14 @@ def render_markdown(b: dict) -> str:
                   "the plan below is grounded in the compared pages' HTML "
                   "snapshots. No queries are invented._", ""]
     else:
+        guidance = ("pass `--gsc` to opt in to real GSC queries"
+                    if gsc.get("note") == "GSC skipped" else
+                    "connect GSC (`narwhal gsc --auth`) to ground the brief in real demand")
         lines += ["_**Structure-only brief** — no Search Console data was "
                   "available"
                   + (f" ({gsc['note']})" if gsc.get("note") else "")
                   + ". Target queries are omitted rather than invented; "
-                  "connect GSC (`narwhal gsc --auth`) to ground the brief in "
-                  "real demand._", ""]
+                  + guidance + "._", ""]
     for f in b.get("failed", []):
         detail = f" — {f['error']}" if f.get("error") else ""
         lines.append(f"_Skipped competitor: {f['url']}{detail}_")
@@ -549,8 +551,8 @@ def render_json(b: dict) -> str:
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     ap = argparse.ArgumentParser(
-        description="Data-driven content brief from your GSC queries + the "
-                    "compared pages (local-first; no keyword APIs)",
+        description="Content brief from compared pages, with optional GSC "
+                    "queries via --gsc (local-first; no keyword APIs)",
         parents=[configlib.config_arg_parser()])
     ap.add_argument("urls", nargs="*",
                     help="YOUR page first, then 1-3 competitor pages "

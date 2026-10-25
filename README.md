@@ -985,7 +985,7 @@ That's it — the skill and its scripts load automatically. Then use the slash
 command:
 
 ```text
-/narwhal audit example.com      # full multi-agent audit (folds in CrUX vitals if a key is set)
+/narwhal audit example.com      # full multi-agent audit; request vitals explicitly to include service data
 /narwhal crawl example.com      # site-wide crawl (links + duplicates)
 /narwhal sitemap example.com    # validate the XML sitemap(s)
 /narwhal llms example.com       # generate a starter llms.txt
@@ -1004,8 +1004,8 @@ command:
 **Using `vitals` from the plugin:** the slash command runs the same CrUX lookup, so
 it needs the key too — set `CRUX_API_KEY` in your shell profile (Claude Code
 inherits it) or drop a `.env` in your project (see *Real Core Web Vitals* above).
-Then `/narwhal vitals example.com` just works, and `/narwhal audit` automatically
-includes real field data when a key is present.
+Then request `/narwhal vitals example.com`, or ask for an audit including vitals.
+A configured key alone does not enable service calls in `/narwhal audit`.
 
 **`/narwhal audit` produces a shareable, branded report file.** It doesn't just
 print in the chat — after the multi-agent synthesis it writes

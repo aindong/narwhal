@@ -31,6 +31,21 @@ def services():
 
 
 class TestServiceOptIn(unittest.TestCase):
+    def test_brief_guidance_distinguishes_opt_in_from_authentication(self):
+        data = brief.synthesize(page(BASE, OWN_HTML), [], None)
+        rendered = brief.render_markdown(data)
+        self.assertIn('pass `--gsc`', rendered)
+        self.assertNotIn('narwhal gsc --auth', rendered)
+        for note in ('credentials unavailable', 'topic mode needs --gsc-site'):
+            data['gsc'] = {'found': False, 'note': note}
+            rendered = brief.render_markdown(data)
+            self.assertIn(note, rendered)
+            self.assertIn('narwhal gsc --auth', rendered)
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            with self.assertRaises(SystemExit):
+                brief.main(['--help'])
+        self.assertIn('queries via --gsc', output.getvalue())
+
     def test_registered_mcp_schema_and_dispatch_keep_service_opt_in_when_sdk_present(self):
         try:
             server = mcp_server.build_server()
