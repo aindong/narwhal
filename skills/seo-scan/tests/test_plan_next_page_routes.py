@@ -14,6 +14,30 @@ import plan
 
 
 class TestNextPageRoutes(unittest.TestCase):
+    def test_existing_homepage_is_preferred_over_unrelated_fallbacks(self):
+        for extension in ('tsx', 'ts', 'jsx', 'js'):
+            for stem in ('app/page', 'src/app/page', 'pages/index', 'src/pages/index'):
+                route = stem + '.' + extension
+                with self.subTest(route=route), tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp).resolve()
+                    paths = ['app/aaa/page.tsx', 'pages/aaa.tsx', route]
+                    for rel in paths:
+                        path = root / rel
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_text('Fixture source', encoding='utf-8')
+                    for target in ('https://example.test/', 'https://example.test?review=1', 'http://example.test/'):
+                        for artifact in ('content', 'headings', 'image_alt'):
+                            owners = plan.likely_files(root, paths, 'nextjs', artifact, target)
+                            self.assertEqual(route, owners[0]['path'])
+                            self.assertTrue(owners[0]['exists'])
+                            self.assertTrue(owners[0]['reason'].startswith('Existing route convention;'))
+                            self.assertTrue(all(0 <= owner['confidence'] <= 1 for owner in owners))
+
+    def test_missing_or_non_web_target_does_not_imply_a_homepage(self):
+        for target in ('', '/', 'file://example.test/', 'https://example.test///'):
+            with self.subTest(target=target):
+                self.assertEqual([], plan._route_candidates(target, 'nextjs', files={'app/page.js'}))
+
     def test_absent_alternative_spellings_do_not_expand_creation_suggestions(self):
         routes = plan._route_candidates('https://example.test/pricing', 'nextjs')
         self.assertEqual(['src/app/pricing/page.tsx', 'app/pricing/page.tsx',

@@ -833,13 +833,19 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
             warnings.append(SOURCE_CANDIDATE_WARNING)
         return []
     try:
-        url_path = urlparse(target).path
+        parsed = urlparse(target)
+        url_path = parsed.path
         path = url_path.strip("/")
     except ValueError:
         if warnings is not None:
             warnings.append(SOURCE_CANDIDATE_WARNING)
         return []
     if not path:
+        if (framework == 'nextjs' and parsed.scheme in ('http', 'https')
+                and parsed.netloc and url_path in ('', '/')):
+            return [f'{stem}.{extension}' for extension in ('tsx', 'ts', 'jsx', 'js')
+                    for stem in ('src/app/page', 'app/page', 'src/pages/index', 'pages/index')
+                    if f'{stem}.{extension}' in files]
         return []
     if not _portable_source_path(path):
         if warnings is not None:

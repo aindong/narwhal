@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Next.js homepage plans prioritize observed root page/index sources across
+  default extensions, including JavaScript and `src/` projects. Missing or
+  non-web target labels do not establish a homepage route; edit authority stays
+  unchanged.
 - Next.js remediation plans recognize observed `.ts`, `.jsx` and `.js` page
   sources and Pages Router directory indexes, including `src/` projects.
   Page-content candidates take precedence over unrelated fallbacks; additional
