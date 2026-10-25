@@ -6,6 +6,7 @@ only_mutate = ["src/plan.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_next_page_routes.py",
+ "skills/seo-scan/tests/test_plan_next_discovery_owners.py",
  "skills/seo-scan/tests/test_plan_owner_contract.py",
  "skills/seo-scan/tests/test_plan_astro_page_routes.py",
  "skills/seo-scan/tests/test_plan_nuxt_page_routes.py",
