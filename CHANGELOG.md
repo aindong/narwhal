@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- JPEG dimension probes skip legal FF marker-fill bytes before application,
+  table and frame markers. Baseline/progressive images with fill retain their
+  dimensions; incomplete prefixes still remain unknown, within existing budgets.
 - Image-header regressions cover lossy/lossless/extended WebP fields, GIF87a,
   PNG prefix boundaries and JPEG segment skipping, with independently decoded
   encoded fixtures. Parser behavior and runtime dependencies are unchanged.

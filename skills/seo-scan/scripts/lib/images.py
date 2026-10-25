@@ -63,6 +63,9 @@ def probe_dimensions(data: bytes):
                 i += 1
                 continue
             marker = data[i + 1]
+            if marker == 0xFF:  # repeated marker-prefix bytes are legal JPEG fill
+                i += 1
+                continue
             if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
                           0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
                 h, w = struct.unpack(">HH", data[i + 5:i + 9])
