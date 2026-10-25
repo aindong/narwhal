@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Installed action-cycle CI executes the plan's generated rescan/diff templates,
+  with a local-preview substitution and restored baseline configuration. It
+  exercises quoted paths with spaces and verifies the baseline stays intact.
 - Remediation-plan JSON schema accepts current inventory-error coverage,
   incomplete-inventory blockers and repeated-observation selection receipts.
   Contract checks compare actual plans with the schema; both MCP SDK CI jobs
