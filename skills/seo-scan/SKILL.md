@@ -252,6 +252,9 @@ layers, route overrides and actual page ownership manually.
 Hugo candidates include observed home/section `_index.md` branch bundles under
 `content/`. Confirm custom content roots, multilingual layouts, URL overrides
 and permalinks before choosing an owner.
+Owner previews label inventory status and disclose candidates beyond the first
+three; the complete list remains in plan JSON. Uninventoried paths are not proven
+missing, and inventoried files are not proven active source owners.
 Markdown evidence previews are literal, capped at 600 characters and not
 reverified; full action evidence remains in JSON. Synthesized sitemap failure
 actions retain the first five reported status/URL witnesses and their total.
