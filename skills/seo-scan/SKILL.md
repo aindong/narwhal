@@ -237,6 +237,12 @@ and the non-strict regression flag retain legacy behavior with a warning.
 An explicit `pages_scanned` must be an integer matching the recorded sample
 length; contradictions withhold crawl-rule claims. Missing counts are not filled
 in or treated as independent evidence of sample completeness.
+Fresh crawl/audit page rows retain recorded `scan_scope`. Incomplete/invalid
+scopes, contradictory duplicate-page settings, changed scopes or scope recorded
+on only one side make audit diffs incomparable. When both reports lack legacy
+page scopes, that coverage remains unverified rather than inferred. Capture a
+fresh matching baseline before edits when crossing this recording change; do
+not backfill old JSON to manufacture comparability.
 
 **Map findings to source before editing** (read-only, no changes applied):
 ```

@@ -231,6 +231,14 @@ def main(use_mcp=False):
                 run(['diff', 'audit-inconsistent.json', 'audit-after.json', '--require-comparable',
                      '--fail-on-regression', '--format', 'json', '-o', 'audit-inconsistent-diff.json'], expected=2)
                 assert read('audit-inconsistent-diff.json')['crawl_rule_changes']['status'] == 'unverified'
+                incomplete = json.loads(json.dumps(audit_before))
+                incomplete['crawl']['pages'][1]['scan_scope'] = {'requested': ['technical'], 'completed': []}
+                (root / 'audit-incomplete-scope.json').write_text(json.dumps(incomplete), encoding='utf-8')
+                run(['diff', 'audit-incomplete-scope.json', 'audit-after.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'audit-incomplete-scope-diff.json'], expected=2)
+                assert read('audit-incomplete-scope-diff.json')['comparison']['status'] == 'incomparable'
+                assert all(page['scan_scope']['requested'] and set(page['scan_scope']['requested']) ==
+                           set(page['scan_scope']['completed']) for page in audit_before['crawl']['pages'])
                 # Removed crawl rules are sample observations, not individual page-resolution classifications.
                 print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
                       'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))

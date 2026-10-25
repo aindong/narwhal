@@ -137,6 +137,10 @@ def _comparison(o: dict, n: dict) -> dict:
         if recorded_response_partial(meta_base) or (type(item.get('status')) is int and item['status'] == 206):
             reasons.append(label + ' report has partial/ranged HTML coverage; full-page comparisons are unverified.')
         pages = crawl.get("pages") if isinstance(crawl, dict) else None
+        if isinstance(pages, list) and any(isinstance(page, dict) and 'scan_scope' in page and (
+                recorded_scan_scope(page) is None or
+                set(recorded_scan_scope(page)[0]) != set(recorded_scan_scope(page)[1])) for page in pages):
+            reasons.append(label + ' audit contains incomplete or invalid recorded crawl auditor scope.')
         if isinstance(pages, list) and any(links.unassessed_base(page)
                                            for page in pages if isinstance(page, dict)):
             reasons.append(label + ' audit contains unassessed declared anchor-base coverage; the sampled site score is not comparable.')
@@ -206,8 +210,10 @@ def _comparison(o: dict, n: dict) -> dict:
                 if len(values) > 1:
                     reasons.append(f"{label} crawl contains contradictory {key} settings for {url}; its overall score is not comparable.")
     for url in sorted(crawls[0].keys() & crawls[1].keys()):
-        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config"):
+        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config", 'auditors_requested', 'auditors_completed'):
             values = [item[url].get(key, set()) for item in crawls]
+            if key in ('auditors_requested', 'auditors_completed') and bool(values[0]) != bool(values[1]):
+                reasons.append(f'Crawl auditor scope {key} is recorded on only one side for {url}; matching execution is unverified.')
             if all(values) and values[0] != values[1]:
                 reasons.append(f"Crawl setting {key} differs for {url}; its contribution to the overall score is not comparable.")
     status = "incomparable" if reasons else (
@@ -221,7 +227,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
         "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base/HTML hreflang gaps, complete recorded audit crawl samples (exact URL multiplicities), page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
-                 "identical response destinations, other configuration, tool rules or unrecorded site-wide samples. Missing settings are not inferred or certified. Incomplete/malformed crawl samples are not inferred or certified.",
+                 "identical response destinations, other configuration, tool rules or unrecorded site-wide samples. Recorded per-page auditor scopes must complete and match; missing legacy page scopes remain unverified. Missing settings are not inferred or certified. Incomplete/malformed crawl samples are not inferred or certified.",
     }
 
 
@@ -256,8 +262,13 @@ def _crawl_settings(crawl):
     for page in pages if isinstance(pages, list) else []:
         if not isinstance(page, dict) or not isinstance(page.get("url"), str) or not page["url"]:
             continue
+        result.setdefault(page['url'], {})
         for key, value in _recorded_settings(page, page.get("rendered")).items():
             result.setdefault(page["url"], {}).setdefault(key, set()).add(value)
+        scope = recorded_scan_scope(page)
+        if scope is not None:
+            for key, value in zip(('auditors_requested', 'auditors_completed'), scope):
+                result.setdefault(page['url'], {}).setdefault(key, set()).add(tuple(sorted(value)))
     return result
 
 

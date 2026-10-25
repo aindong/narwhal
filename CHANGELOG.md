@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl/audit page rows retain auditor execution scope. Audit diffs withhold
+  score and finding verdicts for recorded incomplete, invalid, changed or
+  one-sided page scopes instead of treating missing checks as resolved issues.
 - Fix-workflow instructions keep pre-edit/post-edit local page scans separate
   from original audit baselines, preserve strict diff verdicts and route
   deployed verification through matching report kinds and original settings.
