@@ -27,6 +27,17 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_audit_does_not_gain_a_false_hreflang_score_gap",
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_policy_mismatch_isolated_from_extraction_failure",
   "skills/seo-scan/tests/test_document_base_links.py::TestDocumentBaseLinks::test_known_unassessed_base_blocks_identical_report_site_fix_claims",
+  "skills/seo-scan/tests/test_schema_coverage.py::TestSchemaCoverage::test_matching_unverified_page_diffs_cannot_claim_improvement_or_resolution",
+  "skills/seo-scan/tests/test_schema_coverage.py::TestSchemaCoverage::test_clean_schema_page_diffs_remain_usable",
+  "skills/seo-scan/tests/test_schema_coverage.py::TestSchemaCoverage::test_known_schema_problems_do_not_block_focused_content_only_diffs",
+  "skills/seo-scan/tests/test_schema_coverage.py::TestSchemaCoverage::test_common_crawl_leaf_uncertainty_blocks_audit_overall_diff",
+  "skills/seo-scan/tests/test_image_weight_evidence.py::TestImageWeightEvidence::test_uncertainty_blocks_fix_claims_briefs_comparisons_and_source_actions",
+  "skills/seo-scan/tests/test_js_baseline_coverage.py::TestJsBaselineCoverage::test_diff_does_not_turn_a_skipped_js_check_into_a_resolution",
+  "skills/seo-scan/tests/test_js_baseline_coverage.py::TestJsBaselineCoverage::test_unselected_js_auditors_do_not_block_focused_schema_score_diffs",
+  "skills/seo-scan/tests/test_sitemap_discovery_xml.py::TestSitemapDiscoveryXML::test_unverified_availability_blocks_relevant_diff_compare_and_brief_scores",
+  "skills/seo-scan/tests/test_llms_resource.py::TestLlmsResponseEvidence::test_unverified_http_evidence_blocks_relevant_diff_compare_and_brief",
+  "skills/seo-scan/tests/test_llms_resource.py::TestLlmsResponseEvidence::test_observed_and_absent_receipts_do_not_block_score_comparison",
+  "skills/seo-scan/tests/test_canonical_comparison.py::TestCanonicalComparison::test_known_unverified_scan_and_crawl_scope_block_diff_fix_claims",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
