@@ -115,7 +115,7 @@ class TestDiffScope(unittest.TestCase):
         self.assertEqual(ALL, result['comparison']['old_scope']['completed'])
         self.assertIsNone(result['comparison']['new_scope'])
 
-    def test_malformed_scope_is_unknown_with_shared_report_validation(self):
+    def test_malformed_recorded_scope_withholds_proof_with_shared_validation(self):
         for scope in (None, [], {}, {'requested': [], 'completed': []},
                       {'requested': ALL, 'completed': ['other']},
                       {'requested': ALL + ['schema'], 'completed': ALL},
@@ -127,7 +127,7 @@ class TestDiffScope(unittest.TestCase):
                 data = report(); data['meta']['scan_scope'] = scope
                 self.assertIsNone(recorded_scan_scope(data['meta']))
                 self.assertIsNone(Report('x', meta=data['meta'])._scope_info())
-                self.assertEqual('unknown', diff_scan.diff_reports(data, report())['comparison']['status'])
+                self.assertEqual('incomparable', diff_scan.diff_reports(data, report())['comparison']['status'])
 
     def test_non_dict_meta_is_unknown_without_crashing(self):
         for meta in (None, [], 'bad'):

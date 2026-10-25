@@ -238,6 +238,8 @@ if the score dropped, a new critical/high finding appeared, or an existing
 finding escalated to critical/high (even with an offsetting score improvement).
 Known incomparable coverage also fails the gate. Add `--require-comparable`
 to reject unknown legacy coverage with exit 2; planner commands use both flags.
+An explicitly invalid root-page `scan_scope` is incomparable, with no score/fix
+claims and regression-gate exit 2. Absent legacy scope keeps its unknown status.
 Comparability covers recorded checks only, not unrecorded settings or a whole site. Different complete recorded
 audit crawl URL samples (including multiplicities) withhold verdicts and exit 2;
 order does not matter. An explicitly malformed crawl page list also withholds

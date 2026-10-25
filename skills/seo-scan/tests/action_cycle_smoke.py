@@ -141,11 +141,14 @@ def main(use_mcp=False):
                     comparison = 'invalid-' + label + '-diff.json'
                     run(['diff', source, 'before.json', '--require-comparable', '--fail-on-regression',
                          '--format', 'json', '-o', comparison], expected=2)
-                    assert read(comparison)['comparison']['status'] != 'comparable'
+                    assert read(comparison)['comparison']['status'] == 'incomparable'
+                    assert read(comparison)['score_delta'] is None and read(comparison)['resolved'] == []
+                    run(['diff', source, 'before.json', '--fail-on-regression'], expected=2)
                     if use_mcp:
                         invalid_diff = mcp_tool('diff_reports', {'old_json': json.dumps(invalid),
                             'new_json': json.dumps(read('before.json'))}, root)
-                        assert invalid_diff['comparison']['status'] != 'comparable'
+                        assert invalid_diff['comparison']['status'] == 'incomparable'
+                        assert invalid_diff['score_delta'] is None and invalid_diff['resolved'] == []
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original
                 # Only this generated fixture's templates are executed, as argv without a shell.
                 verification = [shlex.split(step, comments=True) for step in action['verification']

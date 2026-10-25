@@ -816,8 +816,10 @@ Missing counts are not inferred or proof of sample completeness.
 
 JSON includes `comparison.status` (`comparable`, `incomparable`, `unknown`) and
 reasons. Incomparable results have null `score_delta` and `regression`, empty
-change lists, and `not_compared` finding counts. Legacy/malformed scope is
-explicitly unverified: historical finding/score comparisons and gates remain
+change lists, and `not_compared` finding counts. Explicit invalid root-page
+`scan_scope` receipts are incomparable and withhold score/fix claims; the
+regression gate exits 2. Absent legacy scope remains explicitly unverified:
+historical finding/score comparisons and gates remain
 compatible with a visible warning, not proof of matching checks. Even matching
 recorded auditor groups and known settings do not establish identical response
 destinations, other configuration, rule versions or unrecorded site-wide crawl
