@@ -240,7 +240,8 @@ Known incomparable coverage also fails the gate. Add `--require-comparable`
 to reject unknown legacy coverage with exit 2; planner commands use both flags.
 Comparability covers recorded checks only, not unrecorded settings or a whole site. Different complete recorded
 audit crawl URL samples (including multiplicities) withhold verdicts and exit 2;
-order does not matter. Missing/malformed legacy samples stay unverified.
+order does not matter. An explicitly malformed crawl page list also withholds
+score deltas and fix claims. Absent legacy lists remain unverified.
 Works on `audit` JSON too (overall score + homepage findings). Separate
 `crawl_rule_changes` compares native recurring rules only with matching recorded
 coverage and nonempty exact crawl samples. New critical/high rules and severity
@@ -250,9 +251,12 @@ coverage. Missing, legacy or unsupported rollups remain explicitly unverified.
 For audits, `--require-comparable` also requires a verified crawl-rule comparison;
 missing/unsupported rollups or absent/empty crawl samples exit 2. Ordinary viewing
 and the non-strict regression flag retain legacy behavior with a warning.
-An explicit `pages_scanned` must be an integer matching the recorded sample
-length; contradictions withhold crawl-rule claims. Missing counts are not filled
-in or treated as independent evidence of sample completeness.
+An explicit `pages_scanned` must be an integer matching the recorded page list.
+Malformed counts, count/list contradictions, or a count without a page list
+withhold overall score/fix claims as well as crawl-rule claims; regression gates
+exit 2. Missing counts are not filled in or treated as independent evidence of
+sample completeness. Inspect the reasons and re-scan with matching settings;
+do not edit saved JSON to manufacture a passing comparison.
 Fresh crawl/audit page rows retain recorded `scan_scope`. Incomplete/invalid
 scopes, contradictory duplicate-page settings, changed scopes or scope recorded
 on only one side make audit diffs incomparable. When both reports lack legacy

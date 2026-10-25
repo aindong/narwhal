@@ -329,7 +329,7 @@ fetched, stop and say so.
 | `schema` | `generate_schema.py $2 …` | here `$2` is the schema **Type** (e.g. Article) |
 | `vitals` | `crux.py $2` | **real** Core Web Vitals (LCP/INP/CLS) from CrUX — see key note below |
 | `gsc` | `gsc.py $2` | **real** Search Console query data: striking distance, CTR laggards, decaying pages, cannibalization — see the OAuth note below |
-| `diff` | `diff_scan.py $2 $3` | compare two saved JSON reports (`$2`=old, `$3`=new); add `--fail-on-regression` for a gate |
+| `diff` | `diff_scan.py $2 $3` | compare two saved JSON reports (`$2`=old, `$3`=new); use `--require-comparable --fail-on-regression` to verify a fix |
 | `plan` | `plan.py $2 --repo .` | `$2` is a scan/audit JSON report; map findings to likely source owners without editing |
 | `render` | `render_report.py $2 -o report.html` | here `$2` is a Markdown file → branded HTML (`--format pdf` for PDF) |
 

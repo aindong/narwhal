@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Skill, command and README guidance distinguish malformed crawl evidence from
+  absent legacy receipts and recommend both strict flags when verifying fixes.
 - Audit diffs with contradictory or malformed `pages_scanned` receipts now
   withhold overall score/fix claims and fail the regression gate, sharing the
   count check with crawl-rule comparison. Absent legacy counts stay compatible.
