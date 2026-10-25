@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Reachability probes close their initial HEAD responses before GET fallback
+  and close urllib HTTP-error bodies on both attempts. Existing fallback status
+  reporting is preserved without consuming error bodies.
 - Image range probes close requests responses after stream failures and urllib
   HTTP-error bodies without reading them. Existing prefix/error results are
   preserved; failed streams still cannot supply partial image evidence.
