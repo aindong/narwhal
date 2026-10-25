@@ -220,13 +220,13 @@ class TestDiffScope(unittest.TestCase):
 
     def test_zero_crawl_score_is_not_inferred_to_be_a_fetch_failure(self):
         audit = {'site': 'https://example.test', 'overall_score': 0, 'homepage': report(ALL),
-                 'crawl': {'pages': [{'score': 0, 'hard_fail': False}]}}
+                 'crawl': {'pages': [{'url': 'https://example.test/', 'score': 0, 'hard_fail': False}]}}
         self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
         del audit['crawl']['pages'][0]['hard_fail']  # legacy score alone is not execution evidence
         self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
 
     def test_unknown_or_malformed_crawl_evidence_is_not_guessed(self):
-        for crawl in (None, [], {}, {'pages': None}, {'pages': {}}, {'pages': [None, 'bad']}):
+        for crawl in (None, [], {}):
             audit = {'site': 'https://example.test', 'overall_score': 90, 'homepage': report(ALL), 'crawl': crawl}
             self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
 
@@ -268,7 +268,7 @@ class TestDiffScope(unittest.TestCase):
 
     def test_crawl_scores_do_not_imply_truncation_but_malformed_flags_withhold_proof(self):
         audit = {'site': 'https://example.test', 'overall_score': 80, 'homepage': report(ALL),
-                 'crawl': {'pages': [{'score': 80}]}}
+                 'crawl': {'pages': [{'url': 'https://example.test/', 'score': 80}]}}
         self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
         audit['crawl']['pages'][0]['response_truncated'] = 'true'
         result = self.assert_incomparable(audit, audit)

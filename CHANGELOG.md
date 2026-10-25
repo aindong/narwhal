@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Audit diffs with explicitly malformed recorded crawl page lists withhold score
+  deltas and fix claims; strict gates exit 2. Absent legacy lists remain unverified.
 - Diffs and planner eligibility share checks for explicitly failed or unusable
   acquisition evidence. Page/audit comparisons with failed or malformed
   execution fields withhold score deltas and fix claims, including before/after
