@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Repository inventory caps require an observed additional eligible file.
+  Exact-budget repositories retain complete scoped inventory and viewport
+  candidacy; later traversal errors still record incomplete coverage.
 - Planner inventories record traversal errors with bounded directory witnesses.
   Known traversal failures or capped inventories withhold automatic viewport
   candidacy while preserving available source suggestions for review.

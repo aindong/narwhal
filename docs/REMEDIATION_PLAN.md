@@ -178,7 +178,13 @@ points back to the original report; singleton actions omit this receipt.
 
 Repository coverage includes `file_inventory_walk_errors`: traversal failures
 counted by `os.walk`, with up to five failed-directory witnesses in warnings.
-Known traversal errors or a capped file inventory add
+A file inventory is capped only after an additional eligible file is observed
+beyond the returned budget; merely reaching the budget is not an omission.
+The cap bounds returned inventory entries; determining truncation can inspect
+one additional eligible path's metadata without reading its contents.
+Ignored files and empty directories do not count as omitted source. Later
+traversal errors remain recorded even when the returned file count matches the
+budget. Known traversal errors or a capped file inventory add
 `incomplete_repository_inventory` to viewport automation blockers. Available
 source candidates remain reviewable; zero recorded traversal errors does not
 certify all source contents or ignored directories.
