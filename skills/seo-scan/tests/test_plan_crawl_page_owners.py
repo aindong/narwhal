@@ -134,6 +134,25 @@ class TestCrawlPageOwners(unittest.TestCase):
         self.assertIn(BASE + 'pricing/', action['evidence'])
         self.assertTrue(any('locate it manually' in warning for warning in built['warnings']))
 
+    def test_witness_owner_cap_and_root_content_conventions(self):
+        (self.repo / 'index.md').write_text('Home', encoding='utf-8')
+        warnings = []
+        owners = plan._witness_owners(self.repo, ['index.md'], 'jekyll', 'headings', [BASE], warnings)
+        self.assertEqual(['index.md'], [o['path'] for o in owners])
+        self.assertEqual([], warnings)
+        files, targets = [], []
+        for i in range(5):
+            targets.append(BASE + 'page-{}/'.format(i))
+            for rel in ('page-{}.html'.format(i), 'page-{}/index.html'.format(i)):
+                path = self.repo / rel
+                path.parent.mkdir(exist_ok=True)
+                path.write_text('Page', encoding='utf-8')
+                files.append(rel)
+        owners = plan._witness_owners(self.repo, files, 'plain_html', 'headings', targets, warnings)
+        self.assertEqual(8, len(owners))
+        self.assertEqual(8, len({o['path'] for o in owners}))
+        self.assertEqual([], warnings)
+
     def test_framework_routes_and_shared_head_priority_are_preserved(self):
         cases = (
             ('next', 'src/app/pricing/page.jsx', 'src/app/docs/page.jsx', 'app/layout.tsx'),
