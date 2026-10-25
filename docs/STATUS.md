@@ -846,3 +846,5 @@ Versioning is additive-minor / patch-fix; the plugin rename in 1.2.0 only change
 the *install string* (`narwhal@narwhal`), not behavior.
 
 Unverified sitemap planning actions retain up to five recorded target/status witnesses and the total; manual verification remains required.
+
+Planner verification templates use the strict diff gate for measured regressions and known incomparable coverage; unknown legacy coverage remains unverified.
