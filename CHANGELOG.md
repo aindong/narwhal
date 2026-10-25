@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Target-query tables keep query punctuation, line breaks and Markdown syntax
+  as literal cell text, so pipes cannot shift position/impression columns.
+  Original query evidence remains unchanged in JSON.
 - Briefs retain Search Console row-limit evidence (`gsc.capped`: boolean, or
   null when unrecorded), warn when either input query window reached the cap,
   and describe empty results as observations rather than absent demand.
