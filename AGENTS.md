@@ -67,6 +67,16 @@ python -m playwright install chromium   # only for --render
    source.
 
 ## Fix loop (audit → edit → prove it)
+For toolkit development, run the normal offline suite, then the focused mutation
+gate before review/merge: `python scripts/mutation_test.py` in the Python 3.12
+environment from `requirements-mutation.txt`. See `CONTRIBUTING.md` for setup,
+selecting changed functions/tests and reviewing survivors. The default scope
+is `lib.links.http_check_state`, not the whole repository. For behavior changes,
+mutation-test affected functions as well, strengthen assertions for real
+survivors, and report scope and killed/total counts. Empty/untested/incomplete
+runs cannot count as passes. Do not weaken the gate or alter correct behavior
+to kill equivalent mutants.
+
 When the site's **source is in the current workspace**, close the loop instead of
 stopping at the report:
 1. Baseline: `python scan.py <url> --format json -o before.json`.

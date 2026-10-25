@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Development flow adds a focused Mutmut gate for shared HTTP-response
+  classification, failing on survivors or incomplete/empty runs. Boundary
+  assertions now catch six mutations missed by the existing status matrix.
+  Mutation tools are development-only; scanner dependencies are unchanged.
 - Crawl/audit JSON recurring findings retain recorded rule IDs, including
   distinct rules with identical display titles. The title Counter interface
   remains; inconsistent identity/count snapshots fail rendering. Legacy HTTP

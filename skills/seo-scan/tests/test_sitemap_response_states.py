@@ -36,7 +36,10 @@ def actions(sitemap_result):
 
 class TestSitemapResponseStates(unittest.TestCase):
     def test_report_and_planner_match_shared_explicit_status_matrix(self):
-        cases = [(200, None, 'successful_2xx'), (204, '', 'successful_2xx'),
+        cases = [(199, None, 'unverified'), (200, None, 'successful_2xx'),
+                 (204, '', 'successful_2xx'), (299, None, 'successful_2xx'),
+                 (300, None, 'unverified'), (399, None, 'unverified'),
+                 (400, None, 'broken'), (600, None, 'unverified'),
                  (404, None, 'broken'), (500, '', 'broken'), (599, None, 'broken'),
                  (0, 'timeout', 'unverified'), (403, None, 'unverified'),
                  (301, None, 'unverified'), (700, None, 'unverified'),
