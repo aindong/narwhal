@@ -1,7 +1,12 @@
 """The development gate fails closed without adding runtime dependencies."""
 import importlib.util
+import contextlib
+import io
+import json
 from pathlib import Path
+import tempfile
 import unittest
+from unittest import mock
 
 SCRIPT = Path(__file__).resolve().parents[3] / 'scripts/mutation_test.py'
 spec = importlib.util.spec_from_file_location('mutation_gate', SCRIPT)
@@ -10,6 +15,58 @@ spec.loader.exec_module(gate)
 
 
 class TestMutationGate(unittest.TestCase):
+    def test_selected_profile_is_staged_without_changing_configuration_or_targets(self):
+        for custom in (False, True):
+            with self.subTest(custom=custom), tempfile.TemporaryDirectory(prefix='mutation profile ') as tmp:
+                root = Path(tmp)
+                for rel in ('skills/seo-scan/scripts', 'skills/seo-scan/tests', 'scripts/mutation', 'bin'):
+                    (root / rel).mkdir(parents=True)
+                (root / 'skills/seo-scan/scripts/fixture.py').write_text('pass\n', encoding='utf-8')
+                default = root / 'scripts/mutation/pyproject.toml'
+                default.write_text('# Default profile\n', encoding='utf-8')
+                alternate = root / 'focused profile.toml'
+                alternate.write_text('# Focused profile\n', encoding='utf-8')
+                selected = alternate if custom else default
+                executable = root / 'bin/mutmut'
+                executable.touch()
+
+                def run(command, *, cwd, check):
+                    self.assertEqual([str(executable), 'run', '--max-children', '4', 'target_*'], command)
+                    self.assertTrue(check)
+                    self.assertEqual(selected.read_bytes(), (cwd / 'pyproject.toml').read_bytes())
+                    self.assertEqual('pass\n', (cwd / 'src/fixture.py').read_text(encoding='utf-8'))
+                    self.assertNotEqual(root, cwd)
+                    metadata = cwd / 'mutants/src/fixture.py.meta'
+                    metadata.parent.mkdir(parents=True)
+                    metadata.write_text(json.dumps({'exit_code_by_key': {'target_1': 1}}), encoding='utf-8')
+
+                args = ['mutation_test.py', 'target_*']
+                if custom:
+                    args += ['--config', str(alternate)]
+                with mock.patch.object(gate, 'ROOT', root), \
+                        mock.patch.object(gate.sys, 'argv', args), \
+                        mock.patch.object(gate.sys, 'executable', str(root / 'bin/python')), \
+                        mock.patch.object(gate, 'version', return_value='3.7.0'), \
+                        mock.patch.object(gate.subprocess, 'run', side_effect=run) as invoked, \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(0, gate.main())
+                invoked.assert_called_once()
+                self.assertEqual('# Default profile\n', default.read_text(encoding='utf-8'))
+                self.assertEqual('# Focused profile\n', alternate.read_text(encoding='utf-8'))
+
+    def test_missing_or_directory_profile_fails_before_mutation_execution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for config in (Path(tmp), Path(tmp) / 'missing.toml'):
+                with self.subTest(config=config), \
+                        mock.patch.object(gate.sys, 'argv', ['mutation_test.py', '--config', str(config)]), \
+                        mock.patch.object(gate.subprocess, 'run') as invoked, \
+                        contextlib.redirect_stderr(io.StringIO()) as errors, \
+                        self.assertRaises(SystemExit) as stopped:
+                    gate.main()
+                self.assertEqual(2, stopped.exception.code)
+                self.assertIn('Mutation configuration must be a file', errors.getvalue())
+                invoked.assert_not_called()
+
     def test_only_test_failure_exits_pass_and_unselected_results_do_not_count(self):
         results, failures = gate.check_results(
             [{'exit_code_by_key': {'target_1': 1, 'other': 0}}], 'target_*')

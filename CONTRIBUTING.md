@@ -143,13 +143,29 @@ Initially, 21 of 27 response-classifier mutants were killed.
 Six survived because the matrix omitted HTTP 300, 400 and 600; boundary
 assertions now kill all 27 without changing production behavior.
 
-For behavior changes, select affected files and relevant offline tests in
-[the mutation configuration](scripts/mutation/pyproject.toml), then run a quoted
-Mutmut function pattern, for example:
+For behavior changes, select affected files and relevant offline tests in a
+focused TOML profile. Pass it with `--config PATH` rather than replacing
+[the default CI configuration](scripts/mutation/pyproject.toml). Without that
+option, the existing default profile and targets remain unchanged. For example:
 
 ```bash
 .venv-mutation/bin/python scripts/mutation_test.py 'lib.links.x_http_check_state__mutmut_*'
 ```
+
+The committed [planner profile](scripts/mutation/planner.toml) reproduces source
+owner checks across the supported frameworks:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/planner.toml \
+  'plan.x__route_candidates__mutmut_*' 'plan.x_likely_files__mutmut_*'
+```
+
+Profile paths are relative to your invoking directory; paths inside the profile
+refer to the temporary staging layout described below. Selecting a profile does
+not infer function targets: pass their quoted patterns explicitly. The planner
+profile currently kills 320/343 mutants, with 23 unresolved survivors; it is an
+optional diagnostic that exits nonzero, not a passing CI gate. Its schema-file
+test is omitted because references are not staged; full suites/MCP CI retain it.
 
 Pass multiple quoted patterns to gate several functions in one fresh run. Every
 requested pattern must match at least one mutant; a valid target cannot mask an

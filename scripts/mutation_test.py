@@ -39,9 +39,13 @@ def check_results(records, patterns):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--config', type=Path, default=ROOT / 'scripts/mutation/pyproject.toml',
+                        help='Mutmut TOML profile to copy into fresh staging (default: existing CI profile)')
     parser.add_argument('targets', nargs='*', default=DEFAULT_TARGETS,
                         help='Mutmut function patterns within the configured source scope; every pattern must match')
     args = parser.parse_args()
+    if not args.config.is_file():
+        parser.error('Mutation configuration must be a file: ' + str(args.config))
     executable = Path(sys.executable).parent / 'mutmut'
     if not executable.is_file():
         parser.error('Install requirements-mutation.txt in this Python environment first.')
@@ -60,7 +64,7 @@ def main():
         # Preserve fixture paths without adding an unmutated source copy beside tests.
         shutil.copytree(ROOT / 'skills/seo-scan/tests', work / 'skills/seo-scan/tests',
                         ignore=shutil.ignore_patterns('__pycache__'))
-        shutil.copyfile(ROOT / 'scripts/mutation/pyproject.toml', work / 'pyproject.toml')
+        shutil.copyfile(args.config, work / 'pyproject.toml')
         subprocess.run([str(executable), 'run', '--max-children', '4', *args.targets],
                        cwd=work, check=True)
         records = [json.loads(path.read_text())
