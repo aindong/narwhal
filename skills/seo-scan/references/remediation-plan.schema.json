@@ -61,7 +61,7 @@
             "properties": {
               "basis": {"const": "explicit_structural_rule_and_existing_candidate_v1"},
               "eligible": {"type": "boolean"},
-              "blockers": {"type": "array", "uniqueItems": true, "items": {"enum": ["unrecognized_structural_rule", "no_existing_owner_candidate", "known_incomplete_source_evidence", "incomplete_repository_inventory"]}},
+              "blockers": {"type": "array", "uniqueItems": true, "items": {"enum": ["unrecognized_structural_rule", "no_existing_owner_candidate", "known_incomplete_source_evidence", "incomplete_repository_inventory", "unlocated_page_witness"]}},
               "scope": {"type": "string"}
             },
             "additionalProperties": false

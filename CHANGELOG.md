@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl/audit recurring rules retain bounded URL-label witnesses without changing
+  counts or scores. Page-local audit plans map supported same-origin witnesses
+  to inventoried route files rather than unrelated homepage fallbacks. Unlocated
+  legacy/unsupported rollups stay manual; labels/samples do not prove ownership
+  or complete site coverage. Installed CLI/MCP cycles exercise an inner-page fix.
 - Planner regressions verify the complete Markdown automation receipt for
   eligible, blocked, combined-blocker and ownerless actions, including explicit
   non-authorization wording. Focused mutations include these and inventory-error

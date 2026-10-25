@@ -36,7 +36,7 @@ from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib.report import recorded_response_partial  # noqa: E402
-from lib import llms_resource  # noqa: E402
+from lib import llms_resource, finding_urls  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib.report import _crawler_meta_notes, _http_robots_notes  # noqa: E402
 from lib.sitemap_discovery import COMMON_PATHS, Discovery, MAX_INDEX_CHILDREN  # noqa: E402
@@ -402,6 +402,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
 
     pages, issue_counter, pages_links, page_fps = [], Counter(), {}, []
     rule_counter = Counter()
+    rule_urls = {}
     pages_hreflang: dict = {}
     hreflang_coverage, partial_hreflang, sampled_hreflang_observations = {}, set(), []
     for u, rep in results:
@@ -445,6 +446,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
                 rule_counter[(f.category, f.severity, f.title, f.rule_id)] += 1
+                finding_urls.record(rule_urls, (f.category, f.severity, f.title, f.rule_id), rep.final_url or u)
         pages_links[u] = rep.meta.get("links", [])
         pages_hreflang[u] = rep.meta.get('hreflang', []) if u not in partial_hreflang else []
         if detect_dupes and not rep.hard_fail and not truncated and rep.meta.get("fingerprint"):
@@ -456,6 +458,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
               "recurring_rule_counts": rule_counter,
+              "recurring_rule_urls": rule_urls,
               "ecommerce": ecommerce_scope}
     llms = llms_resource.recorded(ctx.get('llms_txt_receipt'))
     if llms:
@@ -772,6 +775,7 @@ def render_json(result: dict) -> str:
     import json
     payload = dict(result)
     rule_counts = payload.pop('recurring_rule_counts', None)
+    rule_urls = payload.pop('recurring_rule_urls', {})
     if rule_counts is not None:
         totals = Counter()
         for (category, severity, title, rule_id), count in rule_counts.items():
@@ -781,7 +785,8 @@ def render_json(result: dict) -> str:
         if totals != result['recurring']:
             raise ValueError('Recurring rule counts disagree with the title rollup; regenerate the crawl before rendering.')
         payload['recurring'] = [
-            {'category': c, 'severity': s, 'title': t, 'count': n, **({'rule_id': rid} if rid else {})}
+            {'category': c, 'severity': s, 'title': t, 'count': n, **({'rule_id': rid} if rid else {}),
+             **({'url_sample': rule_urls[(c, s, t, rid)]} if (c, s, t, rid) in rule_urls else {})}
             for (c, s, t, rid), n in rule_counts.most_common()]
     else:
         payload["recurring"] = [

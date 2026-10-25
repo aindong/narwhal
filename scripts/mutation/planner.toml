@@ -1,8 +1,8 @@
-# Opt-in owner-mapping profile; pass both explicit plan.* function patterns.
+# Opt-in planner/crawl-witness profile; pass explicit changed-function patterns.
 # Published schema-file checks stay in the full suite; references are not staged.
 [tool.mutmut]
 source_paths = ["src/"]
-only_mutate = ["src/plan.py"]
+only_mutate = ["src/plan.py", "src/lib/finding_urls.py", "src/crawl_site.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_next_page_routes.py",
@@ -13,6 +13,9 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_markdown_receipts_expose_classification_blockers_and_authority_limits",
  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_markdown_without_observed_owners_withholds_convention_and_ownerless_actions",
  "skills/seo-scan/tests/test_plan_inventory_errors.py",
+ "skills/seo-scan/tests/test_finding_url_witnesses.py",
+ "skills/seo-scan/tests/test_plan_crawl_page_owners.py",
+ "skills/seo-scan/tests/test_crawl_rule_handoff.py",
  "skills/seo-scan/tests/test_plan_astro_page_routes.py",
  "skills/seo-scan/tests/test_plan_nuxt_page_routes.py",
  "skills/seo-scan/tests/test_plan_hugo_page_routes.py",
