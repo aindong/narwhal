@@ -870,3 +870,5 @@ Planner Markdown carries bounded literal source-recommendation previews outside 
 Anchor-text source findings carry bounded href/label witnesses and explicit content-review mappings; generic wording remains contextual review, with no destination probes or score changes.
 
 Malformed-link syntax findings carry bounded original href witnesses and explicit native/legacy source-review mappings without probing destinations or changing scores.
+
+Crawl/audit recurring JSON preserves recorded rule identities for planner safety, with count-consistency checks and legacy HTTP-header routing that cannot become an HTML-meta edit.

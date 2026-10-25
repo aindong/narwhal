@@ -52,6 +52,9 @@ SKIP_DIRS = {
     "node_modules", "vendor", "dist", "build", "coverage", "__pycache__",
 }
 SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "good": 4}
+HTTP_ROBOTS_REVIEW_RULES = frozenset((
+    'technical.http.robots.noindex', 'technical.http.robots.nofollow',
+    'technical.http.x.robots.tag.declares.noindex', 'technical.http.x.robots.tag.declares.nofollow'))
 SCHEMA_ABSENCE_RULES = frozenset(('schema.no.structured.data',
     'schema.no.structured.data.json.ld',
     'schema.article.like.page.without.article.schema', 'schema.no.organization.website.entity',
@@ -676,7 +679,7 @@ def classify_artifact(finding: dict) -> str:
     if rid in ('technical.links.with.no.anchor.text', 'technical.generic.anchor.text',
                'technical.links.invalid.url', 'technical.malformed.http.link.urls'):
         return 'content'
-    if rid.startswith('technical.http.robots.'):
+    if rid.startswith('technical.http.robots.') or rid in HTTP_ROBOTS_REVIEW_RULES:
         return 'server_config'  # header owner, never an HTML robots-meta edit
     title = str(finding.get("title", "")).lower()
     haystack = rid + " " + title
@@ -893,6 +896,11 @@ READABILITY_REVIEW_GUIDANCE = (
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    **dict.fromkeys(HTTP_ROBOTS_REVIEW_RULES,
+        'Review the observed response headers, their page/crawler scope and the hosting/CDN/middleware response-header owner. '
+        'Preserve intentional restrictions; change X-Robots-Tag only if confirmed unintended. '
+        'Editing HTML meta tags does not remove a response header. Re-fetch affected headers after deployment; '
+        'declarations do not prove live indexing or crawler behavior.'),
     **dict.fromkeys(('technical.links.invalid.url', 'technical.malformed.http.link.urls'),
         'Inspect the recorded href spellings in current source and confirm the intended destinations. '
         'Correct verified host, IPv6 bracket or port syntax without guessing a new destination or '
