@@ -17,13 +17,29 @@ RULE = 'technical.no.responsive.viewport.tag'
 VIEWPORT = '<meta name="viewport" content="width=device-width, initial-scale=1">'
 
 
+class FixtureHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/' and self.server.partial_html:
+            data = (Path(self.directory) / 'index.html').read_bytes()
+            body = data[:64]
+            self.send_response(206)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Range', 'bytes 0-{}/{}'.format(len(body) - 1, len(data)))
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
+
+
 def main():
     with tempfile.TemporaryDirectory(prefix='narwhal-action-cycle-') as directory:
         root = Path(directory)
         site = root / 'site'
         site.mkdir()
-        handler = partial(SimpleHTTPRequestHandler, directory=str(site))
+        handler = partial(FixtureHandler, directory=str(site))
         with ThreadingHTTPServer(('127.0.0.1', 0), handler) as server:
+            server.partial_html = False
             url = 'http://127.0.0.1:' + str(server.server_port) + '/'
             html = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
                     '<title>Local workflow verification for Narwhal development</title>'
@@ -79,8 +95,30 @@ def main():
                 regression = read('regression.json')
                 assert regression['comparison']['status'] == 'comparable', regression
                 assert regression['score_delta'] == -diff['score_delta'], regression
+                server.partial_html = True
+                run(options + ['-o', 'partial.json'])
+                partial_report = read('partial.json')
+                assert partial_report['status'] == 206, partial_report
+                assert partial_report['meta']['scan_scope']['completed'] == [], partial_report
+                run(['diff', 'before.json', 'partial.json', '--fail-on-regression',
+                     '--format', 'json', '-o', 'unverified.json'], expected=2)
+                unverified = read('unverified.json')
+                assert unverified['comparison']['status'] == 'incomparable', unverified
+                assert unverified['score_delta'] is None and unverified['resolved'] == [], unverified
+                fixed_sources = {path.name: path.read_bytes() for path in site.iterdir()}
+                run(['plan', 'partial.json', '--repo', str(site), '--format', 'json', '-o', 'partial-plan.json'])
+                assert {path.name: path.read_bytes() for path in site.iterdir()} == fixed_sources, 'Partial plan changed sources'
+                actions = read('partial-plan.json')['actions']
+                assert RULE not in {a['rule_id'] for a in actions}, actions
+                assert 'technical.response.partial' in {a['rule_id'] for a in actions}, actions
+                for action in actions:
+                    assert action['safety'] == 'manual_external', action
+                    assert action['manual_action'] is True and action['likely_files'] == [], action
+                    assert action['requires_deploy'] is False, action
+                    assert not (action.get('automation_eligibility') or {}).get('eligible'), action
                 print('Installed action cycle passed: planned owner -> explicit fixture edit -> one resolved issue; '
-                      'score {} -> {}; reverse regression rejected.'.format(before['score'], after['score']))
+                      'score {} -> {}; reverse regression rejected; partial rescan withheld fix claims '
+                      'and requested manual verification.'.format(before['score'], after['score']))
             finally:
                 server.shutdown()
                 thread.join(timeout=5)

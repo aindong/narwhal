@@ -32,6 +32,8 @@ disposable loopback fixture, verifies the read-only plan and likely source owner
 applies one explicit fixture edit, and proves the rescan/diff resolves only that
 issue. Reversing the reports must fail the regression gate. This is local,
 page-level workflow evidence, not real-site SEO gains or deployment proof.
+A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),
+with no score delta/resolved fixes and a read-only, manual verification plan.
 
 ## Project layout
 
