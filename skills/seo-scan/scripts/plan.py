@@ -489,6 +489,7 @@ def normalize_report(data: dict) -> dict:
         "score": data.get("overall_score", page.get("score")),
         "report_schema_version": data.get("schema_version", "legacy"),
         "tool_version": data.get("tool_version", "unknown"),
+        "finding_observation_counts": {rid: len(rows) for rid, rows in coalesced.items()},
         "findings": normalized_findings[:MAX_FINDINGS],
         "findings_total": total_findings,
         "findings_capped": total_findings > MAX_FINDINGS,
@@ -1174,6 +1175,15 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         })
         if eligibility is not None:
             actions[-1]['automation_eligibility'] = eligibility
+        observation_count = normalized['finding_observation_counts'][finding['rule_id']]
+        if observation_count > 1:
+            actions[-1]['observation_selection'] = {
+                'basis': 'worst_severity_then_sorted_json_v1',
+                'normalized_observations': observation_count,
+                'occurrences_basis': 'maximum_recorded_count',
+                'scope': 'One representative from normalized findings/rollups; not matched or distinct page instances. '
+                         'Consult the original report for other observations. Site scope is retained when recorded.',
+            }
     actions.sort(key=lambda action: (SEVERITY_RANK.get(action["severity"], 9),
                                      action["rule_id"], action["action_id"]))
     groups = _groups(actions)
@@ -1324,6 +1334,12 @@ def render_markdown(plan: dict) -> str:
                 scope_label = ('Page report' if action.get('scope') == 'page' else
                                'Site sample/rollup' if action.get('scope') == 'site' else 'Unrecorded scope')
                 scope_lines = [f'- **Verification scope:** {scope_label}']
+            if 'observation_selection' in action:
+                receipt = action['observation_selection']
+                scope_lines.append(f"- **Observation selection:** One complete worst-severity representative from "
+                                   f"{receipt['normalized_observations']} normalized observations; equal-severity ties use "
+                                   "sorted-key JSON order. Occurrences retain the maximum recorded count, not a sum or "
+                                   "matched page instances. Consult the original report for other observations.")
             lines += [f"### {action['severity'].upper()} — {display_title}", "",
                       f"- **Rule:** `{action['rule_id']}`",
                       *scope_lines,

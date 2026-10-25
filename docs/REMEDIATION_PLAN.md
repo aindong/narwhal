@@ -170,7 +170,11 @@ worst-severity observation; equal-severity ties use sorted-key JSON lexical
 order. Evidence, title, recommendation and confidence come from that same
 observation. Occurrences use the maximum recorded count (not a sum or matched
 instances), and any recorded site scope is retained. Audit homepage and
-recurring observations use this same selection.
+recurring observations use this same selection. Repeated actions include an
+`observation_selection` receipt with the selection basis, normalized observation
+count and occurrence-count policy. The count includes normalized findings/rollups,
+not distinct pages or matched instances. Markdown discloses the reduction and
+points back to the original report; singleton actions omit this receipt.
 
 ## Compatibility
 
