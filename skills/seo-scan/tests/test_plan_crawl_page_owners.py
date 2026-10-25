@@ -179,7 +179,7 @@ class TestCrawlPageOwners(unittest.TestCase):
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text('Healthy home', encoding='utf-8')
                     added_homes.append(path)
-                files = [str(p.relative_to(root)) for p in root.rglob('*') if p.is_file()]
+                files = [p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file()]
                 for artifact in ('content', 'image_alt'):
                     owners = plan._witness_owners(root, files, framework, artifact,
                                                   [BASE + 'pricing/', BASE + 'docs/'], [])
