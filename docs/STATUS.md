@@ -854,3 +854,5 @@ Diffs retain both target labels (`old_url`, later `url`) and highlight differenc
 Repeated planner rules retain coherent worst-severity evidence across homepage/recurring observations, deterministic ties, maximum occurrence counts and recorded site scope.
 
 Repeated planner actions disclose representative-selection counts/basis without implying distinct pages or matched instances; singleton actions stay compact.
+
+Planner inventories record traversal failures and bounded directory witnesses; known errors/caps withhold automatic viewport candidacy while preserving source review candidates.

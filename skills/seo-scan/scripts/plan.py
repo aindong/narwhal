@@ -28,6 +28,7 @@ from crawl_site import _link_coverage  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
+INVENTORY_ERROR_WITNESSES = 5
 MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
 EVIDENCE_PREVIEW_CHARS = 600
@@ -515,7 +516,16 @@ def safe_repo_root(path: str) -> Path:
 def inventory(root: Path, max_files=MAX_REPO_FILES) -> dict:
     """Build a bounded, symlink-safe repository inventory."""
     files, warnings, capped = [], [], False
-    for current, dirs, names in os.walk(str(root), followlinks=False):
+    walk_errors = 0
+
+    def on_walk_error(error):
+        nonlocal walk_errors
+        walk_errors += 1
+        if walk_errors <= INVENTORY_ERROR_WITNESSES:
+            warnings.append(f"Could not traverse repository directory {error.filename!r} "
+                            f"({type(error).__name__}).")
+
+    for current, dirs, names in os.walk(str(root), followlinks=False, onerror=on_walk_error):
         current_path = Path(current)
         kept_dirs = []
         for name in sorted(dirs):
@@ -542,7 +552,10 @@ def inventory(root: Path, max_files=MAX_REPO_FILES) -> dict:
             break
     if capped:
         warnings.append(f"Repository inventory capped at {max_files} files.")
-    return {"files": sorted(files), "warnings": warnings, "capped": capped}
+    if walk_errors:
+        warnings.append(f"Repository inventory could not traverse {walk_errors} directory/ies; "
+                        "source coverage is incomplete. Check read permissions and rerun planning.")
+    return {"files": sorted(files), "warnings": warnings, "capped": capped, "walk_errors": walk_errors}
 
 
 def _read_small(root: Path, rel: str) -> str:
@@ -1131,6 +1144,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             blockers = []
             if finding['rule_id'] != 'technical.no.responsive.viewport.tag':
                 blockers.append('unrecognized_structural_rule')
+            if inv['capped'] or inv['walk_errors']:
+                blockers.append('incomplete_repository_inventory')
             if not any(owner.get('exists') is True for owner in owners):
                 blockers.append('no_existing_owner_candidate')
             if ((finding.get('scope', 'page') != 'site' and normalized['page_automation_gap'])
@@ -1206,6 +1221,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
             "mapping_ratio": round(mapped_named / len(actions), 3) if actions else 1.0,
             "files_scanned": len(inv["files"]),
             "file_inventory_capped": inv["capped"],
+            "file_inventory_walk_errors": inv["walk_errors"],
         },
         "warnings": sorted(set(warnings)),
         "provenance": {
