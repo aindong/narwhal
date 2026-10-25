@@ -271,14 +271,15 @@ def _header_target_evidence(crawl, rule_id):
 
 
 def _automation_source_gap(page):
-    """Known incomplete technical observations cannot support structural edits."""
+    """Explicitly failed or unusable execution evidence cannot support structural edits."""
     meta = page.get('meta', page)
     if not isinstance(meta, dict):
         meta = {}
     status = page.get('status', 0)
     scope = recorded_scan_scope(meta)
     return (page.get('hard_fail') is True
-            or (isinstance(status, int) and status > 0 and (status == 206 or not 200 <= status < 300))
+            or ('hard_fail' in page and type(page['hard_fail']) is not bool)
+            or ('status' in page and (type(status) is not int or status == 206 or not 200 <= status < 300))
             or recorded_response_partial(meta) or recorded_response_truncated(meta)
             or ('scan_scope' in meta and scope is None)
             or (scope is not None and 'technical' not in scope[1]))

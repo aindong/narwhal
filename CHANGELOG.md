@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner automation eligibility rejects explicitly unusable response statuses
+  and malformed failure flags while retaining source-owner candidates for
+  review. Absent legacy fields keep their existing candidate classification;
+  recorded zero status no longer implies usable execution evidence.
 - Planner scan commands reproduce valid recorded HTML byte budgets for local
   pairs and original-target scans. Missing, malformed or out-of-range values
   retain the manual resource-settings prerequisite rather than guessing a limit.

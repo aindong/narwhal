@@ -115,15 +115,19 @@ def main(use_mcp=False):
                            for owner in action['likely_files']), action
                 invalid_scope = read('before.json')
                 invalid_scope['meta']['scan_scope'] = {'requested': 'technical', 'completed': []}
-                if use_mcp:
-                    invalid_plan = mcp_tool('plan_remediation', {'report': invalid_scope, 'repo': 'site'}, root)
-                else:
-                    (root / 'invalid-scope.json').write_text(json.dumps(invalid_scope), encoding='utf-8')
-                    run(['plan', 'invalid-scope.json', '--repo', str(site), '--format', 'json', '-o', 'invalid-scope-plan.json'])
-                    invalid_plan = read('invalid-scope-plan.json')
-                invalid_action = next(a for a in invalid_plan['actions'] if a['rule_id'] == RULE)
-                assert invalid_action['automation_eligibility']['eligible'] is False, invalid_action
-                assert 'known_incomplete_source_evidence' in invalid_action['automation_eligibility']['blockers']
+                invalid_status = read('before.json')
+                invalid_status['status'] = '200'
+                for label, invalid in (('scope', invalid_scope), ('status', invalid_status)):
+                    if use_mcp:
+                        invalid_plan = mcp_tool('plan_remediation', {'report': invalid, 'repo': 'site'}, root)
+                    else:
+                        source, output = 'invalid-' + label + '.json', 'invalid-' + label + '-plan.json'
+                        (root / source).write_text(json.dumps(invalid), encoding='utf-8')
+                        run(['plan', source, '--repo', str(site), '--format', 'json', '-o', output])
+                        invalid_plan = read(output)
+                    invalid_action = next(a for a in invalid_plan['actions'] if a['rule_id'] == RULE)
+                    assert invalid_action['automation_eligibility']['eligible'] is False, invalid_action
+                    assert 'known_incomplete_source_evidence' in invalid_action['automation_eligibility']['blockers']
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original
                 # Only this generated fixture's templates are executed, as argv without a shell.
                 verification = [shlex.split(step, comments=True) for step in action['verification']

@@ -27,6 +27,48 @@ def baseline():
 
 
 class TestAutomationEligibility(unittest.TestCase):
+    def test_explicit_unusable_status_or_failure_flag_withholds_automation(self):
+        changes = [{'status': value} for value in (None, '200', '503', False, True, 0, -1, 200.0, [], {})]
+        changes += [{'hard_fail': value} for value in (None, 'false', 0, 1, [], {})]
+        for change in changes:
+            for kind in ('scan', 'audit', 'crawl'):
+                with self.subTest(change=change, kind=kind):
+                    page = baseline()
+                    page.update(change)
+                    data = page
+                    if kind == 'audit':
+                        data = {'site': URL, 'homepage': page, 'crawl': {'pages': [], 'recurring': []}}
+                    elif kind == 'crawl':
+                        home = baseline()
+                        home['findings'] = []
+                        finding = dict(page['findings'][0], count=1)
+                        finding['url_sample'] = {'basis': 'recorded_crawl_rule_url_labels_v1',
+                                                 'urls': [URL], 'truncated': False, 'omitted': 0}
+                        data = {'site': URL, 'homepage': home,
+                                'crawl': {'pages': [page], 'recurring': [finding]}}
+                    before = copy.deepcopy(data)
+                    action = self.action(data)
+                    self.assertEqual('review_required', action['safety'])
+                    self.assertIn('known_incomplete_source_evidence', action['automation_eligibility']['blockers'])
+                    self.assertTrue(any(item['exists'] for item in action['likely_files']))
+                    with mock.patch.object(Path, 'cwd', return_value=self.repo.parent), \
+                            mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                        received = mcp_server._plan(data, self.repo.name)
+                    received_action = next(a for a in received['actions'] if a['artifact'] == 'viewport')
+                    self.assertEqual(action['automation_eligibility'], received_action['automation_eligibility'])
+                    self.assertEqual(action['likely_files'], received_action['likely_files'])
+                    self.assertEqual(before, data)
+
+    def test_absent_legacy_status_flags_and_valid_success_remain_candidates(self):
+        for status in (None, 200, 201, 299):
+            data = baseline()
+            if status is None:
+                data.pop('status')
+                data.pop('hard_fail', None)
+            else:
+                data.update(status=status, hard_fail=False)
+            self.assertTrue(self.action(data)['automation_eligibility']['eligible'])
+
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
