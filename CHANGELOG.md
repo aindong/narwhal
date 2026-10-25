@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Mutation runner accepts `--config PATH` for reproducible focused profiles
+  without replacing tracked configuration. A committed planner profile preserves
+  the focused owner checks and their disclosed survivors; the default CI gate
+  and its targets are unchanged. Missing/directory profiles fail before execution.
 - Hugo plans recognize observed home/section `_index.md` branch-bundle sources
   before unrelated capped content fallbacks, preserving plain/leaf candidates.
   Missing branch files are not proposed for creation; custom URL/content layouts

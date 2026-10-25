@@ -1,0 +1,21 @@
+# Opt-in owner-mapping profile; pass both explicit plan.* function patterns.
+# Published schema-file checks stay in the full suite; references are not staged.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/plan.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+ "skills/seo-scan/tests/test_plan_next_page_routes.py",
+ "skills/seo-scan/tests/test_plan_owner_contract.py",
+ "skills/seo-scan/tests/test_plan_astro_page_routes.py",
+ "skills/seo-scan/tests/test_plan_nuxt_page_routes.py",
+ "skills/seo-scan/tests/test_plan_hugo_page_routes.py",
+ "skills/seo-scan/tests/test_plan_route_priority.py",
+ "skills/seo-scan/tests/test_plan_html_file_routes.py",
+ "skills/seo-scan/tests/test_plan.py::TestPlanContract",
+ "-k", "not test_published_json_schema_matches_contract_version_and_required_fields",
+ "skills/seo-scan/tests/test_plan.py::TestFrameworkDetection",
+ "skills/seo-scan/tests/test_plan.py::TestPathSafety",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]
