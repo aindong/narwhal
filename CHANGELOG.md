@@ -18,7 +18,8 @@ All notable changes to Narwhal are documented here. The format follows
   Image metadata records verified/unverified weight counts; successful probes
   retain existing thresholds and request budgets. Explicit unknown coverage
   qualifies reports and blocks comparison/diff fix claims; plans request manual
-  verification without guessing source edits.
+  verification without guessing source edits. Budget-skipped images withhold
+  the all-clear, and present non-object image receipts remain unverified.
 - Image metadata HEAD probes explicitly close requests responses and urllib
   HTTP-error bodies while preserving status, lowercase headers and controlled
   errors. Header-processing failures also release the acquired response.

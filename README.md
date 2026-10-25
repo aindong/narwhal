@@ -341,7 +341,8 @@ measurements. Only error-free HTTP 200 image responses with a valid bounded
 ASCII Content-Length and no range/transfer-encoding evidence supply weights.
 `meta.images.weight_verified` and `weight_unverified` distinguish measured
 weights from attempted probes; unknown weights cannot produce optimization
-findings or an all-under-threshold pass. The existing image-count cap remains.
+findings or an all-under-threshold pass. The existing image-count cap remains;
+unchecked images also withhold the all-clear.
 Explicitly unverified weights also block technical/overall score comparison and
 diff fix claims, including the regression gate. Reports qualify the result;
 plans request manual probe verification without guessing an image source edit.

@@ -92,6 +92,10 @@ class TestImageWeightEvidence(unittest.TestCase):
             self.assertIn(UNVERIFIED_IMAGE_WEIGHT_ERROR, rendered)
 
     def test_receipts_do_not_guess_legacy_data_or_accept_invalid_counts(self):
+        self.assertIsNone(recorded_image_weight_problem({}))
+        for receipt in (None, False, True, 1, 'bad', [], ''):
+            with self.subTest(receipt=receipt):
+                self.assertEqual(UNVERIFIED_IMAGE_WEIGHT_ERROR, recorded_image_weight_problem({'images': receipt}))
         for images_meta in ({}, {'checked': 1}, {'checked': 1, 'weight_verified': 1, 'weight_unverified': 0}):
             self.assertIsNone(recorded_image_weight_problem({'images': images_meta}))
         for receipt in ({'checked': 1, 'weight_verified': 1}, {'checked': 1, 'weight_unverified': 1}):
@@ -164,6 +168,15 @@ class TestImageWeightEvidence(unittest.TestCase):
         self.assertIn('No heavy images detected', {f.title for f in report.findings})
         facts, report = audit([small, (200, {'content-type': 'image/webp'}, None)])
         self.assertEqual(1, facts['weight_unverified'])
+        self.assertNotIn('No heavy images detected', {f.title for f in report.findings})
+
+    def test_head_cap_withholds_the_all_clear_for_unchecked_images(self):
+        small = (200, {'content-type': 'image/webp', 'content-length': '40960'}, None)
+        facts, report = audit([small] * (images.MAX_IMAGES + 1))
+        self.assertEqual(images.MAX_IMAGES, facts['checked'])
+        self.assertEqual(1, facts['unchecked'])
+        self.assertEqual(images.MAX_IMAGES, facts['weight_verified'])
+        self.assertEqual(0, facts['weight_unverified'])
         self.assertNotIn('No heavy images detected', {f.title for f in report.findings})
 
 

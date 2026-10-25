@@ -194,7 +194,7 @@ def findings(facts: dict, report) -> None:
                    + (" Also lighten the src fallback (it's what scrapers and "
                       "srcset-unaware clients download)." if all_srcset else ""),
                    evidence=listing)
-    elif facts["checked"] and facts['weight_verified'] == facts['checked']:
+    elif facts["checked"] and not facts['unchecked'] and facts['weight_verified'] == facts['checked']:
         report.ok(cat, "No heavy images detected",
                   f"{facts['checked']} checked, all under {HEAVY_KB} KB")
 

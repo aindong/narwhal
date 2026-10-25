@@ -136,8 +136,12 @@ def recorded_image_weight_problem(meta, *, for_score=False):
     scope = recorded_scan_scope(meta) if isinstance(meta, dict) else None
     if for_score and scope is not None and 'technical' not in scope[0]:
         return None
-    receipt = meta.get('images') if isinstance(meta, dict) else None
-    if not isinstance(receipt, dict) or not {'weight_verified', 'weight_unverified'} & receipt.keys():
+    if not isinstance(meta, dict) or 'images' not in meta:
+        return None
+    receipt = meta['images']
+    if not isinstance(receipt, dict):
+        return UNVERIFIED_IMAGE_WEIGHT_ERROR
+    if not {'weight_verified', 'weight_unverified'} & receipt.keys():
         return None
     checked, verified, unknown = (receipt.get(key) for key in ('checked', 'weight_verified', 'weight_unverified'))
     if (any(type(value) is not int or value < 0 for value in (checked, verified, unknown))
