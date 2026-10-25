@@ -60,11 +60,11 @@ class TestPlanCommandQuoting(unittest.TestCase):
                              shlex.split(commands[-1]))
 
     def test_local_placeholder_and_memory_baseline_remain_explicit(self):
-        for kind, output in (('scan', 'after.json'), ('audit', 'page-after.json')):
+        for kind in ('scan', 'audit'):
             commands = plan.verification_for('title', 'https://example.test', '<memory>', kind)
             self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
             self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
-                              '-o', output, '--', '<local-preview-url>'], shlex.split(next(step for step in commands if step.startswith('narwhal scan '))))
+                              '-o', 'page-before.json', '--', '<local-preview-url>'], shlex.split(next(step for step in commands if step.startswith('narwhal scan '))))
             self.assertEqual('narwhal diff --fail-on-regression --require-comparable -- before.json after.json', commands[-1])
 
     def test_actual_diff_parser_accepts_leading_dash_filename_after_separator(self):

@@ -1175,16 +1175,19 @@ def safety_for(artifact: str, rule_id: str = "") -> tuple:
     return "manual_external", False
 
 
-def _verification_outputs(report_source):
+def _verification_output(report_source, name):
     """Avoid known baseline basename collisions without inspecting the filesystem.
 
     Treat case and either path separator conservatively for portable templates;
     callers must still choose fresh paths and check symlink/hardlink aliases.
     """
     baseline = report_source.replace('\\', '/').rsplit('/', 1)[-1].casefold()
-    page = 'page-after-2.json' if baseline == 'page-after.json' else 'page-after.json'
-    comparison = 'after-2.json' if baseline == 'after.json' else 'after.json'
-    return page, comparison
+    return name.replace('.json', '-2.json') if baseline == name else name
+
+
+def _verification_outputs(report_source):
+    return (_verification_output(report_source, 'page-after.json'),
+            _verification_output(report_source, 'after.json'))
 
 
 def verification_for(artifact: str, target: str, report_source: str,
@@ -1196,14 +1199,24 @@ def verification_for(artifact: str, target: str, report_source: str,
               shlex.quote(report_source))
     page_output, comparison_output = _verification_outputs(report_source)
     options = ''.join(' ' + shlex.quote(option) for option in scan_options)
+    local = []
+    if artifact not in ("robots_txt", "sitemap", "llms_txt", "server_config"):
+        page_before = _verification_output(report_source, 'page-before.json')
+        local = [SCAN_SETTINGS_INSTRUCTION,
+                 'Before editing, when a preview is available, confirm its route maps to the affected source. '
+                 'Capture this local baseline with fresh paths; use distinct snapshots for each affected page.',
+                 f"narwhal scan --allow-private --format json -o {page_before}{options} -- '<local-preview-url>'",
+                 'After applying the reviewed source edits, scan the same local route with matching options.',
+                 f"narwhal scan --allow-private --format json -o {page_output}{options} -- '<local-preview-url>'",
+                 f'narwhal diff --fail-on-regression --require-comparable -- {page_before} {page_output}',
+                 'The local pair verifies page-level changes only; do not compare '
+                 f'{page_output} with the original baseline or treat it as deployed site verification. '
+                 'Without a pre-edit local scan, the preview is a current-state check, not measured improvement. '
+                 'If no preview is available, mark local proof pending and use the original baseline checks after deployment.']
+        if artifact in ("json_ld", "product_schema"):
+            local.insert(4, "Validate the rendered structured data and replace every TODO placeholder.")
     if report_kind == 'audit':
-        commands = []
-        if artifact not in ("robots_txt", "sitemap", "llms_txt", "server_config"):
-            commands += [
-                f"narwhal scan --allow-private --format json -o {page_output}{options} -- '<local-preview-url>'",
-                'The local scan verifies page-level changes only; do not compare '
-                f'{page_output} with the audit baseline or treat it as deployed site verification.',
-            ]
+        commands = local
         commands += [
             'Restore the original audit configuration, rendering, access settings and '
             'crawl/link/sitemap limits before running this template; the report does '
@@ -1212,19 +1225,13 @@ def verification_for(artifact: str, target: str, report_source: str,
             f'narwhal audit --format json -o {comparison_output} -- {shlex.quote(target)}  # run after deploy',
             f'narwhal diff --fail-on-regression --require-comparable -- {before} {comparison_output}',
         ]
-        if artifact in ("json_ld", "product_schema"):
-            commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
         return prerequisites + commands
-    if artifact in ("robots_txt", "sitemap", "llms_txt", "server_config"):
-        scan_target = shlex.quote(target)
-        scan_command = f"narwhal scan --format json -o {comparison_output}{options} -- {scan_target}  # run after deploy"
-    else:
-        scan_command = f"narwhal scan --allow-private --format json -o {comparison_output}{options} -- '<local-preview-url>'"
-    prerequisites.append(SCAN_SETTINGS_INSTRUCTION)
-    commands = [scan_command,
+    scan_target = shlex.quote(target)
+    scan_command = f"narwhal scan --format json -o {comparison_output}{options} -- {scan_target}  # run after deploy"
+    if not local:
+        prerequisites.append(SCAN_SETTINGS_INSTRUCTION)
+    commands = local + [scan_command,
                 f"narwhal diff --fail-on-regression --require-comparable -- {before} {comparison_output}"]
-    if artifact in ("json_ld", "product_schema"):
-        commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
     return prerequisites + commands
 
 
