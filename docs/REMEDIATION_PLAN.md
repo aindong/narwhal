@@ -193,8 +193,11 @@ Existing route-convention files take priority for content, headings and image
 alt changes across supported frameworks, and for plain-HTML head changes.
 Template-framework head ordering and site-wide discovery candidates retain their
 existing policy. Missing routes do not displace existing fallbacks; route paths
-still pass the same containment/symlink guards. A route match is a convention,
-not proven source ownership; inspect the file before editing.
+still pass the same containment/symlink guards. Plain-HTML URLs ending in `.html`/`.htm` also suggest the literal path, preserving
+its case and encoded spelling; query/fragment components are excluded. Trailing
+slashes retain directory-style conventions. Existing fallback patterns remain.
+A route match is a convention, not proven source ownership; inspect the file
+before editing.
 
 ## Compatibility
 

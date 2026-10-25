@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Plain-HTML source mapping recognizes literal `.html`/`.htm` URL paths,
+  retaining case and existing fallback conventions. Trailing-slash paths keep
+  directory conventions; no URL decoding or ownership equivalence is inferred.
 - Planner source suggestions prioritize existing route conventions for page
   content and plain-HTML head changes over alphabetical homepage fallbacks.
   Framework head/discovery ordering and missing-file suggestion order remain.
