@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- The opt-in diff mutation profile includes existing snapshot/output safety
+  regressions, testing input-file identities, aliases, write failures and saved
+  diff gate behavior alongside report comparison logic.
 - Strict audit diff gates (`--require-comparable`) reject unverified crawl-rule
   evidence with exit 2 instead of passing on homepage execution coverage alone.
   Legacy viewing remains available with an explicit warning.
