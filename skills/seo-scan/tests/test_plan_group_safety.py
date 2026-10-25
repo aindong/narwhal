@@ -47,7 +47,7 @@ class TestManualGroupBoundary(unittest.TestCase):
         self.assertEqual([], result['groups'])
         text = plan.render_markdown(result)
         self.assertIn('Manual / external', text)
-        self.assertNotIn('Grouped template fixes', text)
+        self.assertNotIn('Related actions to review', text)
         self.assertIn(TITLE, text)
         self.assertIn(VIEWPORT, text)
 

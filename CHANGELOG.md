@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner groups distinguish their existing-candidate union from candidate
+  overlaps, recording only the rule IDs that name each overlapping file.
+  Grouped guidance requires owner review rather than claiming shared ownership.
 - Plain-HTML source mapping recognizes literal `.html`/`.htm` URL paths,
   retaining case and existing fallback conventions. Trailing-slash paths keep
   directory conventions; no URL decoding or ownership equivalence is inferred.

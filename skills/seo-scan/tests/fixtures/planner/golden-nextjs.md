@@ -160,7 +160,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-## Grouped template fixes
+## Related actions to review
 
-- **public_discovery_files** — 3 findings; owners: confirm owner
-- **shared_head_metadata** — 5 findings; owners: app/guides/widget/page.tsx, app/layout.tsx
+- **public_discovery_files** — 3 findings; existing candidate union: none recorded; candidates in multiple actions: none recorded. Confirm actual owners before coordinating edits.
+- **shared_head_metadata** — 5 findings; existing candidate union: app/guides/widget/page.tsx, app/layout.tsx; candidates in multiple actions: app/guides/widget/page.tsx, app/layout.tsx. Confirm actual owners before coordinating edits.

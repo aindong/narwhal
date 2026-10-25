@@ -862,3 +862,5 @@ Exact-budget planner inventories are capped only after an extra eligible file is
 Existing route conventions outrank homepage fallbacks for page content and plain-HTML head suggestions; shared framework-head/discovery policies remain unchanged.
 
 Plain-HTML URL-to-source conventions include literal HTML/HTM file paths while preserving trailing-slash directory behavior and existing source safety guards.
+
+Planner groups disclose their legacy candidate union and actual existing-candidate overlaps with member rule IDs; grouped guidance requires owner review before edits.
