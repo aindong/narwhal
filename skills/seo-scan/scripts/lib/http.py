@@ -673,6 +673,7 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
     """Fetch at most the first ``n`` bytes of a URL (Range request; the read is
     capped even when the server ignores Range). Returns ``(bytes, error)`` —
     used to probe image dimensions without downloading whole files.
+    Non-2xx responses return no bytes and their bodies remain unread.
     Invalid/nonpositive counts raise ValueError before I/O."""
     positive_integer(n, 'Range byte budget')
     try:
@@ -688,12 +689,14 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
                 requests, "GET", url, timeout=timeout, headers=headers,
                 allow_private=allow_private, stream=True)
             try:
+                if not 200 <= r.status_code < 300:
+                    return None, f"HTTP {r.status_code}"
                 buf = b""
                 for chunk in r.iter_content(chunk_size=8192):
                     buf += chunk
                     if len(buf) >= n:
                         break
-                return buf[:n], None if r.status_code < 400 else f"HTTP {r.status_code}"
+                return buf[:n], None
             finally:
                 r.close()
         except (requests.RequestException, SSRFError, ValueError) as exc:
