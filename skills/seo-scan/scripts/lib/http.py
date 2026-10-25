@@ -18,6 +18,8 @@ from typing import Optional
 from urllib.parse import urlparse, urlunparse
 from urllib.parse import urljoin
 
+from .budgets import nonnegative_integer, positive_integer
+
 DEFAULT_UA = (
     "Mozilla/5.0 (compatible; seo-scan/1.0; +local-audit) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -284,7 +286,9 @@ def fetch(
     Set ``render=True`` to run the page through Playwright (if installed) so
     client-rendered DOMs are captured. Errors are returned on the Response
     rather than raised, so a single failing page never aborts a scan.
+    Invalid budgets raise before I/O. Zero retains no HTML, not zero network use.
     """
+    nonnegative_integer(max_bytes, 'Response byte budget')
     url = normalize_url(url)
     assert_public_host(url, allow_private=allow_private)
 
@@ -546,8 +550,7 @@ def fetch_bytes(url: str, *, timeout: int = DEFAULT_TIMEOUT,
     file without Content-Encoding remains raw. The byte budget applies to both
     wire and HTTP-decoded bodies, not all network/process work.
     """
-    if type(max_bytes) is not int or max_bytes <= 0:
-        raise ValueError('Raw response byte budget must be a positive integer.')
+    positive_integer(max_bytes, 'Raw response byte budget')
     limit_note = f'Response exceeded raw byte limit ({max_bytes} bytes); body unverified.'
     try:
         url = normalize_url(url)
@@ -663,7 +666,9 @@ def fetch_range(url: str, n: int, *, timeout: int = DEFAULT_TIMEOUT,
                 user_agent: str = DEFAULT_UA, allow_private: bool = False):
     """Fetch at most the first ``n`` bytes of a URL (Range request; the read is
     capped even when the server ignores Range). Returns ``(bytes, error)`` —
-    used to probe image dimensions without downloading whole files."""
+    used to probe image dimensions without downloading whole files.
+    Invalid/nonpositive counts raise ValueError before I/O."""
+    positive_integer(n, 'Range byte budget')
     try:
         url = normalize_url(url)
         assert_public_host(url, allow_private=allow_private)

@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Primary HTML and range-probe byte budgets reject invalid values before DNS,
+  browser startup or transport setup. Negative values cannot reach urllib's
+  read-all behavior. Zero HTML retention remains supported; range/raw-byte
+  budgets require positive integers, with the existing raw error preserved.
 - Declared-length regressions cover malformed/non-ASCII headers, zero-padding,
   digit-width boundaries and overflow probing. Three decision-changing mutations
   missed by the previous tests are caught; streamed overflow bytes still cannot
