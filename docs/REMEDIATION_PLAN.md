@@ -43,6 +43,21 @@ input shape, not an inferred address. Gated/no-response samples remain separate
 verification-only actions. Source ownership and safety classifications do not
 change.
 
+Comprehensive-audit `crawl.links` observations produce manual `links` actions:
+`technical.links.http.failures` for reported failing 4xx/5xx responses without
+request errors (gated codes excluded; unsupported error shapes stay unverified), and `technical.links.coverage.unverified`
+for uncertain responses, capped checks or unrecorded/inconsistent coverage.
+Missing/disabled checks and complete successful or zero-target checks do not
+invent findings. Empty plans do not certify site-wide link health.
+
+Witnesses retain up to five targets and three recorded source URLs per target,
+with counts and nulls for unavailable fields; the original report retains the
+rest. Raw request-error text is not copied. These actions assign no source files,
+join no source-edit groups and authorize no automatic link removal. Confirm
+HEAD/GET support, intended access/anchor behavior and actual ownership before an
+edit. Malformed consumed record/counter shapes raise bounded input errors; valid
+legacy observations remain reviewable without certifying their coverage.
+
 Safety values mean:
 
 - `safely_automatable`: structural change with no editorial or owner-intent value.

@@ -22,6 +22,10 @@ Design principles (keep these): local-first, zero required deps, SSRF-safe,
 fix-first & honest output. See [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Unreleased improvements
+- **Crawl link handoff:** audit plans preserve reported failing HTTP targets and
+  referring pages, separately from uncertain/capped/unrecorded check coverage.
+  Bounded manual actions infer no source ownership, link removal or edit group.
+  Request-error text stays in the original report; planning makes no requests.
 - **Inspectable plan evidence:** sitemap failure actions retain bounded reported
   status/URL witnesses; uncertain probes keep verification-only actions. Action
   Markdown exposes literal 600-character evidence previews with truncation and
