@@ -37,6 +37,9 @@ class TestServiceOptIn(unittest.TestCase):
         for call in (brief.run, mcp_server._brief):
             with services() as (queries, _), mock.patch.object(brief, '_page', return_value=page(RIVAL, OWN_HTML)):
                 queries.return_value = {'found': True, 'striking': [query]}
+                default = call(competitor_urls=[RIVAL], topic='widgets')
+                queries.assert_not_called()
+                self.assertEqual('pages-only', default['grounding'])
                 data = call(competitor_urls=[RIVAL], topic='widgets', gsc_site=BASE)
                 self.assertNotIn('you', data)
                 self.assertEqual('queries+pages', data['grounding'])
