@@ -71,6 +71,16 @@ class TestOwnerPreview(unittest.TestCase):
                 line = self.owner_line(built)
                 self.assertEqual('- **Likely owner:** ' + expected, line)
 
+    def test_single_omitted_metadata_candidate_is_disclosed_at_the_boundary(self):
+        self.report['findings'][0].update(rule_id='technical.no.robots.txt.found', title='No robots.txt found')
+        built = plan.build_plan(self.report, str(self.root))
+        self.assertEqual(3, len(built['actions'][0]['likely_files']))
+        self.assertNotIn('additional candidates', self.owner_line(built))
+        (self.root / 'app/robots.js').write_text('export default function robots() { return {} }', encoding='utf-8')
+        built = plan.build_plan(self.report, str(self.root))
+        self.assertEqual(4, len(built['actions'][0]['likely_files']))
+        self.assertIn('additional candidates in JSON: 1', self.owner_line(built))
+
 
 if __name__ == '__main__':
     unittest.main()
