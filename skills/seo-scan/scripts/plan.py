@@ -146,6 +146,15 @@ def _sitemap_sample_evidence(sitemap):
     return failures, unverified
 
 
+def _url_witness(value):
+    """Keep literal recorded labels, omitting the shared credential-like markers."""
+    if not isinstance(value, str):
+        return {'url': None}
+    if linkslib.has_credential_like_marker(value):
+        return {'url': None, 'url_omitted': 'credential_like_marker'}
+    return {'url': value}
+
+
 def _crawl_link_findings(crawl):
     """Carry reported link failures and measurement gaps into manual actions."""
     info = crawl.get('links')
@@ -186,13 +195,21 @@ def _crawl_link_findings(crawl):
         for row in rows[:LINK_TARGET_WITNESSES]:
             sources = row.get('sources')
             sources = [value for value in sources if isinstance(value, str)] if isinstance(sources, list) else None
-            selected.append({'status': row.get('status') if type(row.get('status')) is int else None,
-                             'url': row.get('url') if isinstance(row.get('url'), str) else None,
-                             'internal': row.get('internal') if type(row.get('internal')) is bool else None,
-                             'sources': sources[:LINK_SOURCE_WITNESSES] if sources is not None else None,
-                             'source_count': len(sources) if sources is not None else None})
+            source_witnesses = ([_url_witness(value) for value in sources[:LINK_SOURCE_WITNESSES]]
+                                if sources is not None else None)
+            witness = {'status': row.get('status') if type(row.get('status')) is int else None,
+                       **_url_witness(row.get('url')),
+                       'internal': row.get('internal') if type(row.get('internal')) is bool else None,
+                       'sources': [item['url'] for item in source_witnesses] if source_witnesses is not None else None,
+                       'source_count': len(sources) if sources is not None else None}
+            omissions = [{'position': position, 'reason': item['url_omitted']}
+                         for position, item in enumerate(source_witnesses or [], 1) if 'url_omitted' in item]
+            if omissions:
+                witness['source_url_omissions'] = omissions
+            selected.append(witness)
         return (f'Reported witnesses (first {len(selected)} of {len(rows)}; up to {LINK_SOURCE_WITNESSES} source URLs each; '
-                'not rechecked; null means unrecorded):\n' + json.dumps(selected, indent=2, ensure_ascii=True))
+                'not rechecked; null means unavailable or explicitly omitted):\n'
+                + json.dumps(selected, indent=2, ensure_ascii=True))
 
     findings = []
     if failures:
@@ -439,10 +456,10 @@ def normalize_report(data: dict) -> dict:
             detail = "; ".join(map(str, sitemap_issues[:5]))
             if failed_samples:
                 witnesses = [{'status': item['status'],
-                              'url': item.get('url') if isinstance(item.get('url'), str) else None}
+                              **_url_witness(item.get('url'))}
                              for item in failed_samples[:SITEMAP_SAMPLE_WITNESSES]]
                 detail += (f"\nReported HTTP failure witnesses (first {len(witnesses)} of {len(failed_samples)}; "
-                           "not rechecked; null URL means unrecorded):\n"
+                           "not rechecked; null URL means unavailable or explicitly omitted):\n"
                            + json.dumps(witnesses, indent=2, ensure_ascii=True))
             findings.append({
                 "category": "technical", "severity": "medium",
@@ -453,13 +470,13 @@ def normalize_report(data: dict) -> dict:
             })
         if unverified_samples:
             witnesses = [{'status': item.get('status') if type(item.get('status')) is int else None,
-                          'url': item.get('url') if isinstance(item.get('url'), str) else None}
+                          **_url_witness(item.get('url'))}
                          if isinstance(item, dict) else {'status': None, 'url': None}
                          for item in unverified_samples[:SITEMAP_SAMPLE_WITNESSES]]
             detail = (f'{len(unverified_samples)} recorded sample(s) lack a confirmed successful or failing HTTP response. '
                       'Gated, unsupported or no-response probes do not establish a dead URL.'
                       f'\nReported unverified witnesses (first {len(witnesses)} of {len(unverified_samples)}; '
-                      'not rechecked; null means unrecorded or unsupported field type):\n'
+                      'not rechecked; null means unavailable or explicitly omitted):\n'
                       + json.dumps(witnesses, indent=2, ensure_ascii=True))
             findings.append({
                 'category': 'technical', 'severity': 'low', 'scope': 'site',

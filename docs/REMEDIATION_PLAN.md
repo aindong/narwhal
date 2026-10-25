@@ -240,6 +240,17 @@ percent/full-width marker spellings, including markers outside the authority:
 `href: null` and `href_omitted: credential_like_marker` disclose the omission.
 Counts remain intact; this is not a general secret detector.
 
+Planner-generated link-check and sitemap-sample witnesses use the same marker
+rule: a matching target label becomes `url: null` with
+`url_omitted: credential_like_marker`. In bounded link source lists, matching
+labels become null in their original positions; `source_url_omissions` records
+each one-based position and reason. `source_count` still counts all recorded
+string source labels before the cap and omission. Omissions do not promote later
+targets/sources into the retained slots, drop response observations or change
+failure/uncertainty classification. Safe labels retain their literal spelling.
+This applies to these generated witnesses, not arbitrary supplied finding text
+or recommendations, and does not sanitize the original report.
+
 New crawl/audit recurring JSON entries retain recorded rule IDs instead of
 reconstructing identity from display titles. Distinct recorded rules with the
 same category/severity/title remain separate entries with their own occurrence
