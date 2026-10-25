@@ -56,7 +56,7 @@ def main(argv=None):
                     elif name == 'plan' or name.startswith('installed-plan-'):
                         assert 'not assigned (verification only)' in text
                         assert 'Do not add or duplicate markup' in text
-                        assert 'Grouped template fixes' not in text
+                        assert 'Related actions to review' not in text
                     elif name.startswith(('page-', 'installed-page-')):
                         assert 'schema/overall score comparisons are unverified' in text
                         assert 'No Organization/WebSite entity' not in text

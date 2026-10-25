@@ -78,7 +78,7 @@ def main(argv=None):
                     if name == 'plan':
                         assert 'Not assigned' in text or 'not assigned' in text
                         assert 'before proposing source edits' in text
-                        assert 'Grouped template fixes' not in text
+                        assert 'Related actions to review' not in text
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (name, mode, width)
                     if args.artifacts and width == 390:
                         page.screenshot(path=str(args.artifacts / (name + '-390.png')), full_page=True)

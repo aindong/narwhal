@@ -1259,12 +1259,19 @@ def _groups(actions: list) -> list:
     for key, members in sorted(buckets.items()):
         if len(members) < 2:
             continue
-        paths = sorted({f["path"] for action in members for f in action["likely_files"]
-                        if f["exists"]})
+        usage = {}
+        for action in members:
+            for candidate in action['likely_files']:
+                if candidate['exists']:
+                    usage.setdefault(candidate['path'], set()).add(action['rule_id'])
         out.append({"group_id": f"group:{key}", "artifact": key,
                     "rule_ids": sorted(a["rule_id"] for a in members),
-                    "likely_shared_files": paths,
-                    "reason": "Implement together to avoid repeated or conflicting template edits."})
+                    "likely_shared_files": sorted(usage),
+                    "candidate_file_basis": "Legacy likely_shared_files is the union of existing candidates, not proven shared ownership.",
+                    "candidate_file_overlaps": [
+                        {'path': path, 'rule_ids': sorted(rules)} for path, rules in sorted(usage.items())
+                        if len(rules) > 1],
+                    "reason": "Review related actions together; confirm source owners before coordinating edits."})
     return out
 
 
@@ -1385,10 +1392,14 @@ def render_markdown(plan: dict) -> str:
                 else:
                     lines += [step, '']
     if plan["groups"]:
-        lines += ["## Grouped template fixes", ""]
+        lines += ["## Related actions to review", ""]
         for group in plan["groups"]:
+            overlaps = group.get('candidate_file_overlaps')
+            overlap_paths = ', '.join(item['path'] for item in overlaps) if overlaps is not None else 'unrecorded'
             lines.append(f"- **{group['artifact']}** — {len(group['rule_ids'])} findings; "
-                         f"owners: {', '.join(group['likely_shared_files']) or 'confirm owner'}")
+                         f"existing candidate union: {', '.join(group['likely_shared_files']) or 'none recorded'}; "
+                         f"candidates in multiple actions: {overlap_paths or 'none recorded'}. "
+                         "Confirm actual owners before coordinating edits.")
         lines.append("")
     if plan["conflicts"]:
         lines += ["## Conflicts requiring a decision", ""]

@@ -199,6 +199,15 @@ slashes retain directory-style conventions. Existing fallback patterns remain.
 A route match is a convention, not proven source ownership; inspect the file
 before editing.
 
+Related source-action groups are review coordination, not verified edit owners.
+For compatibility, `likely_shared_files` remains the union of existing candidate
+paths. `candidate_file_basis` discloses that meaning; it is not an intersection
+or proof of shared ownership. `candidate_file_overlaps` lists existing paths
+named by at least two distinct member rule IDs, with those IDs. Missing proposed
+files, duplicate entries within one action, and excluded manual actions do not
+create existing-candidate overlap evidence. Markdown labels the union and
+multiple-action candidates explicitly; absent legacy overlap data is unrecorded.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

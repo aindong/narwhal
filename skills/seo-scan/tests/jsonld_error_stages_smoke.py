@@ -56,7 +56,7 @@ def main(argv=None):
                     if name == 'processing-plan':
                         assert 'not assigned (verification only)' in text
                         assert 'Verification scope: Page report' in text
-                        assert 'Grouped template fixes' not in text
+                        assert 'Related actions to review' not in text
                     if name == 'mixed':
                         assert 'Invalid JSON-LD' in text and 'syntax error' in text
                         assert 'Recipe missing required' in text
