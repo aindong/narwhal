@@ -165,6 +165,13 @@ access to deployed targets. Matching report kinds avoids a known mismatch; it
 does not certify equal execution coverage, settings, samples or environments.
 The diff's existing incomparability checks remain in force.
 
+Repeated rule IDs yield one action. The representative is the complete
+worst-severity observation; equal-severity ties use sorted-key JSON lexical
+order. Evidence, title, recommendation and confidence come from that same
+observation. Occurrences use the maximum recorded count (not a sum or matched
+instances), and any recorded site scope is retained. Audit homepage and
+recurring observations use this same selection.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

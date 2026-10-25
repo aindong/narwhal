@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Repeated planner rules retain one complete worst-severity observation, with
+  deterministic tie-breaking, rather than pairing escalated severity with weaker
+  evidence. Audit recurring findings enter the same selection; counts retain the
+  maximum recorded occurrence and site scope is preserved.
 - Diff JSON/MCP retains the earlier `old_url` alongside the later `url`.
   Markdown highlights differing target labels for manual mapping verification;
   local preview comparisons and existing gate behavior remain available.

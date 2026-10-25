@@ -387,14 +387,9 @@ def normalize_report(data: dict) -> dict:
             if schema_crawl_uncertain and finding['rule_id'] in SCHEMA_ABSENCE_RULES:
                 continue  # aggregate occurrences cannot locate an absence in the verified portion
             finding["scope"] = "site"
-            finding["occurrences"] = int(finding.get("count", 1))
-            if finding["rule_id"] in seen:
-                seen[finding["rule_id"]]["occurrences"] = finding["occurrences"]
-                if finding['rule_id'] in SCHEMA_VERIFICATION_RULES:
-                    seen[finding['rule_id']]['scope'] = 'site'
-            else:
-                findings.append(finding)
-                seen[finding["rule_id"]] = finding
+            finding["occurrences"] = int(finding.get("count", finding.get("occurrences", 1)))
+            findings.append(finding)
+            seen[finding["rule_id"]] = finding
         findings.extend(_crawl_link_findings(crawl))
         sitemap = data.get("sitemap", {})
         findings.extend(_sitemap_note_findings(sitemap, data.get('schema_version')))
@@ -466,22 +461,21 @@ def normalize_report(data: dict) -> dict:
         # Older/contradictory missing-file findings cannot authorize generation
         # when recorded HTTP evidence explicitly leaves root availability open.
         findings = [finding for finding in findings if finding['rule_id'] != 'geo.no.llms.txt']
-    # Stable action IDs require one action per rule. Multiple page nodes can
-    # produce the same rule; retain the worst severity and occurrence evidence.
+    # Keep a complete worst-severity observation, never severity from one and evidence from another.
     coalesced = {}
     for finding in findings:
-        rid = finding["rule_id"]
-        count = _positive_int(finding.get("occurrences", finding.get("count", 1)))
-        if rid not in coalesced:
-            finding["occurrences"] = count
-            coalesced[rid] = finding
-            continue
-        current = coalesced[rid]
-        current["occurrences"] = max(_positive_int(current.get("occurrences", 1)), count)
-        if SEVERITY_RANK.get(finding.get("severity"), 9) < SEVERITY_RANK.get(current.get("severity"), 9):
-            current["severity"] = finding.get("severity")
+        coalesced.setdefault(finding["rule_id"], []).append(finding)
+    representatives = []
+    for observations in coalesced.values():
+        representative = dict(min(observations, key=lambda finding: (
+            SEVERITY_RANK.get(finding.get("severity"), 9), json.dumps(finding, sort_keys=True))))
+        representative['occurrences'] = max(
+            _positive_int(item.get('occurrences', item.get('count', 1))) for item in observations)
+        if any(item.get('scope') == 'site' for item in observations):
+            representative['scope'] = 'site'
+        representatives.append(representative)
     normalized_findings = sorted(
-        coalesced.values(),
+        representatives,
         key=lambda finding: (SEVERITY_RANK.get(finding.get("severity"), 9),
                              finding["rule_id"]))
     total_findings = len(normalized_findings)
