@@ -18,6 +18,12 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_crawl_url_identity.py::TestCrawlURLIdentity::test_known_current_vs_unrecorded_audit_identity_policy_blocks_fix_claims",
   "skills/seo-scan/tests/test_relative_link_paths.py::TestRelativeLinkPaths::test_known_current_vs_missing_or_different_resolution_blocks_site_fix_claims",
   "skills/seo-scan/tests/test_relative_link_paths.py::TestRelativeLinkPaths::test_matching_policy_and_legacy_pairs_do_not_gain_a_false_gap",
+  "skills/seo-scan/tests/test_document_base_links.py::TestDocumentBaseLinks::test_policy_diff_preserves_previous_v1_guard_and_adds_page_v2_guard",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_response_policy_change_is_not_mislabeled_as_website_improvement",
+  "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_page_site_notes_and_diff_gates_retain_known_uncertainty",
+  "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_supported_current_pairs_compare_without_a_false_gap",
+  "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_scores_are_not_invalidated_by_unselected_technical_checks",
+  "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_audit_does_not_gain_a_false_hreflang_score_gap",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
