@@ -112,6 +112,10 @@ def recorded_execution_problem(page):
     if isinstance(page.get('meta'), dict):
         contexts.append(page['meta'])
     for meta in contexts:
+        settings = meta.get('scan_settings')
+        if (type(page.get('rendered')) is bool and isinstance(settings, dict)
+                and type(settings.get('rendered')) is bool and page['rendered'] != settings['rendered']):
+            return 'records contradictory actual rendering flags.'
         flags = [meta[key] for key in ('response_truncated', 'response_partial') if key in meta]
         coverage = meta.get('coverage')
         if isinstance(coverage, dict) and 'response_truncated' in coverage:

@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Contradictory recorded actual-rendering flags withhold diff score/fix claims
+  and planner automation. Matching flags, absent legacy flags, and requested
+  rendering that falls back to served HTML retain their existing behavior.
 - Diff root-page scope validation distinguishes explicitly invalid receipts from
   absent legacy metadata. Invalid scan/audit homepage scope now withholds
   score/fix claims and fails the regression gate instead of showing legacy gains.

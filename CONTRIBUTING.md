@@ -42,6 +42,8 @@ Malformed scope, HTTP-status and response-completeness fixtures must withhold au
 while keeping planning read-only.
 Contradictory `not_selected` receipts must also block strict CLI proof and leave
 MCP comparisons unverified.
+Contradictory root/settings actual-rendering flags must also withhold automation
+and improvement claims; requested rendering and actual fallback remain distinct.
 Explicitly failed or malformed acquisition evidence must withhold score deltas
 and fix claims in both CLI and MCP comparisons, even with a claimed completed scope.
 Reversing the reports must fail the regression gate. This is local,
