@@ -221,6 +221,9 @@ def _diff(old_json: str, new_json: str) -> dict:
     alone does not prove identical configuration or rendering. Different complete
     recorded audit crawl URL samples (including multiplicities) also withhold
     verdicts; missing/malformed samples remain unverified, not guessed to match.
+    Recorded per-page crawl auditor scopes must complete and match; invalid,
+    contradictory or one-sided scopes also withhold verdicts. Missing scopes
+    on both legacy sides do not certify per-page execution coverage.
     Repeated category/rule identities use worst observed severity and a stable
     representative; ``finding_identity`` discloses entry counts, not individual
     instance matches. Audit ``crawl_rule_changes`` separately compares native

@@ -423,6 +423,8 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "is_product": bool(ecommerce.get("is_product")),
                       "is_merchant": bool(ecommerce.get("is_merchant")),
                       "product_confidence": ecommerce.get("confidence", 0.0)})
+        if 'scan_scope' in rep.meta:
+            pages[-1]['scan_scope'] = rep.meta['scan_scope']
         if rep.meta.get("link_extraction"):
             pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
         if isinstance(rep.meta.get('anchor_base'), dict):
