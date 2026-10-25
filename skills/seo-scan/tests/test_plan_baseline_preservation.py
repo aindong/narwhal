@@ -36,10 +36,11 @@ class TestPlanBaselinePreservation(unittest.TestCase):
             for artifact in ('title', 'product_schema'):
                 with self.subTest(source=source, artifact=artifact):
                     steps = plan.verification_for(artifact, TARGET, source, 'audit')
-                    local, audit, diff = commands_only(steps)
+                    before, local, local_diff, audit, diff = commands_only(steps)
                     self.assertEqual('page-after-2.json', local[local.index('-o') + 1])
                     self.assertEqual('after.json', audit[audit.index('-o') + 1])
                     self.assertEqual('after.json', diff[-1])
+                    self.assertEqual(['page-before.json', 'page-after-2.json'], local_diff[-2:])
                     self.assertTrue(any('do not compare page-after-2.json' in step for step in steps))
 
     def test_alternate_baselines_do_not_trigger_unrelated_renames(self):

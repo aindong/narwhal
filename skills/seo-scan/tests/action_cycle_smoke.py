@@ -126,19 +126,36 @@ def main(use_mcp=False):
                 assert 'known_incomplete_source_evidence' in invalid_action['automation_eligibility']['blockers']
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original
                 # Only this generated fixture's templates are executed, as argv without a shell.
-                verification = [shlex.split(step) for step in action['verification']
+                verification = [shlex.split(step, comments=True) for step in action['verification']
                                 if step.startswith('narwhal ')]
-                assert [command[:2] for command in verification] == [['narwhal', 'scan'], ['narwhal', 'diff']], verification
-                scan_command, diff_command = [command[1:] for command in verification]
-                assert scan_command.count('<local-preview-url>') == 1, scan_command
-                scan_command = [url if token == '<local-preview-url>' else token for token in scan_command]
-                # Restore the baseline's unrecorded configuration choice, as the plan instructs.
-                scan_command.insert(scan_command.index('--'), '--no-config')
+                assert [command[1] for command in verification] == ['scan', 'scan', 'diff', 'scan', 'diff'], verification
+                local_before, local_after, local_diff, original_after, original_diff = verification
+                def scan_arguments(command):
+                    args = [url if token == '<local-preview-url>' else token for token in command[1:]]
+                    # Restore unrecorded config/access settings for this intentional local fixture.
+                    args.insert(args.index('--'), '--no-config')
+                    if '--allow-private' not in args:
+                        args.insert(args.index('--'), '--allow-private')
+                    return args
+                def diff_arguments(command, output):
+                    args = command[1:]
+                    separator = args.index('--')
+                    args[separator:separator] = ['--format', 'json', '-o', output]
+                    return args
+                assert local_before[-1] == local_after[-1] == '<local-preview-url>'
+                run(scan_arguments(local_before))
+                page_baseline = (root / 'page-before.json').read_bytes()
+                diff_command = diff_arguments(original_diff, 'diff.json')
                 assert '--fail-on-regression' in diff_command and '--require-comparable' in diff_command, diff_command
-                separator = diff_command.index('--')
-                diff_command[separator:separator] = ['--format', 'json', '-o', 'diff.json']
                 target.write_text(html.replace('</head>', VIEWPORT + '</head>'), encoding='utf-8')
-                run(scan_command)
+                run(scan_arguments(local_after))
+                run(diff_arguments(local_diff, 'page-diff.json'))
+                page_diff = read('page-diff.json')
+                assert page_diff['comparison']['status'] == 'comparable', page_diff
+                assert {item['rule_id'] for item in page_diff['resolved']} == {RULE}, page_diff
+                assert (root / 'page-before.json').read_bytes() == page_baseline
+                # Exercise the original-target commands on the fixture too; this is not deployment proof.
+                run(scan_arguments(original_after))
                 run(diff_command)
                 assert (root / 'before.json').read_bytes() == baseline, 'Verification overwrote the baseline'
                 before, after, diff = read('before.json'), read('after.json'), read('diff.json')

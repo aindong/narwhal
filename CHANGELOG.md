@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner page-action commands capture paired local scans before/after edits
+  and compare those snapshots separately from matching-kind original-target
+  verification after deployment. Local baseline filenames avoid known input
+  collisions; unavailable pre-edit previews leave measured improvement pending.
 - Brief rendering withholds topic-selection coverage claims for missing,
   malformed or contradictory counts, including counts that disagree with the
   retained query rows; observed rows and original JSON remain available.

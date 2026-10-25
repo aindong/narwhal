@@ -26,8 +26,26 @@ Add a description.
 
 **Verification, in order:**
 
+Before editing, when a preview is available, confirm its route maps to the affected source. Capture this local baseline with fresh paths; use distinct snapshots for each affected page.
+
 ```sh
-narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'
+narwhal scan --allow-private --format json -o page-before.json -- '<local-preview-url>'
+```
+
+After applying the reviewed source edits, scan the same local route with matching options.
+
+```sh
+narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'
+```
+
+```sh
+narwhal diff --fail-on-regression --require-comparable -- page-before.json page-after.json
+```
+
+The local pair verifies page-level changes only; do not compare page-after.json with the original baseline or treat it as deployed site verification. Without a pre-edit local scan, the preview is a current-state check, not measured improvement. If no preview is available, mark local proof pending and use the original baseline checks after deployment.
+
+```sh
+narwhal scan --format json -o after.json -- https://example.test/guides/widget  # run after deploy
 ```
 
 ```sh
@@ -48,8 +66,26 @@ Add a title.
 
 **Verification, in order:**
 
+Before editing, when a preview is available, confirm its route maps to the affected source. Capture this local baseline with fresh paths; use distinct snapshots for each affected page.
+
 ```sh
-narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'
+narwhal scan --allow-private --format json -o page-before.json -- '<local-preview-url>'
+```
+
+After applying the reviewed source edits, scan the same local route with matching options.
+
+```sh
+narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'
+```
+
+```sh
+narwhal diff --fail-on-regression --require-comparable -- page-before.json page-after.json
+```
+
+The local pair verifies page-level changes only; do not compare page-after.json with the original baseline or treat it as deployed site verification. Without a pre-edit local scan, the preview is a current-state check, not measured improvement. If no preview is available, mark local proof pending and use the original baseline checks after deployment.
+
+```sh
+narwhal scan --format json -o after.json -- https://example.test/guides/widget  # run after deploy
 ```
 
 ```sh
@@ -66,10 +102,28 @@ _Original recommendation remains in plan JSON; use the contextual review/verific
 
 **Verification, in order:**
 
+Before editing, when a preview is available, confirm its route maps to the affected source. Capture this local baseline with fresh paths; use distinct snapshots for each affected page.
+
+```sh
+narwhal scan --allow-private --format json -o page-before.json -- '<local-preview-url>'
+```
+
+After applying the reviewed source edits, scan the same local route with matching options.
+
 Validate the rendered structured data and replace every TODO placeholder.
 
 ```sh
-narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'
+narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'
+```
+
+```sh
+narwhal diff --fail-on-regression --require-comparable -- page-before.json page-after.json
+```
+
+The local pair verifies page-level changes only; do not compare page-after.json with the original baseline or treat it as deployed site verification. Without a pre-edit local scan, the preview is a current-state check, not measured improvement. If no preview is available, mark local proof pending and use the original baseline checks after deployment.
+
+```sh
+narwhal scan --format json -o after.json -- https://example.test/guides/widget  # run after deploy
 ```
 
 ```sh
@@ -90,8 +144,26 @@ Add appropriate alt values.
 
 **Verification, in order:**
 
+Before editing, when a preview is available, confirm its route maps to the affected source. Capture this local baseline with fresh paths; use distinct snapshots for each affected page.
+
 ```sh
-narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'
+narwhal scan --allow-private --format json -o page-before.json -- '<local-preview-url>'
+```
+
+After applying the reviewed source edits, scan the same local route with matching options.
+
+```sh
+narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'
+```
+
+```sh
+narwhal diff --fail-on-regression --require-comparable -- page-before.json page-after.json
+```
+
+The local pair verifies page-level changes only; do not compare page-after.json with the original baseline or treat it as deployed site verification. Without a pre-edit local scan, the preview is a current-state check, not measured improvement. If no preview is available, mark local proof pending and use the original baseline checks after deployment.
+
+```sh
+narwhal scan --format json -o after.json -- https://example.test/guides/widget  # run after deploy
 ```
 
 ```sh
@@ -112,8 +184,26 @@ Add a canonical.
 
 **Verification, in order:**
 
+Before editing, when a preview is available, confirm its route maps to the affected source. Capture this local baseline with fresh paths; use distinct snapshots for each affected page.
+
 ```sh
-narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'
+narwhal scan --allow-private --format json -o page-before.json -- '<local-preview-url>'
+```
+
+After applying the reviewed source edits, scan the same local route with matching options.
+
+```sh
+narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'
+```
+
+```sh
+narwhal diff --fail-on-regression --require-comparable -- page-before.json page-after.json
+```
+
+The local pair verifies page-level changes only; do not compare page-after.json with the original baseline or treat it as deployed site verification. Without a pre-edit local scan, the preview is a current-state check, not measured improvement. If no preview is available, mark local proof pending and use the original baseline checks after deployment.
+
+```sh
+narwhal scan --format json -o after.json -- https://example.test/guides/widget  # run after deploy
 ```
 
 ```sh
@@ -134,8 +224,26 @@ Complete OG tags.
 
 **Verification, in order:**
 
+Before editing, when a preview is available, confirm its route maps to the affected source. Capture this local baseline with fresh paths; use distinct snapshots for each affected page.
+
 ```sh
-narwhal scan --allow-private --format json -o after.json -- '<local-preview-url>'
+narwhal scan --allow-private --format json -o page-before.json -- '<local-preview-url>'
+```
+
+After applying the reviewed source edits, scan the same local route with matching options.
+
+```sh
+narwhal scan --allow-private --format json -o page-after.json -- '<local-preview-url>'
+```
+
+```sh
+narwhal diff --fail-on-regression --require-comparable -- page-before.json page-after.json
+```
+
+The local pair verifies page-level changes only; do not compare page-after.json with the original baseline or treat it as deployed site verification. Without a pre-edit local scan, the preview is a current-state check, not measured improvement. If no preview is available, mark local proof pending and use the original baseline checks after deployment.
+
+```sh
+narwhal scan --format json -o after.json -- https://example.test/guides/widget  # run after deploy
 ```
 
 ```sh

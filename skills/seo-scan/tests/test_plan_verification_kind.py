@@ -29,10 +29,11 @@ class TestPlanVerificationKind(unittest.TestCase):
                                 report_source='audit-before.json')
         action = next(item for item in built['actions'] if item['artifact'] == 'title')
         commands = action['verification']
+        scans = [step for step in commands if step.startswith('narwhal scan ')]
         self.assertEqual(['narwhal', 'scan', '--allow-private', '--format', 'json',
-                          '-o', 'page-after.json', '--only', ','.join(ALL), '--', '<local-preview-url>'], shlex.split(commands[0]))
-        self.assertIn('page-level', commands[1])
-        self.assertIn('do not compare', commands[1])
+                          '-o', 'page-before.json', '--only', ','.join(ALL), '--', '<local-preview-url>'], shlex.split(scans[0]))
+        self.assertIn('-o page-after.json', scans[1])
+        self.assertTrue(any('page-level' in step and 'do not compare' in step for step in commands))
         self.assertIn('original audit configuration', commands[-3])
         self.assertIn('not record the complete invocation', commands[-3])
         self.assertEqual(['narwhal', 'audit', '--format', 'json', '-o', 'after.json',
@@ -54,8 +55,13 @@ class TestPlanVerificationKind(unittest.TestCase):
         for artifact in ('json_ld', 'product_schema'):
             commands = plan.verification_for(artifact, 'https://example.test', '<memory>', 'audit')
             self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
-            self.assertIn('replace every TODO', commands[1])
-            self.assertIn('-o page-after.json', commands[2])
+            baseline = next(i for i, step in enumerate(commands) if '-o page-before.json' in step)
+            validation = next(i for i, step in enumerate(commands) if 'replace every TODO' in step)
+            after = next(i for i, step in enumerate(commands) if '-o page-after.json' in step)
+            self.assertLess(baseline, validation)
+            self.assertLess(validation, after)
+            self.assertTrue(any('-o page-before.json' in step for step in commands))
+            self.assertTrue(any('-o page-after.json' in step for step in commands))
             self.assertEqual('narwhal diff --fail-on-regression --require-comparable -- before.json after.json', commands[-1])
 
     def test_scan_contract_does_not_change(self):
