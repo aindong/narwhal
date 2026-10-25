@@ -66,14 +66,21 @@ def probe_dimensions(data: bytes):
             if marker == 0xFF:  # repeated marker-prefix bytes are legal JPEG fill
                 i += 1
                 continue
-            if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
-                          0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
-                h, w = struct.unpack(">HH", data[i + 5:i + 9])
-                return (w, h)
+            if marker in (0xD9, 0xDA):  # end/scan data cannot supply a missing frame header
+                return None
             if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7:
                 i += 2
                 continue
             seg_len = struct.unpack(">H", data[i + 2:i + 4])[0]
+            if seg_len < 2:
+                return None
+            if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
+                          0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                components = data[i + 9]
+                if not components or seg_len != 8 + 3 * components:
+                    return None
+                h, w = struct.unpack(">HH", data[i + 5:i + 9])
+                return (w, h)
             i += 2 + seg_len
         return None
     return None
