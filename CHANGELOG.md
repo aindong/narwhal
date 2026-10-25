@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Both MCP SDK CI jobs exercise the installed stdio server through the local
+  action cycle: read-only source planning, positive/reversed/incomplete diffs
+  matching CLI output, and manual verification when rescan coverage is lost.
 - Installed action-cycle CI executes the plan's generated rescan/diff templates,
   with a local-preview substitution and restored baseline configuration. It
   exercises quoted paths with spaces and verifies the baseline stays intact.

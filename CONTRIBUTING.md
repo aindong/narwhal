@@ -37,6 +37,10 @@ Reversing the reports must fail the regression gate. This is local,
 page-level workflow evidence, not real-site SEO gains or deployment proof.
 A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),
 with no score delta/resolved fixes and a read-only, manual verification plan.
+With the optional MCP SDK installed, add `--mcp` to exercise the installed stdio
+server for both plans and all three diffs. Both SDK CI jobs run this mode and
+require MCP diff output to match the CLI. Local scans use the CLI's explicit
+`--allow-private`; the MCP scan tool continues to require public URLs.
 
 Plan contract tests compare generated plans with the checked-in remediation-plan
 schema. Full JSON Schema validation runs in both MCP SDK CI environments using
