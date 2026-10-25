@@ -117,9 +117,11 @@ finding. Compared candidates do not impose a date quota. See the
 no keyword APIs, no invented volumes):
 ```
 python scripts/brief.py https://you.com/page https://rival.com/page
+python scripts/brief.py https://you.com/page https://rival.com/page --gsc  # explicit Search Console opt-in
 python scripts/brief.py --topic "widget calibration" https://rival.com/guide
 ```
-Combines the page's own **striking-distance GSC queries** (positions 8–20 —
+By default, uses supplied pages without querying account services. Explicit
+`--gsc` (Python/MCP `use_gsc=True`) adds the page's own **striking-distance GSC queries** (positions 8–20 —
 demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **compared-heading review candidates** (a lexical
 H2/H3 term filter, not verified missing semantic coverage), **question-shaped candidates**
@@ -304,8 +306,9 @@ or automatic link edit; verify HEAD/GET behavior and anchor intent first. New
 for that follow-up. Crawl Markdown shows up to 20 rows with bounded URL previews;
 JSON retains all checked records. Legacy missing identities are not inferred.
 
-**Real Core Web Vitals** (opt-in; the one tool that calls an external service).
-Everything else is local and must never fabricate field metrics — for the *real*
+**Real Core Web Vitals** (opt-in external service, like Search Console).
+Ordinary audits do not enable these services merely because credentials exist.
+PageSpeed lab calls are external even without a key. Never fabricate field metrics — for the *real*
 LCP/INP/CLS (what Chrome users experience), query the CrUX API:
 ```
 python scripts/crux.py https://example.com/page      # needs a CrUX API key

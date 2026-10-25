@@ -1,0 +1,14 @@
+# Opt-in account-service policy profile; target changed entry points explicitly.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/brief.py", "src/mcp_server.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_service_opt_in.py",
+  "skills/seo-scan/tests/test_brief_grounding.py::TestBriefGrounding::test_cli_help_does_not_describe_unmeasured_winners",
+  "skills/seo-scan/tests/test_comparison_budgets.py",
+  "skills/seo-scan/tests/test_comparison_coverage.py",
+  "skills/seo-scan/tests/test_cli_artifact_saves.py",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]

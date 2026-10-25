@@ -15,12 +15,13 @@ volumes:
   - **Question-shaped candidates**: compared headings selected by that filter,
     plus your own recorded question-shaped striking queries; review relevance.
 
-Honesty rules: without GSC credentials this degrades to a clearly labeled
+Honesty rules: without explicit GSC opt-in and usable credentials this is a clearly labeled
 **structure-only** brief (no target queries are invented). Gaps are on-page
 differences, never presented as proof of why anyone ranks.
 
 Usage:
     narwhal brief https://you.com/page https://rival.com/page
+    narwhal brief https://you.com/page https://rival.com/page --gsc
     narwhal brief https://you.com/page rival1 rival2 --format json -o brief.json
     narwhal brief --topic "widget calibration" https://rival.com/guide
 """
@@ -302,7 +303,7 @@ def _page(url: str, *, timeout=20, allow_private=False, render=False,
 
 
 def run(your_url: str = None, competitor_urls: list = None, *, topic: str = None,
-        use_gsc: bool = True, days: int = 28, min_impressions: int = 50,
+        use_gsc: bool = False, days: int = 28, min_impressions: int = 50,
         timeout: int = 20, allow_private: bool = False, render: bool = False,
         config=None, max_bytes: int = 5_000_000) -> dict:
     """Fetch everything and build the brief. Failed competitor fetches are
@@ -387,12 +388,14 @@ def render_markdown(b: dict) -> str:
                   "the plan below is grounded in the compared pages' HTML "
                   "snapshots. No queries are invented._", ""]
     else:
+        guidance = ("pass `--gsc` to opt in to real GSC queries"
+                    if gsc.get("note") == "GSC skipped" else
+                    "connect GSC (`narwhal gsc --auth`) to ground the brief in real demand")
         lines += ["_**Structure-only brief** — no Search Console data was "
                   "available"
                   + (f" ({gsc['note']})" if gsc.get("note") else "")
                   + ". Target queries are omitted rather than invented; "
-                  "connect GSC (`narwhal gsc --auth`) to ground the brief in "
-                  "real demand._", ""]
+                  + guidance + "._", ""]
     for f in b.get("failed", []):
         detail = f" — {f['error']}" if f.get("error") else ""
         lines.append(f"_Skipped competitor: {f['url']}{detail}_")
@@ -548,8 +551,8 @@ def render_json(b: dict) -> str:
 def main(argv=None) -> int:
     cfg = configlib.load_from_args(argv)
     ap = argparse.ArgumentParser(
-        description="Data-driven content brief from your GSC queries + the "
-                    "compared pages (local-first; no keyword APIs)",
+        description="Content brief from compared pages, with optional GSC "
+                    "queries via --gsc (local-first; no keyword APIs)",
         parents=[configlib.config_arg_parser()])
     ap.add_argument("urls", nargs="*",
                     help="YOUR page first, then 1-3 competitor pages "
@@ -560,7 +563,10 @@ def main(argv=None) -> int:
     ap.add_argument("--gsc-site", default=None,
                     help="with --topic: your site URL, to pull site-wide "
                          "striking-distance queries near the topic")
-    ap.add_argument("--no-gsc", action="store_true",
+    service = ap.add_mutually_exclusive_group()
+    service.add_argument("--gsc", action="store_true",
+                        help="opt in to Search Console queries for your page (needs OAuth credentials)")
+    service.add_argument("--no-gsc", action="store_true",
                     help="skip Search Console (structure-only brief)")
     ap.add_argument("--days", type=int, default=28)
     ap.add_argument("--min-impressions", type=int, default=50)
@@ -595,7 +601,7 @@ def main(argv=None) -> int:
         print(f"Note: using the first {MAX_COMPETITORS} competitors "
               f"(got {len(competitors)}).", file=sys.stderr)
 
-    b = run(your_url, competitors, topic=args.topic, use_gsc=not args.no_gsc,
+    b = run(your_url, competitors, topic=args.topic, use_gsc=args.gsc,
             days=args.days, min_impressions=args.min_impressions,
             timeout=args.timeout, allow_private=args.allow_private,
             render=args.render, config=cfg, max_bytes=args.max_bytes)

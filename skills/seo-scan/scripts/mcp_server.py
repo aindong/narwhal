@@ -176,15 +176,14 @@ def _compare(your_url: str, competitor_urls: list, render: bool = False,
 
 
 def _brief(your_url: str = "", competitor_urls: list = None, topic: str = "",
-           use_gsc: bool = True, max_bytes: int = 5_000_000) -> dict:
-    """Build a data-driven content brief: your real GSC queries (if credentials
-    are set) + gaps vs the supplied competitor/reference pages.
+           use_gsc: bool = False, max_bytes: int = 5_000_000) -> dict:
+    """Build a content brief from supplied pages, with optional own-page GSC queries.
 
     Args:
         your_url: The page you're rewriting (omit when planning a new page).
         competitor_urls: 1–3 competitor page URLs to learn structure/gaps from.
         topic: When ``your_url`` is empty — the topic of the page to plan.
-        use_gsc: Pull striking-distance queries from Search Console (needs GSC
+        use_gsc: Opt in to striking-distance queries from Search Console (default false; needs GSC
             credentials in the environment; degrades to a labeled
             structure-only brief without them).
         max_bytes: HTML bytes retained per page/snapshot (64KB–20MB; default 5MB).

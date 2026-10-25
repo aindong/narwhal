@@ -11,6 +11,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import brief
+import gsc
 import compare
 import scan
 import mcp_server
@@ -30,6 +31,7 @@ def fixture(partial):
             headers['x-narwhal-truncated'] = 'true'
         return http.Response(url, url, 200, headers, HTML, 1)
     with mock.patch.object(scan, 'gather_context', return_value={}), \
+            mock.patch.object(gsc, 'gather', side_effect=AssertionError('Structure-only fixture queried account')), \
             mock.patch.object(http, 'fetch', side_effect=fetch):
         yield
 

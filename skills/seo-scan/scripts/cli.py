@@ -23,8 +23,8 @@ Usage:
   narwhal audit <url> [options]     Comprehensive site audit (page + crawl + sitemap)
   narwhal scan <url> [options]      Audit a single page
   narwhal compare <you> <rival...>  Side-by-side competitor gap analysis (local-first)
-  narwhal brief <you> <rival...>    Data-driven content brief — your GSC queries + the
-                                    pages that win (--topic "…" plans a new page)
+  narwhal brief <you> <rival...>    Page-grounded content brief (--gsc adds own queries)
+                                    --topic "…" plans a new page
   narwhal crawl <url> [options]     Audit a whole site (sitemap/link discovery)
   narwhal schema <Type> [options]   Generate schema.org JSON-LD
   narwhal sitemap <url> [options]   Validate a site's XML sitemap(s)

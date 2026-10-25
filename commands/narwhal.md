@@ -16,8 +16,9 @@ Prefer the plugin's local scripts:
 python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/<script>" <args>
 ```
 Fallback (needs `uv`): `uvx --from git+https://github.com/aindong/narwhal narwhal <action> <args>`.
-They are local-first and SSRF-safe; only `vitals` (CrUX field data) needs an API
-key. Respect any `narwhal.toml`.
+They are local-first and SSRF-safe. Service integrations are opt-in: CrUX uses
+an API key, Search Console uses OAuth, and PageSpeed lab requests are external
+even without a key. Respect any `narwhal.toml`.
 
 ---
 
@@ -28,16 +29,21 @@ combining deterministic measurement with specialist reasoning.
 
 **Step 1 — Deterministic baseline (hard data, fast).** Run:
 ```
-python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --vitals --gsc --format json -o narwhal-audit.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/audit.py" $2 --format json -o narwhal-audit.json
 ```
 This gives homepage + site-wide + sitemap data, per-area subscores, broken links,
-and duplicate clusters. `--vitals` also fetches **real Core Web Vitals** — CrUX
+and duplicate clusters. Add `--vitals` and/or `--gsc` only when the user has
+opted into those integrations for this audit or an established workflow.
+Credential availability alone is not opt-in. Do not initiate OAuth setup for an
+ordinary audit. With opt-in, `--vitals` fetches **real Core Web Vitals** — CrUX
 field data (if `CRUX_API_KEY` is set), falling back to PageSpeed Insights **lab**
 data for low-traffic sites (see `vitals` below for keys); it lands in
 `narwhal-audit.json` under `vitals`. `--gsc` folds in **real Search Console query
 data** under `gsc` when GSC credentials are set (see `gsc` below) — striking-
 distance queries, CTR laggards, decaying pages, cannibalization; without
-credentials it degrades to a note, and the rest of the audit is unaffected. Skim
+credentials it degrades to a note, and the rest of the audit is unaffected. Pass
+the chosen integration scope and available data blocks to specialists; a missing
+block is not permission to fetch service data. Skim
 the JSON to detect the **business type** (SaaS, publisher, e-commerce,
 local/brick-and-mortar, directory/people-search…).
 
@@ -53,12 +59,13 @@ subagents with the Task tool (pass each the URL `$2` and the path `narwhal-audit
 
 Each returns a domain score + prioritized findings with exact fixes.
 
-**Step 2b — Core Web Vitals.** The `vitals` block is already in
-`narwhal-audit.json` from Step 1's `--vitals` (CrUX field, or PSI lab fallback).
+**Step 2b — Core Web Vitals (when opted in).** If Step 1 used `--vitals`, use its
+`vitals` block (CrUX field, or PSI lab fallback).
 Fold its verdict into the performance section. Label it correctly — **field**
 (real users, CrUX) vs **lab** (synthetic, PSI) — and never fabricate numbers. If
-`vitals` came back empty (no key at all), note that setting `CRUX_API_KEY` /
-`PAGESPEED_API_KEY` unlocks it and move on.
+no data was measured, say so and retain source-based performance hygiene only.
+Without opt-in, do not call CrUX/PageSpeed or infer CWV measurements. Credentials
+may enable a requested field lookup; they do not authorize one by themselves.
 
 **Step 3 — Synthesize one report.** Merge the specialists into:
 - **SEO Health Score (0–100)** — reconcile the deterministic scores with the
@@ -218,8 +225,9 @@ the brief degrades honestly to page + GSC data only.
 python "${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/scripts/brief.py" $2 $3 $4 $5 --format json -o narwhal-brief.json
 ```
 If `$2` is a topic (not a URL), use `--topic "$2"` with the competitor URLs as
-positionals, and add `--gsc-site <their-site>` when the user has GSC connected
-so the topic is grounded in real adjacent queries. The JSON contains: real
+positionals. For explicit or established GSC opt-in, add `--gsc` in page mode or
+`--gsc-site <their-site>` in topic mode. Otherwise use the default page/structure
+brief, even when credentials are configured. The JSON contains, when requested: real
 striking-distance queries for the page (or a `found: false` GSC block), CTR
 laggard / decay / cannibalization status, competitor gaps, heading-review candidates,
 questions to answer, schema suggestions, and structure heuristics. `text_length`
