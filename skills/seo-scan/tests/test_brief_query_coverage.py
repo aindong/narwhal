@@ -10,6 +10,37 @@ from test_brief_grounding import page, BASE, OWN_HTML, RIVAL
 
 
 class TestBriefQueryCoverage(unittest.TestCase):
+    def test_invalid_selection_receipts_cannot_claim_coverage_or_crash_rendering(self):
+        original = self.data(False, topic=True)
+        receipt = original['gsc']['topic_query_selection']
+        invalid = [None, [], {'basis': 'unsupported'}]
+        for key in ('input_rows', 'matching_rows', 'retained_rows', 'omitted_rows', 'limit'):
+            for value in (None, True, False, -1, '1', 1.0):
+                invalid.append({**receipt, key: value})
+            missing = dict(receipt)
+            del missing[key]
+            invalid.append(missing)
+        invalid += [{**receipt, 'input_rows': 0}, {**receipt, 'matching_rows': 0},
+                    {**receipt, 'retained_rows': 0}, {**receipt, 'omitted_rows': 1},
+                    {**receipt, 'limit': 0},
+                    {**receipt, 'input_rows': 2, 'matching_rows': 2, 'omitted_rows': 1}]
+        for selection in invalid:
+            with self.subTest(selection=selection):
+                data = copy.deepcopy(original)
+                data['gsc']['topic_query_selection'] = selection
+                before = copy.deepcopy(data)
+                output = brief.render_markdown(data)
+                self.assertNotIn('Topic query selection:', output)
+                self.assertIn('omitted matches are unverified', output)
+                self.assertEqual(before, data)
+        for rows in (None, (), tuple(original['gsc']['striking']), {}, []):
+            data = copy.deepcopy(original['gsc'])
+            data['striking'] = rows
+            self.assertFalse(brief.recorded_topic_selection(data))
+        self.assertFalse(brief.recorded_topic_selection({'striking': [], 'topic_query_selection': {
+            'basis': 'topic_term_overlap', 'input_rows': 0, 'matching_rows': 0,
+            'retained_rows': 0, 'omitted_rows': 0, 'limit': 0}}))
+
     def test_topic_selection_records_matching_retained_and_omitted_rows(self):
         for count in (0, 14, 15, 16, 20):
             with self.subTest(count=count):

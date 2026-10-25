@@ -2,6 +2,7 @@
 from collections import Counter
 import asyncio
 import contextlib
+import copy
 import io
 import json
 import os
@@ -84,6 +85,9 @@ def main():
             assert data['gsc']['capped'] is True
             assert data['gsc']['topic_query_selection']['matching_rows'] == 1
             assert data['gsc']['topic_query_selection']['omitted_rows'] == 0
+            corrupt = copy.deepcopy(data)
+            corrupt['gsc']['topic_query_selection']['omitted_rows'] = 7
+            assert 'omitted matches are unverified' in brief.render_markdown(corrupt)
             assert '<td>' + question + '</td>' in md_to_html(brief.render_markdown(data))
             assert [q['question'] for q in data['questions']] == [question]
             assert [s['type'] for s in data['schema']] == ['FAQPage']

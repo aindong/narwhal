@@ -132,8 +132,9 @@ exhaustive Search Console coverage.
 Topic `gsc.topic_query_selection` records input/matching/retained/omitted row
 counts for the first-15 lexical filter; rows are not unique-query counts.
 Input rows are analyzed striking-distance rows, not all raw API rows.
-This selection limit is separate from `gsc.capped`. Missing legacy selection
-receipts do not establish that no matching rows were omitted.
+This selection limit is separate from `gsc.capped`. Missing, malformed or
+contradictory receipts do not establish that no matching rows were omitted.
+Internal count consistency does not verify upstream query completeness.
 Explicit `--gsc` (Python/MCP `use_gsc=True`) adds the page's own **striking-distance GSC queries** (positions 8–20 —
 demand it nearly satisfies; needs GSC credentials, same setup as `gsc.py`),
 the **competitor gap analysis**, **compared-heading review candidates** (a lexical
