@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Installed action-cycle CI also verifies loss of rescan coverage: a real local
+  HTTP 206 preview cannot claim resolved fixes or measured score changes, and
+  its plan stays read-only/manual without guessed source owners.
 - Packaging CI exercises the installed CLI through a local scan, read-only plan,
   inspected fixture edit and verified rescan/diff. It checks the planned owner,
   one resolved issue and rejection of the reversed regression, without external
