@@ -32,6 +32,9 @@ class TestDiffExecutionEvidence(unittest.TestCase):
         changes += [{'meta': {'response_truncated': 'false'}},
                     {'meta': {'response_partial': None}},
                     {'meta': {'coverage': {'response_truncated': 0}}}]
+        changes += [{'rendered': True, 'meta': {'scan_settings': {'rendered': False}}},
+                    {'rendered': False, 'meta': {'scan_settings': {'rendered': True}}},
+                    {'rendered': False, 'scan_settings': {'rendered': True}}]
         changes += [{'meta': {}, **raw} for raw in (
             {'response_truncated': 'false'}, {'response_partial': 0},
             {'coverage': {'response_truncated': None}}, {'response_truncated': True},
@@ -94,10 +97,15 @@ class TestDiffExecutionEvidence(unittest.TestCase):
                         self.assertEqual(2, invoke(before, after, '--fail-on-regression')[0])
 
     def test_absent_legacy_and_valid_success_fields_remain_comparable(self):
-        for values in ({}, {'status': 200, 'hard_fail': False}, {'status': 201}, {'status': 299}):
+        for values in ({}, {'status': 200, 'hard_fail': False}, {'status': 201}, {'status': 299},
+                       {'rendered': True}, {'rendered': True, 'scan_settings': {'rendered': True}},
+                       {'rendered': False, 'scan_settings': {'render_requested': True, 'rendered': False}}):
             data = report(ALL)
             data.update(values)
             self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+            if 'scan_settings' in values:
+                data['meta']['scan_settings'] = data.pop('scan_settings')
+                self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
 
 
 if __name__ == '__main__':
