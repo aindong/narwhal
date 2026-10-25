@@ -17,6 +17,7 @@ All notable changes to Narwhal are documented here. The format follows
   fields remain unverified instead of becoming healthy probes or source-repair
   evidence. Raw sample/problem records remain, while report counts and neutral
   problem headings distinguish uncertainty from confirmed HTTP failures.
+  JSON includes selected-target response counts beside the raw observations.
 - Crawl link reports retain checked unverified targets/statuses/referrers in an
   additive `unverified` list and a bounded Markdown table. Planner handoffs
   preserve those identities without duplicating legacy no-response entries.

@@ -57,6 +57,8 @@ class TestSitemapResponseStates(unittest.TestCase):
         for status, error in ((700, None), (404, 'incomplete'), (404, False)):
             result, checks = measured(status, error)
             self.assertEqual(1, checks)
+            self.assertEqual({'basis': 'shared_http_check_state_v1', 'scope': 'selected_targets',
+                              'successful_2xx': 0, 'broken': 0, 'unverified': 1}, result['sample_response_coverage'])
             self.assertEqual(status, result['sample'][0]['status'])
             self.assertEqual(error, result['sample'][0]['error'])
             self.assertEqual(result['sample'], result['broken_sample'])  # compatibility record retained
@@ -107,9 +109,14 @@ class TestSitemapResponseStates(unittest.TestCase):
         built = plan.build_plan(data, str(REPO))
         self.assertEqual([SAMPLE], [a['rule_id'] for a in built['actions']])
         self.assertEqual(original, data)
+        data['sitemap']['sample_response_coverage'] = {'successful_2xx': 1, 'broken': 0, 'unverified': 0}
+        self.assertEqual([SAMPLE], [a['rule_id'] for a in plan.build_plan(data, str(REPO))['actions']])
 
     def test_mcp_has_same_manual_result_without_network_or_input_mutation(self):
         result, _ = measured(700, None)
+        with mock.patch.object(sitemap, 'analyze', return_value=result):
+            exported = mcp_server._sitemap(BASE)
+        self.assertEqual(result['sample_response_coverage'], exported['sample_response_coverage'])
         data = report(); data['sitemap'] = result
         original = copy.deepcopy(data)
         with mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):

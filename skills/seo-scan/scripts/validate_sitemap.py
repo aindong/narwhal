@@ -151,6 +151,7 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
                                    if not sm.loc_problem(e["loc"], host)))
     result['sample_selection'] = {'basis': 'unique_exact_urls_evenly_spaced_v1',
                                   'eligible_unique_urls': len(valid_locs), 'requested': sample}
+    response_counts = {'successful_2xx': 0, 'broken': 0, 'unverified': 0}
     if valid_locs and sample > 0:
         count = min(sample, len(valid_locs))
         indices = [0] if count == 1 else [i * (len(valid_locs) - 1) // (count - 1)
@@ -158,10 +159,13 @@ def analyze(start: str, *, allow_private=False, timeout=20, sample=10,
         picked = [valid_locs[i] for i in indices]
         for loc in picked:
             status, err = http.head(loc, allow_private=allow_private, timeout=timeout)
+            response_counts[links.http_check_state(status, err)] += 1
             entry = {"url": loc, "status": status, "error": err}
             result["sample"].append(entry)
             if links.is_broken(status):
                 result["broken_sample"].append(entry)
+    result['sample_response_coverage'] = {'basis': 'shared_http_check_state_v1',
+                                           'scope': 'selected_targets', **response_counts}
     return result
 
 
