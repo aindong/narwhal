@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Declared-length regressions cover malformed/non-ASCII headers, zero-padding,
+  digit-width boundaries and overflow probing. Three decision-changing mutations
+  missed by the previous tests are caught; streamed overflow bytes still cannot
+  become a successful raw resource. Production comparison behavior is unchanged.
 - An empty DNS resolution result no longer passes the public-host guard.
   Primary fetches and redirects reject it before transport access; optional
   resource checks retain their controlled error results. The explicit
