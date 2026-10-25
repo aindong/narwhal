@@ -850,3 +850,5 @@ Unverified sitemap planning actions retain up to five recorded target/status wit
 Planner verification templates combine `--fail-on-regression` and `--require-comparable`: measured regressions fail, and unknown/incomparable coverage exits 2. Comparability covers only recorded evidence.
 
 Diffs retain both target labels (`old_url`, later `url`) and highlight differences for manual mapping review without blocking local-preview verification.
+
+Repeated planner rules retain coherent worst-severity evidence across homepage/recurring observations, deterministic ties, maximum occurrence counts and recorded site scope.
