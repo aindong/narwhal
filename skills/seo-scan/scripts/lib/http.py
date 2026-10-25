@@ -643,7 +643,10 @@ def head_info(url: str, *, timeout: int = DEFAULT_TIMEOUT,
             r, _, _ = _requests_safe(
                 requests, "HEAD", url, timeout=timeout,
                 headers={"User-Agent": user_agent}, allow_private=allow_private)
-            return r.status_code, {k.lower(): v for k, v in r.headers.items()}, None
+            try:
+                return r.status_code, {k.lower(): v for k, v in r.headers.items()}, None
+            finally:
+                r.close()
         except (requests.RequestException, SSRFError, ValueError) as exc:
             return 0, {}, type(exc).__name__
     except ImportError:
@@ -657,7 +660,10 @@ def head_info(url: str, *, timeout: int = DEFAULT_TIMEOUT,
         with fh:
             return fh.status, {k.lower(): v for k, v in fh.headers.items()}, None
     except urllib.error.HTTPError as exc:
-        return exc.code, {k.lower(): v for k, v in (exc.headers or {}).items()}, None
+        try:
+            return exc.code, {k.lower(): v for k, v in (exc.headers or {}).items()}, None
+        finally:
+            exc.close()
     except Exception as exc:  # noqa: BLE001
         return 0, {}, type(exc).__name__
 
