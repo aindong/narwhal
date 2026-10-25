@@ -10,6 +10,20 @@ from test_brief_grounding import page, BASE, OWN_HTML, RIVAL
 
 
 class TestBriefQueryCoverage(unittest.TestCase):
+    def test_consistent_receipts_accept_one_row_limits_and_all_matching_inputs(self):
+        for count, limit in ((0, 1), (1, 1), (2, 1), (2, 15)):
+            with self.subTest(count=count, limit=limit):
+                data = self.data(False, topic=True)
+                row = data['gsc']['striking'][0]
+                retained = min(count, limit)
+                data['gsc']['striking'] = [dict(row) for _ in range(retained)]
+                data['gsc']['topic_query_selection'] = {
+                    'basis': 'topic_term_overlap', 'input_rows': count, 'matching_rows': count,
+                    'retained_rows': retained, 'omitted_rows': count - retained, 'limit': limit}
+                self.assertTrue(brief.recorded_topic_selection(data['gsc']))
+                self.assertIn(f'{retained} of {count} matching retrieved rows retained',
+                              brief.render_markdown(data))
+
     def test_invalid_selection_receipts_cannot_claim_coverage_or_crash_rendering(self):
         original = self.data(False, topic=True)
         receipt = original['gsc']['topic_query_selection']
