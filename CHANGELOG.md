@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Image-header regressions cover lossy/lossless/extended WebP fields, GIF87a,
+  PNG prefix boundaries and JPEG segment skipping, with independently decoded
+  encoded fixtures. Parser behavior and runtime dependencies are unchanged.
 - Range probes reject non-2xx requests responses before reading their bodies.
   PNG-looking error bodies and terminal redirects cannot become social-image
   dimensions or healthy-image findings. Successful 200/206 prefixes retain
