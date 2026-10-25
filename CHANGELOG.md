@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl/audit JSON recurring findings retain recorded rule IDs, including
+  distinct rules with identical display titles. The title Counter interface
+  remains; inconsistent identity/count snapshots fail rendering. Legacy HTTP
+  header titles stay external/manual rather than becoming HTML-meta edits.
 - Malformed HTTP href findings retain bounded literal source witnesses and
   route-aware review mappings, including legacy title-derived IDs. Syntax
   omissions remain separate from destination failures, without extra probes

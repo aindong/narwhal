@@ -240,6 +240,20 @@ percent/full-width marker spellings, including markers outside the authority:
 `href: null` and `href_omitted: credential_like_marker` disclose the omission.
 Counts remain intact; this is not a general secret detector.
 
+New crawl/audit recurring JSON entries retain recorded rule IDs instead of
+reconstructing identity from display titles. Distinct recorded rules with the
+same category/severity/title remain separate entries with their own occurrence
+counts. The runtime title-based `recurring` Counter is unchanged; internal
+`recurring_rule_counts` supports serialization and is not emitted in JSON.
+Disagreement between those snapshots or invalid rule counts fails JSON rendering
+rather than attaching stale IDs. Regenerate the crawl before rendering changed
+rollups. Legacy Counter-only inputs retain their title/count rendering without
+invented IDs. Known legacy HTTP X-Robots-Tag title identities map to external
+header ownership. Native/legacy header guidance preserves intentional restrictions,
+requires page/crawler-scope and owner review, and calls for deployed-header
+verification rather than HTML-meta edits. HTML robots-meta findings retain their
+source-review behavior.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

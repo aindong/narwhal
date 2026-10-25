@@ -401,6 +401,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
             results = list(ex.map(scan_one, urls))
 
     pages, issue_counter, pages_links, page_fps = [], Counter(), {}, []
+    rule_counter = Counter()
     pages_hreflang: dict = {}
     hreflang_coverage, partial_hreflang, sampled_hreflang_observations = {}, set(), []
     for u, rep in results:
@@ -443,6 +444,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         for f in rep.findings:
             if f.severity in ("critical", "high", "medium"):
                 issue_counter[(f.category, f.severity, f.title)] += 1
+                rule_counter[(f.category, f.severity, f.title, f.rule_id)] += 1
         pages_links[u] = rep.meta.get("links", [])
         pages_hreflang[u] = rep.meta.get('hreflang', []) if u not in partial_hreflang else []
         if detect_dupes and not rep.hard_fail and not truncated and rep.meta.get("fingerprint"):
@@ -453,6 +455,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
     ecommerce_scope = summarize_ecommerce(pages)
     result = {"base": base, "pages_scanned": len(pages), "avg_score": avg,
               "skipped_robots": skipped, "pages": pages, "recurring": issue_counter,
+              "recurring_rule_counts": rule_counter,
               "ecommerce": ecommerce_scope}
     llms = llms_resource.recorded(ctx.get('llms_txt_receipt'))
     if llms:
@@ -768,10 +771,23 @@ def render_markdown(result: dict) -> str:
 def render_json(result: dict) -> str:
     import json
     payload = dict(result)
-    payload["recurring"] = [
-        {"category": c, "severity": s, "title": t, "count": n}
-        for (c, s, t), n in result["recurring"].most_common()
-    ]
+    rule_counts = payload.pop('recurring_rule_counts', None)
+    if rule_counts is not None:
+        totals = Counter()
+        for (category, severity, title, rule_id), count in rule_counts.items():
+            if type(count) is not int or count < 1:
+                raise ValueError('Recurring rule counts must be positive integers.')
+            totals[(category, severity, title)] += count
+        if totals != result['recurring']:
+            raise ValueError('Recurring rule counts disagree with the title rollup; regenerate the crawl before rendering.')
+        payload['recurring'] = [
+            {'category': c, 'severity': s, 'title': t, 'count': n, **({'rule_id': rid} if rid else {})}
+            for (c, s, t, rid), n in rule_counts.most_common()]
+    else:
+        payload["recurring"] = [
+            {"category": c, "severity": s, "title": t, "count": n}
+            for (c, s, t), n in result["recurring"].most_common()
+        ]
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
