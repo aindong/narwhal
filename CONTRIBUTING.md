@@ -38,6 +38,8 @@ The original-target template is also exercised against this intentional local
 fixture; it does not establish deployment proof.
 The fixture uses a non-default 6 MB HTML budget and requires all generated
 page scans to retain it.
+Malformed execution-scope and HTTP-status fixtures must withhold automation
+while keeping planning read-only.
 Reversing the reports must fail the regression gate. This is local,
 page-level workflow evidence, not real-site SEO gains or deployment proof.
 A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),

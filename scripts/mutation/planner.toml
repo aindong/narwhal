@@ -21,6 +21,8 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_explicit_invalid_scope_blocks_page_and_crawl_without_repairing_legacy",
  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_known_partial_truncated_failed_or_unexecuted_source_withholds_automation",
  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_completed_technical_check_does_not_require_unrelated_auditors",
+ "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_explicit_unusable_status_or_failure_flag_withholds_automation",
+ "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_absent_legacy_status_flags_and_valid_success_remain_candidates",
  "skills/seo-scan/tests/test_plan_inventory_errors.py",
  "skills/seo-scan/tests/test_finding_url_witnesses.py",
  "skills/seo-scan/tests/test_plan_crawl_page_owners.py",
