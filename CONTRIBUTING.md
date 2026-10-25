@@ -42,6 +42,8 @@ title. Its recurring rule must carry the inner URL witness and plan only that
 page's inventoried source. An explicit title edit removes the recurring finding
 and improves the comparable overall audit score. Audit diff finding lists still
 describe homepage changes; inner resolution is checked directly in crawl rows.
+The separate crawl-rule diff must report the missing-title rule as no longer
+observed in the matching sample, through both CLI and optional MCP.
 With the optional MCP SDK installed, add `--mcp` to exercise the installed stdio
 server for both plans and all three diffs. Both SDK CI jobs run this mode and
 require MCP diff output to match the CLI. Local scans use the CLI's explicit

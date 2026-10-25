@@ -1,0 +1,14 @@
+# Opt-in audit-diff profile; target changed functions explicitly.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/diff_scan.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_diff_crawl_rules.py",
+  "skills/seo-scan/tests/test_diff_crawl_sample.py",
+  "skills/seo-scan/tests/test_diff_severe_escalation.py",
+  "skills/seo-scan/tests/test_diff_scope.py",
+  "skills/seo-scan/tests/test_diff_input_contract.py",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]

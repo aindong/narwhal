@@ -213,7 +213,13 @@ def main(use_mcp=False):
                      '--format', 'json', '-o', 'audit-diff.json'])
                 audit_diff = read('audit-diff.json')
                 assert audit_diff['comparison']['status'] == 'comparable' and audit_diff['score_delta'] > 0, audit_diff
-                # Audit diff finding classifications cover the homepage; inner resolution is checked above in the rollup.
+                changes = audit_diff['crawl_rule_changes']
+                assert changes['status'] == 'compared' and any(
+                    row['rule_id'] == title_rule for row in changes['removed']), changes
+                if use_mcp:
+                    assert audit_diff == mcp_tool('diff_reports', {
+                        'old_json': json.dumps(audit_before), 'new_json': json.dumps(audit_after)}, root)
+                # Removed crawl rules are sample observations, not individual page-resolution classifications.
                 print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
                       'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))
             finally:

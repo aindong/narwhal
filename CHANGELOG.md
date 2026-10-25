@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Audit diffs separately compare native recurring rule aggregates when recorded
+  coverage and nonempty exact crawl samples match. New critical/high rules and
+  severity escalations trigger the regression gate even without a score drop;
+  disappeared rules are sample observations, not per-page resolution claims.
 - Crawl/audit recurring rules retain bounded URL-label witnesses without changing
   counts or scores. Page-local audit plans map supported same-origin witnesses
   to inventoried route files rather than unrelated homepage fallbacks. Unlocated

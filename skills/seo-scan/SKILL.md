@@ -225,7 +225,12 @@ to reject unknown legacy coverage with exit 2; planner commands use both flags.
 Comparability covers recorded checks only, not unrecorded settings or a whole site. Different complete recorded
 audit crawl URL samples (including multiplicities) withhold verdicts and exit 2;
 order does not matter. Missing/malformed legacy samples stay unverified.
-Works on `audit` JSON too (uses the overall score + homepage findings).
+Works on `audit` JSON too (overall score + homepage findings). Separate
+`crawl_rule_changes` compares native recurring rules only with matching recorded
+coverage and nonempty exact crawl samples. New critical/high rules and severity
+escalations trigger the regression gate even without a score drop. Removed rules
+mean no longer observed in that sample, not per-page fixes or complete site
+coverage. Missing, legacy or unsupported rollups remain explicitly unverified.
 
 **Map findings to source before editing** (read-only, no changes applied):
 ```
