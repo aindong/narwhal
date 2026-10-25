@@ -29,7 +29,7 @@ class TestPlanBaselinePreservation(unittest.TestCase):
                         commands = commands_only(plan.verification_for(artifact, TARGET, source, kind))
                         fetch, diff = commands[-2:]
                         self.assertEqual('after-2.json', fetch[fetch.index('-o') + 1])
-                        self.assertEqual(['narwhal', 'diff', '--', source, 'after-2.json'], diff)
+                        self.assertEqual(['narwhal', 'diff', '--fail-on-regression', '--', source, 'after-2.json'], diff)
 
     def test_page_after_baseline_is_not_reused_by_local_audit_scan(self):
         for source in ('page-after.json', '/reports/PAGE-AFTER.JSON', r'C:\repo\page-after.json'):

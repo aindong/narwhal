@@ -37,7 +37,7 @@ class TestPlanVerificationKind(unittest.TestCase):
         self.assertIn('not record the complete invocation', commands[-3])
         self.assertEqual(['narwhal', 'audit', '--format', 'json', '-o', 'after.json',
                           '--', built['target']], shlex.split(commands[-2], comments=True))
-        self.assertEqual(['narwhal', 'diff', '--', 'audit-before.json', 'after.json'],
+        self.assertEqual(['narwhal', 'diff', '--fail-on-regression', '--', 'audit-before.json', 'after.json'],
                          shlex.split(commands[-1]))
         self.assertFalse(action['requires_deploy'])  # local page proof remains possible
 
@@ -56,7 +56,7 @@ class TestPlanVerificationKind(unittest.TestCase):
             self.assertEqual(plan.MEMORY_BASELINE_INSTRUCTION, commands[0])
             self.assertIn('replace every TODO', commands[1])
             self.assertIn('-o page-after.json', commands[2])
-            self.assertEqual('narwhal diff -- before.json after.json', commands[-1])
+            self.assertEqual('narwhal diff --fail-on-regression -- before.json after.json', commands[-1])
 
     def test_scan_contract_does_not_change(self):
         for artifact in ('title', 'json_ld', 'sitemap', 'server_config'):

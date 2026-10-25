@@ -121,7 +121,10 @@ baseline, source actions may first suggest a local page scan to `page-after.json
 That scan verifies page-level changes only: it must not be diffed against an audit
 overall score or treated as deployed site verification. The final template runs
 `narwhal audit` after deployment, then diffs that audit against the audit baseline.
-Scan baselines retain the page-scan/diff workflow. Sitemap measurement-gap actions
+Scan baselines retain the page-scan/diff workflow. Generated diff commands use
+`--fail-on-regression`: measured regressions exit 1 and known incomparable
+coverage exits 2. Exit 0 does not certify unrecorded settings or legacy unknown
+coverage; review the comparison status and evidence before accepting a fix. Sitemap measurement-gap actions
 remain manual verification tasks rather than source edits.
 Markdown audit plans expose the shared audit rerun and settings reminder before
 the action list; per-action JSON retains the complete ordered instructions.

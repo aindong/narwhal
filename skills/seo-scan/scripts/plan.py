@@ -1077,7 +1077,7 @@ def verification_for(artifact: str, target: str, report_source: str,
             'not record the complete invocation. A matching report kind alone does '
             'not establish comparable coverage.',
             f'narwhal audit --format json -o {comparison_output} -- {shlex.quote(target)}  # run after deploy',
-            f'narwhal diff -- {before} {comparison_output}',
+            f'narwhal diff --fail-on-regression -- {before} {comparison_output}',
         ]
         if artifact in ("json_ld", "product_schema"):
             commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
@@ -1089,7 +1089,7 @@ def verification_for(artifact: str, target: str, report_source: str,
         scan_command = f"narwhal scan --allow-private --format json -o {comparison_output}{options} -- '<local-preview-url>'"
     prerequisites.append(SCAN_SETTINGS_INSTRUCTION)
     commands = [scan_command,
-                f"narwhal diff -- {before} {comparison_output}"]
+                f"narwhal diff --fail-on-regression -- {before} {comparison_output}"]
     if artifact in ("json_ld", "product_schema"):
         commands.insert(0, "Validate the rendered structured data and replace every TODO placeholder.")
     return prerequisites + commands
