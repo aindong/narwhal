@@ -807,8 +807,12 @@ remote site content or guarantee identical crawl samples between runs.
 Audits retain these settings for crawled pages and check common exact URLs too;
 different complete recorded crawl page samples block score/finding verdicts,
 including changed URL multiplicities. Page order does not matter. Exact recorded
-URL strings are compared without normalizing aliases or preview hosts; unknown
-or malformed samples retain legacy comparisons and remain unverified.
+URL strings are compared without normalizing aliases or preview hosts. Explicitly
+malformed page lists withhold score/fix claims; absent legacy lists remain
+unverified. A recorded `pages_scanned` must be an integer matching its page list;
+malformed counts, contradictions, or counts without a list also withhold overall
+and crawl-rule claims. Both regression and strict comparability gates exit 2.
+Missing counts are not inferred or proof of sample completeness.
 
 JSON includes `comparison.status` (`comparable`, `incomparable`, `unknown`) and
 reasons. Incomparable results have null `score_delta` and `regression`, empty
