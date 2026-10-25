@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner Markdown retains a bounded literal preview of the selected report
+  recommendation, separate from planner-authored change/verification guidance.
+  Rules with contextual review/verification overrides keep original advice in
+  JSON only; full supplied recommendations remain unchanged there.
 - Planner groups distinguish their existing-candidate union from candidate
   overlaps, recording only the rule IDs that name each overlapping file.
   Grouped guidance requires owner review rather than claiming shared ownership.

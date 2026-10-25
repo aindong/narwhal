@@ -18,6 +18,12 @@ Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace pla
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
 - **Change:** Add or revise the page meta description in its metadata/head owner.
 
+**Reported recommendation (preview, review required):**
+
+```text
+Add a description.
+```
+
 **Verification, in order:**
 
 ```sh
@@ -34,6 +40,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
 - **Change:** Define a unique, descriptive page title in the framework's metadata/head API.
 
+**Reported recommendation (preview, review required):**
+
+```text
+Add a title.
+```
+
 **Verification, in order:**
 
 ```sh
@@ -49,6 +61,8 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Rule:** `schema.no.structured.data.json.ld`
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
 - **Change:** Review existing supported markup and the actual page entity; add semantic data only when applicable. Do not duplicate entities or invent visible content. Non-observation does not prove a markup requirement or establish rich-result eligibility, ranking or AI citation gains.
+
+_Original recommendation remains in plan JSON; use the contextual review/verification guidance above._
 
 **Verification, in order:**
 
@@ -68,6 +82,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Likely owner:** `app/guides/widget/page.tsx`, `app/layout.tsx`, `app/page.tsx`
 - **Change:** Add meaningful alt text to informative images; use empty alt for decorative images.
 
+**Reported recommendation (preview, review required):**
+
+```text
+Add appropriate alt values.
+```
+
 **Verification, in order:**
 
 ```sh
@@ -84,6 +104,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
 - **Change:** Define the intended absolute canonical URL in the page or shared head owner.
 
+**Reported recommendation (preview, review required):**
+
+```text
+Add a canonical.
+```
+
 **Verification, in order:**
 
 ```sh
@@ -99,6 +125,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Rule:** `content.incomplete.open.graph.tags`
 - **Likely owner:** `app/layout.tsx`, `app/guides/widget/page.tsx`, `app/layout.jsx`
 - **Change:** Complete Open Graph and Twitter metadata using real page title, description, URL, and image.
+
+**Reported recommendation (preview, review required):**
+
+```text
+Complete OG tags.
+```
 
 **Verification, in order:**
 
@@ -118,6 +150,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Likely owner:** `app/robots.ts`, `public/robots.txt`, `src/app/robots.ts`
 - **Change:** Create or revise robots.txt deliberately, preserving intentional crawler policies.
 
+**Reported recommendation (preview, review required):**
+
+```text
+Publish robots.txt.
+```
+
 **Verification, in order:**
 
 ```sh
@@ -134,6 +172,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Likely owner:** `app/sitemap.ts`, `public/sitemap.xml`, `src/app/sitemap.ts`
 - **Change:** Create/configure the sitemap and reference it from robots.txt using the canonical deployed URL.
 
+**Reported recommendation (preview, review required):**
+
+```text
+Publish a sitemap.
+```
+
 **Verification, in order:**
 
 ```sh
@@ -149,6 +193,12 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 - **Rule:** `geo.no.llms.txt`
 - **Likely owner:** `public/llms.txt`
 - **Change:** Generate a starter llms.txt in the public/static root, then curate every entry and TODO.
+
+**Reported recommendation (preview, review required):**
+
+```text
+Publish a curated starter.
+```
 
 **Verification, in order:**
 

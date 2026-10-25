@@ -864,3 +864,5 @@ Existing route conventions outrank homepage fallbacks for page content and plain
 Plain-HTML URL-to-source conventions include literal HTML/HTM file paths while preserving trailing-slash directory behavior and existing source safety guards.
 
 Planner groups disclose their legacy candidate union and actual existing-candidate overlaps with member rule IDs; grouped guidance requires owner review before edits.
+
+Planner Markdown carries bounded literal source-recommendation previews outside contextual-review overrides, separately from generated change/verification instructions; full JSON guidance stays unchanged.

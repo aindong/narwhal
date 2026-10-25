@@ -31,7 +31,7 @@ MAX_REPO_FILES = 5000
 INVENTORY_ERROR_WITNESSES = 5
 MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
-EVIDENCE_PREVIEW_CHARS = 600
+REPORTED_TEXT_PREVIEW_CHARS = 600
 SITEMAP_SAMPLE_WITNESSES = 5
 LINK_TARGET_WITNESSES = 5
 LINK_SOURCE_WITNESSES = 3
@@ -1376,13 +1376,21 @@ def render_markdown(plan: dict) -> str:
                       *scope_lines,
                       f"- **Likely owner:** {owners}",
                       f"- **Change:** {action['proposed_change']}", ""]
-            evidence = action.get('evidence')
-            if evidence:
-                lines += ['**Reported evidence (preview, not reverified):**', '']
-                lines += _code_block(evidence[:EVIDENCE_PREVIEW_CHARS], 'text')
-                if len(evidence) > EVIDENCE_PREVIEW_CHARS:
-                    lines += [f'_Preview truncated at {EVIDENCE_PREVIEW_CHARS} characters; '
-                              'full action evidence remains in plan JSON._', '']
+            for field, label, full_label in (
+                    ('evidence', 'Reported evidence (preview, not reverified)', 'evidence'),
+                    ('source_recommendation', 'Reported recommendation (preview, review required)', 'source_recommendation')):
+                text = action.get(field)
+                if text:
+                    if field == 'source_recommendation' and (
+                            action['rule_id'] in EDITORIAL_REVIEW_GUIDANCE or action['rule_id'] in RESOURCE_VERIFICATION):
+                        lines += ['_Original recommendation remains in plan JSON; use the contextual '
+                                  'review/verification guidance above._', '']
+                        continue
+                    lines += [f'**{label}:**', '']
+                    lines += _code_block(text[:REPORTED_TEXT_PREVIEW_CHARS], 'text')
+                    if len(text) > REPORTED_TEXT_PREVIEW_CHARS:
+                        lines += [f'_Preview truncated at {REPORTED_TEXT_PREVIEW_CHARS} characters; '
+                                  f'full action {full_label} remains in plan JSON._', '']
             lines += ["**Verification, in order:**", ""]
             for step in action['verification']:
                 if step in (MEMORY_BASELINE_INSTRUCTION, SCAN_SETTINGS_INSTRUCTION):
