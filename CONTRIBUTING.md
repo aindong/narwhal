@@ -182,7 +182,8 @@ or tests. Unresolved results keep the gate nonzero. Its schema-file
 test is omitted because references are not staged; full suites/MCP CI retain it.
 
 The optional [service profile](scripts/mutation/services.toml) checks brief
-entry points and account opt-in. Install the optional SDK in that environment
+entry points, account opt-in, and shared scoring-rule ownership across pages.
+Install the optional SDK in that environment
 so registered-tool schema/dispatch checks run too:
 
 ```bash

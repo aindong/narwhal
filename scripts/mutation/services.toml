@@ -5,6 +5,7 @@ only_mutate = ["src/brief.py", "src/mcp_server.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_service_opt_in.py",
+  "skills/seo-scan/tests/test_brief_rule_ownership.py",
   "skills/seo-scan/tests/test_brief_grounding.py::TestBriefGrounding::test_cli_help_does_not_describe_unmeasured_winners",
   "skills/seo-scan/tests/test_comparison_budgets.py",
   "skills/seo-scan/tests/test_comparison_coverage.py",
