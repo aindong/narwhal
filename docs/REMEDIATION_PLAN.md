@@ -218,6 +218,16 @@ in JSON only; Markdown directs readers to the calibrated guidance instead of
 reintroducing unsupported legacy advice. Evidence
 previews retain the same bound and literal-block behavior.
 
+Native empty/generic anchor-text rules map to content-source review, with
+route-aware candidates and no automatic-edit eligibility. New scanner evidence
+retains up to five observed href/label pairs and the total source-anchor count;
+duplicate hrefs remain separate observations. Destinations are not probed or
+certified reachable. Labels still use visible text, image-alt and title fallbacks.
+Generic phrases require review of surrounding context and destination purpose,
+not keyword insertion or a promised ranking gain. Legacy reports retain their
+recorded evidence; missing witnesses are not reconstructed. Witness JSON escapes
+backticks reversibly for literal Markdown presentation.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

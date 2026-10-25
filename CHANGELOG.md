@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Anchor-text findings retain the first five source href/label witnesses and
+  their total without probing destinations. Planner mappings send empty/generic
+  labels to route-aware source review; generic-label advice is contextual rather
+  than keyword insertion. Counts, severity and scoring are unchanged.
 - Planner Markdown retains a bounded literal preview of the selected report
   recommendation, separate from planner-authored change/verification guidance.
   Rules with contextual review/verification overrides keep original advice in

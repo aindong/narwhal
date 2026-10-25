@@ -7,6 +7,7 @@ hreflang, images, links, and a few HTTP-header hygiene checks.
 
 from __future__ import annotations
 
+import json
 from urllib.parse import urljoin, urlparse
 
 try:
@@ -27,6 +28,7 @@ except ImportError:  # when imported as a package
     from .lib import hreflang  # type: ignore
 
 CAT = "technical"
+ANCHOR_TEXT_WITNESSES = 5
 
 
 def audit(doc, resp, report, ctx=None) -> None:
@@ -309,10 +311,18 @@ def _images(doc, report):
                    "Add loading=\"lazy\" to below-the-fold images to improve LCP.")
 
 
+def _anchor_text_evidence(count, witnesses):
+    """Keep source witnesses reversible without breaking inline Markdown code."""
+    return json.dumps({'scope': 'Source anchor observations; destinations not checked.',
+                       'observed_count': count, 'witnesses': witnesses},
+                      indent=2, ensure_ascii=True).replace('`', '\\u0060')
+
+
 def _links(doc, resp, report):
     empty = 0
     generic = 0
     invalid = 0
+    empty_witnesses, generic_witnesses = [], []
     base_url = resp.final_url or resp.url
     effective, receipt = links.document_base(doc, base_url, csp=resp.headers.get('content-security-policy', ''))
     report.meta['anchor_resolution_basis'] = links.RESOLUTION_BASIS
@@ -332,8 +342,12 @@ def _links(doc, resp, report):
                 or htmlx.collapse(a.get("title")))
         if not text:
             empty += 1
+            if len(empty_witnesses) < ANCHOR_TEXT_WITNESSES:
+                empty_witnesses.append({'href': href, 'label': text})
         elif text.lower() in ("click here", "read more", "here", "link", "more"):
             generic += 1
+            if len(generic_witnesses) < ANCHOR_TEXT_WITNESSES:
+                generic_witnesses.append({'href': href, 'label': text})
     if invalid:
         report.add(CAT, "low", "Malformed HTTP link URLs",
                    f"{invalid} <a> href value(s) have invalid HTTP URL syntax and are omitted "
@@ -345,11 +359,14 @@ def _links(doc, resp, report):
         report.add(CAT, "low", "Links with no anchor text",
                    f"{empty} <a> tags have no text, image alt text or title fallback.",
                    "Give links descriptive text or meaningful image alt text. "
-                   "A title is only a fallback, not a full accessibility fix.")
+                   "A title is only a fallback, not a full accessibility fix.",
+                   evidence=_anchor_text_evidence(empty, empty_witnesses))
     if generic:
         report.add(CAT, "low", "Generic anchor text",
                    f"{generic} links use phrases like 'click here'.",
-                   "Use keyword-relevant anchor text describing the destination.")
+                   "Review link purpose and surrounding context; use descriptive labels where helpful. "
+                   "Keep concise navigation and avoid keyword insertion solely to change this phrase count.",
+                   evidence=_anchor_text_evidence(generic, generic_witnesses))
 
 
 def _http_hygiene(resp, report):
