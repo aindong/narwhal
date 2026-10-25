@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- The focused brief/service mutation corpus includes existing rule-ownership
+  regressions to check lost or inconsistent page scoring policies across scans.
 - Service integration opt-in is consistent across agent audit guidance and
   brief Python/CLI/MCP defaults. Briefs now require `--gsc` / `use_gsc=True` for
   own-page queries; explicit topic `--gsc-site` and legacy `--no-gsc` remain.

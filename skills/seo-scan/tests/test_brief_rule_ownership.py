@@ -8,6 +8,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import brief
+import gsc
 from lib import config, http
 
 BASE = 'https://example.test/page-a'
@@ -28,6 +29,7 @@ def run(cfg, your_url=BASE, rivals=None, fetch=None, gather=None, topic=None):
         reports.append(rep)
         return rep
     with mock.patch.object(brief.scanner, 'scan', side_effect=scan), \
+            mock.patch.object(gsc, 'gather', side_effect=AssertionError('Rule-policy fixture queried account')), \
             mock.patch.object(brief.scanner, 'gather_context', side_effect=gather or (lambda *a, **k: {})), \
             mock.patch.object(http, 'fetch', side_effect=fetch or (lambda url, **k: response(url))):
         data = brief.run(your_url, rivals if rivals is not None else [RIVAL],
