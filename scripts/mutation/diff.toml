@@ -24,6 +24,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_supported_current_pairs_compare_without_a_false_gap",
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_scores_are_not_invalidated_by_unselected_technical_checks",
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_content_only_audit_does_not_gain_a_false_hreflang_score_gap",
+  "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_policy_mismatch_isolated_from_extraction_failure",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]

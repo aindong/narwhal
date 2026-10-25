@@ -258,6 +258,36 @@ class TestHreflangSourceSyntax(unittest.TestCase):
         for left, right in ((legacy, current), (current, current)):
             self.assertEqual('incomparable', diff_scan.diff_reports(left, right)['comparison']['status'])
 
+    def test_policy_mismatch_isolated_from_extraction_failure(self):
+        for groups in (['technical'], ['content']):
+            page = json.loads(page_report(VALID, only=groups).to_json())
+            self.assertFalse(hreflang.unverified(page['meta'], for_score=True))
+            for location in ('page', 'crawl'):
+                current = copy.deepcopy(page)
+                if location == 'crawl':
+                    current = {'site': BASE, 'overall_score': page['score'], 'homepage': current,
+                               'crawl': {'pages': [], 'hreflang_policy_basis': hreflang.EXTRACTION_BASIS}}
+                self.assertEqual('comparable', diff_scan.diff_reports(current, current)['comparison']['status'])
+                for basis in (None, 'future'):
+                    other = copy.deepcopy(current)
+                    meta = other['meta'] if location == 'page' else other['crawl']
+                    if basis is None:
+                        meta.pop('hreflang_policy_basis')
+                    else:
+                        meta['hreflang_policy_basis'] = basis
+                    self.assertEqual('comparable', diff_scan.diff_reports(other, other)['comparison']['status'])
+                    for old, new in ((other, current), (current, other)):
+                        with self.subTest(groups=groups, location=location, basis=basis, reverse=old is current):
+                            original = copy.deepcopy((old, new))
+                            result = diff_scan.diff_reports(old, new)
+                            expected = 'incomparable' if groups == ['technical'] else 'comparable'
+                            self.assertEqual(expected, result['comparison']['status'])
+                            if expected == 'incomparable':
+                                self.assertIsNone(result['score_delta'])
+                                self.assertIsNone(result['regression'])
+                                self.assertEqual([], result['resolved'])
+                            self.assertEqual(original, (old, new))
+
     def test_supported_current_pairs_compare_without_a_false_gap(self):
         payload = json.loads(page_report(VALID).to_json())
         self.assertEqual('comparable', diff_scan.diff_reports(payload, copy.deepcopy(payload))['comparison']['status'])
