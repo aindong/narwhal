@@ -73,6 +73,20 @@ def main():
                 assert cli.main(['brief', url, '--no-config', '--format', 'json', *flags]) == 0
                 assert json.loads(output.getvalue())['gsc']['found'] is expected
                 assert queries.call_count == int(expected)
+        question = 'Why do widgets wobble?'
+        measured = {'found': True, 'striking': [
+            {'query': question, 'page': url, 'impressions': 120, 'position': 9}]}
+        with mock.patch.object(gsc, 'gather', return_value=measured), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            assert cli.main(['brief', '--topic', 'widgets', url, '--gsc-site', url,
+                             '--no-config', '--format', 'json']) == 0
+            data = json.loads(output.getvalue())
+            assert [q['question'] for q in data['questions']] == [question]
+            assert [s['type'] for s in data['schema']] == ['FAQPage']
+            for call in (brief.run, mcp_server._brief):
+                data = call(competitor_urls=[url], topic='widgets', gsc_site=url)
+                assert [q['question'] for q in data['questions']] == [question]
+                assert data['grounding'] == 'queries+pages'
         site = {'base': url, 'pages_scanned': 1, 'pages': [{'url': url}], 'avg_score': 100, 'recurring': Counter()}
         with mock.patch.object(audit.scanner, 'scan', return_value=Report(url)), \
                 mock.patch.object(audit.crawl_site, 'crawl', return_value=site), \

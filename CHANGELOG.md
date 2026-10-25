@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Topic briefs synthesize opted-in Search Console queries before deriving
+  question and schema-review candidates. CLI `--gsc-site` now shares the
+  Python/MCP `gsc_site` path; matching queries no longer change only the metadata
+  while silently disappearing from the writing plan.
 - Brief regression tests verify CLI page modes and transport settings for both
   own and competitor pages, plus explicit local-preview access through the host
   guard while MCP remains public-only.
