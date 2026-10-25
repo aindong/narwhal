@@ -1,4 +1,4 @@
-# Optional shared execution-scope receipt validation profile.
+# Shared execution receipts; CI explicitly gates the scope validator.
 [tool.mutmut]
 source_paths = ["src/"]
 only_mutate = ["src/lib/report.py"]
@@ -6,6 +6,11 @@ also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_scan_scope.py",
   "skills/seo-scan/tests/test_scope_selection_consistency.py",
+  "skills/seo-scan/tests/test_diff_execution_evidence.py",
+  "skills/seo-scan/tests/test_diff_scope.py",
+  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_explicit_unusable_execution_evidence_withholds_automation",
+  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_known_partial_truncated_failed_or_unexecuted_source_withholds_automation",
+  "skills/seo-scan/tests/test_plan_automation_eligibility.py::TestAutomationEligibility::test_absent_legacy_status_flags_and_valid_success_remain_candidates",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]

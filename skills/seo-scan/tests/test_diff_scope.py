@@ -226,7 +226,7 @@ class TestDiffScope(unittest.TestCase):
         self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
 
     def test_unknown_or_malformed_crawl_evidence_is_not_guessed(self):
-        for crawl in (None, [], {}, {'pages': None}, {'pages': {}}, {'pages': [None, 'bad', {'hard_fail': 'true'}]}):
+        for crawl in (None, [], {}, {'pages': None}, {'pages': {}}, {'pages': [None, 'bad']}):
             audit = {'site': 'https://example.test', 'overall_score': 90, 'homepage': report(ALL), 'crawl': crawl}
             self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
 
@@ -266,11 +266,14 @@ class TestDiffScope(unittest.TestCase):
             self.assertEqual([False, True], [page['response_truncated'] for page in data['pages']])
             self.assertEqual([False, False], [page['hard_fail'] for page in data['pages']])
 
-    def test_unknown_crawl_truncation_is_not_inferred_from_scores_or_strings(self):
-        for page in ({'score': 80}, {'score': 80, 'response_truncated': 'true'}):
-            audit = {'site': 'https://example.test', 'overall_score': 80, 'homepage': report(ALL),
-                     'crawl': {'pages': [page]}}
-            self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
+    def test_crawl_scores_do_not_imply_truncation_but_malformed_flags_withhold_proof(self):
+        audit = {'site': 'https://example.test', 'overall_score': 80, 'homepage': report(ALL),
+                 'crawl': {'pages': [{'score': 80}]}}
+        self.assertEqual('comparable', diff_scan.diff_reports(audit, audit)['comparison']['status'])
+        audit['crawl']['pages'][0]['response_truncated'] = 'true'
+        result = self.assert_incomparable(audit, audit)
+        self.assertTrue(any('unusable crawl execution evidence' in r for r in result['comparison']['reasons']))
+        self.assertFalse(any('truncated crawl page' in r for r in result['comparison']['reasons']))
 
 
 if __name__ == '__main__':

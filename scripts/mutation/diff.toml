@@ -8,6 +8,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_diff_crawl_sample.py",
   "skills/seo-scan/tests/test_diff_severe_escalation.py",
   "skills/seo-scan/tests/test_diff_scope.py",
+  "skills/seo-scan/tests/test_diff_execution_evidence.py",
   "skills/seo-scan/tests/test_diff_input_contract.py",
   "skills/seo-scan/tests/test_diff_output_safety.py",
   "skills/seo-scan/tests/test_crawl_execution_scope.py",
