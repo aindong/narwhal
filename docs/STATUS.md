@@ -868,3 +868,5 @@ Planner groups disclose their legacy candidate union and actual existing-candida
 Planner Markdown carries bounded literal source-recommendation previews outside contextual-review overrides, separately from generated change/verification instructions; full JSON guidance stays unchanged.
 
 Anchor-text source findings carry bounded href/label witnesses and explicit content-review mappings; generic wording remains contextual review, with no destination probes or score changes.
+
+Malformed-link syntax findings carry bounded original href witnesses and explicit native/legacy source-review mappings without probing destinations or changing scores.
