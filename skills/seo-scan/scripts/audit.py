@@ -174,7 +174,8 @@ def _schema_score_note(data: dict) -> str:
                      or (hreflang.ERROR if hreflang.unverified(data['page'].meta, for_score=True) else ''))
     partial_note = (crawl_site.partial_response_note(data['site_result'])
                     or (report_lib.PARTIAL_HTML_ERROR if report_lib.recorded_response_partial(data['page'].meta) else ''))
-    return ' '.join(note for note in (schema, canonical_note, base_note, hreflang_note, partial_note) if note)
+    image_note = report_lib.recorded_image_weight_problem(data['page'].meta, for_score=True)
+    return ' '.join(note for note in (schema, canonical_note, base_note, hreflang_note, partial_note, image_note) if note)
 
 
 def render_markdown(data: dict) -> str:

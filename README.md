@@ -336,6 +336,17 @@ truthiness, for range evidence: an empty marker is still unverified. These are
 separate completeness checks, not changes to generic 2xx transport success or
 the intentional ranged image-header probes.
 
+Image weight checks use HEAD-declared raw-source sizes, not browser download
+measurements. Only error-free HTTP 200 image responses with a valid bounded
+ASCII Content-Length and no range/transfer-encoding evidence supply weights.
+`meta.images.weight_verified` and `weight_unverified` distinguish measured
+weights from attempted probes; unknown weights cannot produce optimization
+findings or an all-under-threshold pass. The existing image-count cap remains.
+Explicitly unverified weights also block technical/overall score comparison and
+diff fix claims, including the regression gate. Reports qualify the result;
+plans request manual probe verification without guessing an image source edit.
+Legacy reports without weight coverage are not assigned guessed measurements.
+
 Root `llms.txt` checks record HTTP response evidence in `meta.llms_txt`: a
 complete supported text response with an initial ATX/simple Setext H1 is a
 candidate, complete 404/410 is observed root absence, and HTML fallbacks, gates, empty,

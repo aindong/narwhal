@@ -284,7 +284,7 @@ def scan(url: str, *, render=False, allow_private=False, timeout=20,
                                     allow_private=allow_private,
                                     timeout=min(timeout, 8))
         report.meta["images"] = {k: facts[k] for k in
-                                 ("checked", "unchecked", "missing_dims")}
+                                 ("checked", "unchecked", "missing_dims", "weight_verified", "weight_unverified")}
         images.findings(facts, report)
     return report
 

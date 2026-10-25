@@ -12,6 +12,13 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Image weight/format findings require an error-free HTTP 200 image HEAD with
+  a complete, bounded ASCII Content-Length. Failed, gated, partial, non-image
+  and unknown-length probes cannot become optimization or all-clear claims.
+  Image metadata records verified/unverified weight counts; successful probes
+  retain existing thresholds and request budgets. Explicit unknown coverage
+  qualifies reports and blocks comparison/diff fix claims; plans request manual
+  verification without guessing source edits.
 - Image metadata HEAD probes explicitly close requests responses and urllib
   HTTP-error bodies while preserving status, lowercase headers and controlled
   errors. Header-processing failures also release the acquired response.
