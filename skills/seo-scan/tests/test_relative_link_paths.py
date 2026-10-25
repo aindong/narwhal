@@ -12,6 +12,7 @@ import crawl_site
 import diff_scan
 import scan
 from lib import htmlx, http, links, sitegraph
+from lib.urlpaths import remove_dot_segments
 from lib.report import Report
 
 BASE = 'https://example.test/start/page.html?old=1'
@@ -30,6 +31,14 @@ CASES = [
     ('//other.test/guide//chapter', 'https://other.test/guide//chapter'),
     ('https://other.test/guide//chapter', 'https://other.test/guide//chapter'),
     (';v=1', 'https://example.test/start/;v=1'),
+    ('.', 'https://example.test/start/'),
+    ('..', 'https://example.test/'),
+    ('guide/.', 'https://example.test/start/guide/'),
+    ('guide/..', 'https://example.test/start/'),
+    ('../../..', 'https://example.test/'),
+    ('guide//.', 'https://example.test/start/guide//'),
+    ('guide//..', 'https://example.test/start/guide/'),
+    ('guide//part/..', 'https://example.test/start/guide//'),
 ]
 
 
@@ -46,6 +55,14 @@ def report(basis=links.RESOLUTION_BASIS):
 
 
 class TestRelativeLinkPaths(unittest.TestCase):
+    def test_empty_path_root_fallback_and_terminal_dot_segments_are_stable(self):
+        for value, expected in (('', '/'), ('/', '/'), ('/a/.', '/a/'),
+                                ('/a/..', '/'), ('/a//.', '/a//'),
+                                ('/a//..', '/a/'), ('/a//b/..', '/a//'), ('/../../..', '/')):
+            with self.subTest(value=value):
+                self.assertEqual(expected, remove_dot_segments(value))
+                self.assertEqual(expected, remove_dot_segments(expected))
+
     def test_relative_path_components_and_unchanged_absolute_controls(self):
         for href, expected in CASES:
             with self.subTest(href=href):

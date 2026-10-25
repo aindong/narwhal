@@ -98,10 +98,15 @@ python3.12 -m venv .venv-mutation
 .venv-mutation/bin/python scripts/mutation_test.py
 ```
 
-The default gate covers `lib.links.http_check_state` and `lib.links.is_broken`:
+The default gate covers `lib.links.http_check_state`, `lib.links.is_broken` and
+`lib.urlpaths.remove_dot_segments`:
 the complete sitemap response-state module exercises the report/planner matrix
 and MCP handoff, and existing direct link tests cover status 0 and all gated
-codes. The combined scope kills 34/34 mutants. The response-state tests alone
+codes. Relative-path tests cover terminal dot segments, repeated separators and
+the empty-path root fallback. The combined scope kills 57/57 mutants (34 for the
+classifiers and 23 for the path helper). Initially, relative-path tests killed
+19/23 helper mutants; four terminal-segment/root-fallback mutations survived
+until boundary assertions were added. The response-state tests alone
 missed two status-0 mutations in `is_broken`; including its existing direct
 assertions kills both without changing scanner behavior.
 
