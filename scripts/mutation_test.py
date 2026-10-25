@@ -10,30 +10,34 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TARGET = 'lib.links.x_http_check_state__mutmut_*'
+DEFAULT_TARGETS = ('lib.links.x_http_check_state__mutmut_*', 'lib.links.x_is_broken__mutmut_*')
 
 
-def check_results(records, pattern):
-    """Only a nonempty set of pytest test-failure exits passes, never internal errors."""
+def check_results(records, patterns):
+    """Require results for every pattern and explicit pytest test-failure exits."""
+    patterns = [patterns] if isinstance(patterns, str) else list(patterns)
+    if not patterns:
+        raise ValueError('No mutation targets requested; refusing an empty pass.')
     results = {}
     for record in records:
         for name, exit_code in record['exit_code_by_key'].items():
-            if not fnmatch.fnmatchcase(name, pattern):
+            if not any(fnmatch.fnmatchcase(name, pattern) for pattern in patterns):
                 continue
             if name in results:
                 raise ValueError('Duplicate mutant result: ' + name)
             results[name] = exit_code
     # Mutmut also calls pytest internal errors (exit 3) "killed". Fail closed.
     failures = {name: code for name, code in results.items() if type(code) is not int or code != 1}
-    if not results:
-        raise ValueError('No mutants matched the target; refusing an empty pass.')
+    for pattern in patterns:
+        if not any(fnmatch.fnmatchcase(name, pattern) for name in results):
+            raise ValueError('No mutants matched target {!r}; refusing an empty pass.'.format(pattern))
     return results, failures
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('target', nargs='?', default=DEFAULT_TARGET,
-                        help='Mutmut function pattern within the configured source scope')
+    parser.add_argument('targets', nargs='*', default=DEFAULT_TARGETS,
+                        help='Mutmut function patterns within the configured source scope; every pattern must match')
     args = parser.parse_args()
     executable = Path(sys.executable).parent / 'mutmut'
     if not executable.is_file():
@@ -54,11 +58,11 @@ def main():
         shutil.copytree(ROOT / 'skills/seo-scan/tests', work / 'skills/seo-scan/tests',
                         ignore=shutil.ignore_patterns('__pycache__'))
         shutil.copyfile(ROOT / 'scripts/mutation/pyproject.toml', work / 'pyproject.toml')
-        subprocess.run([str(executable), 'run', '--max-children', '4', args.target],
+        subprocess.run([str(executable), 'run', '--max-children', '4', *args.targets],
                        cwd=work, check=True)
         records = [json.loads(path.read_text())
                    for path in sorted((work / 'mutants/src').rglob('*.py.meta'))]
-        results, failures = check_results(records, args.target)
+        results, failures = check_results(records, args.targets)
         for name, code in failures.items():
             print('{}: unresolved (recorded exit {!r})'.format(name, code), flush=True)
             subprocess.run([str(executable), 'show', name], cwd=work, check=True)
