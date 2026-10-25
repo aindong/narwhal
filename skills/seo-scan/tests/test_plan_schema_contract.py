@@ -50,6 +50,8 @@ class TestPlanSchemaContract(unittest.TestCase):
 
     def test_emitted_inventory_and_action_fields_are_declared(self):
         action_properties = SCHEMA['properties']['actions']['items']['properties']
+        self.assertEqual(8, action_properties['likely_files'].get('maxItems'))
+        self.assertIs(True, action_properties['likely_files'].get('uniqueItems'))
         allowed_blockers = action_properties['automation_eligibility']['properties']['blockers']['items']['enum']
         for name, built in self.cases.items():
             with self.subTest(case=name, part='coverage'):
@@ -87,6 +89,16 @@ class TestPlanSchemaContract(unittest.TestCase):
             malformed = copy.deepcopy(self.cases['capped'])
             malformed['actions'][0]['automation_eligibility']['blockers'] = ['unrecognized_future_blocker']
             self.assertTrue(list(validator.iter_errors(malformed)))
+            for count in (2, 8, 9):
+                malformed = copy.deepcopy(self.cases['complete'])
+                owner = malformed['actions'][0]['likely_files'][0]
+                malformed['actions'][0]['likely_files'] = [dict(owner, path='owner-{}.html'.format(i))
+                                                          for i in range(count)]
+                if count == 2:
+                    malformed['actions'][0]['likely_files'][1] = copy.deepcopy(malformed['actions'][0]['likely_files'][0])
+                with self.subTest(invalid_owner_count=count):
+                    errors = list(validator.iter_errors(malformed))
+                    self.assertEqual(count != 8, bool(errors))
         dns.assert_not_called()
         connect.assert_not_called()
 

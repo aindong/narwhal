@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Remediation-plan schema enforces the producer's eight-candidate limit and
+  rejects duplicated owner objects. Behavioral regressions cover bounded,
+  distinct source suggestions, valid confidence/existence receipts, manual
+  artifacts, and generic head/content discovery across source formats.
 - Next.js homepage plans prioritize observed root page/index sources across
   default extensions, including JavaScript and `src/` projects. Missing or
   non-web target labels do not establish a homepage route; edit authority stays

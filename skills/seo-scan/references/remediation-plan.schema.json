@@ -38,6 +38,8 @@
           "proposed_change": {"type": "string"},
           "likely_files": {
             "type": "array",
+            "maxItems": 8,
+            "uniqueItems": true,
             "items": {
               "type": "object",
               "required": ["path", "exists", "confidence", "reason"],
