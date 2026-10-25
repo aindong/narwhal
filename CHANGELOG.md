@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Hugo plans recognize observed home/section `_index.md` branch-bundle sources
+  before unrelated capped content fallbacks, preserving plain/leaf candidates.
+  Missing branch files are not proposed for creation; custom URL/content layouts
+  still require manual ownership confirmation.
 - Nuxt plans recognize observed `app/pages/` root, direct and directory-index
   Vue sources alongside legacy `pages/`, before unrelated capped fallbacks.
   Missing alternatives are not suggested for creation; shared head priority,
