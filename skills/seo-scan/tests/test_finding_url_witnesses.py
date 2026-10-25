@@ -54,6 +54,12 @@ class TestFindingURLWitnesses(unittest.TestCase):
         two = dict(sample, urls=[BASE, BASE + 'docs/'])
         self.assertEqual(two, finding_urls.read({'url_sample': two, 'occurrences': 2}, BASE))
         self.assertIsNone(finding_urls.read({'url_sample': two, 'occurrences': 1}, BASE))
+        self.assertIsNone(finding_urls.read({'url_sample': two}, BASE))
+        for urls, count, omitted in (([BASE, BASE], 2, 0), ([None], 1, 0),
+                                      ([BASE + str(i) for i in range(6)], 6, 0),
+                                      ([BASE], 1, 0.0)):
+            invalid = dict(sample, urls=urls, omitted=omitted)
+            self.assertIsNone(finding_urls.read({'url_sample': invalid, 'count': count}, BASE))
 
     def test_origin_matching_keeps_scheme_ports_and_authority_distinct(self):
         self.assertTrue(finding_urls.same_origin_label('HTTPS://EXAMPLE.TEST:443/a', BASE))

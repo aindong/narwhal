@@ -170,6 +170,22 @@ class TestCrawlPageOwners(unittest.TestCase):
                 built = plan.build_plan(self.data, str(root))
                 action = next(a for a in built['actions'] if a['rule_id'] == RULE)
                 self.assertEqual({pricing, docs}, {o['path'] for o in action['likely_files']})
+                framework = built['framework']['name']
+                added_homes = []
+                for rel in plan.FRAMEWORK_CANDIDATES[framework]['content']:
+                    path = root / rel
+                    if path.exists():
+                        continue
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text('Healthy home', encoding='utf-8')
+                    added_homes.append(path)
+                files = [str(p.relative_to(root)) for p in root.rglob('*') if p.is_file()]
+                for artifact in ('content', 'image_alt'):
+                    owners = plan._witness_owners(root, files, framework, artifact,
+                                                  [BASE + 'pricing/', BASE + 'docs/'], [])
+                    self.assertEqual({pricing, docs}, {o['path'] for o in owners})
+                for path in added_homes:
+                    path.unlink()
                 metadata = copy.deepcopy(self.data)
                 row = next(r for r in metadata['crawl']['recurring'] if r['rule_id'] == RULE)
                 row.update(rule_id='technical.missing.title', title='Missing <title>')
