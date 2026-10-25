@@ -89,6 +89,7 @@ class TestCrawlSampleDiff(unittest.TestCase):
                     self.assertEqual(result, mcp_server._diff(json.dumps(old), json.dumps(new)))
                     self.assertEqual(original, (old, new))
                     self.assertEqual(2, invoke(old, new, '--require-comparable', '--fail-on-regression')[0])
+                    self.assertEqual(2, invoke(old, new, '--fail-on-regression')[0])
 
     def test_absent_legacy_samples_are_not_guessed(self):
         for crawl in (None, {}):
