@@ -276,6 +276,17 @@ def main(use_mcp=False):
                 if use_mcp:
                     assert audit_diff == mcp_tool('diff_reports', {
                         'old_json': json.dumps(audit_before), 'new_json': json.dumps(audit_after)}, root)
+                malformed = json.loads(json.dumps(audit_before))
+                malformed['crawl']['pages'].append(None)
+                (root / 'audit-malformed-sample.json').write_text(json.dumps(malformed), encoding='utf-8')
+                run(['diff', 'audit-malformed-sample.json', 'audit-after.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'audit-malformed-sample-diff.json'], expected=2)
+                malformed_diff = read('audit-malformed-sample-diff.json')
+                assert malformed_diff['comparison']['status'] == 'incomparable', malformed_diff
+                assert malformed_diff['score_delta'] is None and malformed_diff['resolved'] == [], malformed_diff
+                if use_mcp:
+                    assert malformed_diff == mcp_tool('diff_reports', {
+                        'old_json': json.dumps(malformed), 'new_json': json.dumps(audit_after)}, root)
                 legacy = json.loads(json.dumps(audit_before))
                 legacy['crawl'].pop('recurring')
                 (root / 'audit-unverified.json').write_text(json.dumps(legacy), encoding='utf-8')

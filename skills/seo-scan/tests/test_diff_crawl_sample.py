@@ -10,9 +10,9 @@ import diff_scan
 import mcp_server
 from lib.report import Report
 try:
-    from .test_diff_scope import invoke
+    from .test_diff_scope import invoke, FINDING
 except ImportError:
-    from test_diff_scope import invoke
+    from test_diff_scope import invoke, FINDING
 
 URL = 'https://example.test/'
 
@@ -69,10 +69,29 @@ class TestCrawlSampleDiff(unittest.TestCase):
         self.assert_withheld(audit([]), audit([URL]))
         self.assertEqual('comparable', diff_scan.diff_reports(audit([]), audit([]))['comparison']['status'])
 
-    def test_incomplete_legacy_samples_are_not_guessed_or_normalized(self):
-        for crawl in (None, {}, {'pages': None}, {'pages': {}}, {'pages': [None]},
-                      {'pages': [{}]}, {'pages': [{'url': ''}]}, {'pages': [{'url': 3}]},
-                      {'pages': [{'url': URL}, None]}):
+    def test_malformed_recorded_samples_cannot_prove_improvements(self):
+        for pages in (None, {}, [None], [{}], [{'url': ''}], [{'url': '  '}],
+                      [{'url': 3}], [{'url': URL}, None]):
+            before = audit([URL], 0)
+            before['homepage']['findings'] = [copy.deepcopy(FINDING)]
+            before['crawl']['pages'] = pages
+            after = audit([URL], 100)
+            for old, new in ((before, after), (after, before)):
+                with self.subTest(pages=pages, reverse=old is after):
+                    original = copy.deepcopy((old, new))
+                    result = diff_scan.diff_reports(old, new)
+                    self.assertEqual('incomparable', result['comparison']['status'])
+                    self.assertIsNone(result['score_delta'])
+                    self.assertIsNone(result['regression'])
+                    self.assertEqual([], result['resolved'])
+                    self.assertEqual([], result['added'])
+                    self.assertIn('malformed recorded crawl page sample', ' '.join(result['comparison']['reasons']))
+                    self.assertEqual(result, mcp_server._diff(json.dumps(old), json.dumps(new)))
+                    self.assertEqual(original, (old, new))
+                    self.assertEqual(2, invoke(old, new, '--require-comparable', '--fail-on-regression')[0])
+
+    def test_absent_legacy_samples_are_not_guessed(self):
+        for crawl in (None, {}):
             old = audit([URL]); old['crawl'] = crawl
             result = diff_scan.diff_reports(old, audit([URL + 'other']))
             self.assertEqual('comparable', result['comparison']['status'])

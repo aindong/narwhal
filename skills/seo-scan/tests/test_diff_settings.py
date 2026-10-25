@@ -178,7 +178,9 @@ class TestDiffSettings(unittest.TestCase):
         before = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': {'pages': [None, {'url': URL}]}}
         after = copy.deepcopy(before)
         after['crawl']['pages'] = [{'url': URL + '/other', 'scan_settings': SETTINGS}]
-        self.assertEqual('comparable', diff_scan.diff_reports(before, after)['comparison']['status'])
+        result = diff_scan.diff_reports(before, after)
+        self.assertEqual('incomparable', result['comparison']['status'])
+        self.assertFalse(any('Crawl setting' in reason for reason in result['comparison']['reasons']))
 
     def test_contradictory_duplicate_crawl_modes_are_not_last_wins(self):
         data = {'site': URL, 'overall_score': 100, 'homepage': configured(), 'crawl': {'pages': [

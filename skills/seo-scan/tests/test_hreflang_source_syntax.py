@@ -319,7 +319,7 @@ class TestHreflangSourceSyntax(unittest.TestCase):
         report = json.loads(page_report('/fr/', only=['content']).to_json())
         value = {'site': BASE, 'overall_score': report['score'], 'homepage': report, 'crawl': {
             'hreflang_policy_basis': hreflang.EXTRACTION_BASIS,
-            'pages': [{'hreflang_comparison_unverified': False, 'hreflang_extraction': receipt('/fr/')}]}}
+            'pages': [{'url': BASE, 'hreflang_comparison_unverified': False, 'hreflang_extraction': receipt('/fr/')}]}}
         self.assertEqual('comparable', diff_scan.diff_reports(value, copy.deepcopy(value))['comparison']['status'])
 
 

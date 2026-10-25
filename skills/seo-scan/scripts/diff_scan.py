@@ -101,6 +101,11 @@ def _comparison(o: dict, n: dict) -> dict:
     if o["kind"] != n["kind"]:
         reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
     samples = [_crawl_sample(item["crawl"]) for item in (o, n)]
+    for label, item, sample in zip(('Earlier', 'Later'), (o, n), samples):
+        crawl = item['crawl']
+        if isinstance(crawl, dict) and 'pages' in crawl and sample is None:
+            reasons.append(label + ' audit has a malformed recorded crawl page sample; '
+                           'its overall score is not comparable.')
     if all(sample is not None for sample in samples) and samples[0] != samples[1]:
         reasons.append("Recorded audit crawl page samples differ (exact URLs or multiplicities); "
                        "a changed page mix is not site-fix evidence.")
