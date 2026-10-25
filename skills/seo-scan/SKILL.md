@@ -427,10 +427,9 @@ report — close the loop (`/narwhal fix <url>` in Claude Code):
 1. Save a baseline: `python scripts/scan.py <url> --format json -o before.json`
    (or reuse a fresh audit JSON).
 2. Run `python scripts/plan.py before.json --repo . --format json -o plan.json`.
-   Review its likely owners, safety classes, conflicts, and coverage, then apply
-   minimal, framework-idiomatic edits. Before editing, capture a page scan of each
+   Review its likely owners, safety classes, conflicts, and coverage. Capture a page scan of each
    affected local preview route as `page-before.json` when available; use distinct
-   snapshot names for multiple pages. Use
+   snapshot names for multiple pages. Then apply minimal, framework-idiomatic edits. Use
    `generate_schema.py` for JSON-LD and `generate_llms.py` for llms.txt rather
    than hand-writing them.
 3. Re-scan the same local route (`--allow-private` for localhost) with matching
@@ -446,9 +445,11 @@ site-level signals (robots.txt, sitemap, HTTPS, canonical host, llms.txt) as
 deploy" with the re-scan commands. Without a pre-edit page baseline, a later
 preview is a current-state check, not measured improvement. Do not discount a
 regression or override a withheld/incomparable verdict to claim successful
-verification. Report scoped finding changes alongside failed or unverified overall checks. Audit
+verification. Report scoped finding changes alongside failed or unverified
+overall checks. Audit
 homepage findings and crawl-rule aggregate changes have separate scopes; a
-disappeared sampled rule does not prove each page was repaired. If the source is **not** in the workspace,
+disappeared sampled rule does not prove each page was repaired. If the source is
+**not** in the workspace,
 make no edits — give a per-finding fix plan instead. Findings unreachable from
 the repo (CDN/redirect config, real CWV) go in a "needs manual action" list.
 
