@@ -223,7 +223,11 @@ def _diff(old_json: str, new_json: str) -> dict:
     verdicts; missing/malformed samples remain unverified, not guessed to match.
     Repeated category/rule identities use worst observed severity and a stable
     representative; ``finding_identity`` discloses entry counts, not individual
-    instance matches. Recorded scores and regression-gate criteria remain.
+    instance matches. Audit ``crawl_rule_changes`` separately compares native
+    recurring rules only with matching recorded coverage and nonempty exact crawl
+    samples. New critical/high rules or escalations also trigger regression;
+    removed rules mean no longer observed in that sample, not per-page fixes.
+    Missing/unsupported rollups remain unverified. Recorded scores are unchanged.
     Malformed JSON or invalid consumed scores/findings raise bounded ValueError
     diagnostics instead of returning a diff; missing audit scores are not
     substituted with homepage scores. This is not full schema validation or

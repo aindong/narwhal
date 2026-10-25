@@ -12,8 +12,8 @@ Usage:
     python diff_scan.py before.json after.json --format json -o diff.json
     python diff_scan.py before.json after.json --fail-on-regression   # CI gate
 
-Accepts either `scan`/`audit --format json` output (the audit's homepage findings
-and overall score are used). Known mismatched/incomplete auditor scope or
+Accepts either `scan`/`audit --format json` output (audit homepage findings,
+overall score and separately qualified native crawl-rule aggregates). Known mismatched/incomplete auditor scope or
 truncated HTML does not yield improvement/resolution verdicts; CI gates exit 2.
 Legacy scope stays explicitly unknown, with compatible finding comparisons.
 """
@@ -293,16 +293,71 @@ def _index_findings(findings: list) -> dict:
     return indexed
 
 
+def _crawl_rule_changes(o, n, comparison):
+    """Compare native aggregate observations, never infer per-page resolutions."""
+    result = {'status': 'unverified', 'added': [], 'removed': [], 'worsened': [],
+              'improved': [], 'count_changed': [], 'regression': None,
+              'basis': 'native_category_rule_worst_severity_and_observation_totals_v1',
+              'scope': 'Recorded crawl aggregates only; removed means no longer observed in this sample, '
+                       'not a per-page fix or complete site coverage. Counts are finding observations.'}
+    samples = [_crawl_sample(item['crawl']) for item in (o, n)]
+    if comparison['status'] != 'comparable' or not samples[0] or samples[0] != samples[1]:
+        result['reason'] = 'Matching completed report coverage and nonempty exact crawl samples are required.'
+        return result
+    indexes = []
+    for item in (o, n):
+        rows = item['crawl'].get('recurring')
+        completed = recorded_scan_scope(item['meta'])[1]
+        if not isinstance(rows, list) or any(
+                not isinstance(row, dict)
+                or not isinstance(row.get('category'), str) or not row['category'].strip()
+                or row['category'] not in completed
+                or not isinstance(row.get('rule_id'), str) or not row['rule_id'].strip()
+                or not isinstance(row.get('title'), str)
+                or row.get('severity') not in ('critical', 'high', 'medium')
+                or type(row.get('count')) is not int or row['count'] < 1 for row in rows):
+            result['reason'] = 'Both recurring lists need native rule IDs, supported severities and positive observation counts.'
+            return result
+        representatives = _index_findings(rows)
+        index = {}
+        for key, row in representatives.items():
+            index[key] = {field: row[field] for field in ('category', 'rule_id', 'title', 'severity')}
+            index[key]['count'] = sum(r['count'] for r in rows if _key(r) == key)
+        indexes.append(index)
+    earlier, later = indexes
+    for key in sorted(set(earlier) | set(later)):
+        a, b = earlier.get(key), later.get(key)
+        if a is None:
+            result['added'].append(b)
+        elif b is None:
+            result['removed'].append(a)
+        else:
+            if a['severity'] != b['severity']:
+                field = 'worsened' if _worse(b['severity'], a['severity']) else 'improved'
+                result[field].append({'category': b['category'], 'rule_id': b['rule_id'],
+                                      'title': b['title'], 'from': a['severity'], 'to': b['severity']})
+            if a['count'] != b['count']:
+                result['count_changed'].append({'category': b['category'], 'rule_id': b['rule_id'],
+                                               'from': a['count'], 'to': b['count']})
+    result['status'] = 'compared'
+    result['regression'] = (any(row['severity'] in ('critical', 'high') for row in result['added'])
+                            or any(row['to'] in ('critical', 'high') for row in result['worsened']))
+    return result
+
+
 def diff_reports(old: dict, new: dict) -> dict:
     o, n = _normalize(old, 'Earlier report'), _normalize(new, 'Later report')
     comparison = _comparison(o, n)
+    crawl_changes = ({'crawl_rule_changes': _crawl_rule_changes(o, n, comparison)}
+                     if o['kind'] == n['kind'] == 'audit' else {})
     if comparison["status"] == "incomparable":
         # Absence from a narrower/unmeasured run is not evidence of resolution.
         return {"url": n["url"], "old_url": o["url"], "old_score": o["score"], "new_score": n["score"],
                 "score_delta": None, "added": [], "resolved": [], "worsened": [],
                 "improved": [], "unchanged": 0, "regression": None,
                 "new_critical_high": [], "comparison": comparison,
-                "not_compared": {"old_findings": len(o["findings"]), "new_findings": len(n["findings"])}}
+                "not_compared": {"old_findings": len(o["findings"]), "new_findings": len(n["findings"])},
+                **crawl_changes}
     oi = _index_findings(o['findings'])
     ni = _index_findings(n['findings'])
     okeys, nkeys = set(oi), set(ni)
@@ -338,9 +393,11 @@ def diff_reports(old: dict, new: dict) -> dict:
         "improved": improved,
         "unchanged": len(okeys & nkeys) - len(worsened) - len(improved),
         # Severe escalation matters even when other fixes offset its score cost.
-        "regression": score_dropped or bool(new_bad) or severe_escalation,
+        "regression": score_dropped or bool(new_bad) or severe_escalation or
+                      crawl_changes.get('crawl_rule_changes', {}).get('regression') is True,
         "new_critical_high": new_bad,
         "comparison": comparison,
+        **crawl_changes,
         'finding_identity': {
             'basis': 'category_rule_or_legacy_title_worst_severity_v1',
             'representative': 'Worst observed severity; equal-severity ties use sorted-key JSON lexical order.',
@@ -366,6 +423,8 @@ def _verdict(d: dict) -> str:
         escalated = sum(f['to'] in ('critical', 'high') for f in d['worsened'])
         if escalated:
             why.append(f"{escalated} existing finding(s) escalated to critical/high severity")
+        if d.get('crawl_rule_changes', {}).get('regression') is True:
+            why.append('new or escalated critical/high rule in the matching crawl sample')
         return "**Regressed** — " + ", ".join(why) + "."
     if d['worsened']:
         if delta > 0 or d['resolved'] or d['improved']:
@@ -376,6 +435,9 @@ def _verdict(d: dict) -> str:
                 'this lower-severity change alone does not trigger it.')
     if delta > 0 or d["resolved"] or d["improved"]:
         return "**Improved reported findings** — not proof of improved overall page health."
+    crawl = d.get('crawl_rule_changes', {})
+    if any(crawl.get(key) for key in ('added', 'removed', 'worsened', 'improved', 'count_changed')):
+        return '**Changed crawl-rule observations** — inspect the matching-sample aggregates below.'
     return "**No material change** since the previous run."
 
 
@@ -423,6 +485,11 @@ def render_markdown(d: dict) -> str:
         lines.append(f"- {label} settings: " + ("; ".join(facts) if facts else "not recorded") + ".")
     lines.extend("- " + reason for reason in comparison.get("reasons", []))
     lines.extend([comparison.get("basis", "Coverage was not recorded."), ""])
+    if 'crawl_rule_changes' in d:
+        receipt = json.dumps(d['crawl_rule_changes'], indent=2, ensure_ascii=True).replace('`', '\\u0060')
+        lines += ['## Recorded crawl-rule changes', '',
+                  'Homepage finding lists below remain separate from these aggregate observations.', '',
+                  '```json', receipt, '```', '']
     if status == "incomparable":
         counts = d["not_compared"]
         lines.append(f"_Not compared: {counts['old_findings']} earlier and {counts['new_findings']} later findings. "
