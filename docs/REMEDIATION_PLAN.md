@@ -176,6 +176,13 @@ count and occurrence-count policy. The count includes normalized findings/rollup
 not distinct pages or matched instances. Markdown discloses the reduction and
 points back to the original report; singleton actions omit this receipt.
 
+Repository coverage includes `file_inventory_walk_errors`: traversal failures
+counted by `os.walk`, with up to five failed-directory witnesses in warnings.
+Known traversal errors or a capped file inventory add
+`incomplete_repository_inventory` to viewport automation blockers. Available
+source candidates remain reviewable; zero recorded traversal errors does not
+certify all source contents or ignored directories.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.

@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner inventories record traversal errors with bounded directory witnesses.
+  Known traversal failures or capped inventories withhold automatic viewport
+  candidacy while preserving available source suggestions for review.
 - Repeated planner actions disclose their representative-selection basis and
   normalized observation count in JSON/MCP and Markdown. Counts are not distinct
   pages or matched instances; single-observation actions keep their compact form.
