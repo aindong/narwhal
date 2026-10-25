@@ -516,7 +516,7 @@ class TestBrief(unittest.TestCase):
         import brief
         you = self._pagedict(self.YOURS_HTML, "https://you.com/elsewhere")
         md = brief.render_markdown(brief.synthesize(you, [], self.GSC))
-        self.assertIn("no striking-distance queries for this page", md)
+        self.assertIn("no matching striking-distance queries were observed in the retrieved rows", md)
         self.assertNotIn("Structure-only brief", md)
 
     def test_topic_mode(self):
