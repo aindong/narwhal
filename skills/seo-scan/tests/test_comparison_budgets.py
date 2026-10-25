@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 import io
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -12,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import brief
 import gsc
 import compare
+import cli
 import mcp_server
 import scan
 from lib import http
@@ -39,6 +41,39 @@ def fixture():
 
 
 class TestComparisonBudgets(unittest.TestCase):
+    def test_brief_cli_keeps_requested_page_modes_and_transport_options(self):
+        for flags, rendered, timeout, private in (([], False, 20, False),
+                (['--render', '--timeout', '7', '--allow-private'], True, 7, True)):
+            with self.subTest(flags=flags), fixture() as calls, \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(0, cli.main(['brief', *URLS, '--no-config', '--format', 'json', *flags]))
+                data = json.loads(output.getvalue())
+                pages = [data['you'], *data['competitors']]
+                self.assertEqual(URLS, [p['url'] for p in pages])
+                self.assertEqual([rendered, rendered], [p['rendered'] for p in pages])
+                self.assertTrue(calls.call_args_list)
+                for call in calls.call_args_list:
+                    self.assertEqual(timeout, call.kwargs['timeout'])
+                    self.assertIs(private, call.kwargs['allow_private'])
+
+    def test_brief_local_preview_requires_opt_in_for_every_page(self):
+        urls = ['http://127.0.0.1/owner', 'http://127.0.0.1/rival']
+        def response(url, *args, **kwargs):
+            return http.Response(url, url, 200, {'content-type': 'text/html'}, DOM, 1)
+        with mock.patch.object(scan, 'gather_context', return_value={}), \
+                mock.patch.object(http, '_fetch_requests', side_effect=response) as transport, \
+                mock.patch.object(gsc, 'gather', side_effect=AssertionError('Preview queried account')):
+            self.assertIn('error', brief.run(urls[0], urls[1:]))
+            transport.assert_not_called()
+            data = brief.run(urls[0], urls[1:], allow_private=True, timeout=7)
+            self.assertNotIn('error', data)
+            pages = [data['you'], *data['competitors']]
+            self.assertEqual(urls, [p['url'] for p in pages])
+            self.assertEqual(urls, [c.args[0] for c in transport.call_args_list])
+            self.assertTrue(all(c.kwargs['allow_private'] is True for c in transport.call_args_list))
+            self.assertIn('error', mcp_server._brief(urls[0], urls[1:]))
+            self.assertEqual(2, transport.call_count)
+
     def test_compare_sdk_retries_partial_raw_or_baseline_coverage(self):
         for rendered in (False, True):
             with self.subTest(rendered=rendered), fixture() as calls:
