@@ -1159,8 +1159,9 @@ both current major lines.
 - **Graceful degradation.** Works with only the Python standard library; uses
   `requests`, `beautifulsoup4`/`lxml`, `trafilatura`, and `playwright`
   automatically when installed.
-- **SSRF-safe.** URLs that resolve to private, loopback, or link-local addresses
-  are blocked unless you explicitly pass `--allow-private`.
+- **SSRF-safe.** DNS checks reject private, loopback, link-local, shared IPv4
+  (`100.64.0.0/10`), IPv6 site-local and other non-global addresses unless you
+  explicitly pass `--allow-private`. Existing reserved/multicast checks remain.
 - **Fix-first output.** Reports lead with the highest-severity, highest-leverage
   changes — not a data dump.
 

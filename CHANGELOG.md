@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Default host checks reject shared IPv4 and IPv6 site-local addresses that
+  `is_private` does not cover. Mixed DNS answers and redirects retain the same
+  guard; the explicit private-host opt-in remains. No blocked endpoint is fetched
+  by the regression fixtures.
 - Mutation coverage includes literal URL dot-segment handling. Terminal-dot,
   repeated-separator and empty-root assertions catch four previously surviving
   mutations; the focused default gate now kills 57/57 mutants across three
