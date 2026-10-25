@@ -98,8 +98,9 @@ python3.12 -m venv .venv-mutation
 .venv-mutation/bin/python scripts/mutation_test.py
 ```
 
-The default gate covers `lib.links.http_check_state` using the shared
-sitemap/report/planner status matrix. Initially, 21 of 27 mutants were killed.
+The default gate covers `lib.links.http_check_state` using the complete sitemap
+response-state test module, including its shared report/planner matrix and MCP
+handoff. Initially, 21 of 27 mutants were killed.
 Six survived because the matrix omitted HTTP 300, 400 and 600; boundary
 assertions now kill all 27 without changing production behavior.
 
@@ -111,11 +112,15 @@ Mutmut function pattern, for example:
 .venv-mutation/bin/python scripts/mutation_test.py 'lib.links.x_http_check_state__mutmut_*'
 ```
 
-Configuration paths use `src/` for scanner scripts and `tests/` for their tests.
+Configuration paths use `src/` for scanner scripts and retain
+`skills/seo-scan/tests/` for tests and fixtures.
 Each run stages fresh temporary copies, ensuring tests import mutated source,
 leaving the working tree unchanged and avoiding stale cached results.
-Repository-relative fixture paths may need adapting when adding tests; a
-failing baseline stops the run.
+Repository-relative test/fixture paths remain usable, including the MCP planner's
+relative repository argument. Scanner imports still resolve to mutated `src/`,
+not a duplicate source copy beside the tests. Tests requiring other root-level
+assets still need explicit staging support: the runner copies scanner source and
+tests, not the whole repository. A failing baseline stops the run.
 
 Review each surviving diff printed by the gate. Strengthen assertions for
 observable behavior and rerun. Do not change correct behavior to improve the

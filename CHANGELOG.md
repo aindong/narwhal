@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Mutation runs preserve repository-relative test/fixture paths while importing
+  only the staged scanner source. The default gate now runs the full sitemap
+  response-state module, including MCP fixture access, without adapting tests.
 - Planner-generated link-check and sitemap-sample witnesses omit credential-like
   target/source labels using the existing marker rule. Explicit reasons retain
   bounded source positions, observation totals and response classifications;
