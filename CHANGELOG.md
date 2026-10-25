@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Malformed HTTP href findings retain bounded literal source witnesses and
+  route-aware review mappings, including legacy title-derived IDs. Syntax
+  omissions remain separate from destination failures, without extra probes
+  or changes to counts, severity or scoring. Credential-like href spellings
+  are conservatively omitted across source-anchor witness categories.
 - Anchor-text findings retain the first five source href/label witnesses and
   their total without probing destinations. Planner mappings send empty/generic
   labels to route-aware source review; generic-label advice is contextual rather

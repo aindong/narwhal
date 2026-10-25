@@ -673,7 +673,8 @@ ARTIFACT_RULES = (
 
 def classify_artifact(finding: dict) -> str:
     rid = finding["rule_id"].lower()
-    if rid in ('technical.links.with.no.anchor.text', 'technical.generic.anchor.text'):
+    if rid in ('technical.links.with.no.anchor.text', 'technical.generic.anchor.text',
+               'technical.links.invalid.url', 'technical.malformed.http.link.urls'):
         return 'content'
     if rid.startswith('technical.http.robots.'):
         return 'server_config'  # header owner, never an HTML robots-meta edit
@@ -892,6 +893,10 @@ READABILITY_REVIEW_GUIDANCE = (
 
 
 EDITORIAL_REVIEW_GUIDANCE = {
+    **dict.fromkeys(('technical.links.invalid.url', 'technical.malformed.http.link.urls'),
+        'Inspect the recorded href spellings in current source and confirm the intended destinations. '
+        'Correct verified host, IPv6 bracket or port syntax without guessing a new destination or '
+        'dropping parameters. Syntax rejection is not a failed HTTP request; verify destination behavior separately.'),
     'technical.links.with.no.anchor.text':
         'Review the recorded anchors, intended link labels and destination context. Add useful visible text '
         'or meaningful image alt text where appropriate; preserve valid accessible labeling. '

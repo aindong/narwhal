@@ -228,6 +228,18 @@ not keyword insertion or a promised ranking gain. Legacy reports retain their
 recorded evidence; missing witnesses are not reconstructed. Witness JSON escapes
 backticks reversibly for literal Markdown presentation.
 
+Malformed HTTP href findings also retain up to five original href witnesses
+and their occurrence total. Native `technical.links.invalid.url` and legacy
+`technical.malformed.http.link.urls` map to content-source review. Correct only
+confirmed syntax after establishing the intended destination; do not guess a
+replacement URL or drop parameters. Source syntax rejection is not a failed
+HTTP request or proof of a dead destination. Unassessed-base omissions remain
+separate, and missing legacy witnesses are not reconstructed. The shared source
+anchor formatter conservatively omits href values with credential-like `@` or
+percent/full-width marker spellings, including markers outside the authority:
+`href: null` and `href_omitted: credential_like_marker` disclose the omission.
+Counts remain intact; this is not a general secret detector.
+
 ## Compatibility
 
 Additive fields may appear in a `1.x` plan. Consumers must ignore unknown fields.
