@@ -12,6 +12,10 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner regressions verify the complete Markdown automation receipt for
+  eligible, blocked, combined-blocker and ownerless actions, including explicit
+  non-authorization wording. Focused mutations include these and inventory-error
+  checks; classification/output policy remains unchanged.
 - Plan owner and related-action path previews reuse literal code-span encoding,
   preserving filenames with backticks/Markdown punctuation instead of formatting
   fragments of them. Original JSON paths, source files and edit authority remain

@@ -132,6 +132,61 @@ class TestAutomationEligibility(unittest.TestCase):
     def test_safety_defaults_never_promote_a_new_artifact_to_automation(self):
         self.assertEqual(('manual_external', False), plan.safety_for('future_unrecognized_artifact'))
 
+    def test_markdown_receipts_expose_classification_blockers_and_authority_limits(self):
+        for name in ('a.txt', 'z.txt'):
+            (self.repo / name).write_text('Fixture', encoding='utf-8')
+        cases = (
+            ('eligible', None, False, []),
+            ('unknown_rule', None, False, ['unrecognized_structural_rule']),
+            ('partial', 206, False, ['known_incomplete_source_evidence']),
+            ('capped', None, True, ['incomplete_repository_inventory']),
+            ('combined', 206, True, ['unrecognized_structural_rule', 'incomplete_repository_inventory',
+                                    'known_incomplete_source_evidence']),
+        )
+        for name, status, capped, blockers in cases:
+            with self.subTest(case=name):
+                data = baseline()
+                if name in ('unknown_rule', 'combined'):
+                    data['findings'][0]['rule_id'] = 'technical.viewport.policy.review'
+                if status is not None:
+                    data['status'] = status
+                built = plan.build_plan(data, str(self.repo), max_files=2 if capped else 5000)
+                original = copy.deepcopy(built)
+                action = next(item for item in built['actions'] if item['artifact'] == 'viewport')
+                self.assertEqual(blockers, action['automation_eligibility']['blockers'])
+                text = plan.render_markdown(built)
+                line = next(line for line in text.splitlines() if line.startswith('- **Automation eligibility:**'))
+                self.assertIn('not edit authorization', line)
+                self.assertIn('inspect current source before editing', line)
+                if blockers:
+                    self.assertIn('withheld: ' + ', '.join(blockers), line)
+                    self.assertNotIn('## Safe candidates for automation', text)
+                    self.assertFalse(action['automation_eligibility']['eligible'])
+                else:
+                    self.assertIn('candidate.', line)
+                    self.assertNotIn('withheld:', line)
+                    self.assertIn('## Safe candidates for automation', text)
+                    self.assertTrue(action['automation_eligibility']['eligible'])
+                self.assertEqual(original, built)
+
+    def test_markdown_without_observed_owners_withholds_convention_and_ownerless_actions(self):
+        (self.repo / 'index.html').unlink()
+        package = self.repo / 'package.json'
+        package.write_text('{"dependencies":{"next":"*"}}', encoding='utf-8')
+        for layout, expected in (('convention_only', 'review_required'), ('ownerless', 'manual_external')):
+            if layout == 'ownerless':
+                package.unlink()
+            with self.subTest(layout=layout):
+                built = plan.build_plan(baseline(), str(self.repo))
+                action = next(item for item in built['actions'] if item['artifact'] == 'viewport')
+                self.assertEqual(expected, action['safety'])
+                self.assertFalse(action['automation_eligibility']['eligible'])
+                text = plan.render_markdown(built)
+                line = next(line for line in text.splitlines() if line.startswith('- **Automation eligibility:**'))
+                self.assertIn('withheld: no_existing_owner_candidate', line)
+                self.assertIn('not edit authorization', line)
+                self.assertNotIn('## Safe candidates for automation', text)
+
 
 if __name__ == '__main__':
     unittest.main()
