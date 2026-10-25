@@ -35,6 +35,10 @@ page-level workflow evidence, not real-site SEO gains or deployment proof.
 A subsequent HTTP 206 preview must leave the diff incomparable (gate exit 2),
 with no score delta/resolved fixes and a read-only, manual verification plan.
 
+Plan contract tests compare generated plans with the checked-in remediation-plan
+schema. Full JSON Schema validation runs in both MCP SDK CI environments using
+their existing dependencies; stdlib-only runs retain field/enum contract checks.
+
 ## Project layout
 
 ```

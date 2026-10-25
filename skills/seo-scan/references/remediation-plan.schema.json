@@ -59,7 +59,18 @@
             "properties": {
               "basis": {"const": "explicit_structural_rule_and_existing_candidate_v1"},
               "eligible": {"type": "boolean"},
-              "blockers": {"type": "array", "uniqueItems": true, "items": {"enum": ["unrecognized_structural_rule", "no_existing_owner_candidate", "known_incomplete_source_evidence"]}},
+              "blockers": {"type": "array", "uniqueItems": true, "items": {"enum": ["unrecognized_structural_rule", "no_existing_owner_candidate", "known_incomplete_source_evidence", "incomplete_repository_inventory"]}},
+              "scope": {"type": "string"}
+            },
+            "additionalProperties": false
+          },
+          "observation_selection": {
+            "type": "object",
+            "required": ["basis", "normalized_observations", "occurrences_basis", "scope"],
+            "properties": {
+              "basis": {"const": "worst_severity_then_sorted_json_v1"},
+              "normalized_observations": {"type": "integer", "minimum": 2},
+              "occurrences_basis": {"const": "maximum_recorded_count"},
               "scope": {"type": "string"}
             },
             "additionalProperties": false
@@ -84,7 +95,8 @@
         "named_mappings": {"type": "integer", "minimum": 0},
         "mapping_ratio": {"type": "number", "minimum": 0, "maximum": 1},
         "files_scanned": {"type": "integer", "minimum": 0},
-        "file_inventory_capped": {"type": "boolean"}
+        "file_inventory_capped": {"type": "boolean"},
+        "file_inventory_walk_errors": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": false
     },
