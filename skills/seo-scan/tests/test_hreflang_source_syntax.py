@@ -313,8 +313,12 @@ class TestHreflangSourceSyntax(unittest.TestCase):
     def test_crawl_all_rejected_annotations_stay_visible_and_not_clean_or_failed(self):
         response = http.Response(BASE, BASE, 200, {'content-type': 'text/html'}, source('/fr/'), 1)
         with mock.patch.object(scan, 'gather_context', return_value={}), \
-                mock.patch.object(http, 'fetch_text', return_value=''), mock.patch.object(http, 'fetch', return_value=response):
+                mock.patch.object(crawl_site, 'discover', return_value=[BASE]), \
+                mock.patch.object(http, 'fetch', return_value=response), \
+                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
             result = crawl_site.crawl(BASE, max_pages=1, concurrency=1, detect_dupes=False)
+        self.assertEqual(hreflang.EXTRACTION_BASIS,
+                         json.loads(crawl_site.render_json(result))['hreflang_policy_basis'])
         self.assertTrue(result['hreflang']['used'])
         self.assertEqual(1, result['hreflang']['pages_with_hreflang'])
         self.assertEqual([], result['hreflang']['missing_self'])
