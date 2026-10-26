@@ -269,8 +269,7 @@ def main(use_mcp=False):
                 pricing = site / 'pricing/index.html'
                 pricing.parent.mkdir()
                 pricing_html = html.replace('<title>Local workflow verification for Narwhal development</title>', '')
-                pricing_html = pricing_html.replace('</head>', VIEWPORT + '</head>').replace(
-                    'href="' + url + '"', 'href="' + pricing_url + '"')
+                pricing_html = pricing_html.replace('href="' + url + '"', 'href="' + pricing_url + '"')
                 pricing.write_text(pricing_html, encoding='utf-8')
                 (site / 'sitemap.xml').write_text(
                     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -294,6 +293,25 @@ def main(use_mcp=False):
                 assert source_bytes == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 row = next(r for r in audit_before['crawl']['recurring'] if r['rule_id'] == title_rule)
                 assert row['count'] == 1 and row['url_sample']['urls'] == [pricing_url], row
+                viewport_action = next(a for a in audit_plan['actions'] if a['rule_id'] == RULE)
+                assert [o['path'] for o in viewport_action['likely_files']] == ['pricing/index.html'], viewport_action
+                assert viewport_action['automation_eligibility']['eligible'] is True, viewport_action
+                assert viewport_action['automation_eligibility']['blockers'] == [], viewport_action
+                try:
+                    pricing.unlink()
+                    if use_mcp:
+                        ownerless_plan = mcp_tool('plan_remediation', {'report': audit_before, 'repo': 'site'}, root)
+                    else:
+                        run(['plan', 'audit-before.json', '--repo', str(site), '--format', 'json', '-o', 'ownerless-plan.json'])
+                        ownerless_plan = read('ownerless-plan.json')
+                    assert not pricing.exists() and not pricing.is_symlink(), 'Ownerless planning created source'
+                finally:
+                    pricing.write_bytes(source_bytes['pricing/index.html'])
+                ownerless = next(a for a in ownerless_plan['actions'] if a['rule_id'] == RULE)
+                assert ownerless['likely_files'] == [] and ownerless['manual_action'] is True, ownerless
+                assert ownerless['automation_eligibility']['eligible'] is False, ownerless
+                assert 'no_existing_owner_candidate' in ownerless['automation_eligibility']['blockers'], ownerless
+                assert source_bytes == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 pricing.write_text(pricing_html.replace('</head>',
                     '<title>Pricing and plans for local workflow verification</title></head>'), encoding='utf-8')
                 run(audit_options + ['-o', 'audit-after.json'])
@@ -347,6 +365,21 @@ def main(use_mcp=False):
                 assert read('audit-incomplete-scope-diff.json')['comparison']['status'] == 'incomparable'
                 assert all(page['scan_scope']['requested'] and set(page['scan_scope']['requested']) ==
                            set(page['scan_scope']['completed']) for page in audit_before['crawl']['pages'])
+                assert RULE in {r['rule_id'] for r in audit_after['crawl']['recurring']}
+                pricing.write_text(pricing.read_text(encoding='utf-8').replace('</head>', VIEWPORT + '</head>'), encoding='utf-8')
+                run(audit_options + ['-o', 'audit-viewport-after.json'])
+                viewport_after = read('audit-viewport-after.json')
+                assert RULE not in {r['rule_id'] for r in viewport_after['crawl']['recurring']}
+                run(['diff', 'audit-after.json', 'audit-viewport-after.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'audit-viewport-diff.json'])
+                viewport_diff = read('audit-viewport-diff.json')
+                assert viewport_diff['comparison']['status'] == 'comparable' and viewport_diff['score_delta'] > 0, viewport_diff
+                assert {r['rule_id'] for r in viewport_diff['crawl_rule_changes']['removed']} == {RULE}, viewport_diff
+                if use_mcp:
+                    assert viewport_diff == mcp_tool('diff_reports', {
+                        'old_json': json.dumps(audit_after), 'new_json': json.dumps(viewport_after)}, root)
+                print('Installed inner viewport cycle passed: observed pricing owner -> missing owner withheld automation '
+                      '-> explicit viewport edit -> recurring rule no longer observed. Local page proof only.')
                 # Removed crawl rules are sample observations, not individual page-resolution classifications.
                 print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
                       'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))
