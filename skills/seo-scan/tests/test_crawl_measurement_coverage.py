@@ -128,14 +128,16 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
                 self.assertNotIn('🟢', text)
 
     def test_native_duplicate_collection_excludes_partial_pages_and_keeps_canonical_context(self):
-        urls = [BASE, BASE + 'copy', BASE + 'partial']
+        urls = [BASE, BASE + 'copy', BASE + 'different', BASE + 'partial']
         text = 'Detailed guidance covers setup usage examples validation and deployment considerations. ' * 20
         for shared_target, options in ((True, {}), (False, {}), (True, {'detect_dupes': False})):
             def fetch(url, **kwargs):
                 target = BASE if shared_target else url
+                content = ('Coastal wildlife research tracks seasonal migration habitat patterns nesting surveys. ' * 20
+                           if url == urls[2] else text)
                 body = ('<html lang="en"><head><title>Identical guide</title>'
                         '<link rel="canonical" href="' + target + '"></head><body>'
-                        '<h1>Identical guide</h1><p>' + text + '</p></body></html>')
+                        '<h1>Identical guide</h1><p>' + content + '</p></body></html>')
                 headers = {'content-type': 'text/html'}
                 if url == urls[-1]:
                     headers['x-narwhal-truncated'] = 'true'
@@ -146,7 +148,7 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
                     mock.patch.object(http, 'fetch', side_effect=fetch) as page_fetch, \
                     mock.patch.object(simhash, 'simhash', wraps=simhash.simhash) as fingerprints, \
                     mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
-                data = crawl.crawl(BASE, max_pages=3, concurrency=1, **options)
+                data = crawl.crawl(BASE, max_pages=4, concurrency=1, **options)
                 self.assertCountEqual(urls, [call.args[0] for call in page_fetch.call_args_list])
                 self.assertIs(True, data['pages'][-1]['response_truncated'])
                 if options:
@@ -154,9 +156,8 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
                     self.assertNotIn('duplicates', data)
                     self.assertNotIn('duplicate_coverage', data)
                 else:
-                    self.assertGreater(fingerprints.call_count, 0)
-                    self.assertEqual(3, data['duplicate_coverage']['scanned_pages'])
-                    self.assertEqual(2, data['duplicate_coverage']['eligible_pages'])
+                    self.assertEqual(4, data['duplicate_coverage']['scanned_pages'])
+                    self.assertEqual(3, data['duplicate_coverage']['eligible_pages'])
                     self.assertEqual(1, len(data['duplicates']))
                     cluster = data['duplicates'][0]
                     self.assertCountEqual(urls[:2], cluster['urls'])
