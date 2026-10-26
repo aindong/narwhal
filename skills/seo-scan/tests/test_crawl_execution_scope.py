@@ -102,6 +102,24 @@ class TestCrawlExecutionScope(unittest.TestCase):
         self.assertEqual([False, False, True, False], [page['hard_fail'] for page in result['pages']])
         self.assertEqual(before, [page.meta for page in pages])
 
+    def test_crawl_json_retains_page_counts_scores_and_fractional_average(self):
+        pages = [Report('https://example.test/' + str(i), fetched_status=200) for i in range(3)]
+        severities = ('critical', 'high', 'medium', 'low', 'good')
+        for page, findings in zip(pages, (severities, ('low',), ('good',))):
+            for severity in findings:
+                page.add('technical', severity, 'Controlled ' + severity,
+                         rule_id='technical.controlled.' + severity)
+        before = [json.loads(page.to_json()) for page in pages]
+        result = json.loads(crawl_site.render_json(crawl_reports(pages)))
+        self.assertEqual([page.url for page in pages], [page['url'] for page in result['pages']])
+        self.assertEqual([78, 99, 100], [page['score'] for page in result['pages']])
+        self.assertEqual([dict.fromkeys(severities, 1),
+                          {'critical': 0, 'high': 0, 'medium': 0, 'low': 1, 'good': 0},
+                          {'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'good': 1}],
+                         [page['counts'] for page in result['pages']])
+        self.assertEqual(92.3, result['avg_score'])
+        self.assertEqual(before, [json.loads(page.to_json()) for page in pages])
+
     def test_crawl_preserves_primary_status_and_actual_rendering(self):
         pages = [Report('https://example.test/' + str(i), fetched_status=status, rendered=rendered,
                         hard_fail=failed) for i, (status, rendered, failed) in enumerate(
