@@ -44,6 +44,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_crawl_measurement_coverage.py::TestCrawlMeasurementCoverage::test_native_crawl_collects_graph_without_default_resource_probes",
   "skills/seo-scan/tests/test_sitemap_references.py::TestSitemapReferences::test_crawl_merges_context_evidence_and_retains_discovery_sample",
   "skills/seo-scan/tests/test_sitemap_references.py::TestSitemapReferences::test_crawl_does_not_multiply_shared_robots_counts_by_scanned_pages",
+  "skills/seo-scan/tests/test_crawl_measurement_coverage.py::TestCrawlMeasurementCoverage::test_native_duplicate_collection_excludes_partial_pages_and_keeps_canonical_context",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
