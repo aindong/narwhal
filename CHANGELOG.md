@@ -15,6 +15,8 @@ All notable changes to Narwhal are documented here. The format follows
 - Schema generation rejects duplicate keys in JSON-valued fields and native
   dictionary keys that collide in JSON, preventing silent field/price selection.
   Malformed JSON-like literal strings retain their existing interpretation.
+- MCP schema, diff and planner admission errors retain actionable diagnostics on
+  SDK 2.3+ using expected tool errors; direct Python calls keep ValueError.
 - Diff headlines disclose new lower-severity issues even at the score floor,
   and label simultaneous gains as mixed changes without changing regression gates.
   Headline improvement checks exclude removed `good` observations.

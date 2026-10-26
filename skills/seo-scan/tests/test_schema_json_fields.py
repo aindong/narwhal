@@ -159,6 +159,63 @@ class TestSchemaJsonFields(unittest.TestCase):
             mcp_server._schema('Unsupported', {})
         self.assertEqual('Article', mcp_server._schema('Article', {'headline': 'Next request'})['@type'])
 
+    def test_registered_admission_tools_preserve_diagnostics_when_sdk_present(self):
+        try:
+            server = mcp_server.build_server()
+        except ImportError:
+            self.skipTest('Optional MCP SDK is not installed')
+        self.assertEqual('narwhal', server.name)
+        try:
+            from mcp.server.fastmcp.exceptions import ToolError
+        except ImportError:
+            from mcp.server.mcpserver.exceptions import ToolError
+
+        async def exercise():
+            tools = {tool.name: tool for tool in await server.list_tools()}
+            tool = tools['generate_schema']
+            self.assertIn('TODO', tool.description)
+            definition = getattr(tool, 'inputSchema', None)
+            if definition is None:
+                definition = tool.input_schema
+            self.assertEqual({'type', 'fields'}, set(definition['required']))
+            self.assertEqual('object', definition['properties']['fields']['type'])
+            report = {'url': 'https://example.test', 'score': 80, 'findings': []}
+            cases = [
+                ('generate_schema', {'type': 'Product', 'fields': {'offers': '{"secret-token":99,"secret-token":9}'}},
+                 'duplicate', {'type': 'Article', 'fields': {'headline': 'Next request'}}, 'headline', 'Next request'),
+                ('diff_reports', {'old_json': '{"secret-token":99,"secret-token":9}', 'new_json': json.dumps(report)},
+                 'duplicate', {'old_json': json.dumps(report), 'new_json': json.dumps(report)}, 'score_delta', 0),
+                ('plan_remediation', {'report': dict(report, score='secret-token')},
+                 'finite', {'report': report, 'max_files': 1}, 'actions', []),
+            ]
+            for name, invalid, message, valid, key, expected in cases:
+                with self.subTest(tool=name):
+                    with self.assertRaisesRegex(ToolError, '(?i)' + message) as caught:
+                        await server.call_tool(name, invalid)
+                    self.assertNotIn('secret-token', str(caught.exception))
+                    self.assertLess(len(str(caught.exception)), 500)
+                    result = await server.call_tool(name, valid)
+                    if hasattr(result, 'model_dump'):
+                        wire = result.model_dump(by_alias=True)
+                    else:
+                        content, structured = result if isinstance(result, tuple) else (result, None)
+                        wire = {'content': [item.model_dump(by_alias=True) for item in content],
+                                'structuredContent': structured}
+                    generated = wire.get('structuredContent')
+                    if generated is None:
+                        generated = json.loads(next(item['text'] for item in wire['content'] if item['type'] == 'text'))
+                    self.assertEqual(expected, generated[key])
+            try:
+                from mcp.server.mcpserver.exceptions import UnexpectedToolError
+            except ImportError:
+                return  # Older SDKs do not distinguish unexpected tool failures.
+            with mock.patch.object(schema, 'build', side_effect=RuntimeError('secret-token')):
+                with self.assertRaises(UnexpectedToolError) as caught:
+                    await server.call_tool('generate_schema', {'type': 'Product', 'fields': {}})
+            self.assertNotIn('secret-token', str(caught.exception))
+
+        asyncio.run(exercise())
+
 
 if __name__ == '__main__':
     unittest.main()

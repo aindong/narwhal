@@ -277,6 +277,10 @@ JSON field admission, caller isolation and safe script embedding:
 This profile uses offline tests; the stdio recovery test additionally runs when
 the optional MCP SDK is installed. Record survivors separately from the mandatory
 CI gates, as with the other optional profiles.
+With the SDK installed, also target `mcp_server.x_build_server__mutmut_*` to
+check tool registration and recoverable schema/diff/planner admission diagnostics.
+Use `mcp==2.3.0` for that target: older SDKs expose ordinary `ValueError` messages
+too, so they cannot demonstrate the newer SDK's masking regression.
 
 Pass multiple quoted patterns to gate several functions in one fresh run. Every
 requested pattern must match at least one mutant; a valid target cannot mask an

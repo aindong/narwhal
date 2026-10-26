@@ -301,13 +301,29 @@ def build_server():
     try:
         # MCP Python SDK 1.x
         from mcp.server.fastmcp import FastMCP as ServerClass  # noqa: PLC0415
+        from mcp.server.fastmcp.exceptions import ToolError  # noqa: PLC0415
     except ImportError:
         # MCP Python SDK 2.x renamed the high-level server while retaining the
         # add_tool/list_tools/run surface used by this adapter.
         from mcp.server.mcpserver import MCPServer as ServerClass  # noqa: PLC0415
+        from mcp.server.mcpserver.exceptions import ToolError  # noqa: PLC0415
+
+    from functools import wraps
+
+    def admission_tool(fn):
+        @wraps(fn)
+        def call(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except ValueError as exc:
+                # These local validators use ValueError for expected input failures.
+                raise ToolError(str(exc)) from None
+        return call
 
     mcp = ServerClass("narwhal")
     for fn, name in _TOOLS:
+        if fn in (_schema, _diff, _plan):
+            fn = admission_tool(fn)
         mcp.add_tool(fn, name=name)
     return mcp
 
