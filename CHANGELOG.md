@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff CLI report files have a 50 MB byte-admission limit, checked before
+  decoding, comparison claims or output writes.
 - Planner report loading bounds the bytes read after opening, retaining the
   50 MB input limit when a file grows or changes after preflight.
 - The development mutation runner retains JSON gate receipts in CI artifacts

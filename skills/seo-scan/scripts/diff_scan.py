@@ -16,6 +16,7 @@ Accepts either `scan`/`audit --format json` output (audit homepage findings,
 overall score and separately qualified native crawl-rule aggregates). Known mismatched/incomplete auditor scope or
 truncated HTML does not yield improvement/resolution verdicts; CI gates exit 2.
 Legacy scope stays explicitly unknown, with compatible finding comparisons.
+CLI input files are limited to 50 MB each; overflow exits 2 before comparison.
 """
 
 from __future__ import annotations
@@ -35,6 +36,8 @@ from lib.report import recorded_image_weight_problem  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
 from lib.report_output import write_output as _write_output  # noqa: E402
+
+MAX_REPORT_BYTES = 50_000_000
 
 # Ordered worst -> best; lower index == more severe.
 SEVERITY = ("critical", "high", "medium", "low", "good")
@@ -595,11 +598,14 @@ def _decode_report_json(text: str, label='Report') -> dict:
 
 
 def _load(path: str, label='Report', input_stats=None) -> dict:
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, "rb") as fh:
         if input_stats is not None:
             input_stats.append(os.fstat(fh.fileno()))
         try:
-            text = fh.read()
+            raw = fh.read(MAX_REPORT_BYTES + 1)
+            if len(raw) > MAX_REPORT_BYTES:
+                raise ValueError(label + ' file exceeds the 50 MB safety limit.')
+            text = raw.decode('utf-8')
         except UnicodeError:
             raise ValueError(label + ' file must contain UTF-8 JSON.') from None
     return _decode_report_json(text, label)
@@ -607,7 +613,7 @@ def _load(path: str, label='Report', input_stats=None) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Diff two narwhal JSON reports (regression tracking)")
+        description="Diff two narwhal JSON reports (regression tracking; 50 MB per input file)")
     ap.add_argument("old", help="earlier report (scan/audit --format json)")
     ap.add_argument("new", help="later report to compare against it")
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
