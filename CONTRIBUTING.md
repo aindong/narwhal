@@ -158,7 +158,9 @@ every selected result to be an explicit pytest failure (exit 1); survivors,
 errors and incomplete results remain failures. A requested report starts as
 `not_completed`, so a failed baseline cannot leave a stale passing receipt.
 The report is overwritten on each parsed invocation; its parent directory must
-exist. Without `--report`, console output and gate behavior are unchanged.
+exist. Paths or filesystem links referring to the selected mutation configuration
+are rejected before writing. Without `--report`, console output and gate behavior
+are unchanged.
 
 CI retains the three mandatory gate receipts in the `mutation-results` artifact,
 including available receipts when a gate fails. A later skipped gate has no
