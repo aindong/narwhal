@@ -53,6 +53,8 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_server_range_response_does_not_establish_complete_html_coverage",
   "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_unsampled_probe_preserves_receipts_without_inventing_return_tags",
   "skills/seo-scan/tests/test_llms_resource.py::TestLlmsResponseEvidence::test_crawl_retains_shared_root_and_page_evidence_without_rescoring_uncertainty",
+  "skills/seo-scan/tests/test_server_partial_response.py::TestServerPartialResponse::test_live_partial_crawl_has_no_fingerprint_duplicate_or_relationship_claim",
+  "skills/seo-scan/tests/test_server_partial_response.py::TestServerPartialResponse::test_mixed_crawl_keeps_partial_receipts_on_their_own_pages",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
