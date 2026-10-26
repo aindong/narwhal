@@ -25,6 +25,7 @@ class TestGroupOverlaps(unittest.TestCase):
     def test_disjoint_candidates_keep_legacy_union_without_claiming_shared_ownership(self):
         rows = [action('a', candidate('a.html')), action('b', candidate('b.html'))]
         group = plan._groups(rows)[0]
+        self.assertEqual('group:shared_head_metadata', group['group_id'])
         self.assertEqual(['a.html', 'b.html'], group['likely_shared_files'])
         self.assertEqual([], group['candidate_file_overlaps'])
         self.assertIn('union of existing candidates', group['candidate_file_basis'])
@@ -53,7 +54,8 @@ class TestGroupOverlaps(unittest.TestCase):
         rows = [action('a', candidate('common.html')), action('b', candidate('common.html'))]
         expected = plan._groups(rows)
         manual = action('manual', candidate('common.html'), candidate('external.html'), safety='manual_external')
-        self.assertEqual(expected, plan._groups(rows + [manual]))
+        for ordered in itertools.permutations(rows + [manual]):
+            self.assertEqual(expected, plan._groups(list(ordered)))
         self.assertEqual(['a', 'b'], expected[0]['candidate_file_overlaps'][0]['rule_ids'])
 
     def test_markdown_labels_union_and_legacy_unknown_overlap_without_owner_claim(self):
