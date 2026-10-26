@@ -43,6 +43,19 @@ class TestDiffReadBudget(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, '(?i)utf-8'):
                     diff_scan._load(str(path))
 
+    def test_decoder_failures_keep_the_supplied_input_label(self):
+        for label in ('Earlier report', 'Later report'):
+            with self.subTest(label=label, error='invalid JSON'), \
+                    mock.patch('builtins.open', return_value=io.BytesIO(b'{')), \
+                    self.assertRaisesRegex(ValueError, label + ' JSON'):
+                diff_scan._load('controlled.json', label)
+            for error in (ValueError('controlled parser limit'), RecursionError('controlled nesting limit')):
+                with self.subTest(label=label, error=type(error).__name__), \
+                        mock.patch('builtins.open', return_value=io.BytesIO(b'{}')), \
+                        mock.patch.object(diff_scan.json, 'loads', side_effect=error), \
+                        self.assertRaisesRegex(ValueError, label + ' JSON'):
+                    diff_scan._load('controlled.json', label)
+
     def test_either_oversized_input_exits_before_comparison_or_output_changes(self):
         raw = json.dumps(report(['technical'])).encode('utf-8')
         for side in (None, 'Earlier report', 'Later report'):
