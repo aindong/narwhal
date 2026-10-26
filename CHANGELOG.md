@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner report files and diff JSON reject duplicate object keys before
+  choosing evidence, producing verdicts or writing output; errors request a new report.
 - Planner package-manifest reads enforce the 2 MB source-file budget after
   opening, withholding oversized dependency evidence even after stale preflight.
 - Rendering protects regular-file stdin snapshots from HTML/PDF output aliases,

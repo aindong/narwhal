@@ -36,6 +36,7 @@ from lib.report import recorded_image_weight_problem  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
 from lib.report_output import write_output as _write_output  # noqa: E402
+from lib.json_input import DuplicateKeyError, unique_object  # noqa: E402
 
 MAX_REPORT_BYTES = 50_000_000
 
@@ -590,7 +591,9 @@ def _decode_report_json(text: str, label='Report') -> dict:
     if not isinstance(text, str):
         raise ValueError(label + ' JSON input must be a string.')
     try:
-        return json.loads(text)
+        return json.loads(text, object_pairs_hook=unique_object)
+    except DuplicateKeyError:
+        raise ValueError(label + ' JSON contains duplicate object keys; regenerate the report.') from None
     except json.JSONDecodeError as exc:
         raise ValueError(f'{label} JSON is invalid at line {exc.lineno}, column {exc.colno}.') from None
     except (ValueError, RecursionError):

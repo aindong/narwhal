@@ -233,6 +233,7 @@ def _diff(old_json: str, new_json: str) -> dict:
     samples. New critical/high rules or escalations also trigger regression;
     removed rules mean no longer observed in that sample, not per-page fixes.
     Missing/unsupported rollups remain unverified. Recorded scores are unchanged.
+    Duplicate object keys are rejected rather than choosing a winning value.
     Malformed JSON or invalid consumed scores/findings raise bounded ValueError
     diagnostics instead of returning a diff; missing audit scores are not
     substituted with homepage scores. This is not full schema validation or
