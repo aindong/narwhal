@@ -21,6 +21,17 @@ def valid():
 
 
 class TestDiffInputContract(unittest.TestCase):
+    def test_decoder_rejects_non_text_with_bounded_labeled_diagnostics(self):
+        for value in (None, {}, [], 200, False, b'{"secret-token":200}'):
+            with self.subTest(type=type(value).__name__):
+                with self.assertRaises(ValueError) as stopped:
+                    diff_scan._decode_report_json(value, 'Earlier report')
+                message = str(stopped.exception)
+                self.assertIn('Earlier report', message)
+                self.assertIn('string', message.lower())
+                self.assertNotIn('secret-token', message)
+                self.assertLess(len(message), 300)
+
     def assert_rejected(self, bad):
         for old, new, label in ((bad, valid(), 'Earlier'), (valid(), bad, 'Later')):
             with self.subTest(label=label):
