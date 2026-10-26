@@ -853,6 +853,8 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
         return []
     if not path:
         if parsed.scheme in ('http', 'https') and parsed.netloc and url_path in ('', '/'):
+            if framework == 'plain_html':
+                return ['index.htm'] if 'index.htm' in files and 'index.html' not in files else []
             if framework == 'nextjs':
                 return [f'{stem}.{extension}' for extension in ('tsx', 'ts', 'jsx', 'js')
                         for stem in ('src/app/page', 'app/page', 'src/pages/index', 'pages/index')
@@ -872,7 +874,10 @@ def _route_candidates(target: str, framework: str, warnings=None, *, files=()) -
     slug = path.split("/")[-1]
     if framework == "plain_html":
         direct = [path] if not url_path.endswith('/') and path.lower().endswith(('.html', '.htm')) else []
-        return direct + [f"{path}.html", f"{path}/index.html"]
+        routes = direct + [f"{path}.html", f"{path}/index.html"]
+        if not any(rel in files for rel in routes):
+            routes += [rel for rel in (f'{path}.htm', f'{path}/index.htm') if rel in files]
+        return routes
     if framework == "nextjs":
         routes = [f"src/app/{path}/page.tsx", f"app/{path}/page.tsx",
                   f"src/pages/{path}.tsx", f"pages/{path}.tsx"]

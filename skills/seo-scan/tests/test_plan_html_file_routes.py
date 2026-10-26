@@ -13,6 +13,46 @@ from test_plan_route_priority import put, candidates
 
 
 class TestHtmlFileRoutes(unittest.TestCase):
+    def test_observed_htm_fallbacks_locate_home_and_extensionless_page_owners(self):
+        for target, rel in (('/', 'index.htm'), ('/pricing', 'pricing.htm'),
+                            ('/pricing/', 'pricing/index.htm')):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                owner = put(root, rel)
+                if target != '/':
+                    put(root, 'index.html')
+                original = owner.read_bytes()
+                for artifact in ('title', 'content', 'headings', 'image_alt'):
+                    result = candidates(root, 'plain_html', artifact, 'https://example.test' + target)
+                    self.assertEqual(rel, result[0]['path'])
+                    self.assertTrue(result[0]['exists'])
+                data = {'url': 'https://example.test' + target, 'findings': [
+                    {'rule_id': 'technical.missing.title', 'category': 'technical',
+                     'severity': 'high', 'title': 'Missing title'}]}
+                built = plan.build_plan(data, str(root))
+                self.assertEqual('plain_html', built['framework']['name'])
+                self.assertEqual(rel, built['actions'][0]['likely_files'][0]['path'])
+                with mock.patch.object(Path, 'cwd', return_value=root.parent), \
+                        mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                    received = mcp_server._plan(data, root.name)
+                self.assertEqual(built['actions'][0]['likely_files'], received['actions'][0]['likely_files'])
+                self.assertEqual(original, owner.read_bytes())
+
+    def test_htm_fallbacks_do_not_displace_html_or_propose_unobserved_files(self):
+        for target, html, htm in (('/', 'index.html', 'index.htm'),
+                                   ('/pricing', 'pricing.html', 'pricing.htm'),
+                                   ('/pricing/', 'pricing/index.html', 'pricing/index.htm')):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                put(root, html)
+                put(root, htm)
+                result = candidates(root, 'plain_html', 'title', 'https://example.test' + target)
+                self.assertEqual(html, result[0]['path'])
+                (root / html).unlink()
+                (root / htm).unlink()
+                self.assertNotIn(htm, plan._route_candidates('https://example.test' + target,
+                                                           'plain_html', files=[]))
+
     def test_html_htm_case_and_nested_literal_files_rank_before_homepage(self):
         for rel in ('pricing.html', 'pricing.htm', 'pricing.HTML', 'pricing.HtM', '.well-known/info.html', 'guides/café.html'):
             with self.subTest(rel=rel), tempfile.TemporaryDirectory() as tmp:
