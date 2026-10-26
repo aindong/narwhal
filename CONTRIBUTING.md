@@ -59,8 +59,14 @@ Explicitly malformed crawl page lists and contradictory recorded page counts mus
 block score/fix claims in installed CLI and MCP diffs, including regression-only gates.
 The separate crawl-rule diff must report the missing-title rule as no longer
 observed in the matching sample, through both CLI and optional MCP.
+The inner page also lacks a viewport declaration. Its native recurring finding
+must become an automation candidate only for that page's observed source.
+Temporarily removing the fixture source must withhold automation and leave an
+ownerless manual action despite the healthy homepage. After restoring the source,
+a separate explicit viewport edit must remove that recurring rule in a comparable
+audit diff; the earlier title edit alone must leave it present.
 With the optional MCP SDK installed, add `--mcp` to exercise the installed stdio
-server for both plans and all three diffs. Both SDK CI jobs run this mode and
+server for planning and comparisons. Both SDK CI jobs run this mode and
 require MCP diff output to match the CLI. Local scans use the CLI's explicit
 `--allow-private`; the MCP scan tool continues to require public URLs.
 
