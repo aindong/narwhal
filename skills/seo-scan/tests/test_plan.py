@@ -369,6 +369,11 @@ class TestCliAndMcp(unittest.TestCase):
         self.assertEqual("nextjs", result["framework"]["name"])
         self.assertLessEqual(result["coverage"]["files_scanned"], plan.MAX_REPO_FILES)
         self.assertEqual("<mcp-object>", result["provenance"]["report"])
+        with mock.patch("pathlib.Path.cwd", return_value=workspace / "nextjs"):
+            for limit in (0, 1):
+                limited = mcp_server._plan(load_report(), max_files=limit)
+                self.assertEqual(1, limited["coverage"]["files_scanned"])
+                self.assertTrue(limited["coverage"]["file_inventory_capped"])
 
     def test_mcp_tool_is_registered_and_documented(self):
         tools = {name: fn for fn, name in mcp_server._TOOLS}

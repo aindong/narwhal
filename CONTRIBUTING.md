@@ -281,6 +281,8 @@ With the SDK installed, also target `mcp_server.x_build_server__mutmut_*` to
 check tool registration and recoverable schema/diff/planner admission diagnostics.
 Use `mcp==2.3.0` for that target: older SDKs expose ordinary `ValueError` messages
 too, so they cannot demonstrate the newer SDK's masking regression.
+The same profile's `mcp_server.x__plan__mutmut_*` target checks the planner's
+relative-repository boundary and sanitized path diagnostics.
 
 Pass multiple quoted patterns to gate several functions in one fresh run. Every
 requested pattern must match at least one mutant; a valid target cannot mask an

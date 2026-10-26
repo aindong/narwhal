@@ -273,8 +273,13 @@ def _plan(report: dict, repo: str = ".", max_files: int = 5000) -> dict:
     except ValueError as exc:
         raise ValueError("MCP repo cannot escape the server working directory") from exc
     max_files = max(1, min(int(max_files), plan_mod.MAX_REPO_FILES))
-    return plan_mod.build_plan(report, str(candidate), report_source="<mcp-object>",
-                               max_files=max_files)
+    try:
+        return plan_mod.build_plan(report, str(candidate), report_source="<mcp-object>",
+                                   max_files=max_files)
+    except ValueError as exc:
+        if str(exc).startswith('Repository path '):
+            raise ValueError('MCP repository path must refer to an existing directory.') from None
+        raise
 
 
 # (function, public tool name) — names are what MCP clients see.

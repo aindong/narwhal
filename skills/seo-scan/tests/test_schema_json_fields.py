@@ -159,6 +159,20 @@ class TestSchemaJsonFields(unittest.TestCase):
             mcp_server._schema('Unsupported', {})
         self.assertEqual('Article', mcp_server._schema('Article', {'headline': 'Next request'})['@type'])
 
+    def test_invalid_mcp_repository_diagnostics_do_not_disclose_workspace(self):
+        report = {'url': 'https://example.test', 'score': 80, 'findings': []}
+        with tempfile.TemporaryDirectory(prefix='narwhal-private-workspace-') as directory:
+            workspace = Path(directory).resolve()
+            (workspace / 'secret-token.txt').write_text('fixture', encoding='utf-8')
+            with mock.patch('pathlib.Path.cwd', return_value=workspace):
+                for repo in ('missing-secret-token', 'secret-token.txt'):
+                    with self.subTest(repo=repo):
+                        with self.assertRaisesRegex(ValueError, '(?i)repository.*directory') as caught:
+                            mcp_server._plan(report, repo=repo)
+                        self.assertNotIn(str(workspace), str(caught.exception))
+                        self.assertNotIn('secret-token', str(caught.exception))
+                        self.assertLess(len(str(caught.exception)), 200)
+
     def test_registered_admission_tools_preserve_diagnostics_when_sdk_present(self):
         try:
             server = mcp_server.build_server()
@@ -205,6 +219,17 @@ class TestSchemaJsonFields(unittest.TestCase):
                     if generated is None:
                         generated = json.loads(next(item['text'] for item in wire['content'] if item['type'] == 'text'))
                     self.assertEqual(expected, generated[key])
+            with tempfile.TemporaryDirectory(prefix='narwhal-private-workspace-') as directory:
+                workspace = Path(directory).resolve()
+                (workspace / 'secret-token.txt').write_text('fixture', encoding='utf-8')
+                with mock.patch('pathlib.Path.cwd', return_value=workspace):
+                    for repo in ('missing-secret-token', 'secret-token.txt'):
+                        with self.subTest(repo=repo):
+                            with self.assertRaisesRegex(ToolError, '(?i)repository.*directory') as caught:
+                                await server.call_tool('plan_remediation', {'report': report, 'repo': repo})
+                            self.assertNotIn(str(workspace), str(caught.exception))
+                            self.assertNotIn('secret-token', str(caught.exception))
+                            self.assertLess(len(str(caught.exception)), 250)
             try:
                 from mcp.server.mcpserver.exceptions import UnexpectedToolError
             except ImportError:
