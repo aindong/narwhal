@@ -152,6 +152,20 @@ python3.12 -m venv .venv-mutation
 .venv-mutation/bin/python scripts/mutation_test.py
 ```
 
+Add `--report results.json` to retain selected mutant names and their raw exit
+codes, targets, Mutmut version and killed/total summary. `status: passed` requires
+every selected result to be an explicit pytest failure (exit 1); survivors,
+errors and incomplete results remain failures. A requested report starts as
+`not_completed`, so a failed baseline cannot leave a stale passing receipt.
+The report is overwritten on each parsed invocation; its parent directory must
+exist. Without `--report`, console output and gate behavior are unchanged.
+
+CI retains the three mandatory gate receipts in the `mutation-results` artifact,
+including available receipts when a gate fails. A later skipped gate has no
+receipt. Check the workflow's commit and conclusion alongside the artifact;
+receipts describe selected mutations, not proof that all behavior is correct.
+Artifacts follow the repository's retention settings.
+
 The default gate covers `lib.links.http_check_state`, `lib.links.is_broken`,
 `lib.urlpaths.remove_dot_segments` and both integer validators in `lib.budgets`:
 the complete sitemap response-state module exercises the report/planner matrix

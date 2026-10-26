@@ -1,4 +1,4 @@
-"""Run a fresh, bounded mutation gate without changing the working tree."""
+"""Run a fresh, bounded mutation gate without changing source files."""
 import argparse
 import fnmatch
 import json
@@ -41,9 +41,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, default=ROOT / 'scripts/mutation/pyproject.toml',
                         help='Mutmut TOML profile to copy into fresh staging (default: existing CI profile)')
+    parser.add_argument('--report', type=Path, help='Write selected raw exit codes and gate summary as JSON')
     parser.add_argument('targets', nargs='*', default=DEFAULT_TARGETS,
                         help='Mutmut function patterns within the configured source scope; every pattern must match')
     args = parser.parse_args()
+    if args.report:
+        args.report.write_text(json.dumps({'schema_version': 1, 'status': 'not_completed',
+                                          'targets': list(args.targets)}, indent=2) + '\n', encoding='utf-8')
     if not args.config.is_file():
         parser.error('Mutation configuration must be a file: ' + str(args.config))
     executable = Path(sys.executable).parent / 'mutmut'
@@ -70,6 +74,12 @@ def main():
         records = [json.loads(path.read_text())
                    for path in sorted((work / 'mutants/src').rglob('*.py.meta'))]
         results, failures = check_results(records, args.targets)
+        if args.report:
+            args.report.write_text(json.dumps({
+                'schema_version': 1, 'mutmut_version': installed_version, 'targets': list(args.targets),
+                'status': 'failed' if failures else 'passed',
+                'killed': len(results) - len(failures), 'total': len(results), 'results': results,
+            }, indent=2, sort_keys=True) + '\n', encoding='utf-8')
         for name, code in failures.items():
             print('{}: unresolved (recorded exit {!r})'.format(name, code), flush=True)
             subprocess.run([str(executable), 'show', name], cwd=work, check=True)

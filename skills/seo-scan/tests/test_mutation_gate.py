@@ -43,6 +43,9 @@ class TestMutationGate(unittest.TestCase):
                 args = ['mutation_test.py', 'target_*']
                 if custom:
                     args += ['--config', str(alternate)]
+                report = root / 'results.json'
+                if custom:
+                    args += ['--report', str(report)]
                 with mock.patch.object(gate, 'ROOT', root), \
                         mock.patch.object(gate.sys, 'argv', args), \
                         mock.patch.object(gate.sys, 'executable', str(root / 'bin/python')), \
@@ -51,8 +54,64 @@ class TestMutationGate(unittest.TestCase):
                         contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(0, gate.main())
                 invoked.assert_called_once()
+                if custom:
+                    receipt = json.loads(report.read_text(encoding='utf-8'))
+                    self.assertEqual('passed', receipt['status'])
+                    self.assertEqual((1, 1), (receipt['killed'], receipt['total']))
+                    self.assertEqual({'target_1': 1}, receipt['results'])
                 self.assertEqual('# Default profile\n', default.read_text(encoding='utf-8'))
                 self.assertEqual('# Focused profile\n', alternate.read_text(encoding='utf-8'))
+
+    def test_report_preserves_survivors_and_errors_without_weakening_the_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in ('skills/seo-scan/scripts', 'skills/seo-scan/tests', 'bin'):
+                (root / rel).mkdir(parents=True)
+            config = root / 'profile.toml'
+            config.write_text('# Fixture', encoding='utf-8')
+            (root / 'bin/mutmut').touch()
+            report = root / 'results.json'
+            results = {'target_killed': 1, 'target_survived': 0, 'target_error': 3,
+                       'target_incomplete': None, 'target_boolean': True}
+            def run(command, *, cwd, check):
+                if command[1] == 'run':
+                    meta = cwd / 'mutants/src/fixture.py.meta'
+                    meta.parent.mkdir(parents=True)
+                    meta.write_text(json.dumps({'exit_code_by_key': {**results, 'other': 1}}), encoding='utf-8')
+                else:
+                    self.assertEqual('show', command[1])
+            with mock.patch.object(gate, 'ROOT', root), \
+                    mock.patch.object(gate.sys, 'argv', ['mutation_test.py', '--config', str(config),
+                        '--report', str(report), 'target_*']), \
+                    mock.patch.object(gate.sys, 'executable', str(root / 'bin/python')), \
+                    mock.patch.object(gate, 'version', return_value='3.7.0'), \
+                    mock.patch.object(gate.subprocess, 'run', side_effect=run), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(1, gate.main())
+            receipt = json.loads(report.read_text(encoding='utf-8'))
+            self.assertEqual({'schema_version': 1, 'mutmut_version': '3.7.0', 'targets': ['target_*'],
+                              'status': 'failed', 'killed': 1, 'total': 5, 'results': results}, receipt)
+
+    def test_failed_baseline_replaces_old_pass_with_incomplete_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in ('skills/seo-scan/scripts', 'skills/seo-scan/tests', 'bin'):
+                (root / rel).mkdir(parents=True)
+            config = root / 'profile.toml'
+            config.write_text('# Fixture', encoding='utf-8')
+            (root / 'bin/mutmut').touch()
+            report = root / 'results.json'
+            report.write_text(json.dumps({'status': 'passed', 'killed': 999}), encoding='utf-8')
+            with mock.patch.object(gate, 'ROOT', root), \
+                    mock.patch.object(gate.sys, 'argv', ['mutation_test.py', '--config', str(config),
+                        '--report', str(report), 'target_*']), \
+                    mock.patch.object(gate.sys, 'executable', str(root / 'bin/python')), \
+                    mock.patch.object(gate, 'version', return_value='3.7.0'), \
+                    mock.patch.object(gate.subprocess, 'run', side_effect=gate.subprocess.CalledProcessError(1, ['mutmut'])), \
+                    self.assertRaises(gate.subprocess.CalledProcessError):
+                gate.main()
+            self.assertEqual({'schema_version': 1, 'status': 'not_completed', 'targets': ['target_*']},
+                             json.loads(report.read_text(encoding='utf-8')))
 
     def test_missing_or_directory_profile_fails_before_mutation_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
