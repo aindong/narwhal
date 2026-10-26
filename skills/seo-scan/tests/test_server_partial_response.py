@@ -124,6 +124,34 @@ class TestServerPartialResponse(unittest.TestCase):
         self.assertEqual(0,result['avg_score'])
         self.assertNotIn('hreflang',result)
 
+    def test_mixed_crawl_keeps_partial_receipts_on_their_own_pages(self):
+        leaf = URL + 'other/'
+        for supplied, partial in ((response(body=FULL), False), (response(206), True),
+                                  (response(ranged=True), True)):
+            def fetch(url, **kwargs):
+                resp = response(body=FULL) if url == URL else supplied
+                return http.Response(url, url, resp.status, dict(resp.headers), resp.text, 1)
+            with self.subTest(status=supplied.status, partial=partial), \
+                    mock.patch.object(scan, 'gather_context', return_value={}), \
+                    mock.patch.object(crawl_site, 'discover', return_value=[URL, leaf]), \
+                    mock.patch.object(http, 'fetch', side_effect=fetch), \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                result = crawl_site.crawl(URL, max_pages=2, concurrency=1)
+                pages = result['pages']
+                self.assertEqual([URL, leaf], [page['url'] for page in pages])
+                self.assertEqual([False, partial], [page['hard_fail'] for page in pages])
+                self.assertNotIn('response_partial', pages[0])
+                if partial:
+                    self.assertIs(True, pages[1]['response_partial'])
+                else:
+                    self.assertNotIn('response_partial', pages[1])
+                self.assertEqual([False, False], [page['response_truncated'] for page in pages])
+                self.assertEqual([200, supplied.status], [page['status'] for page in pages])
+                self.assertEqual(1 if partial else 2, result['duplicate_coverage']['eligible_pages'])
+                self.assertEqual(0 if partial else 1, len(result['duplicates']))
+                self.assertNotIn('hreflang', result)
+                self.assertNotIn('password', crawl_site.render_json(result))
+
     def test_ranged_response_planning_stays_manual_without_guessed_metadata_owners(self):
         report=scanned(response(ranged=True))
         with tempfile.TemporaryDirectory() as root:
