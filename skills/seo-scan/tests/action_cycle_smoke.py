@@ -253,6 +253,8 @@ def main(use_mcp=False):
                 audit_options = ['audit', url, '--allow-private', '--max-pages', '2', '--no-config', '--format', 'json']
                 run(audit_options + ['-o', 'audit-before.json'])
                 audit_before = read('audit-before.json')
+                assert all(type(page['status']) is int and page['status'] == 200
+                           and page['rendered'] is False for page in audit_before['crawl']['pages'])
                 source_bytes = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 if use_mcp:
                     audit_plan = mcp_tool('plan_remediation', {'report': audit_before, 'repo': 'site'}, root)

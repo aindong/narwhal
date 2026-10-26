@@ -411,6 +411,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
         truncated = rep.meta.get("response_truncated") is True or (
             isinstance(coverage, dict) and coverage.get("response_truncated") is True)
         pages.append({"url": u, "score": rep.score(), "hard_fail": bool(rep.hard_fail),
+                      "status": rep.fetched_status, "rendered": rep.rendered,
                       "response_truncated": truncated,
                       "js_comparison_unverified": bool(recorded_js_comparison_problem(rep.meta, for_score=True)),
                       "sitemap_discovery_unverified": bool(recorded_sitemap_discovery_problem(rep.meta, for_score=True)),

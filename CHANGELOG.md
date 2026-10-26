@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Crawl/audit page rows preserve primary acquisition status and actual rendering
+  flags, alongside existing failure/settings evidence. Inner-page rendering
+  contradictions remain visible to diff and planner validation after handoff.
 - Contradictory recorded actual-rendering flags withhold diff score/fix claims
   and planner automation. Matching flags, absent legacy flags, and requested
   rendering that falls back to served HTML retain their existing behavior.

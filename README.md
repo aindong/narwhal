@@ -804,6 +804,10 @@ cannot silently switch scoring or suppression when caller Config changes.
 Gathered crawl threshold overrides are detached before discovery and workers;
 the audit resolves its sitemap sample budget at entry. This does not freeze
 remote site content or guarantee identical crawl samples between runs.
+Crawl page rows retain the primary acquisition `status` and actual `rendered`
+flag alongside failure state and scan settings. A recorded status of 0 is not an
+HTTP response code. These fields preserve observations, not response provenance
+or complete execution proof; missing legacy fields are not inferred.
 Audits retain these settings for crawled pages and check common exact URLs too;
 different complete recorded crawl page samples block score/finding verdicts,
 including changed URL multiplicities. Page order does not matter. Exact recorded
