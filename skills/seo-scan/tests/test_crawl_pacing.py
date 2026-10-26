@@ -36,21 +36,24 @@ class Clock:
 
 
 class TestCrawlPacing(unittest.TestCase):
-    def run_crawl(self, concurrency, delay, clock, overlap=False):
+    def run_crawl(self, concurrency, delay, clock, overlap=False, urls=URLS):
         starts = []
-        barrier = threading.Barrier(3) if overlap else None
+        barrier = threading.Barrier(concurrency) if overlap else None
         def scan(url, **kwargs):
             starts.append(clock.monotonic())
             clock.scan_started.release()
             if barrier:
-                barrier.wait(timeout=3)  # all scans must enter before any can complete
+                try:
+                    barrier.wait(timeout=3)  # every worker enters before a wave can complete
+                except threading.BrokenBarrierError:
+                    self.fail('Requested concurrent page scans did not overlap.')
             return Report(url, fetched_status=200)
         with mock.patch.object(crawl.scanner, 'gather_context', return_value={}), \
-                mock.patch.object(crawl, 'discover', return_value=URLS), \
+                mock.patch.object(crawl, 'discover', return_value=urls), \
                 mock.patch.object(crawl.scanner, 'scan', side_effect=scan), \
                 mock.patch.object(crawl, 'time', SimpleNamespace(monotonic=clock.monotonic, sleep=clock.sleep)):
-            result = crawl.crawl(URL, concurrency=concurrency, delay=delay, max_pages=3)
-        self.assertEqual(3, result['pages_scanned'])
+            result = crawl.crawl(URL, concurrency=concurrency, delay=delay, max_pages=len(urls))
+        self.assertEqual(len(urls), result['pages_scanned'])
         return starts
 
     def test_parallel_starts_are_spaced_and_scans_can_overlap(self):
@@ -58,6 +61,14 @@ class TestCrawlPacing(unittest.TestCase):
         starts = self.run_crawl(3, .25, clock, overlap=True)
         self.assertEqual([0, .25, .5], starts)
         self.assertEqual([.25, .25], clock.sleeps)
+
+    def test_two_workers_overlap_and_preserve_requested_limit_and_spacing(self):
+        clock = Clock()
+        with mock.patch.object(crawl, 'ThreadPoolExecutor', wraps=crawl.ThreadPoolExecutor) as pools:
+            starts = self.run_crawl(2, .25, clock, overlap=True, urls=URLS + [URL + 'four'])
+        pools.assert_called_once_with(max_workers=2)
+        self.assertEqual([0, .25, .5, .75], starts)
+        self.assertEqual([.25, .25, .25], clock.sleeps)
 
     def test_first_scan_does_not_depend_on_clock_origin(self):
         clock = Clock(start=-10)
