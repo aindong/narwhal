@@ -120,6 +120,48 @@ class TestCrawlExecutionScope(unittest.TestCase):
         self.assertEqual(92.3, result['avg_score'])
         self.assertEqual(before, [json.loads(page.to_json()) for page in pages])
 
+    def test_crawl_keeps_unknown_or_failed_hreflang_sources_unassessed(self):
+        base, target = 'https://example.test/', 'https://example.test/fr/'
+        def page(url, targets):
+            body = '<html><head>' + ''.join('<link rel="alternate" hreflang="fr" href="' +
+                   href + '">' for href in targets) + '</head><body>Guide</body></html>'
+            receipt = {}
+            alts = hreflang.extract(htmlx.parse(body, url), url, diagnostics=receipt)
+            observation = hreflang.source_observation(
+                http.Response(url, url, 200, {'content-type': 'text/html'}, body, 1), url)
+            return Report(url, fetched_status=200, meta={'hreflang': alts,
+                          'hreflang_extraction': receipt, 'hreflang_source_observation': observation})
+        for state in ('unrecorded', 'failed', 'truncated', 'observed_empty', 'reciprocal'):
+            with self.subTest(state=state):
+                source = page(base, (base, target))
+                targets = () if state == 'observed_empty' else (base, target)
+                if state in ('unrecorded', 'failed', 'truncated'):
+                    targets += (target + 'unobserved/',)
+                alternate = page(target, targets)
+                if state == 'unrecorded':
+                    alternate.meta.pop('hreflang_source_observation')
+                elif state == 'failed':
+                    alternate.hard_fail = True
+                    alternate.fetched_status = 503
+                elif state == 'truncated':
+                    alternate.meta['response_truncated'] = True
+                before = copy.deepcopy([source.meta, alternate.meta])
+                with mock.patch.object(http, 'fetch', side_effect=AssertionError('No probe request')):
+                    result = json.loads(crawl_site.render_json(crawl_reports([source, alternate])))
+                cluster = result['hreflang']
+                unknown = state in ('unrecorded', 'failed', 'truncated')
+                self.assertEqual(1 if unknown else 0, cluster['unassessed_pairs'])
+                self.assertEqual(0 if unknown else (1 if state == 'observed_empty' else 2),
+                                 cluster['checked_pairs'])
+                self.assertEqual([{'page': base, 'target': target, 'lang': 'fr'}]
+                                 if state == 'observed_empty' else [], cluster['missing_return'])
+                self.assertEqual(0, cluster['probed'])
+                if state == 'unrecorded':
+                    self.assertEqual({'target': target, 'status': 'unrecorded'},
+                                     cluster['sampled_source_observations'][1])
+                    self.assertNotIn('hreflang_source_observation', result['pages'][1])
+                self.assertEqual(before, [source.meta, alternate.meta])
+
     def test_crawl_preserves_primary_status_and_actual_rendering(self):
         pages = [Report('https://example.test/' + str(i), fetched_status=status, rendered=rendered,
                         hard_fail=failed) for i, (status, rendered, failed) in enumerate(
