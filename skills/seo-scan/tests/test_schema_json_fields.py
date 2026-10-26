@@ -88,7 +88,7 @@ class TestSchemaJsonFields(unittest.TestCase):
         for value in (float('nan'), float('inf'), {'price': float('-inf')}, {1, 2}, cycle,
                       '\ud800', {'\ud800': 'invalid key'}):
             with self.subTest(value_type=type(value).__name__):
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(ValueError, '(?i)JSON-compatible'):
                     schema.build('Product', {'offers': value})
         self.assertIn('TODO', schema.build('Product', {})['offers']['price'])
 
@@ -140,6 +140,14 @@ class TestSchemaJsonFields(unittest.TestCase):
                         self.assertIs(type(value), type(generated[key]))
                     rejected = await session.call_tool('generate_schema', {'type': 'Unsupported', 'fields': {}})
                     self.assertTrue(rejected.model_dump(by_alias=True)['isError'])
+                    ambiguous = await session.call_tool('generate_schema', {
+                        'type': 'Product', 'fields': {'offers': '{"secret-token":99,"secret-token":9}'}})
+                    wire = ambiguous.model_dump(by_alias=True)
+                    self.assertTrue(wire['isError'])
+                    diagnostic = ' '.join(item['text'] for item in wire['content'] if item['type'] == 'text')
+                    self.assertIn('duplicate', diagnostic.lower())
+                    self.assertNotIn('secret-token', diagnostic)
+                    self.assertLess(len(diagnostic), 500)
                     again = node(await session.call_tool('generate_schema', {'type': 'Article', 'fields': {'headline': 'Still running'}}))
                     self.assertEqual('Still running', again['headline'])
 

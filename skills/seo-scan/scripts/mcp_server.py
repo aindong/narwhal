@@ -148,6 +148,7 @@ def _schema(type: str, fields: dict) -> dict:
 
     Returns an independent JSON-LD object; inspect values/TODOs before publishing.
     Unsupported template types and non-JSON/nonfinite values raise ValueError.
+    JSON-valued strings with duplicate keys and native key collisions are rejected.
     """
     import generate_schema as schema_mod
     if type not in schema_mod.TEMPLATES:

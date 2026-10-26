@@ -1,0 +1,13 @@
+# Opt-in schema generator profile; target changed functions explicitly.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/generate_schema.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_schema_duplicate_keys.py",
+  "skills/seo-scan/tests/test_schema_json_fields.py",
+  "skills/seo-scan/tests/test_schema_script_embedding.py",
+  "skills/seo-scan/tests/test_tools.py::TestSchemaGenerator",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]
