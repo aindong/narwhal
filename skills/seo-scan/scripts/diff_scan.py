@@ -469,14 +469,22 @@ def _verdict(d: dict) -> str:
         if d.get('crawl_rule_changes', {}).get('regression') is True:
             why.append('new or escalated critical/high rule in the matching crawl sample')
         return "**Regressed** — " + ", ".join(why) + "."
+    has_improvement = (delta > 0 or any(f['severity'] != 'good' for f in d['resolved'])
+                       or bool(d['improved']))
     if d['worsened']:
-        if delta > 0 or d['resolved'] or d['improved']:
+        if has_improvement:
             return ('**Mixed reported finding changes** — severity worsened alongside other '
                     'reported improvements; inspect both before claiming a fix.')
         return ('**Worsened reported severity** — review the changes below. The regression flag '
                 'also catches score drops, new critical/high findings and escalations to critical/high; '
                 'this lower-severity change alone does not trigger it.')
-    if delta > 0 or d["resolved"] or d["improved"]:
+    if any(f['severity'] != 'good' for f in d['added']):
+        if has_improvement:
+            return ('**Mixed reported finding changes** — new actionable findings are present; '
+                    'inspect them alongside the reported changes before claiming a fix.')
+        return ('**New reported findings** — review the added issues below. '
+                'This lower-severity change alone does not trigger the regression gate.')
+    if has_improvement:
         return "**Improved reported findings** — not proof of improved overall page health."
     crawl = d.get('crawl_rule_changes', {})
     if any(crawl.get(key) for key in ('added', 'removed', 'worsened', 'improved', 'count_changed')):

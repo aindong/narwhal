@@ -4,6 +4,7 @@ source_paths = ["src/"]
 only_mutate = ["src/diff_scan.py", "src/crawl_site.py", "src/lib/json_input.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_diff_new_finding_verdicts.py",
   "skills/seo-scan/tests/test_diff_label_previews.py",
   "skills/seo-scan/tests/test_report_duplicate_keys.py",
   "skills/seo-scan/tests/test_diff_read_budget.py",
