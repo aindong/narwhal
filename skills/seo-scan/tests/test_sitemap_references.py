@@ -1,6 +1,7 @@
 """Rejected discovered sitemap URLs do not abort usable site measurements."""
 
 import json
+import copy
 import sys
 import unittest
 from dataclasses import asdict
@@ -15,6 +16,7 @@ import plan
 import validate_sitemap
 from lib import http, sitemap as sm
 from lib.report import Report
+from lib.sitemap_discovery import Discovery
 
 BASE = 'https://example.test/'
 INDEX = BASE + 'sitemap.xml'
@@ -198,6 +200,44 @@ class TestSitemapReferences(unittest.TestCase):
                                              'index_locations': -1, 'secret': 'password'})
         self.assertEqual({'basis': 'absolute_http_url_syntax', 'rejected': {'robots_directives': 2}}, receipt)
         self.assertIn('not HTTP failures', sm.reference_note(receipt))
+
+    def test_crawl_merges_context_evidence_and_retains_discovery_sample(self):
+        known = BASE + 'known'
+        orphans = [BASE + 'orphan-one', BASE + 'orphan-two']
+        sitemap_urls = [known] + orphans
+        discovery = Discovery('crawl_candidates')
+        with mock.patch.object(http, 'fetch_bytes', return_value=(xml('urlset', sitemap_urls + [BAD] * 3).encode(), None)):
+            discovery.read(INDEX, allow_private=False, timeout=1)
+        receipt = discovery.receipt()
+        context = {'sitemap_references': sm.reference_diagnostics({
+            'robots_directives': 2, 'index_locations': 1})}
+        original = copy.deepcopy((context, receipt))
+        def discover(*args, diagnostics=None, coverage=None, discovered_sitemap=None, **kwargs):
+            if diagnostics is not None:
+                diagnostics.update({'robots_directives': 1, 'page_locations': 3})
+            if coverage is not None:
+                coverage.update(receipt)
+            if discovered_sitemap is not None:
+                discovered_sitemap.extend(sitemap_urls)
+            return [BASE] + sitemap_urls
+        def scan_page(url, **kwargs):
+            return Report(url, fetched_status=200,
+                          meta={'links': [{'url': known, 'internal': True}] if url == BASE else []})
+        with mock.patch.object(crawl_site.scanner, 'gather_context', return_value=context), \
+                mock.patch.object(crawl_site, 'discover', side_effect=discover), \
+                mock.patch.object(crawl_site.scanner, 'scan', side_effect=scan_page) as scanned, \
+                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+            result = json.loads(crawl_site.render_json(crawl_site.crawl(
+                BASE, max_pages=2, concurrency=1, detect_dupes=False)))
+        self.assertEqual([BASE, known], [call.args[0] for call in scanned.call_args_list])
+        self.assertEqual({'robots_directives': 2, 'index_locations': 1, 'page_locations': 3},
+                         result['sitemap_references']['rejected'])
+        self.assertEqual(receipt, result.get('sitemap_discovery'))
+        self.assertEqual(3, result['sitemap_candidates'])
+        self.assertEqual(2, result['pages_scanned'])
+        self.assertIs(True, result['graph']['orphans']['checked'])
+        self.assertEqual(set(orphans), set(result['graph']['orphans']['candidates']))
+        self.assertEqual(original, (context, receipt))
 
     def test_crawl_does_not_multiply_shared_robots_counts_by_scanned_pages(self):
         body = '<html><title>Reference fixture</title><h1>Fixture</h1><a href="/valid">Valid</a></html>'
