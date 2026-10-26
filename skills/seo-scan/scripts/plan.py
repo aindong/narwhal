@@ -1525,7 +1525,8 @@ def render_markdown(plan: dict) -> str:
     f = plan["framework"]
     c = plan["coverage"]
     lines = [
-        f"# Narwhal Remediation Plan — {plan['target']}", "",
+        "# Narwhal Remediation Plan", "",
+        f"**Target:** {_literal_preview_code(' '.join(plan['target'].split()))}", "",
         f"**Framework:** {f['name']} ({round(100 * f['confidence'])}% confidence)  ·  "
         f"**Actions:** {len(plan['actions'])}  ·  **Mapping coverage:** {round(100 * c['mapping_ratio'])}%",
         "", "_Read-only plan: inspect proposed owners and values before applying edits._", "",
@@ -1591,8 +1592,8 @@ def render_markdown(plan: dict) -> str:
                                    f"{receipt['normalized_observations']} normalized observations; equal-severity ties use "
                                    "sorted-key JSON order. Occurrences retain the maximum recorded count, not a sum or "
                                    "matched page instances. Consult the original report for other observations.")
-            lines += [f"### {action['severity'].upper()} — {display_title}", "",
-                      f"- **Rule:** `{action['rule_id']}`",
+            lines += [f"### {action['severity'].upper()} — {_literal_preview_code(' '.join(display_title.split()))}", "",
+                      f"- **Rule:** {_literal_preview_code(' '.join(action['rule_id'].split()))}",
                       *scope_lines,
                       f"- **Likely owner:** {owners}",
                       f"- **Change:** {action['proposed_change']}", ""]
@@ -1635,7 +1636,7 @@ def render_markdown(plan: dict) -> str:
             lines.append(f"- **{conflict['conflict_id']}** — {conflict['reason']}")
         lines.append("")
     if plan["warnings"]:
-        lines += ["## Coverage warnings", ""] + [f"- {w}" for w in plan["warnings"]] + [""]
+        lines += ["## Coverage warnings", ""] + [f"- {_literal_preview_code(' '.join(w.split()))}" for w in plan["warnings"]] + [""]
     return "\n".join(lines).rstrip() + "\n"
 
 

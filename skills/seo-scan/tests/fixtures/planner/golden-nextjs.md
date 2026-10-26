@@ -1,4 +1,6 @@
-# Narwhal Remediation Plan — https://example.test/guides/widget
+# Narwhal Remediation Plan
+
+**Target:** `https://example.test/guides/widget`
 
 **Framework:** nextjs (86% confidence)  ·  **Actions:** 9  ·  **Mapping coverage:** 100%
 
@@ -12,7 +14,7 @@ Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace pla
 
 ## Review required
 
-### HIGH — Missing meta description
+### HIGH — `Missing meta description`
 
 - **Rule:** `technical.missing.meta.description`
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
@@ -52,7 +54,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### HIGH — Missing <title>
+### HIGH — `Missing <title>`
 
 - **Rule:** `technical.missing.title`
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
@@ -92,7 +94,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### MEDIUM — No structured data (JSON-LD)
+### MEDIUM — `No structured data (JSON-LD)`
 
 - **Rule:** `schema.no.structured.data.json.ld`
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
@@ -130,7 +132,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### MEDIUM — Images missing alt text
+### MEDIUM — `Images missing alt text`
 
 - **Rule:** `technical.images.missing.alt.text`
 - **Likely owner:** `app/guides/widget/page.tsx` (in file inventory), `app/layout.tsx` (in file inventory), `app/page.tsx` (not in file inventory); additional candidates in JSON: 5
@@ -170,7 +172,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### MEDIUM — No canonical URL
+### MEDIUM — `No canonical URL`
 
 - **Rule:** `technical.no.canonical.url`
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
@@ -210,7 +212,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### LOW — Incomplete Open Graph tags
+### LOW — `Incomplete Open Graph tags`
 
 - **Rule:** `content.incomplete.open.graph.tags`
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
@@ -252,7 +254,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 
 ## Apply, then verify after deploy
 
-### MEDIUM — No robots.txt found
+### MEDIUM — `No robots.txt found`
 
 - **Rule:** `technical.no.robots.txt.found`
 - **Likely owner:** `app/robots.ts` (not in file inventory), `public/robots.txt` (not in file inventory), `src/app/robots.ts` (not in file inventory)
@@ -274,7 +276,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### MEDIUM — No XML sitemap found
+### MEDIUM — `No XML sitemap found`
 
 - **Rule:** `technical.no.xml.sitemap.found`
 - **Likely owner:** `app/sitemap.ts` (not in file inventory), `public/sitemap.xml` (not in file inventory), `src/app/sitemap.ts` (not in file inventory)
@@ -296,7 +298,7 @@ narwhal scan --format json -o after.json -- https://example.test/guides/widget  
 narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ```
 
-### LOW — No llms.txt
+### LOW — `No llms.txt`
 
 - **Rule:** `geo.no.llms.txt`
 - **Likely owner:** `public/llms.txt` (not in file inventory)

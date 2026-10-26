@@ -218,6 +218,12 @@ in JSON only; Markdown directs readers to the calibrated guidance instead of
 reintroducing unsupported legacy advice. Evidence
 previews retain the same bound and literal-block behavior.
 
+Report URL labels, action titles, rule IDs and coverage warnings use literal
+single-line Markdown previews, with whitespace collapsed for display. Imported
+markup cannot become extra headings, links or HTML through those labels. The
+original strings remain unchanged in plan JSON; this does not authenticate them
+or make their contents execution instructions.
+
 Native empty/generic anchor-text rules map to content-source review, with
 route-aware candidates and no automatic-edit eligibility. New scanner evidence
 retains up to five observed href/label pairs and the total source-anchor count;
