@@ -68,18 +68,22 @@ ownerless manual action despite the healthy homepage. After restoring the source
 a separate explicit viewport edit must remove that recurring rule in a comparable
 audit diff; the earlier title edit alone must leave it present.
 With the optional MCP SDK installed, add `--mcp` to exercise the installed stdio
-server for schema field admission, planning and comparisons. Both SDK CI jobs run this mode and
-require MCP diff output to match the CLI. Local scans use the CLI's explicit
-`--allow-private`; the MCP scan tool continues to require public URLs.
+server for schema field admission, planning and comparisons. All three SDK CI
+jobs run this mode and require MCP diff output to match the CLI. Local scans use
+the CLI's explicit `--allow-private`; the MCP scan tool requires public URLs.
+One persistent installed session must reject ambiguous schema/diff JSON and
+invalid planner paths/reports, then accept a corrected request after each error.
+Diagnostics remain bounded, invalid repository paths do not disclose the server
+workspace, and corrected plans retain the native page's observed source owner.
 
 The installed `service_opt_in_smoke.py` check runs isolated from repository
 imports, with account collectors mocked and sockets blocked. It verifies that
 configured credentials do not enable default audit/brief service calls and
 that explicit brief CLI/Python/MCP opt-in remains available; it does not test
-live OAuth/API availability. Packaging and both MCP SDK CI jobs run this check.
+live OAuth/API availability. Packaging and all MCP SDK CI jobs run this check.
 
 Plan contract tests compare generated plans with the checked-in remediation-plan
-schema. Full JSON Schema validation runs in both MCP SDK CI environments using
+schema. Full JSON Schema validation runs in all MCP SDK CI environments using
 their existing dependencies; stdlib-only runs retain field/enum contract checks.
 
 ## Project layout
