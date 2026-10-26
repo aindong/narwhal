@@ -32,6 +32,16 @@ class CodeText(HTMLParser):
 
 
 class TestLiteralPlanPaths(unittest.TestCase):
+    def test_route_conventions_preserve_literal_spaces_and_edge_letters(self):
+        for framework, url_path, rel in (
+                ('plain_html', '/pricing guide', 'pricing guide.htm'),
+                ('plain_html', '/XML', 'XML.htm'),
+                ('hugo', '/guides/projectX', 'content/guides/projectX.md'),
+                ('jekyll', '/Xdocs/projectX', 'Xdocs/projectX.md')):
+            with self.subTest(framework=framework, path=url_path):
+                self.assertIn(rel, plan._route_candidates('https://example.test' + url_path,
+                                                         framework, files=[rel]))
+
     def test_owner_and_group_paths_survive_markdown_punctuation(self):
         for rel in ('app/layout`_invented_`.tsx', 'app/layout``_invented_``.tsx',
                     'app/layout[ghost](#anchor).tsx', 'app/layout`', '`layout.tsx'):
