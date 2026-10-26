@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Render CLI admits at most 50 MB of UTF-8 Markdown from files or stdin before
+  HTML/PDF rendering and output delivery.
 - Diff CLI report files have a 50 MB byte-admission limit, checked before
   decoding, comparison claims or output writes.
 - Planner report loading bounds the bytes read after opening, retaining the
