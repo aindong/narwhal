@@ -67,6 +67,41 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
                     link_head.assert_not_called()
                     self.assertNotIn('links', data)
 
+    def test_failed_native_pages_do_not_break_link_checks_or_invent_outgoing_targets(self):
+        child = BASE + 'failed'
+        for status, head_status in ((404, 404), (503, 503), (0, 0), (503, 200)):
+            error = 'Controlled transport failure' if status == 0 else None
+            def fetch(url, **kwargs):
+                self.assertIn(url, (BASE, child))
+                body = ('<html><title>Guide</title><h1>Guide</h1><a href="/failed">Child</a></html>'
+                        if url == BASE else '<a href="https://unobserved.test/">Unusable markup</a>')
+                return http.Response(url, url, 200 if url == BASE else status,
+                                     {'content-type': 'text/html'}, body, 1,
+                                     error=error if url == child else None)
+            with self.subTest(status=status, head_status=head_status), \
+                    mock.patch.object(crawl.scanner, 'gather_context', return_value={}), \
+                    mock.patch.object(crawl, 'discover', return_value=[BASE, child]), \
+                    mock.patch.object(http, 'fetch', side_effect=fetch) as fetched, \
+                    mock.patch.object(http, 'head', return_value=(head_status, error)) as head, \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                data = crawl.crawl(BASE, max_pages=2, concurrency=1, check_links=True, detect_dupes=False)
+                self.assertCountEqual([BASE, child], [call.args[0] for call in fetched.call_args_list])
+                self.assertEqual([False, True], [page['hard_fail'] for page in data['pages']])
+                self.assertEqual(status, data['pages'][1]['status'])
+                self.assertEqual([], data['pages'][1]['scan_scope']['completed'])
+                head.assert_called_once_with(child, timeout=8, allow_private=False)
+                self.assertEqual(1, data['links']['unique_links'])
+                self.assertEqual(1, data['links']['checked'])
+                observation = {'url': child, 'status': head_status, 'error': error,
+                               'internal': True, 'sources': [BASE]}
+                self.assertEqual([observation] if head_status == 0 or head_status >= 400 else [],
+                                 data['links']['broken'])
+                self.assertEqual(int(head_status >= 400), data['links']['coverage']['broken'])
+                self.assertEqual(int(head_status == 200), data['links']['coverage']['successful_2xx'])
+                self.assertEqual(int(head_status == 0), data['links']['coverage']['unverified'])
+                self.assertEqual([observation] if head_status == 0 else [], data['links']['unverified'])
+                self.assertEqual(int(head_status == 0), data['links']['coverage']['request_failures'])
+
     def test_zero_targets_are_not_a_green_pass(self):
         data = result()
         data['links'], head = checked([])
