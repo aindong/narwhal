@@ -47,6 +47,11 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_crawl_measurement_coverage.py::TestCrawlMeasurementCoverage::test_native_duplicate_collection_excludes_partial_pages_and_keeps_canonical_context",
   "skills/seo-scan/tests/test_malformed_anchor_links.py::TestMalformedAnchorLinks::test_crawl_reports_omissions_without_fabricating_dead_links",
   "skills/seo-scan/tests/test_document_base_links.py::TestDocumentBaseLinks::test_crawl_keeps_unassessed_base_visible_without_invalid_url_key_error",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_changed_final_identity_is_unassessed_and_does_not_seed_other_probes",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_complete_reciprocal_sample_remains_observed_without_reprobes",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_unavailable_partial_and_missing_identity_snapshots_stay_unassessed",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_server_range_response_does_not_establish_complete_html_coverage",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_unsampled_probe_preserves_receipts_without_inventing_return_tags",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]
