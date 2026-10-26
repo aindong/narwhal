@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff Markdown keeps imported target/title/category labels literal across all
+  finding transitions, retaining original JSON values and comparison verdicts.
 - Planner Markdown keeps imported labels and coverage warnings literal, so they
   cannot create headings, links or raw HTML; original JSON values remain intact.
 - Planner source mapping recognizes observed `.htm` homepage and extensionless
