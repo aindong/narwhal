@@ -96,10 +96,16 @@ class TestCrawlRuleDiff(unittest.TestCase):
                 self.assertIsInstance(receipt['reason'], str)
                 self.assertTrue(receipt['reason'])
 
-    def test_medium_additions_and_count_growth_do_not_invent_severe_regression(self):
+    def test_nonregressing_crawl_changes_keep_an_explicit_sample_headline(self):
         for old, new in ((report([]), report([row('medium')])),
+                         (report([row()]), report([])),
+                         (report([row('high')]), report([row('medium')])),
                          (report([row()]), report([row(count=2)]))):
-            self.assertFalse(diff_scan.diff_reports(old, new)['regression'])
+            result = diff_scan.diff_reports(old, new)
+            self.assertFalse(result['regression'])
+            self.assertEqual(([], [], [], []),
+                             (result['added'], result['resolved'], result['worsened'], result['improved']))
+            self.assertIn('Changed crawl-rule observations', diff_scan._verdict(result))
 
     def test_every_supported_severity_addition_and_transition_obeys_the_gate(self):
         severities = ('critical', 'high', 'medium')

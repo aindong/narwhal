@@ -102,6 +102,30 @@ class TestNewFindingVerdicts(unittest.TestCase):
                 self.assertIn(expected, diff_scan._verdict(result))
                 self.assertNotIn('Improved reported findings', diff_scan._verdict(result))
 
+    def test_worsening_and_new_issues_are_both_disclosed(self):
+        before = native(first='low')
+        for count in (20, 19, 1):
+            with self.subTest(count=count):
+                after = native(['medium', 'good'], count=count, first='medium')
+                result = diff_scan.diff_reports(before, after)
+                self.assertEqual(1, len(result['worsened']))
+                self.assertFalse(result['regression'])
+                if count >= 19:
+                    self.assertEqual(0, result['score_delta'])
+                else:
+                    self.assertGreater(result['score_delta'], 0)
+                verdict = diff_scan._verdict(result)
+                expected = 'New findings and worsened severity' if count == 20 else 'Mixed reported finding changes'
+                self.assertIn(expected, verdict)
+                self.assertIn('new actionable findings', verdict.lower())
+                self.assertIn('severity increases', verdict.lower())
+                self.assertEqual(0, cli(before, after, '--fail-on-regression', '--require-comparable')[0])
+        good_only = diff_scan.diff_reports(before, native(['good'], first='medium'))
+        self.assertIn('Worsened reported severity', diff_scan._verdict(good_only))
+        severe = native(['high'], first='medium')
+        self.assertIn('**Regressed**', diff_scan._verdict(diff_scan.diff_reports(before, severe)))
+        self.assertEqual(1, cli(before, severe, '--fail-on-regression', '--require-comparable')[0])
+
     def test_severe_additions_and_incomparability_keep_verdict_and_gate_priority(self):
         before = native()
         for severity in ('high', 'critical'):
