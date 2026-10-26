@@ -98,6 +98,24 @@ def main(use_mcp=False):
             def read(name):
                 return json.loads((root / name).read_text(encoding='utf-8'))
 
+            offers = '[{"price":9},{"price":99}]'
+            generated = json.loads(run(['schema', 'Product', '--field', 'name=Widget',
+                                        '--field', 'offers=' + offers, '--raw']).stdout)
+            assert generated['@context'] == 'https://schema.org'
+            assert generated['offers'] == json.loads(offers)
+            duplicate = '{"secret-token":99,"secret-token":9}'
+            for mode in ([], ['--raw']):
+                rejected = run(['schema', 'Product', '--field', 'offers=' + duplicate, *mode], expected=2)
+                assert not rejected.stdout
+                assert 'duplicate' in rejected.stderr.lower()
+                assert 'secret-token' not in rejected.stderr
+            if use_mcp:
+                diagnostic = mcp_tool('generate_schema', {'type': 'Product', 'fields': {'offers': duplicate}},
+                                      root, expected_error=True)
+                assert 'duplicate' in diagnostic.lower() and 'secret-token' not in diagnostic
+                generated = mcp_tool('generate_schema', {'type': 'Product', 'fields': {'offers': offers}}, root)
+                assert generated['offers'] == json.loads(offers)
+
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             try:

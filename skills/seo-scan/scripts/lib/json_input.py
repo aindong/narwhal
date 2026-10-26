@@ -1,4 +1,4 @@
-"""Strict object-key admission for saved report JSON, without rewriting values."""
+"""Strict object-key admission for JSON input, without rewriting values."""
 
 
 class DuplicateKeyError(ValueError):

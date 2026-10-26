@@ -36,6 +36,8 @@ verification captures a separate generated local baseline before the edit,
 preserves both baselines, and resolves only that issue in the paired local diff.
 The original-target template is also exercised against this intentional local
 fixture; it does not establish deployment proof.
+Before scanning, isolated installed schema calls must preserve distinct offers
+and reject duplicate JSON keys without emitting either raw or wrapped artifacts.
 The fixture uses a non-default 6 MB HTML budget and requires all generated
 page scans to retain it.
 Malformed scope, HTTP-status and response-completeness fixtures must withhold automation
@@ -66,7 +68,7 @@ ownerless manual action despite the healthy homepage. After restoring the source
 a separate explicit viewport edit must remove that recurring rule in a comparable
 audit diff; the earlier title edit alone must leave it present.
 With the optional MCP SDK installed, add `--mcp` to exercise the installed stdio
-server for planning and comparisons. Both SDK CI jobs run this mode and
+server for schema field admission, planning and comparisons. Both SDK CI jobs run this mode and
 require MCP diff output to match the CLI. Local scans use the CLI's explicit
 `--allow-private`; the MCP scan tool continues to require public URLs.
 
@@ -263,6 +265,24 @@ input admission and source/output preservation:
 .venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/render.toml \
   'render_report.x__read_markdown__mutmut_*'
 ```
+
+The optional [schema generator profile](scripts/mutation/schema.toml) checks
+JSON field admission, caller isolation and safe script embedding:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/schema.toml \
+  'generate_schema.x_build__mutmut_*' 'generate_schema.x__coerce__mutmut_*'
+```
+
+This profile uses offline tests; the stdio recovery test additionally runs when
+the optional MCP SDK is installed. Record survivors separately from the mandatory
+CI gates, as with the other optional profiles.
+With the SDK installed, also target `mcp_server.x_build_server__mutmut_*` to
+check tool registration and recoverable schema/diff/planner admission diagnostics.
+Use `mcp==2.3.0` for that target: older SDKs expose ordinary `ValueError` messages
+too, so they cannot demonstrate the newer SDK's masking regression.
+The same profile's `mcp_server.x__plan__mutmut_*` target checks the planner's
+relative-repository boundary and sanitized path diagnostics.
 
 Pass multiple quoted patterns to gate several functions in one fresh run. Every
 requested pattern must match at least one mutant; a valid target cannot mask an

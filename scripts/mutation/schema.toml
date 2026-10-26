@@ -1,0 +1,16 @@
+# Opt-in schema generator profile; target changed functions explicitly.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/generate_schema.py", "src/mcp_server.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_schema_duplicate_keys.py",
+  "skills/seo-scan/tests/test_schema_json_fields.py",
+  "skills/seo-scan/tests/test_schema_script_embedding.py",
+  "skills/seo-scan/tests/test_tools.py::TestSchemaGenerator",
+  "skills/seo-scan/tests/test_plan.py::TestCliAndMcp::test_mcp_plan_rejects_absolute_and_parent_paths",
+  "skills/seo-scan/tests/test_plan.py::TestCliAndMcp::test_mcp_plan_is_bounded_and_read_only",
+  "skills/seo-scan/tests/test_plan_input_validation.py::TestPlanInputValidation::test_mcp_rejects_the_same_evidence_without_mutation",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]

@@ -211,8 +211,12 @@ class TestEnvLoader(unittest.TestCase):
 class TestSchemaGenerator(unittest.TestCase):
     def test_required_placeholder(self):
         node = generate_schema.build("Product", {})
+        self.assertEqual(node["@context"], "https://schema.org")
         self.assertEqual(node["@type"], "Product")
         self.assertIn("TODO", node["name"])
+        self.assertIn("required", node["name"])
+        self.assertIn("TODO", node["description"])
+        self.assertIn("recommended", node["description"])
         self.assertIn("TODO", node["offers"]["priceCurrency"])
         self.assertIn("TODO", node["offers"]["availability"])
 
@@ -221,7 +225,7 @@ class TestSchemaGenerator(unittest.TestCase):
         self.assertEqual(node["headline"], "Hi")
 
     def test_unknown_type_raises(self):
-        with self.assertRaises(SystemExit):
+        with self.assertRaisesRegex(SystemExit, '--list'):
             generate_schema.build("NotAType", {})
 
 class TestGscAnalysis(unittest.TestCase):

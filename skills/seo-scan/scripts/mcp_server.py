@@ -148,6 +148,7 @@ def _schema(type: str, fields: dict) -> dict:
 
     Returns an independent JSON-LD object; inspect values/TODOs before publishing.
     Unsupported template types and non-JSON/nonfinite values raise ValueError.
+    JSON-valued strings with duplicate keys and native key collisions are rejected.
     """
     import generate_schema as schema_mod
     if type not in schema_mod.TEMPLATES:
@@ -272,8 +273,13 @@ def _plan(report: dict, repo: str = ".", max_files: int = 5000) -> dict:
     except ValueError as exc:
         raise ValueError("MCP repo cannot escape the server working directory") from exc
     max_files = max(1, min(int(max_files), plan_mod.MAX_REPO_FILES))
-    return plan_mod.build_plan(report, str(candidate), report_source="<mcp-object>",
-                               max_files=max_files)
+    try:
+        return plan_mod.build_plan(report, str(candidate), report_source="<mcp-object>",
+                                   max_files=max_files)
+    except ValueError as exc:
+        if str(exc).startswith('Repository path '):
+            raise ValueError('MCP repository path must refer to an existing directory.') from None
+        raise
 
 
 # (function, public tool name) — names are what MCP clients see.
@@ -300,13 +306,29 @@ def build_server():
     try:
         # MCP Python SDK 1.x
         from mcp.server.fastmcp import FastMCP as ServerClass  # noqa: PLC0415
+        from mcp.server.fastmcp.exceptions import ToolError  # noqa: PLC0415
     except ImportError:
         # MCP Python SDK 2.x renamed the high-level server while retaining the
         # add_tool/list_tools/run surface used by this adapter.
         from mcp.server.mcpserver import MCPServer as ServerClass  # noqa: PLC0415
+        from mcp.server.mcpserver.exceptions import ToolError  # noqa: PLC0415
+
+    from functools import wraps
+
+    def admission_tool(fn):
+        @wraps(fn)
+        def call(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except ValueError as exc:
+                # These local validators use ValueError for expected input failures.
+                raise ToolError(str(exc)) from None
+        return call
 
     mcp = ServerClass("narwhal")
     for fn, name in _TOOLS:
+        if fn in (_schema, _diff, _plan):
+            fn = admission_tool(fn)
         mcp.add_tool(fn, name=name)
     return mcp
 

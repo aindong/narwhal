@@ -19,6 +19,11 @@ import argparse
 import json
 import sys
 
+try:
+    from .lib.json_input import DuplicateKeyError, unique_object
+except ImportError:  # standalone script
+    from lib.json_input import DuplicateKeyError, unique_object
+
 CONTEXT = "https://schema.org"
 
 # type -> (required, recommended). Kept in sync with audit_schema.py.
@@ -85,7 +90,10 @@ def build(type_name: str, fields: dict, include_recommended: bool = True) -> dic
             node[k] = _coerce(v)
     try:
         # Detach caller fields and shared placeholders, enforcing JSON value types.
-        return json.loads(json.dumps(node, allow_nan=False, ensure_ascii=False).encode('utf-8'))
+        return json.loads(json.dumps(node, allow_nan=False, ensure_ascii=False).encode('utf-8'),
+                          object_pairs_hook=unique_object)
+    except DuplicateKeyError:
+        raise ValueError('Schema fields contain colliding JSON object keys; supply unique string keys.') from None
     except (TypeError, ValueError, RecursionError):
         raise ValueError('Schema fields must be finite UTF-8 JSON-compatible values within supported serialization limits.') from None
 
@@ -95,12 +103,26 @@ def _coerce(value):
         return value
     v = value.strip()
     if v.startswith(("{", "[")):
+        duplicate = False
+
+        def admit_object(pairs):
+            nonlocal duplicate
+            try:
+                return unique_object(pairs)
+            except DuplicateKeyError:
+                duplicate = True
+                return {}
+
         try:
-            return json.loads(v)
+            decoded = json.loads(v, object_pairs_hook=admit_object)
         except json.JSONDecodeError:
             return value
         except (ValueError, RecursionError):
             raise ValueError('JSON field cannot be decoded within supported parser limits.') from None
+        # Defer rejection so malformed JSON keeps its literal-string fallback.
+        if duplicate:
+            raise ValueError('JSON field contains duplicate object keys; supply unique keys.') from None
+        return decoded
     return value
 
 
