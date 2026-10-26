@@ -20,7 +20,7 @@ RULE = 'technical.no.responsive.viewport.tag'
 VIEWPORT = '<meta name="viewport" content="width=device-width, initial-scale=1">'
 
 
-def mcp_tool(name, arguments, root):
+def mcp_tool(name, arguments, root, *, expected_error=False):
     """Exercise the installed server's real stdio boundary when explicitly requested."""
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
@@ -31,7 +31,9 @@ def mcp_tool(name, arguments, root):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 result = (await session.call_tool(name, arguments)).model_dump(by_alias=True)
-                assert not result['isError'], result
+                assert result['isError'] == expected_error, result
+                if expected_error:
+                    return '\n'.join(item['text'] for item in result['content'] if item['type'] == 'text')
                 if result.get('structuredContent') is not None:
                     return result['structuredContent']
                 return json.loads(next(item['text'] for item in result['content'] if item['type'] == 'text'))
@@ -91,6 +93,7 @@ def main(use_mcp=False):
                 result = subprocess.run([sys.executable, '-I', '-m', 'narwhal', *args], cwd=root,
                                         env=env, capture_output=True, text=True, timeout=30)
                 assert result.returncode == expected, (args, result.returncode, result.stdout, result.stderr)
+                return result
 
             def read(name):
                 return json.loads((root / name).read_text(encoding='utf-8'))
@@ -102,6 +105,28 @@ def main(use_mcp=False):
                            '--max-bytes', '6000000', '--no-config', '--format', 'json']
                 run(options + ['-o', 'before.json'])
                 baseline = (root / 'before.json').read_bytes()
+                assert read('before.json')['status'] == 200
+                ambiguous = '{"status":503,' + baseline.decode('utf-8').lstrip()[1:]
+                (root / 'ambiguous.json').write_text(ambiguous, encoding='utf-8')
+                rejected_output = root / 'rejected-output.json'
+                rejected_output.write_bytes(b'previous output')
+                rejected_commands = [
+                    ['plan', 'ambiguous.json', '--repo', str(site)],
+                    ['diff', 'ambiguous.json', 'before.json', '--require-comparable', '--fail-on-regression'],
+                    ['diff', 'before.json', 'ambiguous.json', '--require-comparable', '--fail-on-regression'],
+                ]
+                for command in rejected_commands:
+                    rejected = run(command + ['--format', 'json', '-o', rejected_output.name], expected=2)
+                    assert rejected.stdout == '' and 'duplicate' in rejected.stderr.lower(), rejected
+                    assert rejected_output.read_bytes() == b'previous output'
+                if use_mcp:
+                    valid_json = baseline.decode('utf-8')
+                    for left, right in ((ambiguous, valid_json), (valid_json, ambiguous)):
+                        error = mcp_tool('diff_reports', {'old_json': left, 'new_json': right},
+                                         root, expected_error=True)
+                        assert 'duplicate' in error.lower(), error
+                assert (root / 'ambiguous.json').read_text(encoding='utf-8') == ambiguous
+                assert (root / 'before.json').read_bytes() == baseline
                 if use_mcp:
                     planned = mcp_tool('plan_remediation', {'report': read('before.json'), 'repo': 'site'}, root)
                     (root / 'plan.json').write_text(json.dumps(planned), encoding='utf-8')
