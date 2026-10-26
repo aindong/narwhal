@@ -304,6 +304,7 @@ def main(use_mcp=False):
                     else:
                         run(['plan', 'audit-before.json', '--repo', str(site), '--format', 'json', '-o', 'ownerless-plan.json'])
                         ownerless_plan = read('ownerless-plan.json')
+                    assert not pricing.exists() and not pricing.is_symlink(), 'Ownerless planning created source'
                 finally:
                     pricing.write_bytes(source_bytes['pricing/index.html'])
                 ownerless = next(a for a in ownerless_plan['actions'] if a['rule_id'] == RULE)
