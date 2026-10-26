@@ -132,10 +132,14 @@ class TestRelativeLinkPaths(unittest.TestCase):
         def response(url, **kwargs):
             return http.Response(url, url, 200, {'content-type': 'text/html'}, body if url == BASE else source(), 1)
         with mock.patch.object(scan, 'gather_context', return_value={}), \
-                mock.patch.object(http, 'fetch_text', return_value=''), mock.patch.object(http, 'fetch', side_effect=response):
+                mock.patch.object(crawl_site, 'discover', return_value=[BASE] + [target for _, target in CASES[:2]]), \
+                mock.patch.object(http, 'fetch', side_effect=response), \
+                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
             result = crawl_site.crawl(BASE, max_pages=3, concurrency=1, detect_dupes=False)
-        self.assertEqual(links.RESOLUTION_BASIS, result['link_resolution_basis'])
+        self.assertEqual(links.RESOLUTION_BASIS,
+                         json.loads(crawl_site.render_json(result))['link_resolution_basis'])
         self.assertEqual(3, result['pages_scanned'])
+        self.assertEqual(2, result['graph']['internal_edges'])
         self.assertIn('Relative anchor paths preserve repeated separators', crawl_site.render_markdown(result))
         del result['link_resolution_basis']
         self.assertIn('historical path merging is unverified', crawl_site.render_markdown(result))
