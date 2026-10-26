@@ -22,12 +22,21 @@ jobs:
       - name: Install development tools
         run: python -m pip install -r requirements-mutation.txt
       - name: Require every selected mutant to be killed
-        run: python scripts/mutation_test.py
+        run: python scripts/mutation_test.py --report mutation-default.json
       - name: Require every execution-scope validator mutant to be killed
         run: >-
-          python scripts/mutation_test.py --config scripts/mutation/scope.toml
+          python scripts/mutation_test.py --config scripts/mutation/scope.toml --report mutation-scope.json
           'lib.report.x_recorded_scan_scope__mutmut_*'
       - name: Require every crawl-count validator mutant to be killed
         run: >-
-          python scripts/mutation_test.py --config scripts/mutation/diff.toml
+          python scripts/mutation_test.py --config scripts/mutation/diff.toml --report mutation-count.json
           'diff_scan.x__crawl_count_problem__mutmut_*'
+      - name: Retain mutation result receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-results
+          path: |
+            mutation-default.json
+            mutation-scope.json
+            mutation-count.json
