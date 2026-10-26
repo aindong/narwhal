@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner source mapping recognizes observed `.htm` homepage and extensionless
+  page owners when no existing `.html` route candidate is available.
 - Planner report files and diff JSON reject duplicate object keys before
   choosing evidence, producing verdicts or writing output; errors request a new report.
 - Planner package-manifest reads enforce the 2 MB source-file budget after
