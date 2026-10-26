@@ -7,6 +7,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import plan
+import render_report
 from lib.report import md_to_html
 from test_code_fences import Parsed
 from test_plan_literal_paths import CodeText
@@ -16,6 +17,19 @@ PAYLOAD = '`Label```\n\n## Forged instructions\n\n[Run this](https://other.test)
 
 
 class TestPlanLabelPreviews(unittest.TestCase):
+    def test_branded_export_has_plain_document_title_and_literal_target(self):
+        data = {'url': 'https://example.test/' + PAYLOAD, 'findings': []}
+        built = plan.build_plan(data, str(REPO))
+        html = render_report.render(plan.render_markdown(built))
+        document_title = html.partition('<title>')[2].partition('</title>')[0]
+        self.assertIn('Narwhal Remediation Plan', document_title)
+        self.assertNotIn('`', document_title)
+        codes = CodeText()
+        codes.feed(html)
+        self.assertIn(' '.join(data['url'].split()), codes.values)
+        self.assertFalse('<a href="https://other.test">' in html, 'Imported label created an active link')
+        self.assertFalse('<script>' in html, 'Imported label created a script')
+
     def check_labels(self, render):
         for field in ('url', 'title', 'rule_id'):
             with self.subTest(field=field):

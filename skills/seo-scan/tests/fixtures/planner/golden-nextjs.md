@@ -1,4 +1,6 @@
-# Narwhal Remediation Plan — `https://example.test/guides/widget`
+# Narwhal Remediation Plan
+
+**Target:** `https://example.test/guides/widget`
 
 **Framework:** nextjs (86% confidence)  ·  **Actions:** 9  ·  **Mapping coverage:** 100%
 

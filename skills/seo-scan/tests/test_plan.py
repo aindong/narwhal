@@ -211,7 +211,7 @@ class TestPlanContract(unittest.TestCase):
         built = plan.build_plan(load_report(), str(FIXTURES / "nextjs"))
         actual = plan.render_markdown(built)
         expected = (FIXTURES / "golden-nextjs.md").read_text(encoding="utf-8")
-        self.assertIn("Remediation Plan — `https://example.test", actual)
+        self.assertIn("**Target:** `https://example.test", actual)
         self.assertEqual(expected, actual)
 
 

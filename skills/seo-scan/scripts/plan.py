@@ -1525,7 +1525,8 @@ def render_markdown(plan: dict) -> str:
     f = plan["framework"]
     c = plan["coverage"]
     lines = [
-        f"# Narwhal Remediation Plan — {_literal_preview_code(' '.join(plan['target'].split()))}", "",
+        "# Narwhal Remediation Plan", "",
+        f"**Target:** {_literal_preview_code(' '.join(plan['target'].split()))}", "",
         f"**Framework:** {f['name']} ({round(100 * f['confidence'])}% confidence)  ·  "
         f"**Actions:** {len(plan['actions'])}  ·  **Mapping coverage:** {round(100 * c['mapping_ratio'])}%",
         "", "_Read-only plan: inspect proposed owners and values before applying edits._", "",
