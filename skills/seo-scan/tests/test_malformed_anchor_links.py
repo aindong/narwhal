@@ -127,11 +127,15 @@ class TestMalformedAnchorLinks(unittest.TestCase):
         pages = {BASE: source('http://[', 'http://[', '/valid'),
                  CHILD: source('https://example.test:nope/path', '/')}
         with mock.patch.object(scan, 'gather_context', return_value={}), \
-                mock.patch.object(http, 'fetch_text', return_value=''), \
+                mock.patch.object(crawl_site, 'discover', return_value=[BASE, CHILD]), \
                 mock.patch.object(http, 'fetch', side_effect=lambda url, **kw: response(url, pages[url])), \
+                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')), \
                 mock.patch.object(http, 'head', return_value=(200, None)) as head:
             data = crawl_site.crawl(BASE, max_pages=2, concurrency=1, check_links=True, detect_dupes=False)
         self.assertEqual(2, data['pages_scanned'])
+        self.assertEqual({BASE: {'invalid_url_occurrences': 2, 'basis': 'url_syntax_only'},
+                          CHILD: {'invalid_url_occurrences': 1, 'basis': 'url_syntax_only'}},
+                         {page['url']: page['link_extraction'] for page in data['pages']})
         self.assertEqual({'invalid_url_occurrences': 3, 'affected_pages': 2, 'basis': 'url_syntax_only'},
                          data['link_extraction'])
         self.assertEqual({BASE, CHILD}, {call.args[0] for call in head.call_args_list})
