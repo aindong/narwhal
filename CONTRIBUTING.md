@@ -203,12 +203,15 @@ option, the existing default profile and targets remain unchanged. For example:
 ```
 
 The committed [planner profile](scripts/mutation/planner.toml) reproduces source
-owner checks across the supported frameworks:
+owner checks across the supported frameworks and related-action group boundaries:
 
 ```bash
 .venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/planner.toml \
   'plan.x__route_candidates__mutmut_*' 'plan.x_likely_files__mutmut_*'
 ```
+
+With the same profile, target `plan.x__groups__mutmut_*` to check manual-action
+exclusion, existing-candidate unions and per-file overlap evidence.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does
