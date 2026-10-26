@@ -3,6 +3,7 @@ import copy
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -54,15 +55,37 @@ class TestPlanLabelPreviews(unittest.TestCase):
                 self.assertEqual(original, data)
                 self.assertEqual(snapshot, json.loads(plan.render_json(built)))
 
+    def check_warnings(self, render):
+        with tempfile.TemporaryDirectory() as repo:
+            data = {'url': 'https://example.test/', 'findings': [
+                {'rule_id': 'technical.missing.title.' + PAYLOAD, 'category': 'technical',
+                 'severity': 'high', 'title': 'Imported title finding'}]}
+            built = plan.build_plan(data, repo)
+            warnings = [w for w in built['warnings'] if PAYLOAD in w]
+            self.assertEqual(1, len(warnings))
+            warning = warnings[0]
+            snapshot = copy.deepcopy(built)
+            html = render(plan.render_markdown(built))
+            codes = CodeText()
+            codes.feed(html)
+            self.assertIn(' '.join(warning.split()), codes.values)
+            self.assertNotIn('script', Parsed(html).tags)
+            self.assertNotIn('a', Parsed(html).tags)
+            self.assertEqual(snapshot, json.loads(plan.render_json(built)))
+            self.assertEqual([], list(Path(repo).iterdir()))
+
     def test_builtin_renderer_keeps_imported_labels_literal(self):
         self.check_labels(md_to_html)
+        self.check_warnings(md_to_html)
 
     def test_commonmark_renderer_keeps_imported_labels_literal(self):
         try:
             from markdown_it import MarkdownIt
         except ImportError:
             self.skipTest('optional markdown-it-py is unavailable')
-        self.check_labels(MarkdownIt('commonmark', {'html': True}).render)
+        render = MarkdownIt('commonmark', {'html': True}).render
+        self.check_labels(render)
+        self.check_warnings(render)
 
 
 if __name__ == '__main__':
