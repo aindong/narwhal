@@ -137,9 +137,11 @@ class TestCrawlPageOwners(unittest.TestCase):
     def test_witness_owner_cap_and_root_content_conventions(self):
         (self.repo / 'index.md').write_text('Home', encoding='utf-8')
         warnings = []
-        owners = plan._witness_owners(self.repo, ['index.md'], 'jekyll', 'headings', [BASE], warnings)
-        self.assertEqual(['index.md'], [o['path'] for o in owners])
-        self.assertEqual([], warnings)
+        for target in (BASE, BASE.rstrip('/')):
+            with self.subTest(target=target):
+                owners = plan._witness_owners(self.repo, ['index.md'], 'jekyll', 'headings', [target], warnings)
+                self.assertEqual(['index.md'], [o['path'] for o in owners])
+                self.assertEqual([], warnings)
         files, targets = [], []
         for i in range(5):
             targets.append(BASE + 'page-{}/'.format(i))
@@ -152,6 +154,65 @@ class TestCrawlPageOwners(unittest.TestCase):
         self.assertEqual(8, len(owners))
         self.assertEqual(8, len({o['path'] for o in owners}))
         self.assertEqual([], warnings)
+
+    def test_shared_candidate_retains_strongest_observation_in_either_url_order(self):
+        files = ['src/pages/head.astro', 'src/pages/pricing.astro']
+        for rel in files:
+            path = self.repo / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('Fixture source', encoding='utf-8')
+        targets = [BASE + 'head/', BASE + 'pricing/']
+        snapshots = {rel: (self.repo / rel).read_bytes() for rel in files}
+        results = []
+        for ordered in (targets, list(reversed(targets))):
+            warnings = []
+            owners = plan._witness_owners(self.repo, files, 'astro', 'title', ordered, warnings)
+            self.assertEqual(set(files), {o['path'] for o in owners})
+            head = next(o for o in owners if o['path'] == files[0])
+            self.assertEqual(0.9, head['confidence'])
+            self.assertIn('route convention', head['reason'])
+            self.assertEqual([], warnings)
+            results.append(owners)
+        self.assertEqual(results[0], results[1])
+        self.assertEqual(snapshots, {rel: (self.repo / rel).read_bytes() for rel in files})
+
+    def test_unknown_framework_root_witness_remains_an_ownerless_manual_action(self):
+        row = {'rule_id': RULE, 'category': 'technical', 'severity': 'high', 'title': 'No H1 heading'}
+        data = {'site': BASE, 'homepage': {'url': BASE, 'findings': [row]},
+                'crawl': {'recurring': [dict(row, count=1)]}}
+        original = copy.deepcopy(data)
+        with tempfile.TemporaryDirectory() as tmp:
+            built = plan.build_plan(data, tmp)
+        self.assertEqual('unknown', built['framework']['name'])
+        action = next(a for a in built['actions'] if a['rule_id'] == RULE)
+        self.assertEqual([], action['likely_files'])
+        self.assertTrue(action['manual_action'])
+        self.assertEqual('manual_external', action['safety'])
+        self.assertEqual(original, data)
+
+    def test_symlinked_witness_owner_keeps_known_page_and_unsafe_source_warning(self):
+        original = copy.deepcopy(self.data)
+        docs = self.repo / 'docs/index.html'
+        snapshot = docs.read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            outside = Path(tmp) / 'outside.html'
+            outside.write_text('Outside source', encoding='utf-8')
+            pricing = self.repo / 'pricing/index.html'
+            pricing.unlink()
+            try:
+                pricing.symlink_to(outside)
+            except OSError:
+                self.skipTest('symlinks unavailable')
+            with mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                built = plan.build_plan(self.data, str(self.repo))
+            action = next(a for a in built['actions'] if a['rule_id'] == RULE)
+            self.assertEqual(['docs/index.html'], [o['path'] for o in action['likely_files']])
+            self.assertIn(plan.SOURCE_CANDIDATE_WARNING, built['warnings'])
+            self.assertTrue(any('locate it manually' in warning for warning in built['warnings']))
+            self.assertTrue(pricing.is_symlink())
+            self.assertEqual('Outside source', outside.read_text(encoding='utf-8'))
+        self.assertEqual(snapshot, docs.read_bytes())
+        self.assertEqual(original, self.data)
 
     def test_framework_routes_and_shared_head_priority_are_preserved(self):
         cases = (
