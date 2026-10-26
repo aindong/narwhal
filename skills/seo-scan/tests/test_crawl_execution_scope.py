@@ -12,6 +12,7 @@ import crawl_site
 import diff_scan
 import mcp_server
 import plan
+import scan
 from lib import canonical, htmlx, http, hreflang, llms_resource, sitemap_discovery
 from lib.report import Report, CATEGORY_LABELS
 from test_crawl_rule_handoff import crawl_reports
@@ -72,6 +73,34 @@ class TestCrawlExecutionScope(unittest.TestCase):
         self.assertEqual([uncertain.url, focused.url], result['ecommerce']['product_pages'])
         self.assertEqual(100, result['avg_score'])
         self.assertEqual(original, [page.meta for page in pages])
+
+    def test_crawl_retains_native_indexing_receipts_only_for_successful_pages(self):
+        base = 'https://example.test/'
+        root = llms_resource.assess(http.Response(base + 'llms.txt', base + 'llms.txt',
+                                   403, {'content-type': 'text/plain'}, '', 0))
+        native = []
+        for url, directive in ((base, 'noindex'), (base + 'other', 'nofollow')):
+            body = ('<html><head><meta name="googlebot" content="' + directive + '">'
+                    '</head><body>Guide</body></html>')
+            response = http.Response(url, url, 200, {'content-type': 'text/html',
+                                     'x-robots-tag': 'googlebot: ' + directive}, body, 1)
+            with mock.patch.object(http, 'fetch', return_value=response), \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                native.append(scan.scan(url, ctx={'llms_txt_receipt': root}, check_images=False))
+        keys = ('crawler_meta_robots', 'http_robots', 'llms_txt')
+        expected = [{key: copy.deepcopy(page.meta[key]) for key in keys} for page in native]
+        failed = Report(base + 'failed', fetched_status=503, hard_fail=True,
+                        meta=copy.deepcopy(native[0].meta))
+        legacy = Report(base + 'legacy', fetched_status=200)
+        pages = native + [failed, legacy]
+        before = copy.deepcopy([page.meta for page in pages])
+        result = json.loads(crawl_site.render_json(crawl_reports(pages)))
+        self.assertEqual(expected, [{key: page[key] for key in keys} for page in result['pages'][:2]])
+        for page in result['pages'][2:]:
+            for key in keys:
+                self.assertNotIn(key, page)
+        self.assertEqual([False, False, True, False], [page['hard_fail'] for page in result['pages']])
+        self.assertEqual(before, [page.meta for page in pages])
 
     def test_crawl_preserves_primary_status_and_actual_rendering(self):
         pages = [Report('https://example.test/' + str(i), fetched_status=status, rendered=rendered,
