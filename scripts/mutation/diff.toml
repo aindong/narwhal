@@ -38,6 +38,9 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_llms_resource.py::TestLlmsResponseEvidence::test_unverified_http_evidence_blocks_relevant_diff_compare_and_brief",
   "skills/seo-scan/tests/test_llms_resource.py::TestLlmsResponseEvidence::test_observed_and_absent_receipts_do_not_block_score_comparison",
   "skills/seo-scan/tests/test_canonical_comparison.py::TestCanonicalComparison::test_known_unverified_scan_and_crawl_scope_block_diff_fix_claims",
+  "skills/seo-scan/tests/test_robots_encoding.py::TestRobotsEncoding::test_crawl_uses_gathered_robots_policy_and_forwards_timeout",
+  "skills/seo-scan/tests/test_site_rule_ownership.py",
+  "skills/seo-scan/tests/test_crawl_measurement_coverage.py::TestCrawlMeasurementCoverage::test_crawl_records_actual_duplicate_inputs_and_omits_disabled_receipts",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]

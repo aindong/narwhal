@@ -3,10 +3,12 @@
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import crawl_site
 from lib.robots import RobotsTxt
+from lib.report import Report
 
 
 def blocked(pattern, target):
@@ -78,6 +80,33 @@ class TestRobotsEncoding(unittest.TestCase):
             with self.subTest(pattern=pattern):
                 self.assertTrue(blocked(pattern, pattern))
         self.assertFalse(blocked('', '/private'))
+
+    def test_crawl_uses_gathered_robots_policy_and_forwards_timeout(self):
+        base = 'https://example.test/'
+        candidates = [base, base + 'private', base + '%70rivate', base + 'public']
+        for prefix in ('', '\ufeff'):
+            for disallow in ('/private', '/'):
+                context = {'robots_txt': prefix + 'User-agent: *\nDisallow: ' + disallow}
+                for obey in (True, False):
+                    expected = candidates if not obey else ([base] if disallow == '/' else [base, candidates[-1]])
+                    options = {} if obey else {'obey_robots': False}
+                    with self.subTest(prefix=prefix, disallow=disallow, obey=obey), \
+                            mock.patch.object(crawl_site.scanner, 'gather_context', return_value=context) as gather, \
+                            mock.patch.object(crawl_site, 'discover', return_value=list(candidates)) as discover, \
+                            mock.patch.object(crawl_site.scanner, 'scan', side_effect=lambda url, **kw:
+                                Report(url, fetched_status=200)) as scan, \
+                            mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                        result = crawl_site.crawl(base, max_pages=4, concurrency=1, timeout=7,
+                                                  detect_dupes=False, **options)
+                        self.assertEqual(expected, [call.args[0] for call in scan.call_args_list])
+                        self.assertEqual(expected, [page['url'] for page in result['pages']])
+                        self.assertEqual(len(candidates) - len(expected), result['skipped_robots'])
+                        self.assertEqual(context['robots_txt'], discover.call_args.kwargs.get('robots_txt'))
+                        self.assertEqual(7, gather.call_args.kwargs.get('timeout'))
+                        self.assertEqual(7, discover.call_args.kwargs.get('timeout'))
+                        self.assertTrue(all(call.kwargs.get('timeout') == 7 for call in scan.call_args_list))
+                        self.assertIs(type(discover.call_args.kwargs.get('limit')), int)
+                        self.assertGreater(discover.call_args.kwargs.get('limit'), 0)
 
     def test_crawl_candidate_filter_does_not_admit_an_encoded_disallowed_path(self):
         base = 'https://example.test/'
