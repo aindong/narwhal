@@ -31,6 +31,7 @@ from crawl_site import _link_coverage  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
 MAX_REPO_FILES = 5000
+MAX_REPORT_BYTES = 50_000_000
 INVENTORY_ERROR_WITNESSES = 5
 MAX_FILE_BYTES = 2_000_000
 MAX_FINDINGS = 1000
@@ -1632,13 +1633,16 @@ def _load_json(path: str, input_stats=None) -> dict:
     candidate = Path(path).expanduser()
     if not candidate.is_file():
         raise ValueError(f"Report file not found: {path}")
-    if candidate.stat().st_size > 50_000_000:
+    if candidate.stat().st_size > MAX_REPORT_BYTES:
         raise ValueError("Report file exceeds the 50 MB safety limit.")
     try:
-        with candidate.open('r', encoding='utf-8') as source:
+        with candidate.open('rb') as source:
             if input_stats is not None:
                 input_stats.append(os.fstat(source.fileno()))
-            text = source.read()
+            raw = source.read(MAX_REPORT_BYTES + 1)
+            if len(raw) > MAX_REPORT_BYTES:
+                raise ValueError("Report file exceeds the 50 MB safety limit.")
+            text = raw.decode('utf-8')
     except UnicodeError:
         raise ValueError('Report file must contain UTF-8 JSON.') from None
     try:

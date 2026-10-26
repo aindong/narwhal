@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner report loading bounds the bytes read after opening, retaining the
+  50 MB input limit when a file grows or changes after preflight.
 - The development mutation runner retains JSON gate receipts in CI artifacts
   and rejects report paths that alias its input configuration before writing.
 - Crawl/audit page rows preserve primary acquisition status and actual rendering
