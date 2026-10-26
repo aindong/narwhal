@@ -43,6 +43,14 @@ class TestPlanReadBudget(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'safety limit'):
                     plan._load_json(str(report))
 
+    def test_invalid_utf8_under_budget_retains_controlled_guidance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / 'report.json'
+            report.write_bytes(b'{"label":"\xff"}')
+            with mock.patch.object(plan, 'MAX_REPORT_BYTES', 32), \
+                    self.assertRaisesRegex(ValueError, '(?i)utf-8'):
+                plan._load_json(str(report))
+
     def test_grown_input_is_rejected_before_inventory_or_output_changes(self):
         original_stat = Path.stat
         def stale_stat(path, *args, **kwargs):
