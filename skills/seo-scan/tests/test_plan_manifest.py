@@ -4,6 +4,7 @@ import contextlib
 import io
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import sys
 import tempfile
 import unittest
@@ -76,6 +77,48 @@ class TestManifestEvidence(unittest.TestCase):
             self.assertEqual('unknown', result['framework']['name'])
             self.assertTrue(any('package.json' in item for item in result['warnings']))
 
+    def test_opened_manifest_reads_are_bounded_despite_smaller_preflight_size(self):
+        case = self
+        class Stream(io.BytesIO):
+            def read(self, size=-1):
+                case.assertGreaterEqual(size, 0)
+                case.assertLessEqual(size, 65)
+                return super().read(size)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'package.json').write_bytes(b'{}')
+            with mock.patch.object(plan, 'MAX_FILE_BYTES', 64), \
+                    mock.patch.object(Path, 'open', return_value=Stream(b'{}' + b' ' * 63)):
+                self.assertEqual('', plan._read_small(root, 'package.json'))
+
+    def test_default_budget_rejects_grown_manifest_without_framework_claims(self):
+        original_stat = Path.stat
+        for size, framework in ((2_000_000, 'nextjs'), (2_000_001, 'unknown')):
+            with self.subTest(size=size), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                package = root / 'package.json'
+                prefix = '{"dependencies":{"next":"^15"},"secret-token":"not output"}'
+                manifest = prefix + ' ' * (size - len(prefix))
+                def stale_stat(path, *args, **kwargs):
+                    value = original_stat(path, *args, **kwargs)
+                    return SimpleNamespace(st_mode=value.st_mode, st_size=0) if path == package else value
+                with mock.patch.object(Path, 'stat', stale_stat):
+                    result = self.build(root, manifest)
+                self.assertEqual(framework, result['framework']['name'])
+                self.assertEqual(size > 2_000_000, any('package.json' in item for item in result['warnings']))
+                self.assertNotIn('secret-token', json.dumps(result))
+
+    def test_exact_utf8_byte_limit_and_replacement_decoding_remain_supported(self):
+        for raw in ('{"label":"é"}'.encode('utf-8'), b'\xff'):
+            with self.subTest(raw=raw), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                path = root / 'package.json'
+                with mock.patch.object(plan, 'MAX_FILE_BYTES', len(raw)):
+                    path.write_bytes(raw)
+                    self.assertEqual(raw.decode('utf-8', errors='replace'), plan._read_small(root, 'package.json'))
+                    path.write_bytes(raw + b' ')
+                    self.assertEqual('', plan._read_small(root, 'package.json'))
+
     def test_valid_and_missing_manifests_do_not_add_manifest_warnings(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -96,8 +139,12 @@ class TestManifestEvidence(unittest.TestCase):
             self.assertEqual(['package.json depends on astro'], result['framework']['evidence'])
             self.assertTrue(any('dependencies' in item for item in result['warnings']))
             self.assertIn('package.json dependencies', plan.render_markdown(result))
-            with mock.patch.object(Path, 'read_text', side_effect=PermissionError('secret-token')):
-                result = self.build(root, '{"dependencies":{"next":"latest"}}')
+            package = root / 'package.json'
+            package.write_text('{"dependencies":{"next":"latest"}}', encoding='utf-8')
+            before = package.read_bytes()
+            with mock.patch.object(Path, 'open', side_effect=PermissionError('secret-token')):
+                result = plan.build_plan(REPORT, str(root))
+            self.assertEqual(before, package.read_bytes())
             self.assertEqual('unknown', result['framework']['name'])
             self.assertEqual([], result['framework']['evidence'])
             self.assertTrue(any('package.json' in item for item in result['warnings']))

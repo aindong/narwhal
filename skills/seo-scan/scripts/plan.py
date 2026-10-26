@@ -628,7 +628,11 @@ def _read_small(root: Path, rel: str) -> str:
     try:
         if path.stat().st_size > MAX_FILE_BYTES:
             return ""
-        return path.read_text(encoding="utf-8", errors="replace")
+        with path.open('rb') as source:
+            raw = source.read(MAX_FILE_BYTES + 1)
+        if len(raw) > MAX_FILE_BYTES:
+            return ""
+        return raw.decode('utf-8', errors='replace')
     except (OSError, UnicodeError):
         return ""
 
