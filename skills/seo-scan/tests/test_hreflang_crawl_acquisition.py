@@ -32,7 +32,8 @@ def crawl(response):
         raise AssertionError('Unobserved source must not generate another probe: ' + url)
     with mock.patch.object(scan, 'gather_context', return_value={}), \
             mock.patch.object(crawl_site, 'discover', return_value=[BASE, TARGET]), \
-            mock.patch.object(http, 'fetch', side_effect=fetch) as fetched:
+            mock.patch.object(http, 'fetch', side_effect=fetch) as fetched, \
+            mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
         result = crawl_site.crawl(BASE, max_pages=2, concurrency=1, detect_dupes=False)
     return result, fetched
 
@@ -72,6 +73,46 @@ class TestCrawledHreflangAcquisition(unittest.TestCase):
         self.assertEqual(2, result['hreflang']['checked_pairs'])
         self.assertEqual(2, fetched.call_count)
         self.assertEqual('source_observed', result['pages'][1]['hreflang_source_observation']['status'])
+
+    def test_unsampled_probe_preserves_receipts_without_inventing_return_tags(self):
+        cases = [('reciprocal', TARGET, 200, html(BASE, TARGET), 'source_observed', 2, 0),
+                 ('missing_return', TARGET, 200, html(), 'source_observed', 1, 0),
+                 ('partial', TARGET, 206, html(), 'partial', 0, 1),
+                 ('redirected', OTHER, 200, html(OTHER), 'identity_changed', 0, 1)]
+        for name, final, status, body, observation, checked, unverified in cases:
+            def fetch(url, **kwargs):
+                if url == BASE:
+                    return http.Response(BASE, BASE, 200, {'content-type': 'text/html'}, html(BASE, TARGET), 1)
+                self.assertEqual(TARGET, url)
+                return http.Response(TARGET, final, status, {'content-type': 'text/html'}, body, 1)
+            with self.subTest(case=name), \
+                    mock.patch.object(scan, 'gather_context', return_value={}), \
+                    mock.patch.object(crawl_site, 'discover', return_value=[BASE]), \
+                    mock.patch.object(http, 'fetch', side_effect=fetch) as fetched, \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                result = crawl_site.crawl(BASE, max_pages=1, concurrency=1, detect_dupes=False)
+            self.assertEqual([BASE, TARGET], [call.args[0] for call in fetched.call_args_list])
+            self.assertEqual([BASE], [page['url'] for page in result['pages']])
+            self.assertEqual({'basis': hreflang.EXTRACTION_BASIS, 'declared': 2,
+                              'accepted': 2, 'omitted': {}}, result['pages'][0]['hreflang_extraction'])
+            cluster = result['hreflang']
+            self.assertEqual(1 + int(observation == 'source_observed'),
+                             cluster['source_coverage']['recorded_pages'])
+            self.assertEqual(0, cluster['source_coverage']['unrecorded_pages'])
+            self.assertEqual(checked, cluster['checked_pairs'])
+            self.assertEqual(0, cluster['unassessed_pairs'])
+            self.assertEqual(unverified, cluster['unverified_targets'])
+            self.assertEqual(int(observation == 'source_observed'), cluster['probed'])
+            self.assertEqual([{'page': BASE, 'target': TARGET, 'lang': 'fr'}]
+                             if name == 'missing_return' else [], cluster['missing_return'])
+            self.assertEqual([{'target': BASE, **result['pages'][0]['hreflang_source_observation']}],
+                             cluster['sampled_source_observations'])
+            self.assertEqual(1, len(cluster['probe_observations']))
+            receipt = cluster['probe_observations'][0]
+            self.assertEqual(TARGET, receipt['target'])
+            self.assertEqual(observation, receipt['status'])
+            self.assertEqual('guarded_http', receipt['acquisition'])
+            self.assertEqual(status, receipt['http_status'])
 
     def test_page_scan_retains_final_page_facts_without_false_source_omission(self):
         response = http.Response(TARGET, OTHER, 200, {'content-type': 'text/html'}, html(OTHER), 1)
