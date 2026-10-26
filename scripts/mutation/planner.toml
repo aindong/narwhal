@@ -5,6 +5,9 @@ source_paths = ["src/"]
 only_mutate = ["src/plan.py", "src/lib/finding_urls.py", "src/crawl_site.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
+ "skills/seo-scan/tests/test_plan_read_budget.py",
+ "skills/seo-scan/tests/test_plan_input_validation.py",
+ "skills/seo-scan/tests/test_plan_output_safety.py",
  "skills/seo-scan/tests/test_plan_local_pairs.py",
  "skills/seo-scan/tests/test_plan_scan_settings.py",
  "skills/seo-scan/tests/test_plan_baseline_preservation.py",
