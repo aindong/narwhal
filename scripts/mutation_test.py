@@ -45,6 +45,9 @@ def main():
     parser.add_argument('targets', nargs='*', default=DEFAULT_TARGETS,
                         help='Mutmut function patterns within the configured source scope; every pattern must match')
     args = parser.parse_args()
+    if args.report and (args.report.resolve() == args.config.resolve() or (
+            args.report.exists() and args.config.exists() and args.report.samefile(args.config))):
+        parser.error('--report must not overwrite the mutation configuration.')
     if args.report:
         args.report.write_text(json.dumps({'schema_version': 1, 'status': 'not_completed',
                                           'targets': list(args.targets)}, indent=2) + '\n', encoding='utf-8')

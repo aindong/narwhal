@@ -3,6 +3,7 @@ import importlib.util
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -112,6 +113,40 @@ class TestMutationGate(unittest.TestCase):
                 gate.main()
             self.assertEqual({'schema_version': 1, 'status': 'not_completed', 'targets': ['target_*']},
                              json.loads(report.read_text(encoding='utf-8')))
+
+    def test_report_cannot_overwrite_configuration_through_path_or_inode_aliases(self):
+        for alias in ('same_path', 'parent_path', 'symlink', 'hardlink', 'missing'):
+            with self.subTest(alias=alias), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                config = root / 'profile.toml'
+                original = b'# Mutation configuration must remain intact\n'
+                if alias != 'missing':
+                    config.write_bytes(original)
+                report = root / 'report.json'
+                if alias in ('same_path', 'missing'):
+                    report = config
+                elif alias == 'parent_path':
+                    (root / 'child').mkdir()
+                    report = root / 'child' / '..' / config.name
+                else:
+                    try:
+                        report.symlink_to(config) if alias == 'symlink' else os.link(config, report)
+                    except (OSError, NotImplementedError) as exc:
+                        self.skipTest('Filesystem alias unavailable: ' + str(exc))
+                with mock.patch.object(gate.sys, 'argv', ['mutation_test.py', '--config', str(config),
+                        '--report', str(report), 'target_*']), \
+                        mock.patch.object(gate.subprocess, 'run') as run, \
+                        mock.patch.object(gate.sys, 'executable', str(root / 'missing-python')), \
+                        contextlib.redirect_stderr(io.StringIO()) as errors, \
+                        self.assertRaises(SystemExit) as stopped:
+                    gate.main()
+                self.assertEqual(2, stopped.exception.code)
+                if alias == 'missing':
+                    self.assertFalse(config.exists())
+                else:
+                    self.assertEqual(original, config.read_bytes())
+                self.assertIn('--report', errors.getvalue())
+                run.assert_not_called()
 
     def test_missing_or_directory_profile_fails_before_mutation_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
