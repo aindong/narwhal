@@ -1,0 +1,11 @@
+# Opt-in Markdown input-admission profile; pass changed-function patterns.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/render_report.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_render_read_budget.py",
+  "skills/seo-scan/tests/test_render_output_safety.py",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]

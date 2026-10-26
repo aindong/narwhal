@@ -247,6 +247,14 @@ so registered-tool schema/dispatch checks run too:
   'brief.x_run__mutmut_*' 'brief.x_main__mutmut_*' 'mcp_server.x__brief__mutmut_*'
 ```
 
+The optional [render profile](scripts/mutation/render.toml) checks Markdown
+input admission and source/output preservation:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/render.toml \
+  'render_report.x__read_markdown__mutmut_*'
+```
+
 Pass multiple quoted patterns to gate several functions in one fresh run. Every
 requested pattern must match at least one mutant; a valid target cannot mask an
 empty/misspelled second target. Overlapping patterns count each mutant once.

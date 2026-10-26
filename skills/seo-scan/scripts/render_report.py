@@ -28,6 +28,19 @@ from lib.report import deliver  # noqa: E402
 from lib.code_fences import closes_fence, markdown_lines, opening_fence  # noqa: E402
 
 
+MAX_INPUT_BYTES = 50_000_000
+
+
+def _read_markdown(source):
+    """Bound read requests and enforce UTF-8 byte admission."""
+    raw = source.read(MAX_INPUT_BYTES + 1)
+    if isinstance(raw, str):
+        raw = raw.encode('utf-8')
+    if len(raw) > MAX_INPUT_BYTES:
+        raise ValueError('Markdown input exceeds the 50 MB safety limit.')
+    return raw.decode('utf-8')
+
+
 def _split_title(md: str):
     """Return (first-H1-text-or-None, body-without-that-H1). Prevents the report
     from showing the title twice — once in the branded header, once in the body."""
@@ -56,7 +69,7 @@ def render(md_text: str, *, title=None, subtitle: str = "") -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Render a Markdown report as branded HTML/PDF")
+        description="Render UTF-8 Markdown as branded HTML/PDF (50 MB input limit)")
     ap.add_argument("input", help="Markdown file to render, or - for stdin")
     ap.add_argument("--title", default=None,
                     help="report title (default: the first # heading)")
@@ -74,12 +87,12 @@ def main(argv=None) -> int:
     input_stats = []
     try:
         if args.input == "-":
-            md = sys.stdin.read()
+            md = _read_markdown(sys.stdin)
         else:
-            with open(args.input, "r", encoding="utf-8") as fh:
+            with open(args.input, "rb") as fh:
                 input_stats.append(os.fstat(fh.fileno()))
-                md = fh.read()
-    except (OSError, UnicodeError) as e:
+                md = _read_markdown(fh)
+    except (OSError, ValueError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2
 
