@@ -127,8 +127,9 @@ class TestMalformedAnchorLinks(unittest.TestCase):
         pages = {BASE: source('http://[', 'http://[', '/valid'),
                  CHILD: source('https://example.test:nope/path', '/')}
         with mock.patch.object(scan, 'gather_context', return_value={}), \
-                mock.patch.object(http, 'fetch_text', return_value=''), \
+                mock.patch.object(crawl_site, 'discover', return_value=[BASE, CHILD]), \
                 mock.patch.object(http, 'fetch', side_effect=lambda url, **kw: response(url, pages[url])), \
+                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')), \
                 mock.patch.object(http, 'head', return_value=(200, None)) as head:
             data = crawl_site.crawl(BASE, max_pages=2, concurrency=1, check_links=True, detect_dupes=False)
         self.assertEqual(2, data['pages_scanned'])

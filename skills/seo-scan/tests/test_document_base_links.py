@@ -214,7 +214,9 @@ class TestDocumentBaseLinks(unittest.TestCase):
         page = doc('<base href="http://[">')
         response = http.Response(BASE, BASE, 200, {'content-type': 'text/html'}, page.html, 1)
         with mock.patch.object(scan, 'gather_context', return_value={}), \
-                mock.patch.object(http, 'fetch_text', return_value=''), mock.patch.object(http, 'fetch', return_value=response):
+                mock.patch.object(crawl_site, 'discover', return_value=[BASE]), \
+                mock.patch.object(http, 'fetch', return_value=response), \
+                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
             result = crawl_site.crawl(BASE, max_pages=2, concurrency=1, detect_dupes=False)
         self.assertEqual(1, result['pages_scanned'])
         self.assertNotIn('link_extraction', result)
