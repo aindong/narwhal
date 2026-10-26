@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner package-manifest reads enforce the 2 MB source-file budget after
+  opening, withholding oversized dependency evidence even after stale preflight.
 - Rendering protects regular-file stdin snapshots from HTML/PDF output aliases,
   including redirected input and symlink/hardlink output paths.
 - Render CLI admits at most 50 MB of UTF-8 Markdown from files or stdin before
