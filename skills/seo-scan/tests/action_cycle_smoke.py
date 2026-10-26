@@ -20,7 +20,17 @@ RULE = 'technical.no.responsive.viewport.tag'
 VIEWPORT = '<meta name="viewport" content="width=device-width, initial-scale=1">'
 
 
-def mcp_tool(name, arguments, root, *, expected_error=False):
+def mcp_result(result, *, expected_error=False):
+    wire = result.model_dump(by_alias=True)
+    assert wire['isError'] == expected_error, wire
+    if expected_error:
+        return '\n'.join(item['text'] for item in wire['content'] if item['type'] == 'text')
+    if wire.get('structuredContent') is not None:
+        return wire['structuredContent']
+    return json.loads(next(item['text'] for item in wire['content'] if item['type'] == 'text'))
+
+
+def mcp_session(exercise, root):
     """Exercise the installed server's real stdio boundary when explicitly requested."""
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
@@ -29,14 +39,9 @@ def mcp_tool(name, arguments, root, *, expected_error=False):
         params = StdioServerParameters(command=sys.executable, args=['-I', '-m', 'narwhal', 'mcp'], cwd=str(root))
         async with stdio_client(params, errlog=errors) as (read, write):
             async with ClientSession(read, write) as session:
-                await session.initialize()
-                result = (await session.call_tool(name, arguments)).model_dump(by_alias=True)
-                assert result['isError'] == expected_error, result
-                if expected_error:
-                    return '\n'.join(item['text'] for item in result['content'] if item['type'] == 'text')
-                if result.get('structuredContent') is not None:
-                    return result['structuredContent']
-                return json.loads(next(item['text'] for item in result['content'] if item['type'] == 'text'))
+                initialized = (await session.initialize()).model_dump(by_alias=True)
+                assert initialized['serverInfo']['name'] == 'narwhal', initialized
+                return await exercise(session)
 
     with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as errors:
         try:
@@ -45,6 +50,55 @@ def mcp_tool(name, arguments, root, *, expected_error=False):
             errors.seek(0)
             sys.stderr.write(errors.read()[-4000:])
             raise
+
+
+def mcp_tool(name, arguments, root, *, expected_error=False):
+    async def call(session):
+        return mcp_result(await session.call_tool(name, arguments), expected_error=expected_error)
+    return mcp_session(call, root)
+
+
+def mcp_recovery(report, root):
+    """Bad input and its correction must work in one installed server session."""
+    async def exercise(session):
+        async def tool(name, arguments, *, error=False):
+            return mcp_result(await session.call_tool(name, arguments), expected_error=error)
+
+        diagnostic = await tool('generate_schema', {
+            'type': 'Product', 'fields': {'offers': '{"secret-token":99,"secret-token":9}'}}, error=True)
+        assert 'duplicate' in diagnostic.lower() and 'secret-token' not in diagnostic
+        assert len(diagnostic) < 500
+        generated = await tool('generate_schema', {
+            'type': 'Product', 'fields': {'offers': '[{"price":9},{"price":99}]'}})
+        assert generated['offers'] == [{'price': 9}, {'price': 99}]
+
+        valid_json = json.dumps(report)
+        ambiguous = '{"status":503,' + valid_json.lstrip()[1:]
+        for left, right in ((ambiguous, valid_json), (valid_json, ambiguous)):
+            diagnostic = await tool('diff_reports', {'old_json': left, 'new_json': right}, error=True)
+            assert 'duplicate' in diagnostic.lower() and len(diagnostic) < 500, diagnostic
+            diff = await tool('diff_reports', {'old_json': valid_json, 'new_json': valid_json})
+            assert diff['comparison']['status'] == 'comparable' and diff['score_delta'] == 0, diff
+            assert diff['regression'] is False and not any(diff[key] for key in ('added', 'resolved', 'worsened', 'improved')), diff
+
+        cases = [({'report': report, 'repo': 'missing-secret-token'}, 'existing directory'),
+                 ({'report': report, 'repo': 'site/index.html'}, 'existing directory'),
+                 ({'report': dict(report, score='secret-token'), 'repo': 'site'}, 'finite')]
+        for arguments, reason in cases:
+            diagnostic = await tool('plan_remediation', arguments, error=True)
+            assert reason in diagnostic.lower() and len(diagnostic) < 500, diagnostic
+            assert root.name not in diagnostic and str(root.resolve()) not in diagnostic, diagnostic
+            assert 'secret-token' not in diagnostic, diagnostic
+            planned = await tool('plan_remediation', {'report': report, 'repo': 'site'})
+            action = next(action for action in planned['actions'] if action['rule_id'] == RULE)
+            assert action['automation_eligibility']['eligible'] is True and action['manual_action'] is False, action
+            assert any(owner['path'] == 'index.html' and owner['exists'] is True for owner in action['likely_files']), action
+        return planned
+
+    planned = mcp_session(exercise, root)
+    print('Installed MCP recovery passed: schema, both diff inputs and planner path/report errors '
+          'each followed by a valid request in one session; bounded diagnostics and native owner retained.')
+    return planned
 
 
 class FixtureHandler(SimpleHTTPRequestHandler):
@@ -109,13 +163,6 @@ def main(use_mcp=False):
                 assert not rejected.stdout
                 assert 'duplicate' in rejected.stderr.lower()
                 assert 'secret-token' not in rejected.stderr
-            if use_mcp:
-                diagnostic = mcp_tool('generate_schema', {'type': 'Product', 'fields': {'offers': duplicate}},
-                                      root, expected_error=True)
-                assert 'duplicate' in diagnostic.lower() and 'secret-token' not in diagnostic
-                generated = mcp_tool('generate_schema', {'type': 'Product', 'fields': {'offers': offers}}, root)
-                assert generated['offers'] == json.loads(offers)
-
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             try:
@@ -137,16 +184,10 @@ def main(use_mcp=False):
                     rejected = run(command + ['--format', 'json', '-o', rejected_output.name], expected=2)
                     assert rejected.stdout == '' and 'duplicate' in rejected.stderr.lower(), rejected
                     assert rejected_output.read_bytes() == b'previous output'
-                if use_mcp:
-                    valid_json = baseline.decode('utf-8')
-                    for left, right in ((ambiguous, valid_json), (valid_json, ambiguous)):
-                        error = mcp_tool('diff_reports', {'old_json': left, 'new_json': right},
-                                         root, expected_error=True)
-                        assert 'duplicate' in error.lower(), error
                 assert (root / 'ambiguous.json').read_text(encoding='utf-8') == ambiguous
                 assert (root / 'before.json').read_bytes() == baseline
                 if use_mcp:
-                    planned = mcp_tool('plan_remediation', {'report': read('before.json'), 'repo': 'site'}, root)
+                    planned = mcp_recovery(read('before.json'), root)
                     (root / 'plan.json').write_text(json.dumps(planned), encoding='utf-8')
                 else:
                     run(['plan', 'before.json', '--repo', str(site), '--format', 'json', '-o', 'plan.json'])

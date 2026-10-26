@@ -79,7 +79,7 @@ class TestPlanSchemaContract(unittest.TestCase):
         self.assertEqual(1, self.cases['walk_error']['coverage']['file_inventory_walk_errors'])
         self.assertEqual(2, self.cases['repeated']['actions'][0]['observation_selection']['normalized_observations'])
 
-    @unittest.skipIf(Draft202012Validator is None, 'Full schema validation runs with both MCP SDK dependency sets')
+    @unittest.skipIf(Draft202012Validator is None, 'Full schema validation runs with the MCP SDK dependency sets')
     def test_full_schema_accepts_emitted_and_legacy_plans_but_rejects_bad_receipts(self):
         with mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')) as dns, \
                 mock.patch('socket.socket.connect', side_effect=AssertionError('No network')) as connect:
