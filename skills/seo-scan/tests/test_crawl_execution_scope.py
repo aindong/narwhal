@@ -34,6 +34,47 @@ class TestCrawlExecutionScope(unittest.TestCase):
         self.assertNotIn('scan_scope', result['pages'][2])
         self.assertEqual(original, [p.meta for p in pages])
 
+    def test_crawl_preserves_primary_status_and_actual_rendering(self):
+        pages = [Report('https://example.test/' + str(i), fetched_status=status, rendered=rendered,
+                        hard_fail=failed) for i, (status, rendered, failed) in enumerate(
+                        ((200, False, False), (201, True, False), (503, False, True), (0, False, True)))]
+        for page in pages:
+            page.meta['scan_scope'] = copy.deepcopy(SCOPE)
+            page.meta['scan_settings'] = {'render_requested': True, 'rendered': page.rendered}
+        original = copy.deepcopy([json.loads(page.to_json()) for page in pages])
+        result = json.loads(crawl_site.render_json(crawl_reports(pages)))
+        self.assertEqual([200, 201, 503, 0], [page.get('status') for page in result['pages']])
+        self.assertEqual([False, True, False, False], [page.get('rendered') for page in result['pages']])
+        self.assertEqual([False, False, True, True], [page['hard_fail'] for page in result['pages']])
+        self.assertEqual(original, [json.loads(page.to_json()) for page in pages])
+
+    def test_crawl_handoff_preserves_rendering_conflict_for_diff_and_planner(self):
+        homepage = Report('https://example.test/', fetched_status=200)
+        inner = Report('https://example.test/pricing/', fetched_status=200, rendered=True)
+        for page in (homepage, inner):
+            page.meta['scan_scope'] = copy.deepcopy(SCOPE)
+            page.meta['scan_settings'] = {'render_requested': True, 'rendered': False}
+        inner.add('technical', 'high', 'No responsive viewport tag',
+                  rule_id='technical.no.responsive.viewport.tag')
+        data = {'site': homepage.url, 'overall_score': 90, 'homepage': json.loads(homepage.to_json()),
+                'crawl': json.loads(crawl_site.render_json(crawl_reports([homepage, inner])))}
+        result = diff_scan.diff_reports(data, data)
+        self.assertEqual('incomparable', result['comparison']['status'])
+        self.assertIsNone(result['score_delta'])
+        self.assertEqual(2, cli(data, data, '--fail-on-regression')[0])
+        self.assertEqual(result, mcp_server._diff(json.dumps(data), json.dumps(data)))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); (root / 'pricing').mkdir()
+            (root / 'pricing/index.html').write_text('<html></html>', encoding='utf-8')
+            action = plan.build_plan(data, tmp)['actions'][0]
+            self.assertFalse(action['automation_eligibility']['eligible'])
+            self.assertIn('known_incomplete_source_evidence', action['automation_eligibility']['blockers'])
+            inner.rendered = False
+            data['crawl'] = json.loads(crawl_site.render_json(crawl_reports([homepage, inner])))
+            self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+            clean_action = plan.build_plan(data, tmp)['actions'][0]
+            self.assertTrue(clean_action['automation_eligibility']['eligible'], clean_action)
+
     def test_partial_invalid_changed_and_one_sided_inner_scope_withhold_verdicts(self):
         for change in ('partial', 'invalid', 'matching_partial', 'matching_invalid',
                        'changed', 'missing', 'contradictory_duplicate'):
