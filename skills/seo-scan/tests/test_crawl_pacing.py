@@ -22,11 +22,15 @@ class Clock:
         self.value = start
         self.sleeps = []
         self.overshoot = overshoot
+        self.scan_started = threading.Semaphore(0)
 
     def monotonic(self):
         return self.value
 
     def sleep(self, seconds):
+        # Advance fake time only after the preceding scan records its start.
+        if not self.scan_started.acquire(timeout=3):
+            raise AssertionError("Previous scan did not enter before fake sleep")
         self.sleeps.append(seconds)
         self.value += seconds + self.overshoot
 
@@ -37,6 +41,7 @@ class TestCrawlPacing(unittest.TestCase):
         barrier = threading.Barrier(3) if overlap else None
         def scan(url, **kwargs):
             starts.append(clock.monotonic())
+            clock.scan_started.release()
             if barrier:
                 barrier.wait(timeout=3)  # all scans must enter before any can complete
             return Report(url, fetched_status=200)
