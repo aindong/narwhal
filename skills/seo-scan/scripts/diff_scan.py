@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib.report import recorded_response_partial, recorded_execution_problem  # noqa: E402
-from lib.report import recorded_image_weight_problem  # noqa: E402
+from lib.report import recorded_image_weight_problem, _literal_preview_code  # noqa: E402
 from lib import canonical  # noqa: E402
 from lib import sitegraph, links, hreflang  # noqa: E402
 from lib.report_output import write_output as _write_output  # noqa: E402
@@ -485,12 +485,15 @@ def _verdict(d: dict) -> str:
 
 
 def render_markdown(d: dict) -> str:
+    def _label(value):
+        return _literal_preview_code(' '.join(value.split()))
+
     delta = d["score_delta"]
     sign = "not compared" if delta is None else (
         f"+{delta}" if delta > 0 else (str(delta) if delta < 0 else "±0"))
     lines = [
-        f"# Narwhal Scan Diff — {d['url']}",
-        "",
+        "# Narwhal Scan Diff", "",
+        f"**Target:** {_label(d['url'])}", "",
         f"**{'Recorded scores' if delta is None else 'Score'}: {d['old_score']} → {d['new_score']} ({sign})**",
         "",
         _verdict(d),
@@ -550,8 +553,8 @@ def render_markdown(d: dict) -> str:
 
     def _bullets(items):
         for f in items:
-            lines.append(f"- {_ICON.get(f.get('severity'), '•')} **{f.get('title')}** "
-                         f"({_CATS.get(f.get('category'), f.get('category'))})")
+            lines.append(f"- {_ICON.get(f.get('severity'), '•')} {_label(f['title'])} "
+                         f"({_label(_CATS.get(f['category'], f['category']))})")
 
     if d["added"]:
         lines.append(f"## 🔺 New findings ({len(d['added'])})")
@@ -562,7 +565,7 @@ def render_markdown(d: dict) -> str:
         lines.append(f"## ⚠️ Worsened ({len(d['worsened'])})")
         lines.append("")
         for c in d["worsened"]:
-            lines.append(f"- **{c['title']}** ({_CATS.get(c['category'], c['category'])}): "
+            lines.append(f"- {_label(c['title'])} ({_label(_CATS.get(c['category'], c['category']))}): "
                          f"{c['from']} → {c['to']}")
         lines.append("")
     if d["resolved"]:
@@ -574,7 +577,7 @@ def render_markdown(d: dict) -> str:
         lines.append(f"## 🟢 Improved severity ({len(d['improved'])})")
         lines.append("")
         for c in d["improved"]:
-            lines.append(f"- **{c['title']}** ({_CATS.get(c['category'], c['category'])}): "
+            lines.append(f"- {_label(c['title'])} ({_label(_CATS.get(c['category'], c['category']))}): "
                          f"{c['from']} → {c['to']}")
         lines.append("")
 
