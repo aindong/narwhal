@@ -41,6 +41,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_robots_encoding.py::TestRobotsEncoding::test_crawl_uses_gathered_robots_policy_and_forwards_timeout",
   "skills/seo-scan/tests/test_site_rule_ownership.py",
   "skills/seo-scan/tests/test_crawl_measurement_coverage.py::TestCrawlMeasurementCoverage::test_crawl_records_actual_duplicate_inputs_and_omits_disabled_receipts",
+  "skills/seo-scan/tests/test_crawl_measurement_coverage.py::TestCrawlMeasurementCoverage::test_native_crawl_collects_graph_without_default_resource_probes",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]

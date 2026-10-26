@@ -32,6 +32,41 @@ def checked(responses, cap=200):
 
 
 class TestCrawlMeasurementCoverage(unittest.TestCase):
+    def test_native_crawl_collects_graph_without_default_resource_probes(self):
+        child = BASE + 'child'
+        bodies = {BASE: '<html><title>Guide</title><h1>Guide</h1>'
+                  '<a href="/child">Child</a><a href="https://outside.test/guide">External</a>'
+                  '<img src="/hero.png" width="900" height="500" alt="Guide"></html>',
+                  child: '<html><title>Child</title><h1>Child</h1><p>Reader guidance.</p></html>'}
+        def fetch(url, **kwargs):
+            return http.Response(url, url, 200, {'content-type': 'text/html'}, bodies[url], 1)
+        for options in ({}, {'check_links': True, 'max_links': 1}, {'check_links': True, 'max_links': 0}):
+            with self.subTest(options=options), \
+                    mock.patch.object(crawl.scanner, 'gather_context', return_value={}), \
+                    mock.patch.object(crawl, 'discover', return_value=[BASE, child]), \
+                    mock.patch.object(http, 'fetch', side_effect=fetch) as page_fetch, \
+                    mock.patch.object(http, 'head', return_value=(200, None)) as link_head, \
+                    mock.patch.object(http, 'head_info', return_value=(200, {
+                        'content-type': 'image/png', 'content-length': '40960'}, None)) as image_head, \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                data = crawl.crawl(BASE, max_pages=2, concurrency=1, detect_dupes=False, **options)
+                self.assertEqual(2, page_fetch.call_count)
+                self.assertEqual({BASE, child}, {call.args[0] for call in page_fetch.call_args_list})
+                self.assertEqual(1, data['graph']['internal_edges'])
+                self.assertEqual(1, data['graph']['max_depth'])
+                self.assertEqual([], data['graph']['unreachable_from_start'])
+                image_head.assert_not_called()
+                self.assertTrue(all(page['scan_settings']['image_checks'] is False for page in data['pages']))
+                self.assertTrue(all(page['scan_settings']['render_requested'] is False for page in data['pages']))
+                if options:
+                    self.assertEqual(options['max_links'], link_head.call_count)
+                    self.assertEqual(options['max_links'], data['links']['checked'])
+                    self.assertEqual(2, data['links']['unique_links'])
+                    self.assertEqual(2 - options['max_links'], data['links']['skipped_over_cap'])
+                else:
+                    link_head.assert_not_called()
+                    self.assertNotIn('links', data)
+
     def test_zero_targets_are_not_a_green_pass(self):
         data = result()
         data['links'], head = checked([])
