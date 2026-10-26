@@ -27,6 +27,7 @@ from lib.report import (recorded_llms_problem, recorded_schema_extraction_proble
                         recorded_execution_problem,
                         recorded_image_weight_problem, _literal_preview_code)
 from lib.report_output import write_output  # noqa: E402
+from lib.json_input import DuplicateKeyError, unique_object  # noqa: E402
 from crawl_site import _link_coverage  # noqa: E402
 
 PLAN_SCHEMA_VERSION = "1.0"
@@ -1650,7 +1651,9 @@ def _load_json(path: str, input_stats=None) -> dict:
     except UnicodeError:
         raise ValueError('Report file must contain UTF-8 JSON.') from None
     try:
-        return json.loads(text)
+        return json.loads(text, object_pairs_hook=unique_object)
+    except DuplicateKeyError:
+        raise ValueError('Report JSON contains duplicate object keys; regenerate the report.') from None
     except json.JSONDecodeError as exc:
         raise ValueError(f'Invalid report JSON at line {exc.lineno}, column {exc.colno}.') from None
     except (ValueError, RecursionError):
