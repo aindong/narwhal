@@ -209,6 +209,7 @@ class TestCrawlPageOwners(unittest.TestCase):
             self.assertEqual(['docs/index.html'], [o['path'] for o in action['likely_files']])
             self.assertIn(plan.SOURCE_CANDIDATE_WARNING, built['warnings'])
             self.assertTrue(any('locate it manually' in warning for warning in built['warnings']))
+            self.assertTrue(pricing.is_symlink())
             self.assertEqual('Outside source', outside.read_text(encoding='utf-8'))
         self.assertEqual(snapshot, docs.read_bytes())
         self.assertEqual(original, self.data)
