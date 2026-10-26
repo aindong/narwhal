@@ -57,6 +57,7 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_server_partial_response.py::TestServerPartialResponse::test_mixed_crawl_keeps_partial_receipts_on_their_own_pages",
   "skills/seo-scan/tests/test_relative_link_paths.py::TestRelativeLinkPaths::test_crawl_records_narrow_policy_and_report_note_without_score_rule_changes",
   "skills/seo-scan/tests/test_hreflang_source_syntax.py::TestHreflangSourceSyntax::test_crawl_all_rejected_annotations_stay_visible_and_not_clean_or_failed",
+  "skills/seo-scan/tests/test_hreflang_crawl_acquisition.py::TestCrawledHreflangAcquisition::test_crawl_forwards_preview_options_and_bounds_followup_timeouts",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]

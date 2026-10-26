@@ -114,6 +114,46 @@ class TestCrawledHreflangAcquisition(unittest.TestCase):
             self.assertEqual('guarded_http', receipt['acquisition'])
             self.assertEqual(status, receipt['http_status'])
 
+    def test_crawl_forwards_preview_options_and_bounds_followup_timeouts(self):
+        body = html(BASE, TARGET).replace('</body>', '<a href="' + TARGET + '">French</a></body>')
+        for private, render, actual, timeout in ((False, False, False, 3), (True, True, True, 20),
+                                                 (True, False, False, 3), (False, True, True, 20),
+                                                 (True, True, False, 3)):
+            options = {'timeout': timeout}
+            if private:
+                options['allow_private'] = True
+            if render:
+                options['render'] = True
+            def fetch(url, **kwargs):
+                self.assertIn(url, (BASE, TARGET))
+                return http.Response(url, url, 200, {'content-type': 'text/html'},
+                                     body if url == BASE else html(BASE, TARGET), 1,
+                                     rendered=actual and kwargs.get('render', False))
+            with self.subTest(private=private, render=render, actual=actual, timeout=timeout), \
+                    mock.patch.object(scan, 'gather_context', return_value={}) as gather, \
+                    mock.patch.object(crawl_site, 'discover', return_value=[BASE]) as discover, \
+                    mock.patch.object(http, 'fetch', side_effect=fetch) as fetched, \
+                    mock.patch.object(http, 'head', return_value=(200, None)) as head, \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                result = crawl_site.crawl(BASE, max_pages=1, concurrency=1, check_links=True,
+                                          detect_dupes=False, **options)
+                for helper in (gather, discover):
+                    self.assertIs(private, helper.call_args.kwargs.get('allow_private'))
+                    self.assertEqual(timeout, helper.call_args.kwargs.get('timeout'))
+                primary = [call for call in fetched.call_args_list if call.args[0] == BASE]
+                probes = [call for call in fetched.call_args_list if call.args[0] == TARGET]
+                self.assertEqual(2 if actual else 1, len(primary))
+                self.assertIs(render, primary[0].kwargs.get('render'))
+                self.assertIs(actual, result['pages'][0]['rendered'])
+                self.assertEqual(1, len(probes))
+                for call in fetched.call_args_list:
+                    self.assertIs(private, call.kwargs.get('allow_private'))
+                    self.assertEqual(timeout if call.args[0] == BASE else min(timeout, 8),
+                                     call.kwargs.get('timeout'))
+                head.assert_called_once_with(TARGET, timeout=min(timeout, 8), allow_private=private)
+                self.assertEqual(1, result['links']['checked'])
+                self.assertEqual(2, result['hreflang']['checked_pairs'])
+
     def test_page_scan_retains_final_page_facts_without_false_source_omission(self):
         response = http.Response(TARGET, OTHER, 200, {'content-type': 'text/html'}, html(OTHER), 1)
         with mock.patch.object(http, 'fetch', return_value=response):
