@@ -2,6 +2,7 @@
 import contextlib
 import io
 import os
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -54,6 +55,45 @@ class TestRenderOutputSafety(unittest.TestCase):
                 continue
             self.reject(alias)
             self.reject(self.source, source=alias)
+
+    def test_regular_file_stdin_rejects_html_pdf_and_link_alias_outputs(self):
+        targets = [self.source]
+        for kind in ('symlink', 'hardlink'):
+            alias = self.root / ('stdin-' + kind)
+            try:
+                alias.symlink_to(self.source) if kind == 'symlink' else os.link(self.source, alias)
+            except OSError:
+                continue
+            targets.append(alias)
+        def pdf(html, path):
+            Path(path).write_bytes(b'%PDF-1.7\ncontrolled')
+            return True
+        for fmt in ('html', 'pdf'):
+            for target in targets:
+                with self.subTest(fmt=fmt, target=target):
+                    self.source.write_bytes(self.original)
+                    with self.source.open('r', encoding='utf-8') as stdin, \
+                            mock.patch.object(render_report.sys, 'stdin', stdin), \
+                            mock.patch.object(report, 'pdf_from_html', side_effect=pdf):
+                        self.reject(target, fmt, source='-')
+            with self.source.open('r', encoding='utf-8') as stdin, \
+                    mock.patch.object(render_report.sys, 'stdin', stdin), \
+                    mock.patch.object(report, 'pdf_from_html', side_effect=pdf):
+                self.assertEqual(0, self.invoke(self.root / ('stdin-output.' + fmt), fmt, source='-')[0])
+            self.assertEqual(self.original, self.source.read_bytes())
+
+    def test_shell_style_stdin_redirection_preserves_source(self):
+        with self.source.open('rb') as stdin:
+            run = subprocess.run([sys.executable, render_report.__file__, '-', '-o', str(self.source)],
+                                 stdin=stdin, capture_output=True, text=True, timeout=5)
+        self.assertEqual(2, run.returncode)
+        self.assertEqual('', run.stdout)
+        self.assertIn('input snapshot', run.stderr)
+        self.assertEqual(self.original, self.source.read_bytes())
+        piped = subprocess.run([sys.executable, render_report.__file__, '-', '-o', str(self.root / 'piped.html')],
+                               input=self.original.decode('utf-8'), capture_output=True, text=True, timeout=5)
+        self.assertEqual(0, piped.returncode)
+        self.assertEqual(self.original, self.source.read_bytes())
 
     def test_renamed_source_identity_is_pinned_before_rendering(self):
         moved = self.root / 'moved.md'

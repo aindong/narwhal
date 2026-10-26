@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import stat
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -76,7 +77,7 @@ def main(argv=None) -> int:
     ap.add_argument("--subtitle", default="",
                     help="subtitle under the title (e.g. the site URL)")
     ap.add_argument("--format", choices=("html", "pdf"), default="html")
-    ap.add_argument("-o", "--output")
+    ap.add_argument("-o", "--output", help="save to a file distinct from file-backed input")
     args = ap.parse_args(argv)
 
     try:
@@ -87,6 +88,13 @@ def main(argv=None) -> int:
     input_stats = []
     try:
         if args.input == "-":
+            try:
+                source_stat = os.fstat(sys.stdin.fileno())
+            except (AttributeError, OSError, ValueError):
+                pass  # in-memory stdin has no file identity to preserve
+            else:
+                if stat.S_ISREG(source_stat.st_mode):
+                    input_stats.append(source_stat)
             md = _read_markdown(sys.stdin)
         else:
             with open(args.input, "rb") as fh:
