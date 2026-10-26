@@ -12,7 +12,8 @@ import crawl_site
 import diff_scan
 import mcp_server
 import plan
-from lib.report import Report
+from lib import canonical, htmlx, http, hreflang, llms_resource, sitemap_discovery
+from lib.report import Report, CATEGORY_LABELS
 from test_crawl_rule_handoff import crawl_reports
 from test_diff_crawl_rules import report
 from test_diff_severe_escalation import cli
@@ -33,6 +34,44 @@ class TestCrawlExecutionScope(unittest.TestCase):
         self.assertEqual([], result['pages'][1]['scan_scope']['completed'])
         self.assertNotIn('scan_scope', result['pages'][2])
         self.assertEqual(original, [p.meta for p in pages])
+
+    def test_crawl_handoff_preserves_coverage_flags_and_merchant_classification(self):
+        base = 'https://example.test/'
+        scope = {'requested': list(CATEGORY_LABELS), 'completed': list(CATEGORY_LABELS)}
+        doc = htmlx.parse('<link rel="canonical" href="https://[">'
+                         '<link rel="alternate" hreflang="fr" href="/fr/">', base)
+        alternate_receipt = {}
+        hreflang.extract(doc, base, diagnostics=alternate_receipt)
+        meta = {'scan_scope': scope, 'scan_settings': {'schema_extraction_reviewed': False},
+                'coverage': {'js_comparison': {'status': 'unverified', 'reason': 'served_html_unavailable'}},
+                'sitemap_discovery': sitemap_discovery.Discovery('context_candidates').receipt(),
+                'llms_txt': llms_resource.assess(http.Response(base + 'llms.txt', base + 'llms.txt',
+                    403, {'content-type': 'text/plain'}, '', 0)),
+                'canonical_comparison': canonical.observe(doc, base),
+                'hreflang_extraction': alternate_receipt,
+                'ecommerce': {'is_product': True, 'is_merchant': True, 'confidence': 0.9}}
+        uncertain = Report(base + 'merchant', fetched_status=200, meta=meta)
+        plain = Report(base + 'plain', fetched_status=200, meta={'scan_scope': copy.deepcopy(scope),
+                       'scan_settings': {'schema_extraction_reviewed': True}})
+        focused = Report(base + 'editorial', fetched_status=200, meta=copy.deepcopy(meta))
+        focused.meta['scan_scope'] = {'requested': ['content'], 'completed': ['content']}
+        focused.meta.pop('canonical_comparison')  # Technical canonical checks are absent in this report.
+        focused.meta['ecommerce'] = {'is_product': True, 'is_merchant': False, 'confidence': 0.6}
+        pages = [uncertain, plain, focused]
+        original = copy.deepcopy([page.meta for page in pages])
+        result = json.loads(crawl_site.render_json(crawl_reports(pages)))
+        for flag in ('js_comparison_unverified', 'sitemap_discovery_unverified', 'llms_txt_unverified',
+                     'schema_extraction_unverified', 'canonical_comparison_unverified',
+                     'hreflang_comparison_unverified'):
+            with self.subTest(flag=flag):
+                self.assertEqual([True, False, False], [page.get(flag) for page in result['pages']])
+        self.assertEqual([True, False, True], [page['is_product'] for page in result['pages']])
+        self.assertEqual([True, False, False], [page['is_merchant'] for page in result['pages']])
+        self.assertEqual([0.9, 0.0, 0.6], [page['product_confidence'] for page in result['pages']])
+        self.assertEqual([uncertain.url], result['ecommerce']['merchant_pages'])
+        self.assertEqual([uncertain.url, focused.url], result['ecommerce']['product_pages'])
+        self.assertEqual(100, result['avg_score'])
+        self.assertEqual(original, [page.meta for page in pages])
 
     def test_crawl_preserves_primary_status_and_actual_rendering(self):
         pages = [Report('https://example.test/' + str(i), fetched_status=status, rendered=rendered,
