@@ -45,6 +45,13 @@ class TestDiffLabelPreviews(unittest.TestCase):
                     codes = CodeText()
                     codes.feed(html)
                     self.assertIn(' '.join(value.split()), codes.values)
+                    if field != 'category':
+                        self.assertIn('Technical SEO', codes.values)
+                    if change in ('added', 'resolved'):
+                        self.assertIn('🟡', html)
+                    else:
+                        transition = 'medium → high' if change == 'worsened' else 'high → medium'
+                        self.assertIn(transition, html)
                     self.assertNotIn('a', Parsed(html).tags)
                     self.assertNotIn('script', Parsed(html).tags)
                     self.assertEqual(inputs, (before, after))
