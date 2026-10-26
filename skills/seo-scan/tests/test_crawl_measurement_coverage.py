@@ -11,7 +11,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import audit
 import crawl_site as crawl
-from lib import http
+from lib import http, simhash
 from lib.report import Report
 
 BASE = 'https://example.test/'
@@ -126,6 +126,43 @@ class TestCrawlMeasurementCoverage(unittest.TestCase):
                 text = crawl.render_markdown(data)
                 self.assertIn('response coverage was not recorded', text)
                 self.assertNotIn('🟢', text)
+
+    def test_native_duplicate_collection_excludes_partial_pages_and_keeps_canonical_context(self):
+        urls = [BASE, BASE + 'copy', BASE + 'partial']
+        text = 'Detailed guidance covers setup usage examples validation and deployment considerations. ' * 20
+        for shared_target, options in ((True, {}), (False, {}), (True, {'detect_dupes': False})):
+            def fetch(url, **kwargs):
+                target = BASE if shared_target else url
+                body = ('<html lang="en"><head><title>Identical guide</title>'
+                        '<link rel="canonical" href="' + target + '"></head><body>'
+                        '<h1>Identical guide</h1><p>' + text + '</p></body></html>')
+                headers = {'content-type': 'text/html'}
+                if url == urls[-1]:
+                    headers['x-narwhal-truncated'] = 'true'
+                return http.Response(url, url, 200, headers, body, 1)
+            with self.subTest(shared_target=shared_target, options=options), \
+                    mock.patch.object(crawl.scanner, 'gather_context', return_value={}), \
+                    mock.patch.object(crawl, 'discover', return_value=list(urls)), \
+                    mock.patch.object(http, 'fetch', side_effect=fetch) as page_fetch, \
+                    mock.patch.object(simhash, 'simhash', wraps=simhash.simhash) as fingerprints, \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                data = crawl.crawl(BASE, max_pages=3, concurrency=1, **options)
+                self.assertCountEqual(urls, [call.args[0] for call in page_fetch.call_args_list])
+                self.assertIs(True, data['pages'][-1]['response_truncated'])
+                if options:
+                    fingerprints.assert_not_called()
+                    self.assertNotIn('duplicates', data)
+                    self.assertNotIn('duplicate_coverage', data)
+                else:
+                    self.assertGreater(fingerprints.call_count, 0)
+                    self.assertEqual(3, data['duplicate_coverage']['scanned_pages'])
+                    self.assertEqual(2, data['duplicate_coverage']['eligible_pages'])
+                    self.assertEqual(1, len(data['duplicates']))
+                    cluster = data['duplicates'][0]
+                    self.assertCountEqual(urls[:2], cluster['urls'])
+                    self.assertEqual(100, cluster['min_similarity'])
+                    self.assertIs(shared_target, cluster['canonical_ok'])
+                    self.assertCountEqual([BASE, BASE] if shared_target else urls[:2], cluster['canonicals'])
 
     def test_crawl_records_actual_duplicate_inputs_and_omits_disabled_receipts(self):
         for fingerprints in ([], [17], [17, 18]):
