@@ -214,7 +214,7 @@ class TestSitemapReferences(unittest.TestCase):
         original = copy.deepcopy((context, receipt))
         def discover(*args, diagnostics=None, coverage=None, discovered_sitemap=None, **kwargs):
             if diagnostics is not None:
-                diagnostics.update({'robots_directives': 1, 'page_locations': 3})
+                diagnostics.update({'robots_directives': discovery_count, 'page_locations': 3})
             if coverage is not None:
                 coverage.update(receipt)
             if discovered_sitemap is not None:
@@ -223,21 +223,23 @@ class TestSitemapReferences(unittest.TestCase):
         def scan_page(url, **kwargs):
             return Report(url, fetched_status=200,
                           meta={'links': [{'url': known, 'internal': True}] if url == BASE else []})
-        with mock.patch.object(crawl_site.scanner, 'gather_context', return_value=context), \
-                mock.patch.object(crawl_site, 'discover', side_effect=discover), \
-                mock.patch.object(crawl_site.scanner, 'scan', side_effect=scan_page) as scanned, \
-                mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
-            result = json.loads(crawl_site.render_json(crawl_site.crawl(
-                BASE, max_pages=2, concurrency=1, detect_dupes=False)))
-        self.assertEqual([BASE, known], [call.args[0] for call in scanned.call_args_list])
-        self.assertEqual({'robots_directives': 2, 'index_locations': 1, 'page_locations': 3},
-                         result['sitemap_references']['rejected'])
-        self.assertEqual(receipt, result.get('sitemap_discovery'))
-        self.assertEqual(3, result['sitemap_candidates'])
-        self.assertEqual(2, result['pages_scanned'])
-        self.assertIs(True, result['graph']['orphans']['checked'])
-        self.assertEqual(set(orphans), set(result['graph']['orphans']['candidates']))
-        self.assertEqual(original, (context, receipt))
+        for discovery_count, expected in ((1, 2), (2, 2), (3, 3)):
+            with self.subTest(discovery_count=discovery_count), \
+                    mock.patch.object(crawl_site.scanner, 'gather_context', return_value=context), \
+                    mock.patch.object(crawl_site, 'discover', side_effect=discover), \
+                    mock.patch.object(crawl_site.scanner, 'scan', side_effect=scan_page) as scanned, \
+                    mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                result = json.loads(crawl_site.render_json(crawl_site.crawl(
+                    BASE, max_pages=2, concurrency=1, detect_dupes=False)))
+                self.assertEqual([BASE, known], [call.args[0] for call in scanned.call_args_list])
+                self.assertEqual({'robots_directives': expected, 'index_locations': 1, 'page_locations': 3},
+                                 result['sitemap_references']['rejected'])
+                self.assertEqual(receipt, result.get('sitemap_discovery'))
+                self.assertEqual(3, result['sitemap_candidates'])
+                self.assertEqual(2, result['pages_scanned'])
+                self.assertIs(True, result['graph']['orphans']['checked'])
+                self.assertEqual(set(orphans), set(result['graph']['orphans']['candidates']))
+                self.assertEqual(original, (context, receipt))
 
     def test_crawl_does_not_multiply_shared_robots_counts_by_scanned_pages(self):
         body = '<html><title>Reference fixture</title><h1>Fixture</h1><a href="/valid">Valid</a></html>'
