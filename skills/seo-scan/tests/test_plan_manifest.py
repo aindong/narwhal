@@ -36,6 +36,8 @@ class TestManifestEvidence(unittest.TestCase):
                 data = copy.deepcopy(REPORT)
                 result = plan.build_plan(data, str(root))
                 self.assertEqual('plain_html', result['framework']['name'])
+                self.assertGreaterEqual(result['framework']['confidence'], 0)
+                self.assertLessEqual(result['framework']['confidence'], 1)
                 self.assertEqual('index.html', result['actions'][0]['likely_files'][0]['path'])
                 self.assertIs(result['actions'][0]['likely_files'][0]['exists'], True)
                 self.assertTrue(any('package.json' in item and 'unverified' in item for item in result['warnings']))
@@ -43,6 +45,32 @@ class TestManifestEvidence(unittest.TestCase):
                 self.assertEqual(raw, package.read_bytes())
                 self.assertEqual(source, owner.read_bytes())
                 self.assertEqual(REPORT, data)
+
+    def test_invalid_manifest_keeps_config_priority_over_incidental_html(self):
+        for config, framework, owner in (
+                ('next.config.mjs', 'nextjs', 'app/layout.tsx'),
+                ('astro.config.mjs', 'astro', 'src/pages/index.astro'),
+                ('nuxt.config.ts', 'nuxt', 'app.vue')):
+            with self.subTest(framework=framework), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'package.json').write_bytes(b'{"dependencies":{"next":"\xff"}}')
+                (root / config).write_text('export default {}', encoding='utf-8')
+                source = root / owner
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text('Fixture source', encoding='utf-8')
+                for index in range(8):
+                    (root / ('index.html' if index == 0 else f'page-{index}.html')).write_text(
+                        '<html><head></head><body>Incidental HTML</body></html>', encoding='utf-8')
+                saved = {path: path.read_bytes() for path in root.rglob('*') if path.is_file()}
+                result = plan.build_plan(REPORT, str(root))
+                self.assertEqual(framework, result['framework']['name'])
+                self.assertFalse(any('depends on' in item for item in result['framework']['evidence']))
+                self.assertTrue(any(item['path'] == owner and item['exists']
+                                    for item in result['actions'][0]['likely_files']))
+                self.assertGreaterEqual(result['framework']['confidence'], 0)
+                self.assertLessEqual(result['framework']['confidence'], 1)
+                self.assertTrue(any('package.json' in item for item in result['warnings']))
+                self.assertEqual(saved, {path: path.read_bytes() for path in saved})
 
     def test_invalid_utf8_keeps_independent_config_and_cli_mcp_plans_available(self):
         with tempfile.TemporaryDirectory() as tmp:
