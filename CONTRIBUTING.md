@@ -370,6 +370,12 @@ the [diff profile](scripts/mutation/diff.toml):
 Other diff-profile targets remain optional diagnostics; passing the count gate
 does not certify the broader comparison corpus.
 
+For crawl-setting changes, target `diff_scan.x__crawl_settings__mutmut_*` and
+`diff_scan.x__comparison__mutmut_*` with that profile. Every sampled row retains
+known or unrecorded settings and auditor scopes, including duplicate URLs.
+Mixed evidence withholds fix claims; actual rendering fallbacks and pairs of
+legacy reports retain their existing handling without certifying missing data.
+
 For acquisition-evidence changes, use the same profile with
 `'lib.report.x_recorded_execution_problem__mutmut_*'` and record the scoped
 results and any surviving variants; its text diagnostics are not the scope CI gate.

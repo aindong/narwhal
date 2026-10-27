@@ -257,7 +257,7 @@ def _comparison(o: dict, n: dict) -> dict:
         for url, modes in crawl.items():
             for key, values in modes.items():
                 if len(values) > 1:
-                    reasons.append(f"{label} crawl contains contradictory {key} settings for {url}; its overall score is not comparable.")
+                    reasons.append(f"{label} crawl contains contradictory {key} settings or incomplete per-row evidence for {url}; its overall score is not comparable.")
     for url in sorted(crawls[0].keys() & crawls[1].keys()):
         old_fields = crawls[0][url].get('merchant_visible_fields')
         new_fields = crawls[1][url].get('merchant_visible_fields')
@@ -269,10 +269,8 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append('Recorded merchant price comparison method changed or is no longer recorded for ' + url + '; a lost or replaced check is not fix evidence.')
         for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config", 'auditors_requested', 'auditors_completed'):
             values = [item[url].get(key, set()) for item in crawls]
-            if key in ('auditors_requested', 'auditors_completed') and bool(values[0]) != bool(values[1]):
-                reasons.append(f'Crawl auditor scope {key} is recorded on only one side for {url}; matching execution is unverified.')
             if all(values) and values[0] != values[1]:
-                reasons.append(f"Crawl setting {key} differs for {url}; its contribution to the overall score is not comparable.")
+                reasons.append(f"Crawl setting {key} differs or is unrecorded for {url}; its contribution to the overall score is not comparable.")
     status = "incomparable" if reasons else (
         "comparable" if all(scope is not None for scope in scopes) else "unknown")
     if status == "unknown":
@@ -329,12 +327,14 @@ def _crawl_settings(crawl):
         if not isinstance(page, dict) or not isinstance(page.get("url"), str) or not page["url"]:
             continue
         result.setdefault(page['url'], {})
-        for key, value in _recorded_settings(page, page.get("rendered")).items():
-            result.setdefault(page["url"], {}).setdefault(key, set()).add(value)
+        settings = _recorded_settings(page, page.get('rendered'))
+        for key in ('render_requested', 'rendered', 'image_checks', 'content_length_reviewed',
+                    'readability_reviewed', 'schema_extraction_reviewed', 'rule_config'):
+            result[page['url']].setdefault(key, set()).add(settings.get(key))
         scope = recorded_scan_scope(page)
-        if scope is not None:
-            for key, value in zip(('auditors_requested', 'auditors_completed'), scope):
-                result.setdefault(page['url'], {}).setdefault(key, set()).add(tuple(sorted(value)))
+        for key, value in zip(('auditors_requested', 'auditors_completed'),
+                              scope if scope is not None else (None, None)):
+            result[page['url']].setdefault(key, set()).add(tuple(sorted(value)) if value is not None else None)
         merchant_basis = recorded_merchant_comparison_basis(page)
         result[page['url']].setdefault('merchant_visible_fields', set()).add(
             tuple(merchant_basis['visible_fields']) if merchant_basis is not None else None)
