@@ -375,6 +375,9 @@ does not certify the broader comparison corpus.
 Explanation tests require nonempty text reasons for unverified/rejected
 comparisons and no spurious scope warning for matching execution. They exercise
 JSON, Markdown and MCP parity alongside the strict and legacy comparison gates.
+For reason-rendering changes, target `diff_scan.x_render_markdown__mutmut_*`
+with the diff profile in the extras-enabled Python 3.12 environment. Label tests
+exercise built-in/CommonMark/branded rendering while retaining raw JSON evidence.
 
 For crawl-setting changes, target `diff_scan.x__crawl_settings__mutmut_*` and
 `diff_scan.x__comparison__mutmut_*` with that profile. Every sampled row retains

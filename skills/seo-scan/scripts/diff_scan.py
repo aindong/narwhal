@@ -586,7 +586,7 @@ def render_markdown(d: dict) -> str:
         if settings:
             facts.append("rule configuration: " + ("fingerprint recorded" if "rule_config" in settings else "unverified"))
         lines.append(f"- {label} settings: " + ("; ".join(facts) if facts else "not recorded") + ".")
-    lines.extend("- " + reason for reason in comparison.get("reasons", []))
+    lines.extend("- " + _label(reason) for reason in comparison.get("reasons", []))
     lines.extend([comparison.get("basis", "Coverage was not recorded."), ""])
     if 'crawl_rule_changes' in d:
         receipt = json.dumps(d['crawl_rule_changes'], indent=2, ensure_ascii=True).replace('`', '\\u0060')

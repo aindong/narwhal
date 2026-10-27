@@ -803,6 +803,10 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Diff Markdown renders comparison reasons as literal single-line previews,
+  preventing recorded crawl URL labels from introducing headings, links or HTML.
+  Full JSON evidence and comparison decisions are preserved.
+
 - llms.txt metadata is serialized as literal single-line Markdown text, preventing supplied headings/links/HTML from changing starter structure. URL destinations escape parentheses/entity-like text separately; raw URL whitespace/control errors are bounded and preserve CLI output files. Underlying metadata remains unchanged.
 
 - llms.txt generation rejects invalid page/worker budgets before requests or output writes, fixing zero-page requests that still fetched a page. MCP candidate-page work is clamped to 1–100 (default 40); explicit larger positive core/CLI page budgets remain supported.
