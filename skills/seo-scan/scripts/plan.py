@@ -93,12 +93,21 @@ def _legacy_rule_id(finding: dict) -> str:
 
 def _sitemap_note_findings(sitemap, schema_version):
     """Separate recorded execution gaps from source invalidity; never parse note text."""
-    notes = sitemap.get('errors') or []
+    notes = sitemap.get('errors', [])
     count = len(notes) if isinstance(notes, list) else 1
-    attempted, fetched, failed = (sitemap.get(key) for key in
-                                  ('sitemaps_attempted', 'sitemaps_fetched', 'fetch_failures'))
+    counter_keys = ('sitemaps_attempted', 'sitemaps_fetched', 'fetch_failures')
+    attempted, fetched, failed = (sitemap.get(key) for key in counter_keys)
     cap = sitemap.get('truncated', 0)
     cap_valid = type(cap) is int and cap >= 0
+    counter_problem = not cap_valid or any(
+        key in sitemap and (type(value) is not int or value < 0)
+        for key, value in zip(counter_keys, (attempted, fetched, failed)))
+    if type(attempted) is int and attempted >= 0:
+        # Missing legacy fields stay unknown; supplied outcomes must fit attempts.
+        outcomes = [value for value in (fetched, failed) if type(value) is int and value >= 0]
+        total_outcomes = sum(outcomes)
+        counter_problem = counter_problem or total_outcomes > attempted or (
+            len(outcomes) == 2 and total_outcomes != attempted)
     known = (schema_version == '2.0' and isinstance(notes, list) and cap_valid
              and all(type(value) is int and value >= 0 for value in (attempted, fetched, failed))
              and attempted == fetched + failed and failed + bool(cap) <= count)
@@ -121,7 +130,7 @@ def _sitemap_note_findings(sitemap, schema_version):
             f'{cap} distinct sitemap file(s) remained outside the recorded attempt budget; URL totals are partial.', cap)
         classified += 1
     hint = any(type(value) is int and value > 0 for value in (failed, cap))
-    if count > classified or (hint and not out):
+    if count > classified or ((hint or counter_problem) and not out):
         add('validation.unverified', 'Sitemap validation notes need manual verification',
             'Sitemap notes are unclassified or execution counters are inconsistent/unrecorded. '
             'Review the original report and endpoint; source invalidity is not established.',
