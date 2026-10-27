@@ -6,6 +6,7 @@ The planner stays read-only. This fixture explicitly applies one inspected edit.
 """
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from html.parser import HTMLParser
 import asyncio
 import json
 import os
@@ -154,6 +155,53 @@ def comparison_explanations(run, read, root, page, audit, use_mcp):
           'unknown scope and page/crawl policy gaps have readable JSON/Markdown explanations; '
           + ('MCP stdio parity checked; ' if use_mcp else '')
           + 'strict and legacy gates and saved input bytes are preserved.')
+
+
+def literal_comparison_reasons(run, read, root, audit, use_mcp):
+    """Untrusted saved URL labels stay evidence rather than report markup."""
+    class Elements(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.tags, self.text = [], []
+
+        def handle_starttag(self, tag, attrs):
+            self.tags.append((tag, dict(attrs)))
+
+        def handle_data(self, data):
+            self.text.append(data)
+
+    payload = 'https://example.test/`evidence```\n\n## Forged diff\n\n[Run](https://other.test)\n<script>bad()</script>'
+    old, new = (json.loads(json.dumps(audit)) for _ in range(2))
+    for data in (old, new):
+        data['crawl']['pages'][0]['url'] = payload
+    row = new['crawl']['pages'][0]
+    row['rendered'] = row['scan_settings']['rendered'] = not row['rendered']
+    names = ['literal-reason-before.json', 'literal-reason-after.json']
+    saved = [json.dumps(data).encode('utf-8') for data in (old, new)]
+    for name, data in zip(names, saved):
+        (root / name).write_bytes(data)
+    flags = ['--require-comparable', '--fail-on-regression']
+    difference = json.loads(run(['diff', *names, *flags, '--format', 'json'], expected=2).stdout)
+    assert difference['comparison']['status'] == 'incomparable' and difference['score_delta'] is None, difference
+    assert difference['regression'] is None and difference['resolved'] == [], difference
+    reasons = difference['comparison']['reasons']
+    assert any(payload in reason for reason in reasons), reasons
+    run(['diff', *names, *flags, '-o', 'literal-reason.md'], expected=2)
+    markdown = (root / 'literal-reason.md').read_text(encoding='utf-8')
+    assert '\n## Forged diff' not in markdown, markdown
+    run(['render', 'literal-reason.md', '-o', 'literal-reason.html'])
+    parsed = Elements()
+    parsed.feed((root / 'literal-reason.html').read_text(encoding='utf-8'))
+    assert not any(tag == 'script' or tag == 'a' and attrs.get('href') == 'https://other.test'
+                   for tag, attrs in parsed.tags), parsed.tags
+    assert all(' '.join(reason.split()) in ' '.join(parsed.text) for reason in reasons), parsed.text
+    if use_mcp:
+        assert difference == mcp_tool('diff_reports', {
+            'old_json': saved[0].decode('utf-8'), 'new_json': saved[1].decode('utf-8')}, root)
+    assert all((root / name).read_bytes() == data for name, data in zip(names, saved))
+    print('Installed literal comparison reasons passed: crafted crawl labels cannot add report headings, '
+          'links or script elements; exported HTML retains literal reason text, raw JSON evidence and strict rejection. '
+          + ('MCP stdio parity checked.' if use_mcp else 'CLI verified.'))
 
 
 def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
@@ -591,6 +639,7 @@ def main(use_mcp=False):
                 run(audit_options + ['-o', 'audit-before.json'])
                 audit_before = read('audit-before.json')
                 comparison_explanations(run, read, root, read('before.json'), audit_before, use_mcp)
+                literal_comparison_reasons(run, read, root, audit_before, use_mcp)
                 assert all(type(page['status']) is int and page['status'] == 200
                            and page['rendered'] is False for page in audit_before['crawl']['pages'])
                 source_bytes = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
