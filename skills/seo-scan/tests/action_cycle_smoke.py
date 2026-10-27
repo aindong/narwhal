@@ -195,14 +195,21 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
             assert ('price' in basis['visible_fields']) == (label == 'before'), basis
     finally:
         target.write_text(merchant_sources['corrected'], encoding='utf-8')
-    for missing in ('receipt', 'method'):
+    for missing in ('receipt', 'method', 'scope', 'rendered', 'rule_config'):
         crawl = read('merchant-crawl-before.json')
         crawl['pages'] = json.loads(json.dumps(crawl['pages'] * 2))
         crawl['pages_scanned'] = 2
         if missing == 'receipt':
             crawl['pages'][1].pop('merchant_comparison_basis')
-        else:
+        elif missing == 'method':
             crawl['pages'][1]['merchant_comparison_basis']['price_method'] = None
+        elif missing == 'scope':
+            crawl['pages'][1].pop('scan_scope')
+        elif missing == 'rendered':
+            crawl['pages'][1].pop('rendered')
+            crawl['pages'][1]['scan_settings'].pop('rendered')
+        else:
+            crawl['pages'][1]['scan_settings'].pop('rule_config')
         supplied = {'site': url, 'overall_score': crawl['avg_score'],
                     'homepage': snapshots['corrected'], 'crawl': crawl, 'sitemap': {}}
         name = 'merchant-duplicate-' + missing + '.json'
@@ -288,6 +295,8 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
     print('Installed merchant basis checks passed: removing observed price or changing exact amount to range '
           'compatibility withholds score/resolution claims; native crawl receipts retain observed field coverage. '
           'Lost price checks and unknown duplicate rows cannot claim resolution; missing-price repair remains comparable.')
+    print('Installed crawl setting checks passed: duplicate rows preserve missing scope, rendering and rule-configuration '
+          'evidence; strict CLI/MCP comparisons withhold score and resolution claims.')
 
 
 def main(use_mcp=False):

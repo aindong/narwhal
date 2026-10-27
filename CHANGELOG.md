@@ -12,6 +12,12 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- FIFO CLI test startup reuses Python's validated bytecode cache for large
+  generated mutation modules, retaining the 30-second startup and five-second
+  output deadlines with cache-reuse and source-invalidation controls.
+- Crawl diffs retain unknown scan settings and auditor scopes for every sampled
+  row, so a duplicate URL cannot hide missing evidence. Known/unrecorded setting
+  changes withhold score/fix claims; rendering fallbacks and legacy handling remain.
 - Diffs retain merchant observation coverage and distinguish exact price amounts
   from AggregateOffer range compatibility, so removing observed fields, dropping a
   known price check or switching methods cannot count as a resolved mismatch or score gain. Native crawl

@@ -18,6 +18,8 @@ pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_diff_output_safety.py",
   "skills/seo-scan/tests/test_crawl_execution_scope.py",
   "skills/seo-scan/tests/test_diff_settings.py",
+  "skills/seo-scan/tests/test_diff_crawl_setting_presence.py",
+  "skills/seo-scan/tests/test_merchant_comparison_basis.py",
   "skills/seo-scan/tests/test_crawl_rule_handoff.py",
   "skills/seo-scan/tests/test_crawl_pacing.py",
   "skills/seo-scan/tests/test_crawl_url_identity.py::TestCrawlURLIdentity::test_known_current_vs_unrecorded_audit_identity_policy_blocks_fix_claims",

@@ -346,6 +346,9 @@ keep the five-second deadline for CLI execution and output handling. Both phases
 terminate and reap a timed-out child. Controlled startup delays and a genuinely
 blocking FIFO writer verify that slow imports cannot consume the I/O budget and
 that blocking output still fails. These tests do not replace installed CLI checks.
+The helper uses Python's validated bytecode cache so large generated Mutmut
+modules do not recompile on every FIFO check. Cache-reuse and checked-hash source
+invalidation controls run alongside the unchanged startup/I/O deadline checks.
 Regular-file controls also run in the parent process so Mutmut records writer
 coverage before selecting the subprocess rejection cases. The profile includes
 empty/binary output preservation and descriptor cleanup when stream setup fails.
@@ -369,6 +372,12 @@ the [diff profile](scripts/mutation/diff.toml):
 
 Other diff-profile targets remain optional diagnostics; passing the count gate
 does not certify the broader comparison corpus.
+
+For crawl-setting changes, target `diff_scan.x__crawl_settings__mutmut_*` and
+`diff_scan.x__comparison__mutmut_*` with that profile. Every sampled row retains
+known or unrecorded settings and auditor scopes, including duplicate URLs.
+Mixed evidence withholds fix claims; actual rendering fallbacks and pairs of
+legacy reports retain their existing handling without certifying missing data.
 
 For acquisition-evidence changes, use the same profile with
 `'lib.report.x_recorded_execution_problem__mutmut_*'` and record the scoped

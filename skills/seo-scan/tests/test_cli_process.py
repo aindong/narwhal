@@ -1,6 +1,7 @@
 """Slow imports must not relax the FIFO I/O deadline or leave child processes."""
 import os
 from pathlib import Path
+import py_compile
 import subprocess
 import sys
 import tempfile
@@ -56,6 +57,32 @@ class TestCliProcess(unittest.TestCase):
         self.write_cli('raise RuntimeError("startup-fault")\n')
         with self.assertRaisesRegex(RuntimeError, 'startup-fault'):
             _cli_process.run_cli(self.cli, [])
+
+    def test_valid_cached_cli_is_not_recompiled(self):
+        self.write_cli('import sys\ndef main(args):\n    print("cached CLI")\n    return 2\n')
+        py_compile.compile(str(self.cli), doraise=True,
+                           invalidation_mode=py_compile.PycInvalidationMode.CHECKED_HASH)
+        guard = '''import builtins, sys
+original_compile = builtins.compile
+def checked_compile(source, filename, *args, **kwargs):
+    if filename == sys.argv[1]:
+        raise AssertionError('cached CLI was recompiled')
+    return original_compile(source, filename, *args, **kwargs)
+builtins.compile = checked_compile
+'''
+        with mock.patch.object(_cli_process, 'CHILD', guard + _cli_process.CHILD):
+            result = _cli_process.run_cli(self.cli, [])
+        self.assertEqual((2, 'cached CLI\n'), (result.returncode, result.stdout))
+
+    def test_changed_source_invalidates_checked_hash_cache(self):
+        self.write_cli('import sys\ndef main(args):\n    print("old CLI")\n    return 2\n')
+        py_compile.compile(str(self.cli), doraise=True,
+                           invalidation_mode=py_compile.PycInvalidationMode.CHECKED_HASH)
+        before = self.cli.stat()
+        self.cli.write_text(self.cli.read_text().replace('old CLI', 'new CLI').replace('return 2', 'return 3'))
+        os.utime(self.cli, ns=(before.st_atime_ns, before.st_mtime_ns))
+        result = _cli_process.run_cli(self.cli, [])
+        self.assertEqual((3, 'new CLI\n'), (result.returncode, result.stdout))
 
     def test_startup_still_has_a_finite_deadline(self):
         self.write_cli('import time\ntime.sleep(10)\n')
