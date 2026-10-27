@@ -73,6 +73,8 @@ templates with fresh snapshots, requires one observed WebSite node and exactly t
 schema non-observation resolved, and rejects the reverse regression. Prior reports
 and unrelated source bytes remain unchanged. This is supported-extractor/local
 workflow evidence, not full schema validation, eligibility or ranking proof.
+Replanning that verified schema report must leave no actions, groups or conflicts;
+successful observations are not remaining work, and the input report stays intact.
 The inner page also lacks a viewport declaration. Its native recurring finding
 must become an automation candidate only for that page's observed source.
 Temporarily removing the fixture source must withhold automation and leave an
@@ -230,6 +232,9 @@ owner checks across the supported frameworks and related-action group boundaries
 
 With the same profile, target `plan.x__groups__mutmut_*` to check manual-action
 exclusion, existing-candidate unions and per-file overlap evidence.
+The profile also exercises successful-finding exclusion and repeated-observation
+counts, scope and selection receipts. Successful siblings/rollups must neither
+create remediation nor inflate a remaining finding's count or selection history.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does

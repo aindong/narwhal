@@ -539,6 +539,16 @@ def main(use_mcp=False):
                 if use_mcp:
                     assert schema_diff == mcp_tool('diff_reports', {
                         'old_json': schema_page_baseline.decode('utf-8'), 'new_json': json.dumps(schema_after)}, root)
+                schema_after_bytes = (root / 'schema-page-after.json').read_bytes()
+                if use_mcp:
+                    completed_plan = mcp_tool('plan_remediation', {'report': schema_after, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'schema-page-after.json', '--repo', str(site), '--format', 'json',
+                         '-o', 'schema-completed-plan.json'])
+                    completed_plan = read('schema-completed-plan.json')
+                assert completed_plan['actions'] == completed_plan['groups'] == completed_plan['conflicts'] == []
+                assert completed_plan['coverage']['actionable_findings'] == completed_plan['coverage']['actions_emitted'] == 0
+                assert (root / 'schema-page-after.json').read_bytes() == schema_after_bytes
                 run(['diff', 'schema-page-after.json', 'schema-page-before.json', '--require-comparable',
                      '--fail-on-regression', '--format', 'json', '-o', 'schema-regression.json'], expected=1)
                 assert read('schema-regression.json')['regression'] is True
@@ -549,7 +559,8 @@ def main(use_mcp=False):
                 assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 print('Installed schema action cycle passed: reviewed source owner -> generated and curated WebSite JSON-LD '
                       '-> explicit fixture edit -> one resolved observation in a comparable local rescan; '
-                      'prior reports preserved and reverse regression rejected. No eligibility or ranking proof.')
+                      'no remaining schema actions; prior reports preserved and reverse regression rejected. '
+                      'No eligibility or ranking proof.')
             finally:
                 server.shutdown()
                 thread.join(timeout=5)
