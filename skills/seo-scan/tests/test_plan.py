@@ -1,6 +1,7 @@
 """Remediation planner contract, framework, security, and CLI tests."""
 
 import contextlib
+import copy
 import io
 import json
 import os
@@ -189,14 +190,49 @@ class TestPlanContract(unittest.TestCase):
             for n in range(plan.MAX_FINDINGS + 2)
         ]
         findings[-1]["severity"] = "critical"
+        findings[-1]["rule_id"] = "content.zzz.urgent"
         built = plan.build_plan({"url": "https://example.test", "findings": findings},
                                 str(FIXTURES / "plain_html"))
         self.assertEqual(plan.MAX_FINDINGS, len(built["actions"]))
         self.assertTrue(built["coverage"]["action_generation_capped"])
         self.assertEqual(plan.MAX_FINDINGS + 2,
                          built["coverage"]["actionable_findings"])
-        self.assertIn("content.issue.1001", {a["rule_id"] for a in built["actions"]})
+        self.assertEqual("content.zzz.urgent", built["actions"][0]["rule_id"])
+        self.assertEqual("critical", built["actions"][0]["severity"])
         self.assertTrue(any("severity-first" in warning for warning in built["warnings"]))
+
+    def test_action_limit_counts_unique_nonpassing_rules_and_only_reports_real_omissions(self):
+        for total in (plan.MAX_FINDINGS - 1, plan.MAX_FINDINGS, plan.MAX_FINDINGS + 1):
+            with self.subTest(total=total):
+                findings = [
+                    {'category': 'content', 'severity': 'low', 'title': f'Issue {n}',
+                     'rule_id': f'content.limit.{n:04d}'}
+                    for n in range(total - 1)]
+                findings += [dict(findings[0], count=7),
+                             {'category': 'content', 'severity': 'good', 'title': 'Passed check',
+                              'rule_id': 'content.limit.passed'},
+                             {'category': 'content', 'severity': 'critical', 'title': 'Urgent issue',
+                              'rule_id': 'content.zzz.urgent'}]
+                report = {'url': 'https://example.test/', 'findings': findings}
+                original = copy.deepcopy(report)
+                built = plan.build_plan(report, str(FIXTURES / 'plain_html'), report_source='<mcp-object>')
+                expected_ids = (['content.zzz.urgent']
+                                + [f'content.limit.{n:04d}' for n in range(min(total, plan.MAX_FINDINGS) - 1)])
+                self.assertEqual(expected_ids, [a['rule_id'] for a in built['actions']])
+                self.assertEqual(total, built['coverage']['actionable_findings'])
+                self.assertEqual(min(total, plan.MAX_FINDINGS), built['coverage']['actions_emitted'])
+                self.assertIs(total > plan.MAX_FINDINGS, built['coverage']['action_generation_capped'])
+                selected = next(a for a in built['actions'] if a['rule_id'] == 'content.limit.0000')
+                self.assertEqual(7, selected['occurrences'])
+                self.assertEqual(2, selected['observation_selection']['normalized_observations'])
+                warnings = [w for w in built['warnings'] if w.startswith('Action generation capped')]
+                expected_warning = (f'Action generation capped at {plan.MAX_FINDINGS} of '
+                                    f'{total} actionable findings (severity-first).')
+                self.assertEqual([expected_warning] if total > plan.MAX_FINDINGS else [], warnings)
+                self.assertEqual(total > plan.MAX_FINDINGS,
+                                 expected_warning in plan.render_markdown(built))
+                self.assertEqual(built, mcp_server._plan(report, 'skills/seo-scan/tests/fixtures/planner/plain_html'))
+                self.assertEqual(original, report)
 
     def test_intent_conflicts_are_emitted(self):
         report = {"url": "https://example.test", "findings": [

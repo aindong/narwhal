@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner tests require severity-first truncation and accurate coverage around
+  the 1,000-action limit, after deduplication and successful-check exclusion,
+  retaining critical findings and matching Python/MCP plans without false cap warnings.
 - Planner source scores follow scan/audit report kind, preserving missing/null
   measurements instead of borrowing homepage or unrelated additive scores.
   Extra overall-score fields cannot bypass page-score validation.

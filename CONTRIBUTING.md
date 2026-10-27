@@ -299,6 +299,10 @@ kind are present. Missing/null scores stay unknown, and missing audit overall
 scores must not borrow homepage measurements. The installed action cycle checks
 native reports alongside deliberately altered saved copies through CLI/MCP;
 an invalid page score cannot be hidden by an extra overall score.
+Action-limit controls exercise the real 1,000-rule boundary below, at and above
+the cap. Deduplicate observations and exclude successful checks before counting;
+retain late critical rules ahead of low-priority rules, and disclose only actual
+omissions through coverage and Markdown warnings, with direct MCP parity.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does
