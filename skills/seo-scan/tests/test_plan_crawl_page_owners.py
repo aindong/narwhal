@@ -74,6 +74,31 @@ class TestCrawlPageOwners(unittest.TestCase):
             self.assertEqual([], self.action(data)['likely_files'])
             self.assertEqual({}, plan._rule_page_witnesses(data, 'https://[invalid'))
 
+    def test_url_notes_append_without_discarding_the_selected_observation(self):
+        for field in ('evidence', 'detail'):
+            with self.subTest(field=field):
+                data = copy.deepcopy(self.data)
+                observation = 'Observed zero H1 headings.\nKeep this original snapshot evidence: café.'
+                row = next(r for r in data['crawl']['recurring'] if r['rule_id'] == RULE)
+                row[field] = observation
+                original = copy.deepcopy(data)
+                sources = {str(p.relative_to(self.repo)): p.read_bytes()
+                           for p in self.repo.rglob('*') if p.is_file()}
+                with mock.patch.object(Path, 'cwd', return_value=self.workspace), \
+                        mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')):
+                    action = self.action(data)
+                    received = mcp_server._plan(data, 'site')
+                self.assertTrue(action['evidence'].startswith(observation + '\n\n'))
+                note = action['evidence'][len(observation) + 2:]
+                self.assertIn('not a complete affected-page list', note)
+                self.assertEqual(row['url_sample']['urls'], json.loads(note.rsplit('\n', 1)[1]))
+                self.assertEqual(action, next(a for a in received['actions'] if a['rule_id'] == RULE))
+                self.assertEqual('site', action['scope'])
+                self.assertEqual('review_required', action['safety'])
+                self.assertEqual(original, data)
+                self.assertEqual(sources, {str(p.relative_to(self.repo)): p.read_bytes()
+                                           for p in self.repo.rglob('*') if p.is_file()})
+
     def test_home_observations_need_matching_rule_complete_source_and_same_origin(self):
         row = {'rule_id': RULE, 'category': 'technical', 'severity': 'high', 'title': 'No H1 heading'}
         for page, expected in (
