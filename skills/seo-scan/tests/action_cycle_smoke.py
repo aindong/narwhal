@@ -172,6 +172,19 @@ def planner_witness_cycle(run, read, root, site, url, server, use_mcp):
             plans = [read(name + '.plan.json')]
             if use_mcp:
                 plans.append(mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root))
+            markdown_name = name + '.plan.md'
+            run(['plan', name, '--repo', 'site', '--format', 'markdown', '-o', markdown_name])
+            markdown = (root / markdown_name).read_text(encoding='utf-8')
+            for rule in {h1_rule} | (header_rules if label == 'generic' else set()):
+                section = markdown.split('- **Rule:** `' + rule + '`', 1)[1].split('\n### ', 1)[0]
+                assert '- **Plan scope:** `site` · **Occurrences:** 1' in section, section
+            assert 'maximum supplied count' in markdown and 'default to 1' in markdown
+            assert 'not distinct affected-page totals' in markdown
+            html_name = markdown_name + '.html'
+            run(['render', markdown_name, '-o', html_name])
+            exported = (root / html_name).read_text(encoding='utf-8')
+            assert '<strong>Plan scope:</strong> <code>site</code>' in exported
+            assert '<strong>Occurrences:</strong> 1' in exported
             for built in plans:
                 actions = {a['rule_id']: a for a in built['actions']}
                 h1 = actions[h1_rule]
@@ -202,6 +215,9 @@ def planner_witness_cycle(run, read, root, site, url, server, use_mcp):
     print('Installed planner witness checks passed: native original finding text survives appended page/header '
           'labels; HTML candidates and manual deployed-header work stay separate; named-only/absent headers '
           'do not invent generic restrictions. Baseline and source bytes preserved. '
+          + ('CLI and MCP stdio verified.' if use_mcp else 'CLI verified.'))
+    print('Installed plan context checks passed: per-rule Markdown and exported HTML retain site scope and '
+          'occurrence counts with maximum/default limits; native JSON context stays unchanged. '
           + ('CLI and MCP stdio verified.' if use_mcp else 'CLI verified.'))
 
 
