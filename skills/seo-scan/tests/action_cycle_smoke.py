@@ -492,6 +492,8 @@ def main(use_mcp=False):
                 assert not (schema_action.get('automation_eligibility') or {}).get('eligible'), schema_action
                 assert any(o['path'] == 'index.html' and o['exists'] is True for o in schema_action['likely_files'])
                 fields = {'name': 'Local workflow verification', 'url': url}
+                assert '<h1>' + fields['name'] + '</h1>' in schema_sources['index.html'].decode('utf-8')
+                assert fields['url'] == schema_before['final_url']
                 generation = ['schema', 'WebSite', '--no-recommended',
                               '--field', 'name=' + fields['name'], '--field', 'url=' + url]
                 node = json.loads(run(generation + ['--raw']).stdout)
