@@ -714,8 +714,8 @@ def main(use_mcp=False):
                 for title, destination in entries.items():
                     source = llms_sources['index.html' if destination == url else 'pricing/index.html'].decode('utf-8')
                     assert '<title>' + title + '</title>' in source
-                assert {line for line in starter.splitlines() if line.startswith('- [')} == {
-                    '- [' + title + '](' + destination + ')' for title, destination in entries.items()}, starter
+                assert sorted(line for line in starter.splitlines() if line.startswith('- [')) == sorted(
+                    '- [' + title + '](' + destination + ')' for title, destination in entries.items()), starter
                 assert 'TODO' not in starter, starter
                 assert llms_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 # Both entry points were inspected above; remove the starter comment for this disposable fixture.
