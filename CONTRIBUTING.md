@@ -77,6 +77,8 @@ do not establish totals of distinct affected pages.
 Copies of native sitemap receipts with unsupported sample containers must request
 manual verification without inventing probe rows or source-edit actions. The
 uncorrupted native control and all source/report bytes must remain unchanged.
+Combined malformed counts, counters and containers must retain each verification
+reason and guidance through same-rule selection.
 The fixture also reviews a schema action, generates WebSite JSON-LD from its real
 name/URL, and curates the MCP starter's inapplicable search-action placeholder.
 It applies that inspected artifact, runs the generated schema-only local scan/diff

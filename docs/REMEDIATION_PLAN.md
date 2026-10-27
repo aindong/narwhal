@@ -55,6 +55,9 @@ validation verification. They are not expanded into individual probe records
 and cannot alone justify source edits. Valid records in a companion list retain
 their independent classification. Missing legacy keys and empty lists keep their
 existing behavior; unsupported container values are not echoed into evidence.
+When malformed counts coexist with these execution or container warnings, their
+generated verification reasons are consolidated before same-rule selection so
+neither the explanation nor its verification guidance disappears.
 
 Comprehensive-audit `crawl.links` observations produce manual `links` actions:
 `technical.links.http.failures` for reported failing 4xx/5xx responses without

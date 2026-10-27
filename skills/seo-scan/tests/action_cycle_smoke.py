@@ -137,13 +137,13 @@ def sitemap_container_plans(run, read, root, site, audit, use_mcp):
     source = 'technical.sitemap.validation.issues'
     sample = 'technical.sitemap.sample.unverified'
     assert isinstance(audit['sitemap']['sample'], list) and audit['sitemap']['broken_sample'] == []
-    cases = [('native', None, None),
-             ('object-broken', 'broken_sample', {'status': 404, 'url': 'https://example.test/secret-token'}),
-             ('null-sample', 'sample', None), ('false-broken', 'broken_sample', False)]
-    for label, field, value in cases:
+    cases = [('native', {}),
+             ('object-broken', {'broken_sample': {'status': 404, 'url': 'https://example.test/secret-token'}}),
+             ('null-sample', {'sample': None}), ('false-broken', {'broken_sample': False}),
+             ('mixed-counts', {'sample': None, 'invalid_lastmod': '0', 'fetch_failures': False})]
+    for label, changes in cases:
         supplied = json.loads(json.dumps(audit))
-        if field:
-            supplied['sitemap'][field] = value
+        supplied['sitemap'].update(changes)
         name = 'sample-containers-' + label + '.json'
         saved = json.dumps(supplied).encode('utf-8')
         (root / name).write_bytes(saved)
@@ -154,12 +154,16 @@ def sitemap_container_plans(run, read, root, site, audit, use_mcp):
         for built in plans:
             actions = {a['rule_id']: a for a in built['actions']}
             assert source not in actions and sample not in actions, actions
-            if field:
+            if changes:
                 assert unknown in actions, actions
                 action = actions[unknown]
                 assert (action['safety'], action['manual_action'], action['requires_deploy'], action['likely_files']) == (
                     'manual_external', True, False, []), action
                 assert 'container' in action['evidence'].lower() and action['occurrences'] == 1, action
+                assert 'before making source changes' in action['source_recommendation'].lower(), action
+                if label == 'mixed-counts':
+                    assert 'execution counters' in action['evidence'].lower(), action
+                    assert 'problem/invalid-lastmod counts' in action['evidence'].lower(), action
                 assert not any(unknown in group['rule_ids'] for group in built['groups']), built
                 assert 'secret-token' not in json.dumps(built), built
             else:

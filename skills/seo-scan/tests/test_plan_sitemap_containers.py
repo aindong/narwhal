@@ -124,6 +124,32 @@ class TestSitemapSampleContainers(unittest.TestCase):
         self.assertIn('execution counters', actions[NOTES]['evidence'].lower())
         self.assertIn('sample containers', actions[NOTES]['evidence'].lower())
 
+    def test_malformed_counts_cannot_replace_container_and_counter_explanations(self):
+        for counts, expected in (({'invalid_lastmod': '0'}, {NOTES}),
+                                 ({'problems': {'future': 'secret-token'}}, {NOTES}),
+                                 ({'problems': []}, {NOTES}),
+                                 ({'problems': {'not-absolute': 1, 'future': 'secret-token'}}, {NOTES, SOURCE})):
+            for counter_gap in (False, True):
+                with self.subTest(counts=counts, counter_gap=counter_gap):
+                    data = clean()
+                    data['sitemap'].update(sample=None, **counts)
+                    if counter_gap:
+                        data['sitemap']['fetch_failures'] = False
+                    original = copy.deepcopy(data)
+                    built, actions = self.actions(data)
+                    self.assertEqual(expected, set(actions))
+                    self.assert_gap(actions[NOTES])
+                    self.assertIn('problem/invalid-lastmod counts', actions[NOTES]['evidence'].lower())
+                    self.assertEqual(counter_gap, 'execution counters' in actions[NOTES]['evidence'].lower())
+                    self.assertEqual(1, actions[NOTES]['occurrences'])
+                    self.assertFalse(any(NOTES in group['rule_ids'] for group in built['groups']))
+                    if SOURCE in actions:
+                        self.assertEqual('deploy_verification', actions[SOURCE]['safety'])
+                        self.assertTrue(actions[SOURCE]['requires_deploy'])
+                        self.assertTrue(any(owner['path'] == 'sitemap.xml'
+                                            for owner in actions[SOURCE]['likely_files']))
+                    self.assertEqual(original, data)
+
     def test_successful_prefix_cannot_hide_later_failures_or_gated_records(self):
         ok = {'url': 'https://example.test/ok', 'status': 200, 'error': None}
         failure = {'url': 'https://example.test/gone', 'status': 404, 'error': None}

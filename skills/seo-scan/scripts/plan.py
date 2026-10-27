@@ -502,7 +502,8 @@ def normalize_report(data: dict) -> dict:
             seen[finding["rule_id"]] = finding
         findings.extend(_crawl_link_findings(crawl))
         sitemap = data.get("sitemap", {})
-        findings.extend(_sitemap_note_findings(sitemap, data.get('schema_version')))
+        sitemap_notes = _sitemap_note_findings(sitemap, data.get('schema_version'))
+        findings.extend(sitemap_notes)
         failed_samples, unverified_samples = _sitemap_sample_evidence(sitemap)
         sitemap_issues = ([f'{len(failed_samples)} recorded failing sampled HTTP response(s)']
                           if failed_samples else [])
@@ -511,13 +512,20 @@ def normalize_report(data: dict) -> dict:
         if isinstance(problems, dict):
             source_counts.extend(problems.values())
         if not isinstance(problems, dict) or any(type(value) is not int or value < 0 for value in source_counts):
-            findings.append({
+            problem_note = {
                 'category': 'technical', 'severity': 'low', 'scope': 'site',
                 'rule_id': 'technical.sitemap.validation.unverified',
                 'title': 'Sitemap problem counts need manual verification',
                 'detail': 'Recorded sitemap problem/invalid-lastmod counts have unsupported shapes or values. '
                           'Verify the original counts; these values do not establish source invalidity.',
-            })
+            }
+            validation_note = next((note for note in sitemap_notes
+                                    if note['rule_id'] == problem_note['rule_id']), None)
+            if validation_note is None:
+                findings.append(problem_note)
+            else:
+                # One synthesized observation keeps each independent reason through selection.
+                validation_note['detail'] += '\n\n' + problem_note['detail']
         if any(type(value) is int and value > 0 for value in source_counts):
             sitemap_issues.append("invalid sitemap entries or lastmod values")
         if sitemap_issues and "technical.sitemap.validation.issues" not in seen:
