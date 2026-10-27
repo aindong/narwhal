@@ -75,6 +75,10 @@ and unrelated source bytes remain unchanged. This is supported-extractor/local
 workflow evidence, not full schema validation, eligibility or ranking proof.
 Replanning that verified schema report must leave no actions, groups or conflicts;
 successful observations are not remaining work, and the input report stays intact.
+Sitemap source-problem summaries use nonnegative integer counts. Zero-filled
+summaries do not imply defects; malformed counts require manual verification.
+Independent positive counts and recorded failing HTTP samples retain their
+source-review actions even when other counters are unverified.
 The inner page also lacks a viewport declaration. Its native recurring finding
 must become an automation candidate only for that page's observed source.
 Temporarily removing the fixture source must withhold automation and leave an

@@ -481,7 +481,19 @@ def normalize_report(data: dict) -> dict:
         failed_samples, unverified_samples = _sitemap_sample_evidence(sitemap)
         sitemap_issues = ([f'{len(failed_samples)} recorded failing sampled HTTP response(s)']
                           if failed_samples else [])
-        if sitemap.get("problems") or sitemap.get("invalid_lastmod"):
+        problems = sitemap.get('problems', {})
+        source_counts = [sitemap.get('invalid_lastmod', 0)]
+        if isinstance(problems, dict):
+            source_counts.extend(problems.values())
+        if not isinstance(problems, dict) or any(type(value) is not int or value < 0 for value in source_counts):
+            findings.append({
+                'category': 'technical', 'severity': 'low', 'scope': 'site',
+                'rule_id': 'technical.sitemap.validation.unverified',
+                'title': 'Sitemap problem counts need manual verification',
+                'detail': 'Recorded sitemap problem/invalid-lastmod counts have unsupported shapes or values. '
+                          'Verify the original counts; these values do not establish source invalidity.',
+            })
+        if any(type(value) is int and value > 0 for value in source_counts):
             sitemap_issues.append("invalid sitemap entries or lastmod values")
         if sitemap_issues and "technical.sitemap.validation.issues" not in seen:
             detail = "; ".join(map(str, sitemap_issues[:5]))
