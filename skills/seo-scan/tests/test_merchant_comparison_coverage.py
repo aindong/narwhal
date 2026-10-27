@@ -78,6 +78,7 @@ class TestMerchantComparisonCoverage(unittest.TestCase):
             built = plan.build_plan(data, str(REPO))
             self.assertIn(VERIFY, [a['rule_id'] for a in built['actions']])
             action = next(a for a in built['actions'] if a['rule_id'] == VERIFY)
+            self.assertEqual(('schema', 'low'), (action['category'], action['severity']))
             self.assertEqual('manual_external', action['safety'])
             self.assertEqual([], action['likely_files'])
             self.assertFalse(action['requires_deploy'])
@@ -93,7 +94,10 @@ class TestMerchantComparisonCoverage(unittest.TestCase):
                 mock.patch.object(crawl_site.scanner, 'scan', return_value=report):
             result = crawl_site.crawl(URL, max_pages=1)
         self.assertIs(True, result['pages'][0].get('merchant_comparison_unverified'))
-        self.assertIn('Product/Offer', crawl_site.render_markdown(result))
+        rendered = crawl_site.render_markdown(result)
+        self.assertIn('Product/Offer', rendered)
+        self.assertIn('# Site SEO & GEO Scan', rendered)
+        self.assertIn('**Average score:** ' + str(result['avg_score']) + '/100', rendered)
         home = observed(page(offers()[:1], price='129.00'))
         audit_data = {'site': URL, 'page': home, 'site_result': result,
                       'sitemap': {'start': URL, 'seeds': []}}
@@ -257,6 +261,8 @@ class TestMerchantComparisonCoverage(unittest.TestCase):
         built = plan.build_plan(data, str(REPO))
         self.assertIn(VERIFY, [a['rule_id'] for a in built['actions']])
         self.assertNotIn(OFFER, [a['rule_id'] for a in built['actions']])
+        data['crawl'].pop('recurring')
+        self.assertIn(VERIFY, [a['rule_id'] for a in plan.build_plan(data, str(REPO))['actions']])
 
     def test_malformed_crawl_recurring_preserves_unverified_aggregate_contract(self):
         home = payload(observed(page(offers()[:1], price='129.00')))
