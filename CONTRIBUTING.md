@@ -66,6 +66,11 @@ Explicitly malformed crawl page lists and contradictory recorded page counts mus
 block score/fix claims in installed CLI and MCP diffs, including regression-only gates.
 The separate crawl-rule diff must report the missing-title rule as no longer
 observed in the matching sample, through both CLI and optional MCP.
+Planner witness checks also require native finding text to survive appended
+page/header URL notes. A missing-H1 fixture keeps its observed HTML owner while
+generic HTTP `noindex`/`nofollow` actions remain manual hosting work with
+deployment-required verification. Named-crawler-only and absent headers cannot
+invent generic restrictions. Planning preserves source and baseline bytes.
 The fixture also reviews a schema action, generates WebSite JSON-LD from its real
 name/URL, and curates the MCP starter's inapplicable search-action placeholder.
 It applies that inspected artifact, runs the generated schema-only local scan/diff

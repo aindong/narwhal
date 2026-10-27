@@ -104,6 +104,12 @@ def mcp_recovery(report, root):
 
 
 class FixtureHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        field = getattr(self.server, 'witness_header', None)
+        if self.path == '/witness/' and field:
+            self.send_header('X-Robots-Tag', field)
+        super().end_headers()
+
     def do_GET(self):
         if self.path == '/legacy/':
             self.send_response(302)
@@ -121,6 +127,82 @@ class FixtureHandler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
             return
         super().do_GET()
+
+
+def planner_witness_cycle(run, read, root, site, url, server, use_mcp):
+    """Verify native finding text and separate HTML/header ownership through planning."""
+    sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    reports = {p: p.read_bytes() for p in root.glob('*.json')}
+    target = site / 'witness/index.html'
+    assert not target.parent.exists()
+    html = (site / 'index.html').read_text(encoding='utf-8')
+    heading = '<h1>Local workflow verification</h1>'
+    assert heading in html
+    target.parent.mkdir()
+    target.write_text(html.replace(heading, ''), encoding='utf-8')
+    fixture = target.read_bytes()
+    destination = url + 'witness/'
+    h1_rule = 'technical.no.h1.heading'
+    header_rules = {'technical.http.robots.noindex', 'technical.http.robots.nofollow'}
+    try:
+        for label, field in (('generic', 'none'), ('named', 'googlebot: none'), ('absent', None)):
+            server.witness_header = field
+            name = 'witness-' + label + '-audit.json'
+            run(['audit', destination, '--allow-private', '--max-pages', '1', '--max-links', '0',
+                 '--max-sitemaps', '0', '--no-config', '--format', 'json', '-o', name])
+            supplied = read(name)
+            saved = (root / name).read_bytes()
+            assert supplied['homepage']['status'] == 200 and supplied['crawl']['pages_scanned'] == 1
+            expected_scope = {
+                'generic': (['nofollow', 'noindex'], []),
+                'named': ([], [{'agent': 'googlebot', 'directives': ['nofollow', 'noindex']}]),
+                'absent': ([], []),
+            }[label]
+            for metadata in (supplied['homepage']['meta'], supplied['crawl']['pages'][0]):
+                if field is None:
+                    assert 'http_robots' not in metadata, metadata
+                else:
+                    receipt = metadata['http_robots']
+                    assert receipt['field_count'] == 1, receipt
+                    assert (receipt['generic'], receipt['scoped']) == expected_scope, receipt
+            original = {f['rule_id']: f.get('evidence') or f.get('detail') or ''
+                        for f in supplied['homepage']['findings'] if f['severity'] != 'good'}
+            assert original[h1_rule], original
+            run(['plan', name, '--repo', 'site', '--format', 'json', '-o', name + '.plan.json'])
+            plans = [read(name + '.plan.json')]
+            if use_mcp:
+                plans.append(mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root))
+            for built in plans:
+                actions = {a['rule_id']: a for a in built['actions']}
+                h1 = actions[h1_rule]
+                assert h1['evidence'].startswith(original[h1_rule] + '\n\n'), h1
+                assert json.loads(h1['evidence'].rsplit('\n', 1)[1]) == [destination], h1
+                assert h1['likely_files'][0]['path'] == 'witness/index.html' and h1['likely_files'][0]['exists'], h1
+                assert h1['safety'] == 'review_required' and h1['scope'] == 'site' and h1['occurrences'] == 1, h1
+                assert header_rules.intersection(actions) == (header_rules if label == 'generic' else set()), actions
+                if label == 'generic':
+                    receipt = supplied['crawl']['pages'][0]['http_robots']
+                    for rule in header_rules:
+                        action = actions[rule]
+                        assert original[rule] and action['evidence'].startswith(original[rule] + '\n\n'), action
+                        rows = json.loads(action['evidence'].split('not re-fetched):\n', 1)[1])
+                        assert rows == [{'crawl_target_label': destination, 'header_basis': receipt['basis']}], rows
+                        assert (action['artifact'], action['safety'], action['manual_action'],
+                                action['requires_deploy'], action['likely_files']) == (
+                                    'server_config', 'manual_external', True, True, []), action
+                        assert not any(rule in group['rule_ids'] for group in built['groups']), built
+            assert target.read_bytes() == fixture and (root / name).read_bytes() == saved
+            assert all(p.read_bytes() == body for p, body in sources.items())
+            assert all(p.read_bytes() == body for p, body in reports.items())
+    finally:
+        server.witness_header = None
+        target.unlink()
+        target.parent.rmdir()
+    assert sources == {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    print('Installed planner witness checks passed: native original finding text survives appended page/header '
+          'labels; HTML candidates and manual deployed-header work stay separate; named-only/absent headers '
+          'do not invent generic restrictions. Baseline and source bytes preserved. '
+          + ('CLI and MCP stdio verified.' if use_mcp else 'CLI verified.'))
 
 
 def audit_redirect_cycle(run, read, root, site, url, use_mcp):
@@ -828,6 +910,7 @@ def main(use_mcp=False):
                 audit_before = read('audit-before.json')
                 comparison_explanations(run, read, root, read('before.json'), audit_before, use_mcp)
                 literal_comparison_reasons(run, read, root, audit_before, use_mcp)
+                planner_witness_cycle(run, read, root, site, url, server, use_mcp)
                 assert all(type(page['status']) is int and page['status'] == 200
                            and page['rendered'] is False for page in audit_before['crawl']['pages'])
                 source_bytes = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}

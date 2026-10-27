@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner mutation diagnostics include existing header/evidence handoff checks,
+  and recurring-page tests require URL notes to retain the original observation.
 - Audit plans select page-route source candidates using the fetched homepage's
   recorded destination, retaining the original site input for audit verification.
   Legacy URL fallbacks, discovery files and recurring-page witnesses remain scoped.
