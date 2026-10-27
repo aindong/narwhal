@@ -81,6 +81,15 @@ repair for source review and leave extraction verification ownerless. Even
 identical uncertain reports must fail comparability in CLI and MCP diffs.
 Null and future llms.txt receipts in saved audits likewise withhold stale
 missing-file repairs, keep verification ownerless and fail CLI/MCP comparability.
+The positive llms.txt fixture removes the root file, observes HTTP 404, reviews
+the deployment-required source candidate and generates a starter with the CLI.
+It checks both entry-point titles against source and both URL destinations before
+curating the artifact, then explicitly applies it to the disposable site.
+Matching GEO-only scans must observe a root text candidate, resolve only the
+missing-file finding and reject the reverse regression. Replanning leaves no
+llms.txt work, and source/report bytes stay intact except the intended artifact.
+This verifies a local endpoint only; production root verification remains pending
+deployment. It does not prove full proposal validity, engine adoption or ranking gains.
 Sitemap source-problem summaries use nonnegative integer counts. Zero-filled
 summaries do not imply defects; malformed counts require manual verification.
 Independent positive counts and recorded failing HTTP samples retain their
@@ -267,6 +276,10 @@ boundary and requested-GEO scope handling, with planner and diff controls:
 .venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/llms.toml \
   'lib.llms_resource.x_problem__mutmut_*' 'lib.report.x_recorded_llms_problem__mutmut_*'
 ```
+
+The same profile includes generator metadata, budgets, redirects and literal
+artifact checks. Target `generate_llms.x_build__mutmut_*` and
+`generate_llms.x_render_llms_txt__mutmut_*` to diagnose those functions.
 
 The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
 and their report/diff/planner consumers. The existing mutation CI job runs it

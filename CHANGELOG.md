@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Installed llms.txt action-cycle proof covers a measured root 404, reviewed
+  deployment-required plan, generated and curated entry points, matching local
+  GEO verification and reverse regression; production checks remain pending deploy.
 - Unsupported explicit llms.txt receipts require manual verification instead of
   enabling stale missing-file repairs or claimed score/resolution improvements.
   Valid receipts, unselected GEO checks and missing legacy evidence retain their handling.

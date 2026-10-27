@@ -30,6 +30,39 @@ def unavailable():
 
 
 class TestLlmsMetadataCoverage(unittest.TestCase):
+    def test_site_metadata_precedence_and_distinct_child_descriptions_survive_generation(self):
+        cases = (
+            ('<title>Document title</title><meta property="og:site_name" content="Official name">'
+             '<meta name="description" content="Site summary"><meta property="og:description" content="OG summary">',
+             'Official name', 'Site summary'),
+            ('<title>Document title</title><meta property="og:description" content="OG summary">',
+             'Document title', 'OG summary'),
+            ('<title>Document title</title>', 'Document title', ''),
+            ('', 'example.test', ''),
+        )
+        repeat, unique = URL + 'repeat', URL + 'unique'
+        for head, site_name, description in cases:
+            with self.subTest(site_name=site_name, description=description):
+                responses = {
+                    URL: response(text='<html><head>' + head + '</head><body>Fixture</body></html>'),
+                    repeat: response(repeat, text='<title>Repeated</title><meta name="description" content=" '
+                                     + description.upper() + ' ">'),
+                    unique: response(unique, text='<title>Unique</title><meta name="description" content="Unique child summary">'),
+                }
+                with mock.patch.object(http, 'fetch', side_effect=lambda url, **kwargs: responses[url]), \
+                        mock.patch.object(http, 'fetch_text', return_value=''), \
+                        mock.patch.object(llms.crawl_site, 'discover', return_value=[repeat, unique]):
+                    data = llms.build(URL)
+                self.assertEqual(site_name, data['site_name'])
+                self.assertEqual(description, data['description'])
+                pages = {p['url']: p for _, entries in data['sections'] for p in entries}
+                self.assertEqual({repeat, unique}, set(pages))
+                self.assertEqual('', pages[repeat]['description'])
+                self.assertEqual('Unique child summary', pages[unique]['description'])
+                output = llms.render_llms_txt(data['site_name'], data['description'], data['sections'])
+                self.assertIn('- [Repeated](' + repeat + ')\n', output)
+                self.assertIn('- [Unique](' + unique + '): Unique child summary\n', output)
+
     def test_unusable_homepage_stops_before_discovery_or_parsing(self):
         for home in unavailable():
             with self.subTest(status=home.status, headers=home.headers):
