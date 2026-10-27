@@ -129,6 +129,47 @@ class TestPlanVerificationKind(unittest.TestCase):
                 self.assertEqual(built, mcp_server._plan(data, 'skills/seo-scan/tests/fixtures/planner/plain_html'))
                 self.assertEqual(original, data)
 
+    def test_scan_score_ignores_audit_only_fields(self):
+        page = audit_report()['homepage']
+        for score in (0, 80, None, 'missing'):
+            control = copy.deepcopy(page)
+            if score == 'missing':
+                control.pop('score')
+            else:
+                control['score'] = score
+            expected = plan.build_plan(control, str(FIXTURES / 'plain_html'), report_source='<mcp-object>')
+            for extra in (20, None, {}, 'future-field'):
+                with self.subTest(score=score, extra=extra):
+                    supplied = dict(control, overall_score=extra)
+                    original = copy.deepcopy(supplied)
+                    built = plan.build_plan(supplied, str(FIXTURES / 'plain_html'), report_source='<mcp-object>')
+                    self.assertEqual(None if score == 'missing' else score, built['source_score'])
+                    self.assertEqual(expected, built)
+                    self.assertEqual(built, mcp_server._plan(supplied, 'skills/seo-scan/tests/fixtures/planner/plain_html'))
+                    self.assertEqual(original, supplied)
+
+    def test_audit_without_overall_score_does_not_invent_site_measurement(self):
+        for overall in (0, 20, None, 'missing'):
+            for page_score in (80, 'not-a-site-score'):
+                with self.subTest(overall=overall, page_score=page_score):
+                    supplied = audit_report()
+                    supplied['homepage']['score'] = page_score
+                    supplied['score'] = 99
+                    if overall == 'missing':
+                        supplied.pop('overall_score')
+                    else:
+                        supplied['overall_score'] = overall
+                    original = copy.deepcopy(supplied)
+                    built = plan.build_plan(supplied, str(FIXTURES / 'plain_html'), report_source='<mcp-object>')
+                    self.assertEqual(None if overall == 'missing' else overall, built['source_score'])
+                    self.assertEqual('audit', built['provenance']['report_kind'])
+                    self.assertTrue(built['actions'])
+                    for action in built['actions']:
+                        command = shlex.split(action['verification'][-2], comments=True)
+                        self.assertEqual(['narwhal', 'audit'], command[:2])
+                    self.assertEqual(built, mcp_server._plan(supplied, 'skills/seo-scan/tests/fixtures/planner/plain_html'))
+                    self.assertEqual(original, supplied)
+
     def test_same_kind_keeps_real_diff_while_cross_kind_stays_blocked(self):
         before = audit_report()
         after = copy.deepcopy(before)

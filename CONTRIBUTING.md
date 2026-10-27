@@ -294,6 +294,11 @@ report its fresh results and survivors separately from the default CI gate.
 Planner context tests also retain numeric zero scores, scan/audit provenance and
 literal legacy target fallbacks in matching-kind verification commands. Malformed
 tool-version metadata must fail before inventory or output writes.
+The selected score follows report kind even when additive fields from another
+kind are present. Missing/null scores stay unknown, and missing audit overall
+scores must not borrow homepage measurements. The installed action cycle checks
+native reports alongside deliberately altered saved copies through CLI/MCP;
+an invalid page score cannot be hidden by an extra overall score.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does

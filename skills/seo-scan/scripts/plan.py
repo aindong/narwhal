@@ -409,8 +409,8 @@ def normalize_report(data: dict) -> dict:
     for field in ('schema_version', 'tool_version'):
         if field in data:
             _validate_text(data[field], 'Report.' + field)
-    score_field = 'overall_score' if 'overall_score' in data else 'score'
-    score = data.get('overall_score', page.get('score'))
+    score_field = 'overall_score' if kind == 'audit' else 'score'
+    score = data.get(score_field)
     if score is not None and (type(score) not in (int, float) or not 0 <= score <= 100):
         raise ValueError('Report.' + score_field + ' must be a finite number between 0 and 100 or null.')
     _validate_findings(page.get('findings', []), 'Report.homepage.findings' if kind == 'audit' else 'Report.findings')
@@ -637,7 +637,7 @@ def normalize_report(data: dict) -> dict:
         "crawl_rule_ids": sorted(crawl_rule_ids),
         "kind": kind,
         "target": str(target),
-        "score": data.get("overall_score", page.get("score")),
+        "score": score,
         "report_schema_version": data.get("schema_version", "legacy"),
         "tool_version": data.get("tool_version", "unknown"),
         "finding_observation_counts": {rid: len(rows) for rid, rows in coalesced.items()},
