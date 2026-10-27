@@ -25,6 +25,14 @@ CLI report paths use the same home expansion for loading and recorded
 verification provenance, so a quoted `~/report.json` does not become a different
 literal path beneath the current directory.
 
+`source_score` retains the score for the recorded report kind: `score` for a
+page scan, `overall_score` for a comprehensive audit. A missing or null score
+stays null; an audit does not substitute its homepage score. Additive fields
+from another report kind do not override the selected score or bypass its
+validation. Present non-null scores must be finite numbers from 0 through 100;
+invalid consumed scores fail before repository inventory or output writes.
+This preserves reported measurements, without recalculating or authenticating them.
+
 ## Action semantics
 
 Every non-passing finding becomes one action linked by stable `rule_id`. Older

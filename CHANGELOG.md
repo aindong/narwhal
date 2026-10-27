@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner source scores follow scan/audit report kind, preserving missing/null
+  measurements instead of borrowing homepage or unrelated additive scores.
+  Extra overall-score fields cannot bypass page-score validation.
 - Planner tests preserve report kind, numeric zero scores and literal audit URL
   fallbacks, and reject malformed tool-version metadata before inventory/output.
 - Planner tests require later independent crawl findings to survive successful

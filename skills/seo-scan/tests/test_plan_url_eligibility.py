@@ -32,7 +32,8 @@ class TestUrlEligibility(unittest.TestCase):
         built = plan.build_plan(data, str(self.root))
         self.assertEqual(data.get('schema_version', 'legacy'), built['provenance']['report_schema_version'])
         self.assertEqual(data.get('tool_version', 'unknown'), built['provenance']['report_tool_version'])
-        self.assertEqual(data.get('overall_score', data.get('homepage', data).get('score')), built['source_score'])
+        score_field = 'overall_score' if 'homepage' in data else 'score'
+        self.assertEqual(data.get(score_field), built['source_score'])
         action = next(action for action in built['actions'] if action['rule_id'] == RULE)
         self.assertEqual(eligible, action['automation_eligibility']['eligible'])
         self.assertEqual('safely_automatable' if eligible else 'review_required', action['safety'])

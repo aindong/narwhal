@@ -65,12 +65,19 @@ class TestPlanInputValidation(unittest.TestCase):
                     data = baseline()
                     field = 'score'
                     if kind == 'audit':
-                        data = {'homepage': data, 'overall_score': score}
+                        data = {'homepage': data, 'overall_score': score, 'score': 99}
                         field = 'overall_score'
                     else:
                         data['score'] = score
-                    with self.assertRaisesRegex(ValueError, field):
-                        plan.build_plan(data, REPO)
+                        data['overall_score'] = 20
+                    original = json.dumps(data)
+                    with mock.patch.object(plan, 'inventory', wraps=plan.inventory) as inventory:
+                        with self.assertRaisesRegex(ValueError, r'Report\.' + field):
+                            plan.build_plan(data, REPO)
+                        with self.assertRaisesRegex(ValueError, r'Report\.' + field):
+                            mcp_server._plan(data, 'skills/seo-scan/tests/fixtures/planner/plain_html')
+                        inventory.assert_not_called()
+                    self.assertEqual(original, json.dumps(data))
 
     def test_tool_version_is_validated_before_inventory_and_keeps_legacy_strings(self):
         for kind in ('scan', 'audit'):
@@ -112,6 +119,8 @@ class TestPlanInputValidation(unittest.TestCase):
 
     def test_cli_rejects_invalid_json_and_evidence_without_touching_outputs(self):
         cases = [json.dumps({'findings': [dict(baseline()['findings'][0], severity=[])]}).encode(),
+                 json.dumps(dict(baseline(), score='secret-token', overall_score=20)).encode(),
+                 json.dumps({'homepage': baseline(), 'overall_score': 'secret-token', 'score': 99}).encode(),
                  json.dumps({'findings': [], 'tool_version': {}}).encode(),
                  json.dumps({'findings': [], 'tool_version': '\ud800'}).encode(),
                  b'\xff', ('[' * 2000 + '0' + ']' * 2000).encode(),
@@ -132,6 +141,7 @@ class TestPlanInputValidation(unittest.TestCase):
                     self.assertEqual('', out.getvalue())
                     self.assertTrue(err.getvalue().startswith('Error: '))
                     self.assertNotIn('Traceback', err.getvalue())
+                    self.assertNotIn('secret-token', err.getvalue())
                     self.assertLess(len(err.getvalue()), 500)
                     self.assertEqual(body, source.read_bytes())
                     self.assertEqual(b'keep this output' if existing else None,

@@ -85,7 +85,7 @@ def mcp_recovery(report, root):
 
         cases = [({'report': report, 'repo': 'missing-secret-token'}, 'existing directory'),
                  ({'report': report, 'repo': 'site/index.html'}, 'existing directory'),
-                 ({'report': dict(report, score='secret-token'), 'repo': 'site'}, 'finite')]
+                 ({'report': dict(report, score='secret-token', overall_score=20), 'repo': 'site'}, 'finite')]
         for arguments, reason in cases:
             diagnostic = await tool('plan_remediation', arguments, error=True)
             assert reason in diagnostic.lower() and len(diagnostic) < 500, diagnostic
@@ -101,6 +101,47 @@ def mcp_recovery(report, root):
     print('Installed MCP recovery passed: schema, both diff inputs and planner path/report errors '
           'each followed by a valid request in one session; bounded diagnostics and native owner retained.')
     return planned
+
+
+def planner_score_plans(run, read, root, site, page, audit, use_mcp):
+    """Keep native controls and distinguish missing/imported scores by report kind."""
+    sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    reports = {p: p.read_bytes() for p in root.glob('*.json')}
+    extra = (page['score'] + 1) % 101
+    for label, base, changes, missing, expected, kind in (
+            ('native-scan', page, {}, None, page['score'], 'scan'),
+            ('extra-scan', page, {'overall_score': extra}, None, page['score'], 'scan'),
+            ('null-scan', page, {'overall_score': extra, 'score': None}, None, None, 'scan'),
+            ('missing-scan', page, {'overall_score': extra}, 'score', None, 'scan'),
+            ('native-audit', audit, {}, None, audit['overall_score'], 'audit'),
+            ('missing-audit', audit, {'score': 99}, 'overall_score', None, 'audit'),
+            ('null-audit', audit, {'score': 99, 'overall_score': None}, None, None, 'audit'),
+            ('zero-audit', audit, {'score': 99, 'overall_score': 0}, None, 0, 'audit')):
+        supplied = json.loads(json.dumps(base))
+        supplied.update(changes)
+        if missing:
+            supplied.pop(missing)
+        name = 'planner-score-' + label + '.json'
+        saved = json.dumps(supplied).encode('utf-8')
+        (root / name).write_bytes(saved)
+        run(['plan', name, '--repo', str(site), '--format', 'json', '-o', name + '.plan.json'])
+        received = [read(name + '.plan.json')]
+        if use_mcp:
+            received.append(mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root))
+        for planned in received:
+            assert planned['source_score'] == expected, (label, planned['source_score'], expected)
+            assert type(planned['source_score']) is type(expected), (label, planned['source_score'])
+            assert planned['provenance']['report_kind'] == kind, (label, planned['provenance'])
+            assert planned['actions'], (label, planned)
+            for action in planned['actions']:
+                command = shlex.split(action['verification'][-2], comments=True)
+                assert command[:2] == ['narwhal', kind], (label, command)
+        assert json.dumps(supplied).encode('utf-8') == saved
+        assert (root / name).read_bytes() == saved
+    assert all(p.read_bytes() == body for p, body in reports.items())
+    assert sources == {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    print('Installed planner score checks passed: native scan/audit controls, additive score fields, '
+          'missing/null scores and measured zero retain report-kind semantics; source/report bytes unchanged.')
 
 
 class FixtureHandler(SimpleHTTPRequestHandler):
@@ -985,6 +1026,7 @@ def main(use_mcp=False):
                 audit_options = ['audit', url, '--allow-private', '--max-pages', '2', '--no-config', '--format', 'json']
                 run(audit_options + ['-o', 'audit-before.json'])
                 audit_before = read('audit-before.json')
+                planner_score_plans(run, read, root, site, read('before.json'), audit_before, use_mcp)
                 comparison_explanations(run, read, root, read('before.json'), audit_before, use_mcp)
                 literal_comparison_reasons(run, read, root, audit_before, use_mcp)
                 planner_witness_cycle(run, read, root, site, url, server, use_mcp)
