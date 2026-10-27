@@ -6,12 +6,15 @@ import sys
 
 STARTUP_TIMEOUT = 30
 IO_TIMEOUT = 5
-CHILD = '''import os, runpy, sys
-namespace = runpy.run_path(sys.argv[1], run_name='__fifo_test__')
+CHILD = '''import importlib.util, os, sys
+spec = importlib.util.spec_from_file_location('__fifo_test__', sys.argv[1])
+cli = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = cli
+spec.loader.exec_module(cli)
 os.write(int(sys.argv[2]), b'R')
 os.close(int(sys.argv[2]))
 sys.stdin.readline()
-raise SystemExit(namespace['main'](sys.argv[3:]))
+raise SystemExit(cli.main(sys.argv[3:]))
 '''
 
 
