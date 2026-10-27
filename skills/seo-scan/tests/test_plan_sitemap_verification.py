@@ -36,6 +36,8 @@ def actions(data):
 
 class TestPlanSitemapVerification(unittest.TestCase):
     def assert_manual(self, action):
+        self.assertIsInstance(action['title'], str)
+        self.assertIn('sitemap', action['title'].lower())
         self.assertEqual('manual_external', action['safety'])
         self.assertTrue(action['manual_action'])
         self.assertFalse(action['requires_deploy'])
@@ -119,6 +121,17 @@ class TestPlanSitemapVerification(unittest.TestCase):
                                 sitemaps_attempted=1, sitemaps_fetched=1))
         self.assertEqual({NOTES}, set(output))
         self.assertEqual(3, output[NOTES]['occurrences'])
+
+    def test_known_fetch_and_cap_require_the_recorded_note_cardinality(self):
+        data = report(errors=['one retained note'], fetch_failures=1,
+                      sitemaps_attempted=2, sitemaps_fetched=1, truncated=3)
+        self.assert_execution_gap(data)
+        data['sitemap']['errors'] = ['fetch note', 'cap note']
+        output = actions(data)
+        self.assertEqual({FETCH: 1, CAP: 3},
+                         {rule: action['occurrences'] for rule, action in output.items()})
+        for action in output.values():
+            self.assert_manual(action)
 
     def test_known_fetch_only_notes_do_not_create_a_source_action(self):
         data = actions(report())
