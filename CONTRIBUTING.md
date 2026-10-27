@@ -372,6 +372,9 @@ the [diff profile](scripts/mutation/diff.toml):
 
 Other diff-profile targets remain optional diagnostics; passing the count gate
 does not certify the broader comparison corpus.
+Explanation tests require nonempty text reasons for unverified/rejected
+comparisons and no spurious scope warning for matching execution. They exercise
+JSON, Markdown and MCP parity alongside the strict and legacy comparison gates.
 
 For crawl-setting changes, target `diff_scan.x__crawl_settings__mutmut_*` and
 `diff_scan.x__comparison__mutmut_*` with that profile. Every sampled row retains
