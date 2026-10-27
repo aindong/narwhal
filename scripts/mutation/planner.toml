@@ -10,6 +10,7 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_label_previews.py",
  "skills/seo-scan/tests/test_report_duplicate_keys.py",
  "skills/seo-scan/tests/test_plan_manifest.py",
+ "skills/seo-scan/tests/test_plan_manifest_identity.py",
  "skills/seo-scan/tests/test_plan_read_budget.py",
  "skills/seo-scan/tests/test_plan_input_validation.py",
  "skills/seo-scan/tests/test_plan_output_safety.py",

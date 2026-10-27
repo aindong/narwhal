@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner manifest reads recheck source-path safety and match the opened file's
+  identity before reading, withholding framework claims from replacement files.
 - Schema generation rejects duplicate keys in JSON-valued fields and native
   dictionary keys that collide in JSON, preventing silent field/price selection.
   Malformed JSON-like literal strings retain their existing interpretation.
