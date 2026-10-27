@@ -5,7 +5,6 @@ import io
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -14,6 +13,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import plan
 from lib.report import Report
+from _cli_process import run_cli
 
 
 class TestPlanOutputSafety(unittest.TestCase):
@@ -153,14 +153,17 @@ class TestPlanOutputSafety(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(os, 'mkfifo'), 'named pipes unavailable')
     def test_plan_output_to_a_fifo_is_rejected_without_blocking(self):
+        control = self.root / 'regular-plan.json'
+        code, _, error = self.invoke(control)
+        self.assertEqual(0, code, error)
+        self.assertEqual(self.data['score'], json.loads(control.read_text(encoding='utf-8'))['source_score'])
         fifo = self.root / 'output-pipe'
         os.mkfifo(fifo)
         for with_reader in (False, True):
             reader = os.open(str(fifo), os.O_RDONLY | os.O_NONBLOCK) if with_reader else None
             try:
-                run = subprocess.run([sys.executable, plan.__file__, str(self.baseline), '--repo', str(self.repo),
-                                      '--format', 'json', '-o', str(fifo)],
-                                     capture_output=True, text=True, timeout=5)
+                run = run_cli(plan.__file__, [self.baseline, '--repo', self.repo,
+                                             '--format', 'json', '-o', fifo])
                 self.assertEqual(2, run.returncode)
                 self.assertEqual('', run.stdout)
                 self.assertIn('output', run.stderr)

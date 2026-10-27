@@ -4,7 +4,6 @@ import contextlib
 import io
 import json
 import os
-import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -14,6 +13,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import diff_scan
 from test_diff_scope import FINDING, report
+from _cli_process import run_cli
 
 
 class TestDiffOutputSafety(unittest.TestCase):
@@ -172,14 +172,16 @@ class TestDiffOutputSafety(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(os, 'mkfifo'), 'named pipes unavailable')
     def test_named_pipe_outputs_never_block_or_receive_report_bytes(self):
+        control = self.root / 'regular-output.json'
+        code, _, error = self.invoke(control, '--format', 'json')
+        self.assertEqual(0, code, error)
+        self.assertEqual(6, json.loads(control.read_text(encoding='utf-8'))['score_delta'])
         fifo = self.root / 'output-pipe'
         os.mkfifo(fifo)
         for with_reader in (False, True):
             reader = os.open(str(fifo), os.O_RDONLY | os.O_NONBLOCK) if with_reader else None
             try:
-                run = subprocess.run([sys.executable, diff_scan.__file__, str(self.old), str(self.new),
-                                      '-o', str(fifo), '--format', 'json'],
-                                     capture_output=True, text=True, timeout=5)
+                run = run_cli(diff_scan.__file__, [self.old, self.new, '-o', fifo, '--format', 'json'])
                 self.assertEqual(2, run.returncode)
                 self.assertEqual('', run.stdout)
                 self.assertIn('output', run.stderr)

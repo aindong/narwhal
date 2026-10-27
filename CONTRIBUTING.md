@@ -322,6 +322,23 @@ The installed action-cycle smoke also requires ambiguous or ignored-warning
 reports to yield manual verification and strict incomparable diffs, while a real
 consensus price correction resolves the mismatch and its reverse fails regression.
 
+The optional [output profile](scripts/mutation/output.toml) exercises snapshot
+preservation and nonblocking regular-file output through diff/planner tests:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/output.toml \
+  'lib.report_output.x_write_output__mutmut_*'
+```
+
+POSIX FIFO checks allow up to 30 seconds for interpreter/module startup, then
+keep the five-second deadline for CLI execution and output handling. Both phases
+terminate and reap a timed-out child. Controlled startup delays and a genuinely
+blocking FIFO writer verify that slow imports cannot consume the I/O budget and
+that blocking output still fails. These tests do not replace installed CLI checks.
+Regular-file controls also run in the parent process so Mutmut records writer
+coverage before selecting the subprocess rejection cases. The profile includes
+empty/binary output preservation and descriptor cleanup when stream setup fails.
+
 The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
 and their report/diff/planner consumers. The existing mutation CI job runs it
 alongside the default corpus:

@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diff/planner FIFO tests separate bounded process startup from the unchanged
+  five-second I/O deadline, with child cleanup and controlled slow-startup and
+  blocking-writer checks. Tool runtime behavior is unchanged.
+  Regular-file controls make FIFO rejection cases discoverable to mutation testing;
+  shared-writer tests cover empty/binary reports and descriptor setup failures.
 - Skipped ambiguous Product/Offer comparisons remain visible in page/crawl/audit
   reports and block diff score/resolution claims. Plans request ownerless manual
   verification while preserving independent property/validity repairs; installed

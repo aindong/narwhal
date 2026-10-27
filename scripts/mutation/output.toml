@@ -1,0 +1,13 @@
+# Opt-in report-output safety checks; select the shared writer explicitly.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/lib/report_output.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_diff_output_safety.py",
+  "skills/seo-scan/tests/test_plan_output_safety.py",
+  "skills/seo-scan/tests/test_cli_process.py",
+  "skills/seo-scan/tests/test_report_output.py",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]
