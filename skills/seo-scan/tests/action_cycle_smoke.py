@@ -194,13 +194,30 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
     run(['diff', 'merchant-corrected.json', 'merchant-before.json', '--require-comparable', '--fail-on-regression',
          '--format', 'json', '-o', 'merchant-reverse.diff.json'], expected=1)
     assert read('merchant-reverse.diff.json')['regression'] is True
+    for label, recurring in (('null', None), ('number', 7)):
+        supplied = {'site': destination, 'overall_score': snapshots['corrected']['score'],
+                    'homepage': snapshots['corrected'], 'crawl': {
+                        'pages_scanned': 1, 'pages': [{'url': destination}], 'recurring': recurring}, 'sitemap': {}}
+        name = 'merchant-malformed-' + label + '.json'
+        saved = json.dumps(supplied).encode('utf-8')
+        (root / name).write_bytes(saved)
+        run(['diff', name, name, '--format', 'json', '-o', name + '.diff.json'])
+        difference = read(name + '.diff.json')
+        aggregate = difference['crawl_rule_changes']
+        assert aggregate['status'] == 'unverified' and aggregate['regression'] is None, aggregate
+        assert aggregate['removed'] == [] and aggregate['reason'], aggregate
+        if use_mcp:
+            assert difference == mcp_tool('diff_reports', {
+                'old_json': saved.decode('utf-8'), 'new_json': saved.decode('utf-8')}, root)
+        assert (root / name).read_bytes() == saved
     assert all(p.read_bytes() == body for p, body in original_reports.items())
     assert all(p.read_bytes() == body for p, body in saved_reports.items())
     assert all(p.read_bytes() == body for p, body in original_sources.items())
     assert target.read_text(encoding='utf-8') == source
     print('Installed merchant comparison cycle passed: ambiguous Offers and ignored notes cannot claim a repaired price '
           'or score gain; plans require ownerless manual verification; actual consensus price correction compares '
-          'and reverse regression fails. Prior source/report bytes are preserved; no production or ranking proof.')
+          'and reverse regression fails. Malformed crawl aggregates remain unverified. '
+          'Prior source/report bytes are preserved; no production or ranking proof.')
 
 
 def main(use_mcp=False):

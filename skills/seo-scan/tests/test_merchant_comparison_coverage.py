@@ -60,6 +60,7 @@ class TestMerchantComparisonCoverage(unittest.TestCase):
                     with mock.patch.object(Path, 'cwd', return_value=REPO.resolve().parent):
                         self.assertEqual(built, mcp_server._plan(data, REPO.name))
                 action = next(a for a in built['actions'] if a['rule_id'] == rule)
+                self.assertNotIn(VERIFY, [a['rule_id'] for a in built['actions']])
                 self.assertEqual('manual_external', action['safety'])
                 self.assertTrue(action['manual_action'])
                 self.assertFalse(action['requires_deploy'])
@@ -157,6 +158,13 @@ class TestMerchantComparisonCoverage(unittest.TestCase):
         self.assertEqual('review_required', independent['safety'])
         self.assertTrue(independent['likely_files'])
         self.assertFalse(independent['manual_action'])
+        data['findings'] = [f for f in data['findings'] if f['rule_id'] != OFFER]
+        self.assertIn(VERIFY, [a['rule_id'] for a in plan.build_plan(data, str(REPO))['actions']])
+        healthy = payload(observed(page(offers()[:1], price='129.00')))
+        saved_audit = {'site': URL, 'overall_score': healthy['score'], 'homepage': healthy,
+                       'crawl': {'pages': [{'url': URL, 'merchant_comparison_unverified': True}],
+                                 'recurring': [f for f in data['findings'] if f['severity'] != 'good']}, 'sitemap': {}}
+        self.assertIn(VERIFY, [a['rule_id'] for a in plan.build_plan(saved_audit, str(REPO))['actions']])
 
     def test_homepage_warning_does_not_conceal_ignored_crawl_uncertainty(self):
         home = payload(observed(page(offers())))
@@ -174,9 +182,97 @@ class TestMerchantComparisonCoverage(unittest.TestCase):
         warning = next(f for f in payload(observed(page(offers())))['findings'] if f['rule_id'] == OFFER)
         data = {'site': URL, 'overall_score': home['score'], 'homepage': home,
                 'crawl': {'pages_scanned': 1, 'pages': [{'url': URL}], 'recurring': [warning]}, 'sitemap': {}}
-        self.assertEqual('incomparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+        compared = diff_scan.diff_reports(data, data)['comparison']
+        self.assertEqual('incomparable', compared['status'])
+        self.assertTrue(all(isinstance(reason, str) and reason for reason in compared['reasons']))
         warning['severity'] = 'good'
         self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+
+    def test_aggregate_score_note_counts_only_relevant_pages_and_handles_homepage_only(self):
+        home = observed(page(offers()))
+        data = {'page': home, 'site_result': {}}
+        self.assertIn('Product/Offer', audit._schema_score_note(data))
+        home.meta['scan_scope'] = {'requested': ['content'], 'completed': ['content']}
+        self.assertNotIn('Product/Offer', audit._schema_score_note(data))
+        excluded = {'merchant_comparison_unverified': True, 'scan_scope': home.meta['scan_scope']}
+        site = {'pages': [{'merchant_comparison_unverified': True}, excluded,
+                          {'merchant_comparison_unverified': False}, None,
+                          {'merchant_comparison_unverified': True}]}
+        self.assertIn('2 scanned page(s)', crawl_site.merchant_comparison_note(site))
+        data['site_result'] = {'pages': [row for row in site['pages'] if row is not None]}
+        self.assertIn('2 scanned page(s)', audit._schema_score_note(data))
+        self.assertEqual('', crawl_site.merchant_comparison_note({}))
+        self.assertEqual('', crawl_site.merchant_comparison_note({'pages': [excluded, {}, None]}))
+
+    def test_unselected_crawl_scope_does_not_gain_merchant_uncertainty(self):
+        report = observed(page(offers()))
+        report.meta['scan_scope'] = {'requested': ['content'], 'completed': ['content']}
+        report.findings = []
+        with mock.patch.object(crawl_site.scanner, 'gather_context', return_value={}), \
+                mock.patch.object(crawl_site, 'discover', return_value=[URL]), \
+                mock.patch.object(crawl_site.scanner, 'scan', return_value=report):
+            result = crawl_site.crawl(URL, max_pages=1)
+        self.assertIs(False, result['pages'][0]['merchant_comparison_unverified'])
+        self.assertNotIn('Product/Offer', crawl_site.render_markdown(result))
+        row = result['pages'][0]
+        row['merchant_comparison_unverified'] = True
+        data = {'site': URL, 'overall_score': 100, 'homepage': payload(report),
+                'crawl': json.loads(crawl_site.render_json(result)), 'sitemap': {}}
+        self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+        self.assertNotIn(VERIFY, [a['rule_id'] for a in plan.build_plan(data, str(REPO))['actions']])
+
+    def test_positive_legacy_page_observation_does_not_block_comparison(self):
+        data = payload(observed(page(offers())))
+        data['meta'].pop('ecommerce')
+        for finding in data['findings']:
+            if finding['rule_id'] == OFFER:
+                finding['severity'] = 'good'
+        self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+
+    def test_fallback_scope_distinguishes_page_only_and_joint_uncertainty(self):
+        home = observed(page(offers()))
+        home.findings = []
+        for rows, scope, included in (([], 'page', 'page report'),
+                ([{'url': URL, 'merchant_comparison_unverified': True}], 'site',
+                 'page report and crawl sample/rollup')):
+            data = {'site': URL, 'overall_score': 100, 'homepage': payload(home),
+                    'crawl': {'pages': rows, 'recurring': []}, 'sitemap': {}}
+            action = next(a for a in plan.build_plan(data, str(REPO))['actions'] if a['rule_id'] == VERIFY)
+            self.assertEqual(scope, action['scope'])
+            self.assertIn(included, action['evidence'])
+            if scope == 'page':
+                self.assertNotIn('crawl sample/rollup', action['evidence'])
+
+    def test_crawl_warning_covers_its_own_uncertainty_but_positive_observation_does_not(self):
+        home = payload(observed(page(offers()[:1], price='129.00')))
+        warning = next(f for f in payload(observed(page(offers())))['findings'] if f['rule_id'] == OFFER)
+        data = {'site': URL, 'overall_score': home['score'], 'homepage': home,
+                'crawl': {'pages': [{'url': URL, 'merchant_comparison_unverified': True}],
+                          'recurring': [warning]}, 'sitemap': {}}
+        built = plan.build_plan(data, str(REPO))
+        self.assertNotIn(VERIFY, [a['rule_id'] for a in built['actions']])
+        action = next(a for a in built['actions'] if a['rule_id'] == OFFER)
+        self.assertEqual(('site', 'manual_external', []), (action['scope'], action['safety'], action['likely_files']))
+        warning['severity'] = 'good'
+        built = plan.build_plan(data, str(REPO))
+        self.assertIn(VERIFY, [a['rule_id'] for a in built['actions']])
+        self.assertNotIn(OFFER, [a['rule_id'] for a in built['actions']])
+
+    def test_malformed_crawl_recurring_preserves_unverified_aggregate_contract(self):
+        home = payload(observed(page(offers()[:1], price='129.00')))
+        for recurring in (None, 7, 'future', {}, [None]):
+            with self.subTest(recurring=recurring):
+                data = {'site': URL, 'overall_score': home['score'], 'homepage': home,
+                        'crawl': {'pages_scanned': 1, 'pages': [{'url': URL}], 'recurring': recurring}, 'sitemap': {}}
+                before = copy.deepcopy(data)
+                result = diff_scan.diff_reports(data, data)
+                aggregate = result['crawl_rule_changes']
+                self.assertEqual('unverified', aggregate['status'])
+                self.assertIsNone(aggregate['regression'])
+                self.assertTrue(aggregate['reason'])
+                self.assertEqual([], aggregate['removed'])
+                self.assertEqual(result, mcp_server._diff(json.dumps(data), json.dumps(data)))
+                self.assertEqual(before, data)
 
 
 if __name__ == '__main__':

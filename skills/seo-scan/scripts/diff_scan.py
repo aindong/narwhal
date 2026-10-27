@@ -154,12 +154,13 @@ def _comparison(o: dict, n: dict) -> dict:
         if recorded_response_partial(meta_base) or (type(item.get('status')) is int and item['status'] == 206):
             reasons.append(label + ' report has partial/ranged HTML coverage; full-page comparisons are unverified.')
         pages = crawl.get("pages") if isinstance(crawl, dict) else None
-        if (isinstance(pages, list) and any(recorded_merchant_comparison_problem(page, for_score=True)
-                                          for page in pages)
-                or (scope is None or 'schema' in scope[0]) and isinstance(crawl, dict) and any(
+        recurring = crawl.get('recurring') if isinstance(crawl, dict) else None
+        if ((isinstance(pages, list) and any(recorded_merchant_comparison_problem(page, for_score=True)
+                                           for page in pages))
+                or ((scope is None or 'schema' in scope[0]) and isinstance(recurring, list) and any(
                     isinstance(finding, dict) and finding.get('severity') != 'good'
                     and finding.get('rule_id') in MERCHANT_COMPARISON_RULES
-                    for finding in crawl.get('recurring', []))):
+                    for finding in recurring))):
             reasons.append(label + ' audit contains unverified Product/Offer comparisons; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and 'scan_scope' in page and (
                 recorded_scan_scope(page) is None or
@@ -215,9 +216,9 @@ def _comparison(o: dict, n: dict) -> dict:
         if recorded_schema_extraction_problem(meta, for_score=True):
             reasons.append(label + ' report has unverified structured-data extraction; schema/overall score comparison is unverified.')
         if (recorded_merchant_comparison_problem(meta, for_score=True)
-                or (scope is None or 'schema' in scope[0]) and any(
+                or ((scope is None or 'schema' in scope[0]) and any(
                     finding.get('severity') != 'good' and finding.get('rule_id') in MERCHANT_COMPARISON_RULES
-                    for finding in item['findings'])):
+                    for finding in item['findings']))):
             reasons.append(label + ' report has unverified Product/Offer comparisons; schema/overall score comparison is unverified.')
         if meta.get("response_truncated") is True or (
                 isinstance(coverage, dict) and coverage.get("response_truncated") is True):
