@@ -1375,6 +1375,10 @@ def _witness_owners(root, files, framework, artifact, targets, warnings, unlocat
 def build_plan(report: dict, repo: str, *, report_source="<memory>",
                max_files=MAX_REPO_FILES) -> dict:
     normalized = normalize_report(report)
+    page = report['homepage'] if normalized['kind'] == 'audit' else report
+    page_target = page.get('final_url') or page.get('url') or normalized['target']
+    if not isinstance(page_target, str):
+        page_target = normalized['target']
     root = safe_repo_root(repo)
     inv = inventory(root, max_files=max(1, min(int(max_files), MAX_REPO_FILES)))
     warnings = list(inv["warnings"])
@@ -1422,7 +1426,7 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
         elif site_page:
             owners = _witness_owners(root, inv['files'], framework['name'], artifact, targets, warnings, unlocated)
         else:
-            owners = likely_files(root, inv['files'], framework['name'], artifact, normalized['target'], warnings)
+            owners = likely_files(root, inv['files'], framework['name'], artifact, page_target, warnings)
         eligibility = None
         if artifact == 'viewport':
             blockers = []

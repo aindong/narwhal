@@ -48,6 +48,7 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_nuxt_page_routes.py",
  "skills/seo-scan/tests/test_plan_hugo_page_routes.py",
  "skills/seo-scan/tests/test_plan_route_priority.py",
+ "skills/seo-scan/tests/test_plan_audit_redirect.py",
  "skills/seo-scan/tests/test_plan_html_file_routes.py",
  "skills/seo-scan/tests/test_plan.py::TestPlanContract",
  "-k", "not test_published_json_schema_matches_contract_version_and_required_fields",

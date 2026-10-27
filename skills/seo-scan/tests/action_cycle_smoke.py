@@ -105,6 +105,11 @@ def mcp_recovery(report, root):
 
 class FixtureHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
+        if self.path == '/legacy/':
+            self.send_response(302)
+            self.send_header('Location', '/en/')
+            self.end_headers()
+            return
         if self.path == '/' and self.server.partial_html:
             data = (Path(self.directory) / 'index.html').read_bytes()
             body = data[:64]
@@ -116,6 +121,76 @@ class FixtureHandler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
             return
         super().do_GET()
+
+
+def audit_redirect_cycle(run, read, root, site, url, use_mcp):
+    """Follow a real redirect, inspect the planned page, edit and prove its fix."""
+    sources = {path: path.read_bytes() for path in site.rglob('*') if path.is_file()}
+    baseline = (root / 'before.json').read_bytes()
+    destination, legacy = site / 'en/index.html', site / 'legacy/index.html'
+    image = destination.parent / 'social.svg'
+    assert not destination.parent.exists() and not legacy.parent.exists()
+    for path in (destination, legacy):
+        path.parent.mkdir()
+    original = (site / 'index.html').read_text(encoding='utf-8')
+    broken_image, healthy_image = url + 'missing-social.png', url + 'en/social.svg'
+    source = original.replace('</head>', '<meta property="og:image" content="' + broken_image + '"></head>')
+    destination.write_text(source, encoding='utf-8')
+    image.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">'
+                     '<rect width="1200" height="630" fill="navy"/></svg>', encoding='utf-8')
+    legacy.write_text(original.replace('</head>', VIEWPORT + '</head>'), encoding='utf-8')
+    saved_legacy = legacy.read_bytes()
+    requested, final = url + 'legacy/', url + 'en/'
+    try:
+        audit_options = ['audit', requested, '--allow-private', '--max-pages', '1',
+                         '--max-links', '0', '--max-sitemaps', '0', '--no-config', '--format', 'json']
+        run(audit_options + ['-o', 'redirect-audit-before.json'])
+        supplied = read('redirect-audit-before.json')
+        saved_audit = (root / 'redirect-audit-before.json').read_bytes()
+        assert supplied['site'] == requested and supplied['homepage']['final_url'] == final, supplied
+        assert supplied['homepage']['status'] == 200, supplied['homepage']['status']
+        rule = next(f['rule_id'] for f in supplied['homepage']['findings'] if f['title'] == 'og:image is broken')
+        assert rule not in {f['rule_id'] for f in supplied['crawl']['recurring']}, supplied['crawl']['recurring']
+        run(['plan', 'redirect-audit-before.json', '--repo', 'site', '--format', 'json', '-o', 'redirect-plan.json'])
+        plans = [read('redirect-plan.json')]
+        if use_mcp:
+            plans.append(mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root))
+        for built in plans:
+            action = next(a for a in built['actions'] if a['rule_id'] == rule)
+            assert action['likely_files'][0]['path'] == 'en/index.html' and action['likely_files'][0]['exists'], action
+            assert action['safety'] == 'review_required' and action['artifact'] == 'open_graph', action
+            assert built['target'] == requested and built['provenance']['report_kind'] == 'audit', built
+            rerun = next(shlex.split(s, comments=True) for s in action['verification'] if s.startswith('narwhal audit '))
+            assert rerun[-1] == requested, rerun
+        assert destination.read_text(encoding='utf-8') == source and legacy.read_bytes() == saved_legacy
+        page_options = ['scan', final, '--allow-private', '--only', 'technical',
+                        '--no-config', '--format', 'json']
+        run(page_options + ['-o', 'redirect-page-before.json'])
+        saved_page = (root / 'redirect-page-before.json').read_bytes()
+        destination.write_text(source.replace(broken_image, healthy_image), encoding='utf-8')
+        run(page_options + ['-o', 'redirect-page-after.json'])
+        run(['diff', 'redirect-page-before.json', 'redirect-page-after.json', '--require-comparable',
+             '--fail-on-regression', '--format', 'json', '-o', 'redirect-page.diff.json'])
+        difference = read('redirect-page.diff.json')
+        assert difference['comparison']['status'] == 'comparable' and difference['score_delta'] > 0, difference
+        assert {f['rule_id'] for f in difference['resolved']} == {rule}, difference
+        run(['diff', 'redirect-page-after.json', 'redirect-page-before.json', '--require-comparable',
+             '--fail-on-regression'], expected=1)
+        run(audit_options + ['-o', 'redirect-audit-after.json'])
+        assert rule not in {f['rule_id'] for f in read('redirect-audit-after.json')['homepage']['findings']
+                            if f['severity'] != 'good'}
+        assert (root / 'redirect-audit-before.json').read_bytes() == saved_audit
+        assert (root / 'redirect-page-before.json').read_bytes() == saved_page
+        assert (root / 'before.json').read_bytes() == baseline and legacy.read_bytes() == saved_legacy
+    finally:
+        image.unlink()
+        for path in (destination, legacy):
+            path.unlink()
+            path.parent.rmdir()
+    assert sources == {path: path.read_bytes() for path in site.rglob('*') if path.is_file()}
+    print('Installed audit redirect cycle passed: real 302 destination -> observed page candidate -> explicit '
+          'fixture edit -> comparable local page fix and reverse regression; original audit target and baseline '
+          'bytes preserved. ' + ('CLI and MCP stdio verified.' if use_mcp else 'CLI verified.'))
 
 
 def manifest_fifo_plans(root, site, page, use_mcp):
@@ -554,6 +629,7 @@ def main(use_mcp=False):
                 assert read('before.json')['status'] == 200
                 manifest_encoding_plans(run, read, root, site, read('before.json'), use_mcp)
                 manifest_fifo_plans(root, site, read('before.json'), use_mcp)
+                audit_redirect_cycle(run, read, root, site, url, use_mcp)
                 ambiguous = '{"status":503,' + baseline.decode('utf-8').lstrip()[1:]
                 (root / 'ambiguous.json').write_text(ambiguous, encoding='utf-8')
                 rejected_output = root / 'rejected-output.json'
