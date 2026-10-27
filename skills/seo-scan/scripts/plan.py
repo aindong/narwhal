@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import links as linkslib, sitemap as sitemaplib, finding_urls  # noqa: E402
 from lib.http import normalize_url, URLInputError  # noqa: E402
 from lib.report import (recorded_llms_problem, recorded_schema_extraction_problem,  # noqa: E402
+                        recorded_merchant_comparison_problem, MERCHANT_COMPARISON_RULES,
                         recorded_response_partial, recorded_response_truncated, recorded_scan_scope, _http_robots_notes,
                         recorded_execution_problem,
                         recorded_image_weight_problem, _literal_preview_code)
@@ -436,6 +437,9 @@ def normalize_report(data: dict) -> dict:
         findings = [f for f in findings if f['rule_id'] not in SCHEMA_ABSENCE_RULES]
     schema_crawl_uncertain = False
     schema_crawl_verification = False
+    merchant_page_pending = bool(recorded_merchant_comparison_problem(page_meta, for_score=True)) and not any(
+        finding['rule_id'] in MERCHANT_COMPARISON_RULES for finding in findings)
+    merchant_crawl_pending = False
     llms_metadata = [page_meta]
     if kind == 'audit':
         llms_metadata.append(data.get('crawl'))
@@ -460,6 +464,10 @@ def normalize_report(data: dict) -> dict:
                              'occurrences': max(1, recorded['unverified_files']) if recorded else 1})
     if kind == "audit":
         crawl = data.get('crawl', {})
+        merchant_crawl_pending = any(recorded_merchant_comparison_problem(item, for_score=True)
+                                     for item in crawl.get('pages', [])) and not any(
+            item.get('severity') != 'good' and _legacy_rule_id(item) in MERCHANT_COMPARISON_RULES
+            for item in crawl.get('recurring', []))
         crawl_automation_gap = any(_automation_source_gap(item) for item in crawl.get('pages', [])
                                    if isinstance(item, dict))
         schema_crawl_uncertain = any(isinstance(item, dict) and (
@@ -563,6 +571,16 @@ def normalize_report(data: dict) -> dict:
                                    + pending_scope
                                    + '; non-observed types are not evidence of missing markup. '
                                    'Existing syntax/property findings remain reviewable.'})
+    if merchant_page_pending or merchant_crawl_pending:
+        pending_scope = ('page report and crawl sample/rollup' if merchant_page_pending and merchant_crawl_pending else
+                         'crawl sample/rollup' if merchant_crawl_pending else 'page report')
+        findings.append({'category': 'schema', 'severity': 'low',
+                         'scope': 'site' if merchant_crawl_pending else 'page',
+                         'rule_id': 'schema.ecommerce.comparison.unverified',
+                         'title': 'Product/Offer comparisons need manual verification',
+                         'detail': 'Known Product/Offer comparison uncertainty was recorded in the ' + pending_scope
+                                   + '; skipped comparisons are not evidence of corrected price, currency or stock. '
+                                   'Independent observed property/validity findings remain reviewable.'})
     if llms_uncertain:
         # Older/contradictory missing-file findings cannot authorize generation
         # when recorded HTTP evidence explicitly leaves root availability open.
@@ -1207,6 +1225,13 @@ for _rule in sorted(SCHEMA_VERIFICATION_RULES):
         ('Review original HTML, retained extraction warnings and intended entity/consumer; preserve SSRF and body/parser limits.',
          'Validate supported/unsupported markup with an appropriate validator and re-scan before treating missing findings as fixes. '
          'Syntax/property defects actually observed may still be repaired after confirming their source.'))
+for _rule in sorted(MERCHANT_COMPARISON_RULES):
+    RESOURCE_VERIFICATION[_rule] = (
+        'Verify the intended Product, selected variant and Offer against visible/catalog facts before editing markup. '
+        'Do not invent product data or generate schema merely to clear an ambiguous comparison.',
+        ('Inspect the original page, selected identity and price/currency/stock for each relevant Offer.',
+         'Re-scan matching page states after verification; a skipped comparison cannot establish a resolved mismatch or score gain. '
+         'Independent observed property/validity defects may still be reviewed.'))
 for _rule in sorted(RENDER_VERIFICATION_RULES):
     RESOURCE_VERIFICATION[_rule] = (
         'Inspect paired served HTML/rendered DOM, extraction scope and intended page state before proposing source edits. '

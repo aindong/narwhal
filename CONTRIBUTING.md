@@ -302,6 +302,26 @@ selected auditor scope and planner/diff consumers:
 For native schema/merchant absence checks, also select `audit_schema.x_audit__mutmut_*`,
 `audit_schema.x__cross_checks__mutmut_*` and `lib.ecommerce.x_audit__mutmut_*`.
 
+The optional [merchant profile](scripts/mutation/merchant.toml) checks known
+Product/Offer comparison skips, selected scope, read-only planning, crawl/audit
+propagation and real price-correction controls:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/merchant.toml \
+  'lib.report.x_recorded_merchant_comparison_problem__mutmut_*' \
+  'crawl_site.x_crawl__mutmut_*' 'crawl_site.x_merchant_comparison_note__mutmut_*' \
+  'crawl_site.x_render_markdown__mutmut_*' 'audit.x__schema_score_note__mutmut_*' \
+  'diff_scan.x__comparison__mutmut_*' 'plan.x_normalize_report__mutmut_*'
+```
+
+Mutmut does not generate mutants for the dataclass report methods; the focused
+tests and installed cycle check their Markdown/HTML qualifiers directly.
+This broad diagnostic is separate from the mandatory gates. Report its completed
+killed/total counts and survivors; do not count incomplete runs as passes.
+The installed action-cycle smoke also requires ambiguous or ignored-warning
+reports to yield manual verification and strict incomparable diffs, while a real
+consensus price correction resolves the mismatch and its reverse fails regression.
+
 The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
 and their report/diff/planner consumers. The existing mutation CI job runs it
 alongside the default corpus:

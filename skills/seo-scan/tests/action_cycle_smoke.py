@@ -116,6 +116,93 @@ class FixtureHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
+    """A skipped price comparison is not a repaired mismatch."""
+    original_sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    original_reports = {p: p.read_bytes() for p in root.glob('*.json')}
+    destination = url + 'merchant/'
+    target = site / 'merchant/index.html'
+    target.parent.mkdir()
+    snapshots = {}
+    options = ['scan', destination, '--allow-private', '--only', 'schema', '--no-image-checks',
+               '--max-bytes', '6000000', '--no-config', '--format', 'json']
+    for label, prices in (('before', ['129.00']), ('ambiguous', ['129.00', '139.00']),
+                          ('corrected', ['149.00', '149.00'])):
+        product = {'@context': 'https://schema.org', '@type': 'Product', 'name': 'Trail Shoe',
+                   'url': destination, 'image': url + 'shoe.jpg', 'description': 'A stable trail shoe.',
+                   'brand': {'@type': 'Brand', 'name': 'Northstar'}, 'sku': 'TS-42',
+                   'offers': [{'@type': 'Offer', 'price': price, 'priceCurrency': 'USD',
+                               'availability': 'https://schema.org/InStock', 'url': destination,
+                               'itemCondition': 'https://schema.org/NewCondition',
+                               'seller': {'@type': 'Organization', 'name': 'Seller ' + str(index)}}
+                              for index, price in enumerate(prices)]}
+        source = ('<!doctype html><html><head><title>Trail Shoe</title>'
+                  '<meta property="og:type" content="product">'
+                  '<meta property="product:price:amount" content="149.00">'
+                  '<meta property="product:price:currency" content="USD">'
+                  '<meta property="product:availability" content="in stock">'
+                  '<meta property="product:retailer_item_id" content="TS-42">'
+                  '<script type="application/ld+json">' + json.dumps(product)
+                  + '</script></head><body><h1>Trail Shoe</h1><button>Add to cart</button></body></html>')
+        target.write_text(source, encoding='utf-8')
+        name = 'merchant-' + label + '.json'
+        run(options + ['-o', name])
+        report = read(name)
+        scope = report['meta']['scan_scope']
+        assert report['status'] == 200 and scope['requested'] == scope['completed'] == ['schema'], report
+        snapshots[label] = report
+        assert target.read_text(encoding='utf-8') == source
+    saved_reports = {p: p.read_bytes() for p in root.glob('*.json')}
+    mismatch = 'schema.ecommerce.price.mismatch'
+    ambiguity = 'schema.ecommerce.offer.comparison.ambiguous'
+    assert mismatch in {f['rule_id'] for f in snapshots['before']['findings']}
+    assert mismatch not in {f['rule_id'] for f in snapshots['ambiguous']['findings']}
+    assert snapshots['ambiguous']['meta']['ecommerce']['offer_comparison_status']['price'] == 'skipped_ambiguous'
+    for label, supplied, rule in (
+            ('ambiguous', snapshots['ambiguous'], ambiguity),
+            ('ignored', dict(snapshots['ambiguous'], findings=[]), 'schema.ecommerce.comparison.unverified')):
+        name = 'merchant-' + label + '.json'
+        if label == 'ignored':
+            (root / name).write_text(json.dumps(supplied), encoding='utf-8')
+        run(['plan', name, '--repo', str(site), '--format', 'json', '-o', name + '.plan.json'])
+        built = read(name + '.plan.json')
+        action = next(a for a in built['actions'] if a['rule_id'] == rule)
+        assert (action['safety'], action['manual_action'], action['requires_deploy'], action['likely_files']) == (
+            'manual_external', True, False, []), action
+        assert not any(rule in group['rule_ids'] for group in built['groups']), built
+        run(['diff', 'merchant-before.json', name, '--require-comparable', '--fail-on-regression',
+             '--format', 'json', '-o', name + '.diff.json'], expected=2)
+        difference = read(name + '.diff.json')
+        assert difference['comparison']['status'] == 'incomparable' and difference['score_delta'] is None, difference
+        assert difference['resolved'] == [], difference
+        if use_mcp:
+            received = mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root)
+            mcp_action = next(a for a in received['actions'] if a['rule_id'] == rule)
+            for key in ('rule_id', 'safety', 'manual_action', 'requires_deploy', 'likely_files', 'verification'):
+                assert mcp_action[key] == action[key], (key, mcp_action, action)
+            assert not any(rule in group['rule_ids'] for group in received['groups']), received
+            assert difference == mcp_tool('diff_reports', {
+                'old_json': json.dumps(snapshots['before']), 'new_json': json.dumps(supplied)}, root)
+    run(['diff', 'merchant-before.json', 'merchant-corrected.json', '--require-comparable', '--fail-on-regression',
+         '--format', 'json', '-o', 'merchant-fixed.diff.json'])
+    corrected = read('merchant-fixed.diff.json')
+    assert corrected['comparison']['status'] == 'comparable' and corrected['score_delta'] > 0, corrected
+    assert {f['rule_id'] for f in corrected['resolved']} == {mismatch}, corrected
+    if use_mcp:
+        assert corrected == mcp_tool('diff_reports', {
+            'old_json': json.dumps(snapshots['before']), 'new_json': json.dumps(snapshots['corrected'])}, root)
+    run(['diff', 'merchant-corrected.json', 'merchant-before.json', '--require-comparable', '--fail-on-regression',
+         '--format', 'json', '-o', 'merchant-reverse.diff.json'], expected=1)
+    assert read('merchant-reverse.diff.json')['regression'] is True
+    assert all(p.read_bytes() == body for p, body in original_reports.items())
+    assert all(p.read_bytes() == body for p, body in saved_reports.items())
+    assert all(p.read_bytes() == body for p, body in original_sources.items())
+    assert target.read_text(encoding='utf-8') == source
+    print('Installed merchant comparison cycle passed: ambiguous Offers and ignored notes cannot claim a repaired price '
+          'or score gain; plans require ownerless manual verification; actual consensus price correction compares '
+          'and reverse regression fails. Prior source/report bytes are preserved; no production or ranking proof.')
+
+
 def main(use_mcp=False):
     with tempfile.TemporaryDirectory(prefix='narwhal action cycle-') as directory:
         root = Path(directory)
@@ -836,6 +923,7 @@ def main(use_mcp=False):
                 print('Installed llms.txt action cycle passed: observed root 404 -> deployment-required plan -> generated and inspected '
                       'entry points -> explicit fixture edit -> observed root text candidate; comparable local GEO diff and reverse '
                       'regression checked. Production root verification remains pending deployment; no engine-adoption or ranking proof.')
+                merchant_comparison_cycle(run, read, root, site, url, use_mcp)
             finally:
                 server.shutdown()
                 thread.join(timeout=5)

@@ -213,6 +213,31 @@ def recorded_schema_extraction_problem(meta, *, for_score=False):
     return None
 
 
+MERCHANT_COMPARISON_RULES = frozenset((
+    'schema.ecommerce.comparison.ambiguous',
+    'schema.ecommerce.offer.comparison.ambiguous',
+    'schema.ecommerce.comparison.unverified',
+))
+
+
+def recorded_merchant_comparison_problem(meta, *, for_score=False):
+    """Retain known skipped comparisons without inferring legacy coverage."""
+    scope = recorded_scan_scope(meta) if isinstance(meta, dict) else None
+    if for_score and scope is not None and 'schema' not in scope[0]:
+        return None
+    if not isinstance(meta, dict):
+        return None
+    data = meta.get('ecommerce')
+    data = data if isinstance(data, dict) else {}
+    offers = data.get('offer_comparison_status')
+    if (meta.get('merchant_comparison_unverified') is True
+            or data.get('comparison_status') == 'skipped_ambiguous'
+            or isinstance(offers, dict) and any(
+                offers.get(key) == 'skipped_ambiguous' for key in ('price', 'currency', 'availability'))):
+        return 'Product/Offer comparisons need verification; schema/overall score comparisons are unverified.'
+    return None
+
+
 def _crawler_policy_notes(meta):
     """Read explicit informational notes without reinterpreting legacy metadata."""
     receipt = meta.get("ai_crawler_access") if isinstance(meta, dict) else None
@@ -405,9 +430,11 @@ class Report:
         discovery = recorded_sitemap_discovery_problem(self.meta)
         llms = recorded_llms_problem(self.meta)
         schema = recorded_schema_extraction_problem(self.meta, for_score=True)
+        merchant = recorded_merchant_comparison_problem(self.meta, for_score=True)
         image_weight = recorded_image_weight_problem(self.meta, for_score=True)
         discovery_suffix = ((' ' + discovery if discovery else '') + (' ' + llms if llms else '')
                             + (' ' + schema if schema else '')
+                            + (' ' + merchant if merchant else '')
                             + (' ' + image_weight if image_weight else '')
                             + (' ' + canonical.ERROR if canonical.unverified(self.meta) else '')
                             + (' ' + linklib.BASE_ERROR if linklib.unassessed_base(self.meta) else '')
