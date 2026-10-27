@@ -108,9 +108,9 @@ def _comparison(o: dict, n: dict) -> dict:
     if any(basis is not None for basis in merchant_bases):
         if any(basis is None for basis in merchant_bases) or merchant_bases[0]['visible_fields'] != merchant_bases[1]['visible_fields']:
             reasons.append('Recorded merchant observations differ or are unrecorded; changed field coverage is not fix evidence.')
-        elif (all(basis['price_method'] is not None for basis in merchant_bases)
+        elif (merchant_bases[0]['price_method'] is not None
               and merchant_bases[0]['price_method'] != merchant_bases[1]['price_method']):
-            reasons.append('Recorded merchant price comparison methods differ; exact amounts and range compatibility are not the same check.')
+            reasons.append('Recorded merchant price comparison method changed or is no longer recorded; loss or replacement of a price check is not fix evidence.')
     if o["kind"] != n["kind"]:
         reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
     samples = [_crawl_sample(item["crawl"]) for item in (o, n)]
@@ -263,7 +263,11 @@ def _comparison(o: dict, n: dict) -> dict:
         new_fields = crawls[1][url].get('merchant_visible_fields')
         if old_fields != new_fields:
             reasons.append('Recorded merchant observations differ or are unrecorded for ' + url + '; changed field coverage is not fix evidence.')
-        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config", 'auditors_requested', 'auditors_completed', 'merchant_price_method'):
+        old_methods = crawls[0][url]['merchant_price_method']
+        new_methods = crawls[1][url]['merchant_price_method']
+        if any(method is not None for method in old_methods) and old_methods != new_methods:
+            reasons.append('Recorded merchant price comparison method changed or is no longer recorded for ' + url + '; a lost or replaced check is not fix evidence.')
+        for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config", 'auditors_requested', 'auditors_completed'):
             values = [item[url].get(key, set()) for item in crawls]
             if key in ('auditors_requested', 'auditors_completed') and bool(values[0]) != bool(values[1]):
                 reasons.append(f'Crawl auditor scope {key} is recorded on only one side for {url}; matching execution is unverified.')
@@ -332,10 +336,10 @@ def _crawl_settings(crawl):
             for key, value in zip(('auditors_requested', 'auditors_completed'), scope):
                 result.setdefault(page['url'], {}).setdefault(key, set()).add(tuple(sorted(value)))
         merchant_basis = recorded_merchant_comparison_basis(page)
-        if merchant_basis is not None:
-            result[page['url']].setdefault('merchant_visible_fields', set()).add(tuple(merchant_basis['visible_fields']))
-            if merchant_basis['price_method'] is not None:
-                result[page['url']].setdefault('merchant_price_method', set()).add(merchant_basis['price_method'])
+        result[page['url']].setdefault('merchant_visible_fields', set()).add(
+            tuple(merchant_basis['visible_fields']) if merchant_basis is not None else None)
+        result[page['url']].setdefault('merchant_price_method', set()).add(
+            merchant_basis['price_method'] if merchant_basis is not None else None)
     return result
 
 

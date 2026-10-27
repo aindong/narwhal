@@ -119,10 +119,15 @@ class TestMerchantComparisonBasis(unittest.TestCase):
     def test_explicit_malformed_crawl_receipts_withhold_claims(self):
         for basis in (None, {}, {'visible_fields': ['price'], 'price_method': 'future'},
                       {'visible_fields': [1], 'price_method': None},
+                      {'visible_fields': ['future'], 'price_method': None},
+                      {'visible_fields': {'price': {}}, 'price_method': None},
+                      {'visible_fields': [[]], 'price_method': None},
                       {'visible_fields': [], 'price_method': 'exact_decimal'},
                       {'visible_fields': ['price', 'price'], 'price_method': None}):
             old = saved_audit([URL])
             old['crawl']['pages'][0]['merchant_comparison_basis'] = basis
+            self.assert_withheld(old, old)
+            old['crawl']['pages'][0]['scan_scope'] = {'requested': ['schema'], 'completed': ['schema']}
             self.assert_withheld(old, old)
 
     def test_receipt_order_and_missing_price_repairs_do_not_change_crawl_scope(self):
@@ -132,6 +137,19 @@ class TestMerchantComparisonBasis(unittest.TestCase):
         self.assertEqual('comparable', diff_scan.diff_reports(old, new)['comparison']['status'])
         old['crawl']['pages'][0]['merchant_comparison_basis']['price_method'] = 'exact_decimal'
         self.assertEqual('comparable', diff_scan.diff_reports(old, new)['comparison']['status'])
+        for data in (old, new):
+            data['crawl']['pages'][0]['merchant_comparison_basis']['price_method'] = 'inclusive_range'
+        self.assertEqual('comparable', diff_scan.diff_reports(old, new)['comparison']['status'])
+
+    def test_explicit_page_receipts_validate_and_respect_selected_scope(self):
+        data = payload(observed(page(offers()[:1])))
+        data['meta']['merchant_comparison_basis'] = recorded_merchant_comparison_basis(data['meta'])
+        self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
+        for bad in (None, {}, {'visible_fields': ['price'], 'price_method': 'future'}):
+            data['meta']['merchant_comparison_basis'] = bad
+            self.assert_withheld(data, data)
+        data['meta']['scan_scope'] = {'requested': ['content'], 'completed': ['content']}
+        self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
 
     def test_unselected_crawl_scope_ignores_unrelated_receipts(self):
         old, new = saved_audit([URL]), saved_audit([URL], 99)
@@ -166,3 +184,30 @@ class TestMerchantComparisonBasis(unittest.TestCase):
         self.assert_withheld(old, new)
         new['crawl']['pages'].reverse()
         self.assert_withheld(old, new)
+
+    def test_known_price_method_cannot_disappear_behind_missing_schema_data(self):
+        old = payload(observed(page(offers()[:1], price='149.00')))
+        offer = dict(offers()[0])
+        offer.pop('price')
+        new = payload(observed(page([offer], price='149.00')))
+        self.assertEqual(old['meta']['ecommerce']['visible_facts'], new['meta']['ecommerce']['visible_facts'])
+        self.assertNotIn('point_price_comparison', new['meta']['ecommerce'])
+        self.assert_withheld(old, new)
+        earlier, later = saved_audit([URL]), saved_audit([URL], 99)
+        for data, method in ((earlier, 'exact_decimal'), (later, None)):
+            data['crawl']['pages'][0]['merchant_comparison_basis'] = {'visible_fields': ['price'], 'price_method': method}
+        self.assert_withheld(earlier, later)
+        self.assertEqual('comparable', diff_scan.diff_reports(later, earlier)['comparison']['status'])
+
+    def test_duplicate_rows_preserve_missing_basis_and_missing_method(self):
+        for remove in ('receipt', 'method'):
+            old, new = saved_audit([URL, URL]), saved_audit([URL, URL], 99)
+            for data in (old, new):
+                for row in data['crawl']['pages']:
+                    row['merchant_comparison_basis'] = {'visible_fields': ['price'], 'price_method': 'exact_decimal'}
+            if remove == 'receipt':
+                new['crawl']['pages'][1].pop('merchant_comparison_basis')
+            else:
+                new['crawl']['pages'][1]['merchant_comparison_basis']['price_method'] = None
+            self.assert_withheld(old, new)
+            self.assert_withheld(new, new)

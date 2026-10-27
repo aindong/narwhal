@@ -329,6 +329,9 @@ exact-vs-range changes, native crawl receipts, unsupported saved receipts and
 positive exact/range/missing-price repairs. Known current crawl evidence paired
 with unrecorded legacy evidence cannot certify unchanged observation coverage;
 two legacy reports retain their existing handling without inferring that coverage.
+Known price checks becoming unrecorded withhold claims; adding a genuinely missing
+schema price remains eligible. Duplicate sampled URLs retain missing receipts and
+methods alongside known evidence instead of discarding those observations.
 
 The optional [output profile](scripts/mutation/output.toml) exercises snapshot
 preservation and nonblocking regular-file output through diff/planner tests:
