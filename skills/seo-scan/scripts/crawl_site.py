@@ -35,6 +35,7 @@ from lib.markdown_text import TABLE_TEXT_MARKER, table_text  # noqa: E402
 from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib.report import recorded_merchant_comparison_problem  # noqa: E402
 from lib.report import recorded_response_partial  # noqa: E402
 from lib import llms_resource, finding_urls  # noqa: E402
 from lib import canonical  # noqa: E402
@@ -417,6 +418,7 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "sitemap_discovery_unverified": bool(recorded_sitemap_discovery_problem(rep.meta, for_score=True)),
                       "llms_txt_unverified": bool(recorded_llms_problem(rep.meta, for_score=True)),
                       'schema_extraction_unverified': bool(recorded_schema_extraction_problem(rep.meta, for_score=True)),
+                      'merchant_comparison_unverified': bool(recorded_merchant_comparison_problem(rep.meta, for_score=True)),
                       'canonical_comparison_unverified': canonical.unverified(rep.meta),
                       'hreflang_comparison_unverified': hreflang.unverified(rep.meta, for_score=True),
                       "scan_settings": rep.meta.get("scan_settings", {}),
@@ -547,6 +549,17 @@ def schema_extraction_note(result: dict) -> str:
             'Raw scores are retained, not proof of improvement.')
 
 
+def merchant_comparison_note(result: dict) -> str:
+    """Keep explicitly skipped merchant comparisons visible in site scores."""
+    affected = sum(1 for page in result.get('pages', [])
+                   if recorded_merchant_comparison_problem(page, for_score=True))
+    if not affected:
+        return ''
+    return (f'Product/Offer comparisons need verification on {affected} scanned page(s); '
+            'schema/overall score comparisons, including the site average, are unverified. '
+            'Raw scores are retained, not proof of improvement.')
+
+
 def canonical_comparison_note(result: dict) -> str:
     """Qualify the site average only for explicitly recorded comparison gaps."""
     affected = sum(1 for page in result.get('pages', []) if isinstance(page, dict)
@@ -595,6 +608,9 @@ def render_markdown(result: dict) -> str:
     schema_note = schema_extraction_note(result)
     if schema_note:
         lines += ['> ' + schema_note, '']
+    merchant_note = merchant_comparison_note(result)
+    if merchant_note:
+        lines += ['> ' + merchant_note, '']
     canonical_note = canonical_comparison_note(result)
     if canonical_note:
         lines += ['> ' + canonical_note, '']

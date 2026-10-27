@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
+from lib.report import recorded_merchant_comparison_problem, MERCHANT_COMPARISON_RULES  # noqa: E402
 from lib.report import recorded_response_partial, recorded_execution_problem  # noqa: E402
 from lib.report import recorded_image_weight_problem, _literal_preview_code  # noqa: E402
 from lib import canonical  # noqa: E402
@@ -153,6 +154,14 @@ def _comparison(o: dict, n: dict) -> dict:
         if recorded_response_partial(meta_base) or (type(item.get('status')) is int and item['status'] == 206):
             reasons.append(label + ' report has partial/ranged HTML coverage; full-page comparisons are unverified.')
         pages = crawl.get("pages") if isinstance(crawl, dict) else None
+        recurring = crawl.get('recurring') if isinstance(crawl, dict) else None
+        if ((isinstance(pages, list) and any(recorded_merchant_comparison_problem(page, for_score=True)
+                                           for page in pages))
+                or ((scope is None or 'schema' in scope[0]) and isinstance(recurring, list) and any(
+                    isinstance(finding, dict) and finding.get('severity') != 'good'
+                    and finding.get('rule_id') in MERCHANT_COMPARISON_RULES
+                    for finding in recurring))):
+            reasons.append(label + ' audit contains unverified Product/Offer comparisons; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and 'scan_scope' in page and (
                 recorded_scan_scope(page) is None or
                 set(recorded_scan_scope(page)[0]) != set(recorded_scan_scope(page)[1])) for page in pages):
@@ -206,6 +215,11 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + ' report: ' + image_problem)
         if recorded_schema_extraction_problem(meta, for_score=True):
             reasons.append(label + ' report has unverified structured-data extraction; schema/overall score comparison is unverified.')
+        if (recorded_merchant_comparison_problem(meta, for_score=True)
+                or ((scope is None or 'schema' in scope[0]) and any(
+                    finding.get('severity') != 'good' and finding.get('rule_id') in MERCHANT_COMPARISON_RULES
+                    for finding in item['findings']))):
+            reasons.append(label + ' report has unverified Product/Offer comparisons; schema/overall score comparison is unverified.')
         if meta.get("response_truncated") is True or (
                 isinstance(coverage, dict) and coverage.get("response_truncated") is True):
             reasons.append(label + " report used truncated HTML coverage.")
@@ -246,7 +260,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/HTML canonical/declared anchor-base/HTML hreflang gaps, complete recorded audit crawl samples (exact URL multiplicities), page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/Product/Offer comparison/HTML canonical/declared anchor-base/HTML hreflang gaps, complete recorded audit crawl samples (exact URL multiplicities), page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
                  "identical response destinations, other configuration, tool rules or unrecorded site-wide samples. Recorded per-page auditor scopes must complete and match; missing legacy page scopes remain unverified. Missing settings are not inferred or certified. Incomplete/malformed crawl samples are not inferred or certified.",
     }
 

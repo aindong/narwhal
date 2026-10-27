@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Skipped ambiguous Product/Offer comparisons remain visible in page/crawl/audit
+  reports and block diff score/resolution claims. Plans request ownerless manual
+  verification while preserving independent property/validity repairs; installed
+  CLI/MCP proof distinguishes ambiguity from an actual consensus price correction.
+  Malformed saved crawl aggregates retain their unverified classification.
 - Known truncated/ranged HTML withholds schema-type absence advice across native
   schema audits, standalone merchant checks and saved-report planning, while
   preserving observed nodes/property repairs and raw extractor counts.

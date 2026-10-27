@@ -175,7 +175,9 @@ def _schema_score_note(data: dict) -> str:
     partial_note = (crawl_site.partial_response_note(data['site_result'])
                     or (report_lib.PARTIAL_HTML_ERROR if report_lib.recorded_response_partial(data['page'].meta) else ''))
     image_note = report_lib.recorded_image_weight_problem(data['page'].meta, for_score=True)
-    return ' '.join(note for note in (schema, canonical_note, base_note, hreflang_note, partial_note, image_note) if note)
+    merchant_note = (crawl_site.merchant_comparison_note(data['site_result'])
+                     or report_lib.recorded_merchant_comparison_problem(data['page'].meta, for_score=True))
+    return ' '.join(note for note in (schema, canonical_note, base_note, hreflang_note, partial_note, image_note, merchant_note) if note)
 
 
 def render_markdown(data: dict) -> str:
