@@ -83,6 +83,10 @@ class TestLlmsResponseEvidence(unittest.TestCase):
                         newer['crawl']['recurring'] = []
                     diff = diff_scan.diff_reports(data, newer)
                     self.assertEqual('incomparable', diff['comparison']['status'])
+                    reasons = diff['comparison']['reasons']
+                    self.assertTrue(reasons)
+                    self.assertTrue(all(isinstance(reason, str) and reason for reason in reasons))
+                    self.assertTrue(any('llms.txt' in reason.lower() for reason in reasons))
                     self.assertIsNone(diff['score_delta'])
                     self.assertEqual([], diff['resolved'])
                     self.assertEqual(original, data)
@@ -122,6 +126,11 @@ class TestLlmsResponseEvidence(unittest.TestCase):
         self.assertEqual(llms_resource.note(legacy), llms_resource.problem(legacy))
         self.assertEqual(llms_resource.note(legacy), recorded_llms_problem(legacy))
         self.assertIsNone(recorded_llms_problem(legacy, for_score=True))
+        page = json.loads(report_for(response()).to_json())
+        for receipt in (legacy['llms_txt'], {'version': 1, 'checked_path': '/llms.txt',
+                                           'basis': 'not_recorded', 'state': 'unverified'}):
+            data = {'site': BASE, 'overall_score': 100, 'homepage': page, 'crawl': {'llms_txt': receipt}}
+            self.assertEqual('comparable', diff_scan.diff_reports(data, data)['comparison']['status'])
 
     def test_text_candidates_support_atx_setext_bom_and_media_types(self):
         for mime in ('text/plain', 'text/markdown; charset=utf-8', 'text/x-markdown', ''):
