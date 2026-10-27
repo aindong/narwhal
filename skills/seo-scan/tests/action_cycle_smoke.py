@@ -683,6 +683,80 @@ def main(use_mcp=False):
                       '-> explicit fixture edit -> one resolved observation in a comparable local rescan; '
                       'no remaining schema actions; prior reports preserved and reverse regression rejected. '
                       'No eligibility or ranking proof.')
+                llms_reports = {p: p.read_bytes() for p in root.glob('*.json')}
+                llms_path = site / 'llms.txt'
+                llms_path.unlink()
+                llms_sources = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                geo_options = list(options)
+                geo_options[geo_options.index('--only') + 1] = 'geo'
+                run(geo_options + ['-o', 'llms-before.json'])
+                llms_baseline = (root / 'llms-before.json').read_bytes()
+                llms_before = read('llms-before.json')
+                assert llms_before['meta']['llms_txt']['state'] == 'absent', llms_before
+                assert llms_before['meta']['llms_txt']['http_status'] == 404, llms_before
+                if use_mcp:
+                    llms_plan = mcp_tool('plan_remediation', {'report': llms_before, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'llms-before.json', '--repo', str(site), '--format', 'json', '-o', 'llms-plan.json'])
+                    llms_plan = read('llms-plan.json')
+                llms_action = next(a for a in llms_plan['actions'] if a['rule_id'] == llms_missing)
+                assert llms_action['artifact'] == 'llms_txt' and llms_action['safety'] == 'deploy_verification', llms_action
+                assert llms_action['requires_deploy'] is True and llms_action['manual_action'] is False, llms_action
+                assert any(o['path'] == 'llms.txt' and o['exists'] is False for o in llms_action['likely_files']), llms_action
+                assert any('run after deploy' in step for step in llms_action['verification']), llms_action
+                assert not any('--allow-private' in step for step in llms_action['verification']), llms_action
+                run(['llms', url, '--allow-private', '--max-pages', '2', '--concurrency', '1', '--no-config',
+                     '-o', 'llms-starter.txt'])
+                starter_bytes = (root / 'llms-starter.txt').read_bytes()
+                starter = starter_bytes.decode('utf-8')
+                entries = {'Local workflow verification for Narwhal development': url,
+                           'Pricing and plans for local workflow verification': pricing_url}
+                for title, destination in entries.items():
+                    source = llms_sources['index.html' if destination == url else 'pricing/index.html'].decode('utf-8')
+                    assert '<title>' + title + '</title>' in source
+                assert {line for line in starter.splitlines() if line.startswith('- [')} == {
+                    '- [' + title + '](' + destination + ')' for title, destination in entries.items()}, starter
+                assert 'TODO' not in starter, starter
+                assert llms_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                # Both entry points were inspected above; remove the starter comment for this disposable fixture.
+                curated = '\n'.join(line for line in starter.splitlines() if not line.startswith('<!--')) + '\n'
+                llms_path.write_text(curated, encoding='utf-8')
+                run(geo_options + ['-o', 'llms-after.json'])
+                llms_after = read('llms-after.json')
+                llms_after_bytes = (root / 'llms-after.json').read_bytes()
+                for page in (llms_before, llms_after):
+                    scope = page['meta']['scan_scope']
+                    assert page['status'] == 200 and scope['requested'] == scope['completed'] == ['geo'], page
+                observation = llms_after['meta']['llms_txt']
+                assert (observation['basis'], observation['http_status'], observation['state'], observation['reason']) == (
+                    'root_http_response', 200, 'observed', 'candidate_text'), observation
+                run(['diff', 'llms-before.json', 'llms-after.json', '--require-comparable', '--fail-on-regression',
+                     '--format', 'json', '-o', 'llms-diff.json'])
+                llms_diff = read('llms-diff.json')
+                assert llms_diff['comparison']['status'] == 'comparable' and llms_diff['regression'] is False, llms_diff
+                assert {f['rule_id'] for f in llms_diff['resolved']} == {llms_missing}, llms_diff
+                assert [(f['rule_id'], f['severity']) for f in llms_diff['added']] == [('geo.llms.txt.published', 'good')], llms_diff
+                assert llms_diff['score_delta'] > 0, llms_diff
+                if use_mcp:
+                    assert llms_diff == mcp_tool('diff_reports', {
+                        'old_json': llms_baseline.decode('utf-8'), 'new_json': json.dumps(llms_after)}, root)
+                    llms_completed = mcp_tool('plan_remediation', {'report': llms_after, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'llms-after.json', '--repo', str(site), '--format', 'json', '-o', 'llms-completed-plan.json'])
+                    llms_completed = read('llms-completed-plan.json')
+                assert not {llms_missing, llms_unknown, 'geo.llms.txt.published'} & {a['rule_id'] for a in llms_completed['actions']}
+                run(['diff', 'llms-after.json', 'llms-before.json', '--require-comparable', '--fail-on-regression',
+                     '--format', 'json', '-o', 'llms-regression.json'], expected=1)
+                assert read('llms-regression.json')['regression'] is True
+                assert (root / 'llms-before.json').read_bytes() == llms_baseline
+                assert (root / 'llms-after.json').read_bytes() == llms_after_bytes
+                assert (root / 'llms-starter.txt').read_bytes() == starter_bytes
+                assert all(p.read_bytes() == data for p, data in llms_reports.items())
+                llms_sources['llms.txt'] = curated.encode('utf-8')
+                assert llms_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed llms.txt action cycle passed: observed root 404 -> deployment-required plan -> generated and inspected '
+                      'entry points -> explicit fixture edit -> observed root text candidate; comparable local GEO diff and reverse '
+                      'regression checked. Production root verification remains pending deployment; no engine-adoption or ranking proof.')
             finally:
                 server.shutdown()
                 thread.join(timeout=5)
