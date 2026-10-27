@@ -281,6 +281,9 @@ exclusion, existing-candidate unions and per-file overlap evidence.
 The profile also exercises successful-finding exclusion and repeated-observation
 counts, scope and selection receipts. Successful siblings/rollups must neither
 create remediation nor inflate a remaining finding's count or selection history.
+Crawl-only work must also survive a preceding successful rollup or an absence
+rollup skipped for schema uncertainty. Ordering controls retain the independent
+action's evidence/counts and keep verification separate from schema repair advice.
 Schema extraction guards are exercised through `test_page_schema_review.py`,
 including stale absence advice, independent syntax/property repairs and separate
 homepage/crawl uncertainty. These guards must survive the planner handoff.

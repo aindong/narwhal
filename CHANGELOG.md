@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner tests require later independent crawl findings to survive successful
+  or unverified schema-absence rollups, preserving counts, evidence and manual scope.
 - Planner mutation diagnostics select existing image-weight, llms.txt, sitemap
   discovery/parsing and merchant-comparison tests for normalization handoffs.
 - Planner Markdown shows each action's existing scope and occurrence count,

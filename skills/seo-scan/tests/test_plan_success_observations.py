@@ -1,4 +1,4 @@
-"""Successful observations cannot become work or inflate a remaining action."""
+"""Skipped observations cannot hide or inflate independent remaining work."""
 import copy
 import json
 from pathlib import Path
@@ -75,6 +75,54 @@ class TestPlanSuccessObservations(unittest.TestCase):
                     self.assertEqual(1, built['coverage']['actionable_findings'])
                     self.assertEqual(1, built['coverage']['actions_emitted'])
                     self.assertFalse(built['coverage']['action_generation_capped'])
+
+    def test_successful_rollup_cannot_hide_later_crawl_only_work(self):
+        page = baseline()
+        remaining = dict(page['findings'][0], count=2)
+        good = dict(remaining, severity='good', count=999, occurrences=999,
+                    scope='site', detail='Successful observation, not remaining work')
+        for rows in ([good, remaining], [remaining, good]):
+            with self.subTest(success_first=rows[0] is good):
+                data = {'site': URL, 'homepage': dict(page, findings=[]),
+                        'crawl': {'recurring': rows}, 'sitemap': {}}
+                built = self.compare(data)
+                self.assertEqual([RULE], [a['rule_id'] for a in built['actions']])
+                action, = built['actions']
+                self.assertEqual((RULE, 'site', 2),
+                                 tuple(action[k] for k in ('rule_id', 'scope', 'occurrences')))
+                self.assertTrue(action['evidence'].startswith(remaining['detail']))
+                self.assertNotIn('observation_selection', action)
+                self.assertEqual(1, built['coverage']['actionable_findings'])
+                self.assertEqual(1, built['coverage']['actions_emitted'])
+
+    def test_skipped_schema_absence_cannot_hide_independent_crawl_work(self):
+        page = baseline()
+        remaining = dict(page['findings'][0], count=2)
+        absence = {'category': 'schema', 'severity': 'medium', 'rule_id': 'schema.no.structured.data',
+                   'title': 'No structured data', 'count': 7, 'recommendation': 'LEGACY_ADD_DUPLICATE_MARKUP'}
+        verification = 'schema.extraction.unverified'
+        for uncertain in (False, True):
+            for rows in ([absence, remaining], [remaining, absence]):
+                with self.subTest(uncertain=uncertain, absence_first=rows[0] is absence):
+                    data = {'site': URL, 'homepage': dict(page, findings=[]), 'sitemap': {},
+                            'crawl': {'pages': [{'url': URL + 'leaf',
+                                                 'schema_extraction_unverified': uncertain}],
+                                      'recurring': rows}}
+                    built = self.compare(data)
+                    actions = {a['rule_id']: a for a in built['actions']}
+                    self.assertEqual({RULE, verification if uncertain else absence['rule_id']}, set(actions))
+                    self.assertEqual(('site', 2), tuple(actions[RULE][k] for k in ('scope', 'occurrences')))
+                    self.assertTrue(actions[RULE]['evidence'].startswith(remaining['detail']))
+                    if uncertain:
+                        action = actions[verification]
+                        self.assertEqual(('manual_external', True, False, []),
+                                         tuple(action[k] for k in ('safety', 'manual_action',
+                                                                  'requires_deploy', 'likely_files')))
+                        self.assertNotIn('LEGACY_ADD_DUPLICATE_MARKUP', plan.render_markdown(built))
+                        self.assertFalse(any(verification in g['rule_ids'] for g in built['groups']))
+                    else:
+                        self.assertEqual('LEGACY_ADD_DUPLICATE_MARKUP',
+                                         actions[absence['rule_id']]['source_recommendation'])
 
 
 if __name__ == '__main__':
