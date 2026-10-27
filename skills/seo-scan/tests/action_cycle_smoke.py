@@ -562,6 +562,36 @@ def main(use_mcp=False):
                 schema_before = read('schema-before.json')
                 schema_rule = 'schema.no.structured.data'
                 assert schema_rule in {f['rule_id'] for f in schema_before['findings']}
+                for label in ('container', 'review-flag'):
+                    supplied = json.loads(json.dumps(schema_before))
+                    if label == 'container':
+                        supplied['meta']['structured_data'] = None
+                    else:
+                        supplied['meta']['scan_settings']['schema_extraction_reviewed'] = 'true'
+                    name = 'schema-unsupported-' + label + '.json'
+                    saved = json.dumps(supplied).encode('utf-8')
+                    (root / name).write_bytes(saved)
+                    if use_mcp:
+                        received = mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root)
+                    else:
+                        run(['plan', name, '--repo', str(site), '--format', 'json', '-o', name + '.plan.json'])
+                        received = read(name + '.plan.json')
+                    note, = received['actions']
+                    assert note['rule_id'] == 'schema.extraction.unverified' and note['safety'] == 'manual_external', note
+                    assert note['manual_action'] is True and note['requires_deploy'] is False and note['likely_files'] == [], note
+                    assert received['groups'] == [] and received['source_score'] == supplied['score'], received
+                    run(['diff', name, name, '--require-comparable', '--fail-on-regression', '--format', 'json',
+                         '-o', name + '.diff.json'], expected=2)
+                    difference = read(name + '.diff.json')
+                    assert difference['comparison']['status'] == 'incomparable' and difference['score_delta'] is None, difference
+                    assert difference['resolved'] == [], difference
+                    if use_mcp:
+                        assert difference == mcp_tool('diff_reports', {
+                            'old_json': saved.decode('utf-8'), 'new_json': saved.decode('utf-8')}, root)
+                    assert (root / name).read_bytes() == saved
+                    assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed schema receipt checks passed: unsupported containers/review flags withheld absence advice; '
+                      'verification stayed ownerless and identical reports failed comparability.')
                 try:
                     target.write_bytes(schema_sources['index.html'] + b'<script type="application/ld+json">{bad</script>')
                     run(schema_options + ['-o', 'schema-uncertain.json'])

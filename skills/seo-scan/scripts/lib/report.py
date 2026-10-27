@@ -202,10 +202,12 @@ def recorded_schema_extraction_problem(meta, *, for_score=False):
     data = meta.get('structured_data') if isinstance(meta, dict) else None
     legacy_warning = isinstance(data, dict) and any(
         isinstance(data.get(key), list) and bool(data[key]) for key in ('microdata_warnings', 'rdfa_warnings'))
-    unsupported = (isinstance(data, dict) and 'extraction_coverage' in data
-                   and schema_coverage.recorded(data['extraction_coverage']) is None)
+    unsupported = ((isinstance(meta, dict) and 'structured_data' in meta and not isinstance(data, dict))
+                   or (isinstance(data, dict) and 'extraction_coverage' in data
+                       and schema_coverage.recorded(data['extraction_coverage']) is None))
     if (schema_coverage.state(schema_coverage.meta_receipt(meta)) == 'unverified'
-            or legacy_warning or unsupported or isinstance(settings, dict) and settings.get('schema_extraction_reviewed') is False):
+            or legacy_warning or unsupported or isinstance(settings, dict) and 'schema_extraction_reviewed' in settings
+            and settings['schema_extraction_reviewed'] is not True):
         return 'Structured-data extraction needs verification; schema/overall score comparisons are unverified.'
     return None
 

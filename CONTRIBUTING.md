@@ -79,6 +79,9 @@ An actual JSON-LD parse error is also rescanned, then paired with stale saved
 absence advice. Planning must withhold that absence action, retain the syntax
 repair for source review and leave extraction verification ownerless. Even
 identical uncertain reports must fail comparability in CLI and MCP diffs.
+Explicit unsupported structured-data containers and review flags also withhold
+absence advice and score/fix claims. Missing legacy fields and unselected schema
+checks retain their handling; independently observed property repairs stay reviewable.
 Null and future llms.txt receipts in saved audits likewise withhold stale
 missing-file repairs, keep verification ownerless and fail CLI/MCP comparability.
 The positive llms.txt fixture removes the root file, observes HTTP 404, reviews
@@ -280,6 +283,15 @@ boundary and requested-GEO scope handling, with planner and diff controls:
 The same profile includes generator metadata, budgets, redirects and literal
 artifact checks. Target `generate_llms.x_build__mutmut_*` and
 `generate_llms.x_render_llms_txt__mutmut_*` to diagnose those functions.
+
+The [extraction profile](scripts/mutation/extraction.toml) checks structured-data
+receipt interpretation, including malformed containers/flags, legacy coverage,
+selected auditor scope and planner/diff consumers:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/extraction.toml \
+  'lib.report.x_recorded_schema_extraction_problem__mutmut_*'
+```
 
 The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
 and their report/diff/planner consumers. The existing mutation CI job runs it
