@@ -205,6 +205,7 @@ class TestPageSchemaReview(unittest.TestCase):
         self.assertEqual('page', actions['schema.microdata.extraction']['scope'])
         self.assertEqual('site', actions['schema.extraction.unverified']['scope'])
         self.assertIn('crawl sample/rollup', actions['schema.extraction.unverified']['evidence'])
+        self.assertNotIn('page report', actions['schema.extraction.unverified']['evidence'])
         text = plan.render_markdown(result)
         self.assertIn('Verification scope:** Page report', text)
         self.assertIn('Verification scope:** Site sample/rollup', text)
@@ -217,6 +218,7 @@ class TestPageSchemaReview(unittest.TestCase):
         self.assertEqual('site', actions['schema.rdfa.extraction']['scope'])
         self.assertEqual('page', actions['schema.extraction.unverified']['scope'])
         self.assertIn('page report', actions['schema.extraction.unverified']['evidence'])
+        self.assertNotIn('crawl sample/rollup', actions['schema.extraction.unverified']['evidence'])
 
     def test_same_explicit_warning_in_both_scopes_coalesces_to_one_site_task(self):
         warning = finding('schema.microdata.extraction')
