@@ -59,7 +59,7 @@ class TestPlanInputValidation(unittest.TestCase):
                     plan.build_plan(data, REPO)
 
     def test_scores_must_be_finite_measured_numbers_when_present(self):
-        for score in (True, '80', -1, 101, float('nan'), float('inf')):
+        for score in (False, True, '80', -1, 101, float('nan'), float('inf')):
             for kind in ('scan', 'audit'):
                 with self.subTest(score=score, kind=kind):
                     data = baseline()
@@ -71,6 +71,27 @@ class TestPlanInputValidation(unittest.TestCase):
                         data['score'] = score
                     with self.assertRaisesRegex(ValueError, field):
                         plan.build_plan(data, REPO)
+
+    def test_tool_version_is_validated_before_inventory_and_keeps_legacy_strings(self):
+        for kind in ('scan', 'audit'):
+            for value in ({}, None, '\ud800'):
+                with self.subTest(kind=kind, value=value):
+                    data = baseline()
+                    if kind == 'audit':
+                        data = {'homepage': data}
+                    data['tool_version'] = value
+                    original = copy.deepcopy(data)
+                    with mock.patch.object(plan, 'inventory', wraps=plan.inventory) as inventory:
+                        with self.assertRaisesRegex(ValueError, r'Report\.tool_version'):
+                            plan.build_plan(data, REPO)
+                        with self.assertRaisesRegex(ValueError, r'Report\.tool_version'):
+                            mcp_server._plan(data, 'skills/seo-scan/tests/fixtures/planner/plain_html')
+                        inventory.assert_not_called()
+                    self.assertEqual(original, data)
+        for version in ('future-producer', ''):
+            data = dict(baseline(), tool_version=version)
+            self.assertEqual(version, plan.build_plan(data, REPO)['provenance']['report_tool_version'])
+        self.assertEqual('unknown', plan.build_plan(baseline(), REPO)['provenance']['report_tool_version'])
 
     def test_legacy_missing_fields_and_null_optional_evidence_stay_supported(self):
         data = {'findings': [{'title': 'Missing title', 'evidence': None, 'detail': None}]}
@@ -91,6 +112,8 @@ class TestPlanInputValidation(unittest.TestCase):
 
     def test_cli_rejects_invalid_json_and_evidence_without_touching_outputs(self):
         cases = [json.dumps({'findings': [dict(baseline()['findings'][0], severity=[])]}).encode(),
+                 json.dumps({'findings': [], 'tool_version': {}}).encode(),
+                 json.dumps({'findings': [], 'tool_version': '\ud800'}).encode(),
                  b'\xff', ('[' * 2000 + '0' + ']' * 2000).encode(),
                  ('{"findings": [], "score": ' + '9' * 5000 + '}').encode()]
         with tempfile.TemporaryDirectory() as tmp:
