@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Audit plans select page-route source candidates using the fetched homepage's
+  recorded destination, retaining the original site input for audit verification.
+  Legacy URL fallbacks, discovery files and recurring-page witnesses remain scoped.
 - Comparison tests check readable rejection and unknown-scope explanations,
   matching-scope consistency, and JSON/Markdown/MCP agreement.
 - FIFO CLI test startup reuses Python's validated bytecode cache for large

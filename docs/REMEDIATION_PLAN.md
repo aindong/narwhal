@@ -84,6 +84,12 @@ Safety values mean:
 
 `likely_files` are ranked candidates, not authorization to edit. `exists` and
 `confidence` distinguish observed owners from framework-convention suggestions.
+For audit homepage findings, page-route candidates follow the recorded
+`homepage.final_url`, then `homepage.url`, falling back to the audit target for
+legacy reports without those labels. The plan target and final audit rerun keep
+the original site input. Discovery files and recurring-rule URL witnesses keep
+their existing scope. A recorded destination is a route hint, not proof that the
+repository owns it; malformed page labels still withhold structural automation.
 `groups` identify findings best fixed in one shared template. `conflicts` stop
 automation where canonical/index/crawler intent must be decided first.
 
