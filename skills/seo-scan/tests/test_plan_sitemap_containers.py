@@ -42,6 +42,8 @@ class TestSitemapSampleContainers(unittest.TestCase):
                          tuple(action[k] for k in ('safety', 'manual_action', 'requires_deploy', 'likely_files')))
         self.assertIn('sample', action['evidence'].lower())
         self.assertIn('container', action['evidence'].lower())
+        self.assertIn('verify', action['source_recommendation'].lower())
+        self.assertIn('before making source changes', action['source_recommendation'].lower())
         self.assertNotIn('secret-token', json.dumps(action))
 
     def test_explicit_unsupported_containers_cannot_be_clean_or_source_defects(self):
