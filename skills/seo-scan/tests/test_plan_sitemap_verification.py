@@ -10,6 +10,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import plan
+import mcp_server
 
 ROOT = Path(__file__).parent / 'fixtures/planner/plain_html'
 FETCH = 'technical.sitemap.fetch.unverified'
@@ -35,12 +36,102 @@ def actions(data):
 
 class TestPlanSitemapVerification(unittest.TestCase):
     def assert_manual(self, action):
+        self.assertIsInstance(action['title'], str)
+        self.assertIn('sitemap', action['title'].lower())
         self.assertEqual('manual_external', action['safety'])
         self.assertTrue(action['manual_action'])
         self.assertFalse(action['requires_deploy'])
         self.assertEqual([], action['likely_files'])
         self.assertEqual('site', action['scope'])
         self.assertNotIn('Create/configure', action['proposed_change'])
+
+    def assert_execution_gap(self, data):
+        original = copy.deepcopy(data)
+        files = {p: p.read_bytes() for p in ROOT.rglob('*') if p.is_file()}
+        with mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')), \
+                mock.patch('socket.socket.connect', side_effect=AssertionError('No network')):
+            built = plan.build_plan(data, str(ROOT), report_source='<mcp-object>')
+            with mock.patch.object(Path, 'cwd', return_value=ROOT.resolve().parent):
+                self.assertEqual(built, mcp_server._plan(data, ROOT.name))
+        self.assertEqual(original, data)
+        self.assertTrue(all(p.read_bytes() == contents for p, contents in files.items()))
+        output = {a['rule_id']: a for a in built['actions']}
+        self.assertEqual({NOTES}, set(output))
+        self.assert_manual(output[NOTES])
+        self.assertEqual(('technical', 'low'), tuple(output[NOTES][key] for key in ('category', 'severity')))
+        self.assertEqual(1, output[NOTES]['occurrences'])
+        self.assertFalse(built['groups'])
+        self.assertNotIn('secret-token', json.dumps(built))
+
+    def test_explicit_malformed_receipts_without_notes_remain_visible(self):
+        for key in ('sitemaps_attempted', 'sitemaps_fetched', 'fetch_failures', 'truncated'):
+            for value in (None, False, True, -1, '0', 'secret-token', 0.0, [], {}):
+                with self.subTest(key=key, value=value):
+                    data = report(errors=[], fetch_failures=0, sitemaps_attempted=1, sitemaps_fetched=1)
+                    data['sitemap'][key] = value
+                    self.assert_execution_gap(data)
+        for value in (None, False, 0, '', {}):
+            with self.subTest(errors=value):
+                self.assert_execution_gap(report(errors=value, fetch_failures=0,
+                                                 sitemaps_attempted=1, sitemaps_fetched=1))
+
+    def test_contradictory_outcomes_without_notes_are_not_a_clean_plan(self):
+        for attempted, fetched, failed in ((4, 1, 0), (0, 1, 0), (1, 0, 0)):
+            with self.subTest(attempted=attempted, fetched=fetched, failed=failed):
+                self.assert_execution_gap(report(errors=[], sitemaps_attempted=attempted,
+                                                 sitemaps_fetched=fetched, fetch_failures=failed))
+        for removed, changes in (('fetch_failures', {'sitemaps_attempted': 1, 'sitemaps_fetched': 2}),
+                                  ('sitemaps_fetched', {'sitemaps_attempted': 1, 'fetch_failures': 2})):
+            data = report(errors=[], fetch_failures=0, sitemaps_attempted=1, sitemaps_fetched=1)
+            data['sitemap'].pop(removed)
+            data['sitemap'].update(changes)
+            self.assert_execution_gap(data)
+
+    def test_plausible_partial_legacy_receipts_do_not_invent_a_failure(self):
+        for retained in ({}, {'sitemaps_attempted': 4, 'sitemaps_fetched': 1},
+                         {'sitemaps_fetched': 2}, {'sitemaps_attempted': 2, 'fetch_failures': 0}):
+            with self.subTest(retained=retained):
+                data = report(errors=[])
+                for key in ('sitemaps_attempted', 'sitemaps_fetched', 'fetch_failures'):
+                    data['sitemap'].pop(key)
+                data['sitemap'].update(retained)
+                self.assertEqual({}, actions(data))
+
+    def test_invalid_execution_receipts_keep_independent_source_evidence(self):
+        for changes in ({'fetch_failures': False}, {'sitemaps_attempted': 4}, {'truncated': None}):
+            with self.subTest(changes=changes):
+                data = report(errors=[], fetch_failures=0, sitemaps_attempted=1, sitemaps_fetched=1,
+                              problems={'not-absolute': 1})
+                data['sitemap'].update(changes)
+                output = actions(data)
+                self.assertEqual({SOURCE, NOTES}, set(output))
+                self.assert_manual(output[NOTES])
+                self.assertEqual('deploy_verification', output[SOURCE]['safety'])
+
+    def test_fetch_cap_and_unclassified_note_counts_remain_distinct(self):
+        output = actions(report(errors=['fetch one', 'fetch two', 'cap', 'extra one', 'extra two'],
+                                fetch_failures=2, sitemaps_attempted=3, sitemaps_fetched=1, truncated=4))
+        self.assertEqual({FETCH: 2, CAP: 4, NOTES: 2},
+                         {rule: action['occurrences'] for rule, action in output.items()})
+        for action in output.values():
+            self.assert_manual(action)
+        self.assertIn('4', output[CAP]['evidence'])
+        self.assertIn('3', output[FETCH]['evidence'])
+        output = actions(report(errors=['one', 'two', 'three'], fetch_failures=0,
+                                sitemaps_attempted=1, sitemaps_fetched=1))
+        self.assertEqual({NOTES}, set(output))
+        self.assertEqual(3, output[NOTES]['occurrences'])
+
+    def test_known_fetch_and_cap_require_the_recorded_note_cardinality(self):
+        data = report(errors=['one retained note'], fetch_failures=1,
+                      sitemaps_attempted=2, sitemaps_fetched=1, truncated=3)
+        self.assert_execution_gap(data)
+        data['sitemap']['errors'] = ['fetch note', 'cap note']
+        output = actions(data)
+        self.assertEqual({FETCH: 1, CAP: 3},
+                         {rule: action['occurrences'] for rule, action in output.items()})
+        for action in output.values():
+            self.assert_manual(action)
 
     def test_known_fetch_only_notes_do_not_create_a_source_action(self):
         data = actions(report())

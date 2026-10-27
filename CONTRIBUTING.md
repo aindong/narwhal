@@ -79,6 +79,9 @@ Sitemap source-problem summaries use nonnegative integer counts. Zero-filled
 summaries do not imply defects; malformed counts require manual verification.
 Independent positive counts and recorded failing HTTP samples retain their
 source-review actions even when other counters are unverified.
+Explicit malformed notes/counters and contradictory sitemap attempt/outcome totals
+must remain manual verification gaps even without error prose. Plausible partial
+legacy receipts remain unknown; missing fields alone do not establish failures.
 The inner page also lacks a viewport declaration. Its native recurring finding
 must become an automation candidate only for that page's observed source.
 Temporarily removing the fixture source must withhold automation and leave an

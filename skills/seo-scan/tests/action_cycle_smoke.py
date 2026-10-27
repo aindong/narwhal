@@ -377,12 +377,18 @@ def main(use_mcp=False):
                     audit_plan = read('audit-plan.json')
                 sitemap_source = 'technical.sitemap.validation.issues'
                 sitemap_unknown = 'technical.sitemap.validation.unverified'
-                for label, problems, lastmod, expected in (
-                        ('zero', {'not-absolute': 0}, 0, set()),
-                        ('unknown', {}, '0', {sitemap_unknown}),
-                        ('mixed', {'not-absolute': 1}, '0', {sitemap_source, sitemap_unknown})):
+                for label, changes, expected in (
+                        ('zero', {'problems': {'not-absolute': 0}, 'invalid_lastmod': 0}, set()),
+                        ('unknown', {'problems': {}, 'invalid_lastmod': '0'}, {sitemap_unknown}),
+                        ('mixed', {'problems': {'not-absolute': 1}, 'invalid_lastmod': '0'},
+                         {sitemap_source, sitemap_unknown}),
+                        ('bad-execution', {'errors': [], 'fetch_failures': False}, {sitemap_unknown}),
+                        ('contradictory-execution', {'errors': [], 'sitemaps_attempted': 3,
+                                                    'sitemaps_fetched': 1, 'fetch_failures': 0}, {sitemap_unknown}),
+                        ('mixed-execution', {'errors': [], 'problems': {'not-absolute': 1}, 'fetch_failures': False},
+                         {sitemap_source, sitemap_unknown})):
                     supplied = json.loads(json.dumps(audit_before))
-                    supplied['sitemap'].update(problems=problems, invalid_lastmod=lastmod)
+                    supplied['sitemap'].update(changes)
                     name = 'sitemap-count-' + label + '.json'
                     supplied_bytes = json.dumps(supplied).encode('utf-8')
                     (root / name).write_bytes(supplied_bytes)
@@ -406,7 +412,8 @@ def main(use_mcp=False):
                     assert (root / name).read_bytes() == supplied_bytes
                     assert source_bytes == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 print('Installed sitemap count checks passed: zero summaries withheld repair advice; malformed counts '
-                      'required manual verification; independent positive evidence retained its source candidate.')
+                      'required manual verification; independent positive evidence retained its source candidate; '
+                      'explicit malformed/inconsistent execution receipts stayed visible.')
                 title_rule = 'technical.missing.title'
                 title_action = next(a for a in audit_plan['actions'] if a['rule_id'] == title_rule)
                 assert [owner['path'] for owner in title_action['likely_files']] == ['pricing/index.html'], title_action
