@@ -79,6 +79,8 @@ An actual JSON-LD parse error is also rescanned, then paired with stale saved
 absence advice. Planning must withhold that absence action, retain the syntax
 repair for source review and leave extraction verification ownerless. Even
 identical uncertain reports must fail comparability in CLI and MCP diffs.
+Null and future llms.txt receipts in saved audits likewise withhold stale
+missing-file repairs, keep verification ownerless and fail CLI/MCP comparability.
 Sitemap source-problem summaries use nonnegative integer counts. Zero-filled
 summaries do not imply defects; malformed counts require manual verification.
 Independent positive counts and recorded failing HTTP samples retain their
@@ -257,6 +259,14 @@ profile is an optional diagnostic, not a default CI gate. Record fresh killed/to
 counts and unresolved outcomes with each PR; past counts do not score new source
 or tests. Unresolved results keep the gate nonzero. Its schema-file
 test is omitted because references are not staged; full suites/MCP CI retain it.
+
+The [llms.txt profile](scripts/mutation/llms.toml) checks the shared saved-receipt
+boundary and requested-GEO scope handling, with planner and diff controls:
+
+```bash
+.venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/llms.toml \
+  'lib.llms_resource.x_problem__mutmut_*' 'lib.report.x_recorded_llms_problem__mutmut_*'
+```
 
 The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
 and their report/diff/planner consumers. The existing mutation CI job runs it

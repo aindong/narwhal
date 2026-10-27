@@ -16,6 +16,7 @@ import compare
 import crawl_site
 import diff_scan
 import plan
+import mcp_server
 import scan
 from lib import htmlx, http, llms_resource
 from lib.report import Report, recorded_llms_problem
@@ -40,6 +41,88 @@ def report_for(resp, only='geo'):
 
 
 class TestLlmsResponseEvidence(unittest.TestCase):
+    def test_unsupported_explicit_saved_receipts_withhold_creation_and_fix_claims(self):
+        valid = llms_resource.assess(response())
+        cases = [None, False, True, 0, '', 'secret-token', [], {},
+                 {**valid, 'version': True}, {**valid, 'version': 99},
+                 {**valid, 'state': 'absent'}, {**valid, 'http_status': '200'},
+                 {**valid, 'body_truncated': True}, {**valid, 'basis': 'future'},
+                 {**valid, 'reason': ['secret-token']}]
+        repo = Path(__file__).parent / 'fixtures/planner/plain_html'
+        files = {p: p.read_bytes() for p in repo.rglob('*') if p.is_file()}
+        for receipt in cases:
+            for kind in ('scan', 'audit', 'audit_crawl'):
+                with self.subTest(receipt=receipt, kind=kind):
+                    page = json.loads(report_for(response(status=404)).to_json())
+                    if kind != 'audit_crawl':
+                        page['meta']['llms_txt'] = receipt
+                    data = page if kind == 'scan' else {
+                        'site': BASE, 'overall_score': 90, 'homepage': page,
+                        'crawl': {'llms_txt': receipt, 'recurring': copy.deepcopy(page['findings'])}}
+                    original = copy.deepcopy(data)
+                    with mock.patch('socket.getaddrinfo', side_effect=AssertionError('No DNS')), \
+                            mock.patch('socket.socket.connect', side_effect=AssertionError('No network')):
+                        built = plan.build_plan(data, str(repo), report_source='<mcp-object>')
+                        with mock.patch.object(Path, 'cwd', return_value=repo.resolve().parent):
+                            self.assertEqual(built, mcp_server._plan(data, repo.name))
+                    action, = built['actions']
+                    self.assertEqual(('geo.llms.txt.availability.unverified', 'geo', 'low', 'site', 'manual_external'),
+                                     tuple(action[key] for key in ('rule_id', 'category', 'severity', 'scope', 'safety')))
+                    self.assertTrue(action['manual_action'])
+                    self.assertFalse(action['requires_deploy'])
+                    self.assertEqual([], action['likely_files'])
+                    self.assertFalse(built['groups'])
+                    self.assertEqual(page['score'] if kind == 'scan' else 90, built['source_score'])
+                    self.assertNotIn('secret-token', json.dumps(built))
+                    newer = copy.deepcopy(data)
+                    if kind == 'scan':
+                        newer.update(score=100, findings=[])
+                    else:
+                        newer['overall_score'] = 100
+                        newer['homepage']['findings'] = []
+                        newer['crawl']['recurring'] = []
+                    diff = diff_scan.diff_reports(data, newer)
+                    self.assertEqual('incomparable', diff['comparison']['status'])
+                    self.assertIsNone(diff['score_delta'])
+                    self.assertEqual([], diff['resolved'])
+                    self.assertEqual(original, data)
+        self.assertTrue(all(p.read_bytes() == before for p, before in files.items()))
+
+    def test_unsupported_receipts_do_not_block_unselected_geo_or_invent_missing_legacy_evidence(self):
+        repo = Path(__file__).parent / 'fixtures/planner/plain_html'
+        for receipt in (None, {}, False, 'secret-token'):
+            page = json.loads(report_for(response(), only='technical').to_json())
+            page['findings'] = []
+            page['meta']['llms_txt'] = receipt
+            self.assertIsNone(recorded_llms_problem(page['meta'], for_score=True))
+            self.assertFalse(plan.build_plan(page, str(repo))['actions'])
+            self.assertEqual('comparable', diff_scan.diff_reports(page, page)['comparison']['status'])
+        for meta in (None, [], {}, {'llms_txt': {'version': 1, 'checked_path': '/llms.txt',
+                                                 'basis': 'not_recorded', 'state': 'unverified'}},
+                     {'llms_txt': {'version': 1, 'checked_path': '/llms.txt', 'basis': 'legacy_context',
+                                   'state': 'unverified', 'reported_present': False}}):
+            self.assertIsNone(recorded_llms_problem(meta, for_score=True))
+
+    def test_supported_presence_and_absence_retain_planner_handling(self):
+        repo = Path(__file__).parent / 'fixtures/planner/plain_html'
+        for resp, expected in ((response(), []), (response(status=404), ['geo.no.llms.txt'])):
+            page = json.loads(report_for(resp).to_json())
+            built = plan.build_plan(page, str(repo))
+            self.assertEqual(expected, [a['rule_id'] for a in built['actions']])
+            if expected:
+                self.assertEqual('deploy_verification', built['actions'][0]['safety'])
+                self.assertTrue(built['actions'][0]['likely_files'])
+            self.assertEqual('comparable', diff_scan.diff_reports(page, page)['comparison']['status'])
+
+    def test_requested_geo_and_default_informational_notes_remain_distinct_from_score_gating(self):
+        meta = {'llms_txt': {}, 'scan_scope': {'requested': ['geo', 'technical'], 'completed': ['technical']}}
+        self.assertIsNotNone(recorded_llms_problem(meta, for_score=True))
+        legacy = {'llms_txt': {'version': 1, 'checked_path': '/llms.txt', 'basis': 'legacy_context',
+                               'state': 'unverified', 'reported_present': False}}
+        self.assertEqual(llms_resource.note(legacy), llms_resource.problem(legacy))
+        self.assertEqual(llms_resource.note(legacy), recorded_llms_problem(legacy))
+        self.assertIsNone(recorded_llms_problem(legacy, for_score=True))
+
     def test_text_candidates_support_atx_setext_bom_and_media_types(self):
         for mime in ('text/plain', 'text/markdown; charset=utf-8', 'text/x-markdown', ''):
             for body in ('# Project', '\ufeff\n \t\n# Project', 'Project\n=======\n\nDetails'):

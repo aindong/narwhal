@@ -414,6 +414,47 @@ def main(use_mcp=False):
                 print('Installed sitemap count checks passed: zero summaries withheld repair advice; malformed counts '
                       'required manual verification; independent positive evidence retained its source candidate; '
                       'explicit malformed/inconsistent execution receipts stayed visible.')
+                llms_missing = 'geo.no.llms.txt'
+                llms_unknown = 'geo.llms.txt.availability.unverified'
+                receipt = audit_before['homepage']['meta']['llms_txt']
+                assert receipt['state'] == 'observed', receipt
+                for label, unsupported, homepage_gap in (('null', None, True),
+                                                         ('future', dict(receipt, version=99), True),
+                                                         ('crawl-only', None, False)):
+                    supplied = json.loads(json.dumps(audit_before))
+                    if homepage_gap:
+                        supplied['homepage']['meta']['llms_txt'] = unsupported
+                    supplied['crawl']['llms_txt'] = unsupported
+                    stale = {'category': 'geo', 'severity': 'low', 'scope': 'site',
+                             'rule_id': llms_missing, 'title': 'No root llms.txt observed'}
+                    supplied['homepage']['findings'].append(stale)
+                    supplied['crawl']['recurring'].append(dict(stale, count=2))
+                    name = 'llms-receipt-' + label + '.json'
+                    saved = json.dumps(supplied).encode('utf-8')
+                    (root / name).write_bytes(saved)
+                    if use_mcp:
+                        received = mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root)
+                    else:
+                        run(['plan', name, '--repo', str(site), '--format', 'json', '-o', name + '.plan.json'])
+                        received = read(name + '.plan.json')
+                    selected = {a['rule_id']: a for a in received['actions'] if a['rule_id'] in (llms_missing, llms_unknown)}
+                    assert set(selected) == {llms_unknown}, (label, selected)
+                    note = selected[llms_unknown]
+                    assert note['safety'] == 'manual_external' and note['manual_action'] is True, note
+                    assert note['likely_files'] == [] and note['requires_deploy'] is False, note
+                    assert not any(llms_unknown in group['rule_ids'] for group in received['groups']), received
+                    run(['diff', name, name, '--require-comparable', '--fail-on-regression', '--format', 'json',
+                         '-o', name + '.diff.json'], expected=2)
+                    difference = read(name + '.diff.json')
+                    assert difference['comparison']['status'] == 'incomparable' and difference['score_delta'] is None, difference
+                    assert difference['resolved'] == [], difference
+                    if use_mcp:
+                        assert difference == mcp_tool('diff_reports', {
+                            'old_json': saved.decode('utf-8'), 'new_json': saved.decode('utf-8')}, root)
+                    assert (root / name).read_bytes() == saved
+                    assert source_bytes == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed llms.txt receipt checks passed: null/future and independent crawl evidence withheld stale file-creation advice; '
+                      'manual verification stayed ownerless and identical reports failed comparability.')
                 title_rule = 'technical.missing.title'
                 title_action = next(a for a in audit_plan['actions'] if a['rule_id'] == title_rule)
                 assert [owner['path'] for owner in title_action['likely_files']] == ['pricing/index.html'], title_action
