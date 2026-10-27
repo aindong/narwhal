@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib.report import recorded_scan_scope, recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib.report import recorded_merchant_comparison_problem, MERCHANT_COMPARISON_RULES  # noqa: E402
+from lib.report import recorded_merchant_comparison_basis  # noqa: E402
 from lib.report import recorded_response_partial, recorded_execution_problem  # noqa: E402
 from lib.report import recorded_image_weight_problem, _literal_preview_code  # noqa: E402
 from lib import canonical  # noqa: E402
@@ -103,6 +104,13 @@ def _comparison(o: dict, n: dict) -> dict:
     scopes = [recorded_scan_scope(item["meta"]) for item in (o, n)]
     settings = [_recorded_settings(item["meta"], item["rendered"]) for item in (o, n)]
     reasons = []
+    merchant_bases = [recorded_merchant_comparison_basis(item['meta']) for item in (o, n)]
+    if any(basis is not None for basis in merchant_bases):
+        if any(basis is None for basis in merchant_bases) or merchant_bases[0]['visible_fields'] != merchant_bases[1]['visible_fields']:
+            reasons.append('Recorded merchant observations differ or are unrecorded; changed field coverage is not fix evidence.')
+        elif (merchant_bases[0]['price_method'] is not None
+              and merchant_bases[0]['price_method'] != merchant_bases[1]['price_method']):
+            reasons.append('Recorded merchant price comparison method changed or is no longer recorded; loss or replacement of a price check is not fix evidence.')
     if o["kind"] != n["kind"]:
         reasons.append("Report kinds differ: page score and audit overall score are not comparable.")
     samples = [_crawl_sample(item["crawl"]) for item in (o, n)]
@@ -145,6 +153,9 @@ def _comparison(o: dict, n: dict) -> dict:
             reasons.append(label + " report did not complete all requested auditor groups.")
         crawl = item["crawl"]
         meta_base = item['meta'] if isinstance(item['meta'], dict) else {}
+        if ((scope is None or 'schema' in scope[0]) and 'merchant_comparison_basis' in meta_base
+                and recorded_merchant_comparison_basis(meta_base) is None):
+            reasons.append(label + ' report has unsupported merchant comparison coverage evidence.')
         if 'scan_scope' in meta_base and scope is None:
             reasons.append(label + ' report has invalid recorded auditor scope; fix claims are unverified.')
         if links.unassessed_base(meta_base):
@@ -154,6 +165,10 @@ def _comparison(o: dict, n: dict) -> dict:
         if recorded_response_partial(meta_base) or (type(item.get('status')) is int and item['status'] == 206):
             reasons.append(label + ' report has partial/ranged HTML coverage; full-page comparisons are unverified.')
         pages = crawl.get("pages") if isinstance(crawl, dict) else None
+        if isinstance(pages, list) and any(isinstance(page, dict) and 'merchant_comparison_basis' in page
+                and (recorded_scan_scope(page) is None or 'schema' in recorded_scan_scope(page)[0])
+                and recorded_merchant_comparison_basis(page) is None for page in pages):
+            reasons.append(label + ' audit has unsupported merchant comparison coverage evidence.')
         recurring = crawl.get('recurring') if isinstance(crawl, dict) else None
         if ((isinstance(pages, list) and any(recorded_merchant_comparison_problem(page, for_score=True)
                                            for page in pages))
@@ -244,6 +259,14 @@ def _comparison(o: dict, n: dict) -> dict:
                 if len(values) > 1:
                     reasons.append(f"{label} crawl contains contradictory {key} settings for {url}; its overall score is not comparable.")
     for url in sorted(crawls[0].keys() & crawls[1].keys()):
+        old_fields = crawls[0][url].get('merchant_visible_fields')
+        new_fields = crawls[1][url].get('merchant_visible_fields')
+        if old_fields != new_fields:
+            reasons.append('Recorded merchant observations differ or are unrecorded for ' + url + '; changed field coverage is not fix evidence.')
+        old_methods = crawls[0][url]['merchant_price_method']
+        new_methods = crawls[1][url]['merchant_price_method']
+        if any(method is not None for method in old_methods) and old_methods != new_methods:
+            reasons.append('Recorded merchant price comparison method changed or is no longer recorded for ' + url + '; a lost or replaced check is not fix evidence.')
         for key in ("render_requested", "rendered", "image_checks", "content_length_reviewed", 'readability_reviewed', 'schema_extraction_reviewed', "rule_config", 'auditors_requested', 'auditors_completed'):
             values = [item[url].get(key, set()) for item in crawls]
             if key in ('auditors_requested', 'auditors_completed') and bool(values[0]) != bool(values[1]):
@@ -260,7 +283,7 @@ def _comparison(o: dict, n: dict) -> dict:
         "old_scope": {"requested": scopes[0][0], "completed": scopes[0][1]} if scopes[0] else None,
         "new_scope": {"requested": scopes[1][0], "completed": scopes[1][1]} if scopes[1] else None,
         "old_settings": settings[0], "new_settings": settings[1],
-        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/Product/Offer comparison/HTML canonical/declared anchor-base/HTML hreflang gaps, complete recorded audit crawl samples (exact URL multiplicities), page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
+        "basis": "Recorded auditor execution, known rendering/image-check/content-length threshold/readability formula settings and rule-configuration fingerprints, response truncation/range evidence, known JS/sitemap/root-llms/structured-data extraction/Product/Offer comparison and observation/price-method coverage/HTML canonical/declared anchor-base/HTML hreflang gaps, complete recorded audit crawl samples (exact URL multiplicities), page anchor-resolution and crawl URL-identity/link-resolution/hreflang policy and explicit crawl failures only; not proof of "
                  "identical response destinations, other configuration, tool rules or unrecorded site-wide samples. Recorded per-page auditor scopes must complete and match; missing legacy page scopes remain unverified. Missing settings are not inferred or certified. Incomplete/malformed crawl samples are not inferred or certified.",
     }
 
@@ -312,6 +335,11 @@ def _crawl_settings(crawl):
         if scope is not None:
             for key, value in zip(('auditors_requested', 'auditors_completed'), scope):
                 result.setdefault(page['url'], {}).setdefault(key, set()).add(tuple(sorted(value)))
+        merchant_basis = recorded_merchant_comparison_basis(page)
+        result[page['url']].setdefault('merchant_visible_fields', set()).add(
+            tuple(merchant_basis['visible_fields']) if merchant_basis is not None else None)
+        result[page['url']].setdefault('merchant_price_method', set()).add(
+            merchant_basis['price_method'] if merchant_basis is not None else None)
     return result
 
 

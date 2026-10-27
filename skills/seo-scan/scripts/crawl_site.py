@@ -36,6 +36,7 @@ from lib.report import SEVERITY, below_threshold  # noqa: E402
 from lib.report import recorded_js_comparison_problem, recorded_sitemap_discovery_problem  # noqa: E402
 from lib.report import recorded_llms_problem, recorded_schema_extraction_problem  # noqa: E402
 from lib.report import recorded_merchant_comparison_problem  # noqa: E402
+from lib.report import recorded_merchant_comparison_basis  # noqa: E402
 from lib.report import recorded_response_partial  # noqa: E402
 from lib import llms_resource, finding_urls  # noqa: E402
 from lib import canonical  # noqa: E402
@@ -428,6 +429,9 @@ def crawl(base: str, *, max_pages=15, render=False, allow_private=False,
                       "product_confidence": ecommerce.get("confidence", 0.0)})
         if 'scan_scope' in rep.meta:
             pages[-1]['scan_scope'] = rep.meta['scan_scope']
+        merchant_basis = recorded_merchant_comparison_basis(rep.meta)
+        if merchant_basis is not None:
+            pages[-1]['merchant_comparison_basis'] = merchant_basis
         if rep.meta.get("link_extraction"):
             pages[-1]["link_extraction"] = dict(rep.meta["link_extraction"])
         if isinstance(rep.meta.get('anchor_base'), dict):

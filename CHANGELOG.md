@@ -12,6 +12,11 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Diffs retain merchant observation coverage and distinguish exact price amounts
+  from AggregateOffer range compatibility, so removing observed fields, dropping a
+  known price check or switching methods cannot count as a resolved mismatch or score gain. Native crawl
+  receipts preserve the same evidence; genuine price and missing-price repairs remain comparable.
+  Duplicate crawl rows retain missing coverage alongside known receipts.
 - Diff/planner FIFO tests separate bounded process startup from the unchanged
   five-second I/O deadline, with child cleanup and controlled slow-startup and
   blocking-writer checks. Tool runtime behavior is unchanged.

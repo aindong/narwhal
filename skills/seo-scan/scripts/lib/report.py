@@ -238,6 +238,36 @@ def recorded_merchant_comparison_problem(meta, *, for_score=False):
     return None
 
 
+def recorded_merchant_comparison_basis(meta):
+    """Read observed fields and known price methods, never infer legacy coverage."""
+    scope = recorded_scan_scope(meta) if isinstance(meta, dict) else None
+    if not isinstance(meta, dict) or scope is not None and 'schema' not in scope[0]:
+        return None
+    fields = frozenset(('price', 'currency', 'availability', 'sku', 'brand', 'name'))
+    if 'merchant_comparison_basis' in meta:
+        receipt = meta['merchant_comparison_basis']
+        if not isinstance(receipt, dict) or set(receipt) != {'visible_fields', 'price_method'}:
+            return None
+        observed = receipt['visible_fields']
+        method = receipt['price_method']
+        if (not isinstance(observed, list)
+                or any(not isinstance(field, str) or field not in fields for field in observed)
+                or len(set(observed)) != len(observed)
+                or method not in (None, 'exact_decimal', 'inclusive_range')
+                or method is not None and 'price' not in observed):
+            return None
+        return {'visible_fields': sorted(observed), 'price_method': method}
+    data = meta.get('ecommerce')
+    if (not isinstance(data, dict) or type(data.get('is_product')) is not bool
+            or not isinstance(data.get('visible_facts'), dict)):
+        return None
+    observed = sorted(fields.intersection(data['visible_facts'])) if data['is_product'] else []
+    methods = [method for key, method in (('point_price_comparison', 'exact_decimal'),
+                                          ('aggregate_price_comparison', 'inclusive_range'))
+               if 'price' in observed and isinstance(data.get(key), dict) and data[key].get('method') == method]
+    return {'visible_fields': observed, 'price_method': methods[0] if len(methods) == 1 else None}
+
+
 def _crawler_policy_notes(meta):
     """Read explicit informational notes without reinterpreting legacy metadata."""
     receipt = meta.get("ai_crawler_access") if isinstance(meta, dict) else None
