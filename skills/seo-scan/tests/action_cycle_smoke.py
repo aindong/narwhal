@@ -592,6 +592,55 @@ def main(use_mcp=False):
                     assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
                 print('Installed schema receipt checks passed: unsupported containers/review flags withheld absence advice; '
                       'verification stayed ownerless and identical reports failed comparability.')
+                bounded_url = url + 'bounded/'
+                bounded = site / 'bounded/index.html'
+                bounded.parent.mkdir()
+                bounded_body = ('<!doctype html><html><head><title>Bounded schema fixture</title></head><body>'
+                                '<h1>Bounded schema fixture</h1>' + ' ' * 65000
+                                + '<script type="application/ld+json">'
+                                + json.dumps({'@context': 'https://schema.org', '@type': 'WebSite',
+                                              'name': 'Bounded schema fixture', 'url': bounded_url})
+                                + '</script></body></html>')
+                bounded.write_text(bounded_body, encoding='utf-8')
+                schema_sources['bounded/index.html'] = bounded_body.encode('utf-8')
+                bounded_options = list(schema_options)
+                bounded_options[1] = bounded_url
+                bounded_options[bounded_options.index('--max-bytes') + 1] = '64000'
+                run(bounded_options + ['-o', 'schema-bounded.json'])
+                bounded_bytes = (root / 'schema-bounded.json').read_bytes()
+                limited = read('schema-bounded.json')
+                assert limited['meta']['response_truncated'] is True and limited['status'] == 200, limited
+                extraction = limited['meta']['structured_data']
+                assert extraction['nodes_count'] == 0 and extraction['extraction_coverage']['status'] == 'no_known_problem', extraction
+                assert schema_rule not in {f['rule_id'] for f in limited['findings']}, limited
+                if use_mcp:
+                    limited_plan = mcp_tool('plan_remediation', {'report': limited, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'schema-bounded.json', '--repo', str(site), '--format', 'json', '-o', 'schema-bounded-plan.json'])
+                    limited_plan = read('schema-bounded-plan.json')
+                note = next(a for a in limited_plan['actions'] if a['rule_id'] == 'schema.extraction.unverified')
+                assert note['safety'] == 'manual_external' and note['manual_action'] is True, note
+                assert note['likely_files'] == [] and note['requires_deploy'] is False, note
+                assert schema_rule not in {a['rule_id'] for a in limited_plan['actions']}, limited_plan
+                bounded_options[bounded_options.index('--max-bytes') + 1] = '6000000'
+                run(bounded_options + ['-o', 'schema-bounded-full.json'])
+                whole = read('schema-bounded-full.json')
+                whole_bytes = (root / 'schema-bounded-full.json').read_bytes()
+                assert whole['meta']['structured_data']['types_by_format'] == {'jsonld': ['WebSite']}, whole
+                assert whole['meta']['coverage']['response_truncated'] is False, whole
+                run(['diff', 'schema-bounded.json', 'schema-bounded-full.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'schema-bounded-diff.json'], expected=2)
+                bounded_diff = read('schema-bounded-diff.json')
+                assert bounded_diff['comparison']['status'] == 'incomparable' and bounded_diff['score_delta'] is None, bounded_diff
+                assert bounded_diff['resolved'] == [], bounded_diff
+                if use_mcp:
+                    assert bounded_diff == mcp_tool('diff_reports', {
+                        'old_json': bounded_bytes.decode('utf-8'), 'new_json': whole_bytes.decode('utf-8')}, root)
+                assert (root / 'schema-bounded.json').read_bytes() == bounded_bytes
+                assert (root / 'schema-bounded-full.json').read_bytes() == whole_bytes
+                assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed bounded schema checks passed: real HTML byte cap withheld missing-markup advice; '
+                      'raising only the budget observed existing WebSite markup without claiming a source fix.')
                 try:
                     target.write_bytes(schema_sources['index.html'] + b'<script type="application/ld+json">{bad</script>')
                     run(schema_options + ['-o', 'schema-uncertain.json'])

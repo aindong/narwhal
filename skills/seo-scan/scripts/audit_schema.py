@@ -9,8 +9,10 @@ from __future__ import annotations
 
 try:
     from lib import ecommerce, htmlx, microdata, structured_data, schema_appearance, schema_coverage
+    from lib.report import recorded_schema_extraction_problem
 except ImportError:  # when imported as a package
     from .lib import ecommerce, htmlx, microdata, structured_data, schema_appearance, schema_coverage  # type: ignore
+    from .lib.report import recorded_schema_extraction_problem
 
 CAT = "schema"
 
@@ -122,7 +124,8 @@ def audit(doc, resp, report, ctx=None) -> None:
     if not blobs and not any(structured_data.types(r["node"]) for r in records):
         # Hub/index pages have no single entity to mark up — absence there is a
         # note, not a real gap (articles/products/homepages keep medium).
-        if schema_coverage.state(schema_coverage.meta_receipt(report.meta)) == 'no_known_problem':
+        if (schema_coverage.state(schema_coverage.meta_receipt(report.meta)) == 'no_known_problem'
+                and not recorded_schema_extraction_problem(report.meta)):
             hub = htmlx.is_hub_page(doc)
             report.add(CAT, "low" if hub else "medium",
                        "No structured data",
@@ -249,7 +252,8 @@ def _validate_node(node, found_types, report):
 def _cross_checks(doc, found_types, report):
     # An unobserved type may be in the portion the extractor could not inspect.
     # Node-level validation above remains active for positively observed objects.
-    if schema_coverage.state(schema_coverage.meta_receipt(report.meta)) != 'no_known_problem':
+    if (schema_coverage.state(schema_coverage.meta_receipt(report.meta)) != 'no_known_problem'
+            or recorded_schema_extraction_problem(report.meta)):
         return
     has_article = any(t in found_types for t in ("Article", "NewsArticle", "BlogPosting"))
     # Shared page-type heuristic (og:type / published_time / single <article>) —

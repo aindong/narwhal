@@ -1,13 +1,16 @@
 # Opt-in structured-data receipt boundary; pass explicit function targets.
 [tool.mutmut]
 source_paths = ["src/"]
-only_mutate = ["src/lib/report.py"]
+only_mutate = ["src/lib/report.py", "src/audit_schema.py", "src/lib/ecommerce.py"]
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_schema_receipt_validation.py",
   "skills/seo-scan/tests/test_schema_coverage.py",
   "skills/seo-scan/tests/test_page_schema_review.py",
   "skills/seo-scan/tests/test_scope_selection_consistency.py",
+  "skills/seo-scan/tests/test_schema_source_coverage.py",
+  "skills/seo-scan/tests/test_server_partial_response.py",
+  "skills/seo-scan/tests/test_ecommerce.py",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["skills/seo-scan/tests"]

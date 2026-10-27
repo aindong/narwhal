@@ -15,6 +15,7 @@ from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
 
 from . import htmlx, merchant_source, microdata, structured_data, schema_coverage
+from .report import recorded_schema_extraction_problem
 
 CAT = "schema"
 IDENTIFIERS = ("sku", "gtin", "gtin8", "gtin12", "gtin13", "gtin14", "mpn")
@@ -425,7 +426,8 @@ def audit(doc, report, *, today=None):
         return meta
     products = detected["product_nodes"]
     if not products:
-        if schema_coverage.state(schema_coverage.observe(doc, errors)) == 'no_known_problem' and not meta['source_warnings']:
+        if (schema_coverage.state(schema_coverage.observe(doc, errors)) == 'no_known_problem'
+                and not meta['source_warnings'] and not recorded_schema_extraction_problem(report.meta)):
             report.add(CAT, "high", "Product page has no Product structured data",
                        "Product-page signals were found, but no Product type was observed in the supported subset; "
                        "this is not exhaustive absence or Google merchant eligibility.",
