@@ -153,6 +153,18 @@ def planner_witness_cycle(run, read, root, site, url, server, use_mcp):
             supplied = read(name)
             saved = (root / name).read_bytes()
             assert supplied['homepage']['status'] == 200 and supplied['crawl']['pages_scanned'] == 1
+            expected_scope = {
+                'generic': (['nofollow', 'noindex'], []),
+                'named': ([], [{'agent': 'googlebot', 'directives': ['nofollow', 'noindex']}]),
+                'absent': ([], []),
+            }[label]
+            for metadata in (supplied['homepage']['meta'], supplied['crawl']['pages'][0]):
+                if field is None:
+                    assert 'http_robots' not in metadata, metadata
+                else:
+                    receipt = metadata['http_robots']
+                    assert receipt['field_count'] == 1, receipt
+                    assert (receipt['generic'], receipt['scoped']) == expected_scope, receipt
             original = {f['rule_id']: f.get('evidence') or f.get('detail') or ''
                         for f in supplied['homepage']['findings'] if f['severity'] != 'good'}
             assert original[h1_rule], original
