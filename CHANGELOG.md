@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Unsupported structured-data containers and explicit review flags require manual
+  verification, withholding stale absence advice and score/resolution claims while
+  preserving independent property repairs, legacy handling and unselected schema checks.
 - Installed llms.txt action-cycle proof covers a measured root 404, reviewed
   deployment-required plan, generated and curated entry points, matching local
   GEO verification and reverse regression; production checks remain pending deploy.
