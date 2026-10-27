@@ -375,6 +375,38 @@ def main(use_mcp=False):
                 else:
                     run(['plan', 'audit-before.json', '--repo', str(site), '--format', 'json', '-o', 'audit-plan.json'])
                     audit_plan = read('audit-plan.json')
+                sitemap_source = 'technical.sitemap.validation.issues'
+                sitemap_unknown = 'technical.sitemap.validation.unverified'
+                for label, problems, lastmod, expected in (
+                        ('zero', {'not-absolute': 0}, 0, set()),
+                        ('unknown', {}, '0', {sitemap_unknown}),
+                        ('mixed', {'not-absolute': 1}, '0', {sitemap_source, sitemap_unknown})):
+                    supplied = json.loads(json.dumps(audit_before))
+                    supplied['sitemap'].update(problems=problems, invalid_lastmod=lastmod)
+                    name = 'sitemap-count-' + label + '.json'
+                    supplied_bytes = json.dumps(supplied).encode('utf-8')
+                    (root / name).write_bytes(supplied_bytes)
+                    if use_mcp:
+                        received = mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root)
+                    else:
+                        run(['plan', name, '--repo', str(site), '--format', 'json', '-o', name + '.plan.json'])
+                        received = read(name + '.plan.json')
+                    selected = {a['rule_id']: a for a in received['actions']
+                                if a['rule_id'] in (sitemap_source, sitemap_unknown)}
+                    assert set(selected) == expected, (label, selected)
+                    if sitemap_unknown in selected:
+                        note = selected[sitemap_unknown]
+                        assert note['manual_action'] is True and note['safety'] == 'manual_external'
+                        assert note['likely_files'] == [] and note['requires_deploy'] is False
+                        assert not any(sitemap_unknown in group['rule_ids'] for group in received['groups'])
+                    if sitemap_source in selected:
+                        action = selected[sitemap_source]
+                        assert action['safety'] == 'deploy_verification' and action['requires_deploy'] is True
+                        assert any(o['path'] == 'sitemap.xml' and o['exists'] is True for o in action['likely_files'])
+                    assert (root / name).read_bytes() == supplied_bytes
+                    assert source_bytes == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed sitemap count checks passed: zero summaries withheld repair advice; malformed counts '
+                      'required manual verification; independent positive evidence retained its source candidate.')
                 title_rule = 'technical.missing.title'
                 title_action = next(a for a in audit_plan['actions'] if a['rule_id'] == title_rule)
                 assert [owner['path'] for owner in title_action['likely_files']] == ['pricing/index.html'], title_action

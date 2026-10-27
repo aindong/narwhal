@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner sitemap advice distinguishes positive source-problem counts from zero
+  summaries and malformed counters, retaining confirmed evidence alongside verification gaps.
 - Planner mutation coverage exercises successful-observation exclusion and repeated
   evidence receipts; installed schema verification now replans to no remaining work.
 - Installed schema action-cycle proof covers reviewed source selection, generated
