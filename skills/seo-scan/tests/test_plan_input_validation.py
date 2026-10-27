@@ -25,7 +25,8 @@ def baseline():
 class TestPlanInputValidation(unittest.TestCase):
     def test_invalid_finding_fields_raise_named_errors_before_inventory(self):
         for field, value in (
-            ('severity', []), ('severity', 'urgent'), ('title', None), ('title', '\ud800'), ('category', {}),
+            ('severity', []), ('severity', 'urgent'), ('severity', None), ('severity', ''),
+            ('title', None), ('title', '\ud800'), ('category', {}),
             ('rule_id', ['technical.no.responsive.viewport.tag']), ('rule_id', '  '), ('rule_id', '\ud800'),
             ('confidence', True), ('confidence', float('nan')), ('confidence', 1.1),
             ('scope', 'global'), ('detail', {}), ('evidence', []), ('recommendation', None),

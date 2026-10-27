@@ -103,6 +103,60 @@ def mcp_recovery(report, root):
     return planned
 
 
+def planner_legacy_priority_plans(run, read, root, site, page, audit, use_mcp):
+    """Native controls and altered saved copies retain the legacy low default."""
+    sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    reports = {p: p.read_bytes() for p in root.glob('*.json')}
+    native = next(f for f in page['findings'] if f['rule_id'] == RULE)
+    observed = native['evidence'] or native['detail']
+    assert isinstance(observed, str) and observed
+    legacy = dict(native, title='A legacy viewport observation', evidence='A: ' + observed,
+                  confidence=0.4, occurrences=8)
+    legacy.pop('severity')
+    explicit = dict(legacy, severity='low', title='Z explicit viewport observation',
+                    evidence='Z: ' + observed, confidence=0.9, occurrences=3)
+    for kind, base in (('scan', page), ('audit', audit)):
+        for label in ('native', 'repeated', 'capped'):
+            supplied = json.loads(json.dumps(base))
+            leaf = supplied if kind == 'scan' else supplied['homepage']
+            if label != 'native':
+                leaf['findings'] = ([dict(legacy), dict(explicit)] if label == 'repeated' else
+                    [{'category': 'content', 'severity': 'low', 'title': f'Imported issue {n}',
+                      'rule_id': f'zzzz.low.{n:04d}'} for n in range(1000)] + [dict(legacy)])
+                if kind == 'audit':
+                    supplied['crawl']['recurring'] = []
+            name = 'legacy-priority-' + kind + '-' + label + '.json'
+            saved = json.dumps(supplied).encode('utf-8')
+            (root / name).write_bytes(saved)
+            if use_mcp:
+                planned = mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root)
+            else:
+                run(['plan', name, '--repo', str(site), '--format', 'json', '-o', name + '.plan.json'])
+                planned = read(name + '.plan.json')
+            action = next((a for a in planned['actions'] if a['rule_id'] == RULE), None)
+            assert action is not None, (kind, label, 'viewport action omitted')
+            assert planned['provenance']['report_kind'] == kind
+            assert planned['source_score'] == base['score' if kind == 'scan' else 'overall_score']
+            if label == 'native':
+                assert action['severity'] == native['severity'], (kind, label, action['severity'])
+            else:
+                assert (action['severity'], action['title'], action['evidence'], action['confidence']) == (
+                    'low', legacy['title'], legacy['evidence'], 0.4), (kind, label, action['title'])
+                assert action['occurrences'] == 8
+                if label == 'repeated':
+                    assert action['observation_selection']['normalized_observations'] == 2
+                else:
+                    assert len(planned['actions']) == 1000
+                    assert planned['coverage']['actionable_findings'] >= 1001
+                    assert planned['coverage']['action_generation_capped'] is True
+            assert json.dumps(supplied).encode('utf-8') == saved
+            assert (root / name).read_bytes() == saved
+    assert all(p.read_bytes() == body for p, body in reports.items())
+    assert sources == {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    print('Installed legacy priority checks passed: native scan/audit controls, missing-low observation '
+          'selection and real 1000-action truncation; source/report bytes unchanged.')
+
+
 def planner_score_plans(run, read, root, site, page, audit, use_mcp):
     """Keep native controls and distinguish missing/imported scores by report kind."""
     sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
@@ -1027,6 +1081,7 @@ def main(use_mcp=False):
                 run(audit_options + ['-o', 'audit-before.json'])
                 audit_before = read('audit-before.json')
                 planner_score_plans(run, read, root, site, read('before.json'), audit_before, use_mcp)
+                planner_legacy_priority_plans(run, read, root, site, read('before.json'), audit_before, use_mcp)
                 comparison_explanations(run, read, root, read('before.json'), audit_before, use_mcp)
                 literal_comparison_reasons(run, read, root, audit_before, use_mcp)
                 planner_witness_cycle(run, read, root, site, url, server, use_mcp)
