@@ -80,6 +80,8 @@ class TestManifestEvidence(unittest.TestCase):
     def test_opened_manifest_reads_are_bounded_despite_smaller_preflight_size(self):
         case = self
         class Stream(io.BytesIO):
+            def fileno(self):
+                return descriptor.fileno()
             def read(self, size=-1):
                 case.assertGreaterEqual(size, 0)
                 case.assertLessEqual(size, 65)
@@ -87,7 +89,8 @@ class TestManifestEvidence(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / 'package.json').write_bytes(b'{}')
-            with mock.patch.object(plan, 'MAX_FILE_BYTES', 64), \
+            with (root / 'package.json').open('rb') as descriptor, \
+                    mock.patch.object(plan, 'MAX_FILE_BYTES', 64), \
                     mock.patch.object(Path, 'open', return_value=Stream(b'{}' + b' ' * 63)):
                 self.assertEqual('', plan._read_small(root, 'package.json'))
 
@@ -101,7 +104,8 @@ class TestManifestEvidence(unittest.TestCase):
                 manifest = prefix + ' ' * (size - len(prefix))
                 def stale_stat(path, *args, **kwargs):
                     value = original_stat(path, *args, **kwargs)
-                    return SimpleNamespace(st_mode=value.st_mode, st_size=0) if path == package else value
+                    return SimpleNamespace(st_mode=value.st_mode, st_size=0,
+                                           st_dev=value.st_dev, st_ino=value.st_ino) if path == package else value
                 with mock.patch.object(Path, 'stat', stale_stat):
                     result = self.build(root, manifest)
                 self.assertEqual(framework, result['framework']['name'])

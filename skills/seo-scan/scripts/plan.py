@@ -627,9 +627,13 @@ def inventory(root: Path, max_files=MAX_REPO_FILES) -> dict:
 def _read_small(root: Path, rel: str) -> str:
     path = root / rel
     try:
-        if path.stat().st_size > MAX_FILE_BYTES:
+        admitted = path.lstat()
+        if admitted.st_size > MAX_FILE_BYTES or not _safe_source_candidate(root, rel):
             return ""
         with path.open('rb') as source:
+            # A replacement must not supply bytes after path admission.
+            if not os.path.samestat(admitted, os.fstat(source.fileno())):
+                return ""
             raw = source.read(MAX_FILE_BYTES + 1)
         if len(raw) > MAX_FILE_BYTES:
             return ""
