@@ -44,10 +44,10 @@ class TestManifestIdentity(unittest.TestCase):
                 self.assertTrue(package.is_symlink())
                 self.assertEqual(raw, outside.read_text(encoding='utf-8'))
 
-    def test_changed_opened_file_is_closed_without_reading_its_bytes(self):
+    def test_opened_identity_controls_reads_without_freezing_in_place_edits(self):
         original_open = Path.open
-        for symlink in (False, True):
-            with self.subTest(symlink=symlink), tempfile.TemporaryDirectory() as folder:
+        for change in ('replacement', 'symlink', 'in_place'):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as folder:
                 base = Path(folder).resolve()
                 root = base / 'repo'
                 root.mkdir()
@@ -75,8 +75,9 @@ class TestManifestIdentity(unittest.TestCase):
 
                 def replace_before_open(path, *args, **kwargs):
                     self.assertEqual(package, path)
-                    package.rename(root / 'saved-package.json')
-                    if symlink:
+                    if change != 'in_place':
+                        package.rename(root / 'saved-package.json')
+                    if change == 'symlink':
                         link_or_skip(self, package, replacement)
                     else:
                         with original_open(package, 'wb') as destination:
@@ -88,14 +89,20 @@ class TestManifestIdentity(unittest.TestCase):
                 warnings = []
                 with mock.patch.object(Path, 'open', autospec=True, side_effect=replace_before_open):
                     framework = plan.detect_framework(root, files, warnings)
-                self.assertEqual('astro', framework['name'])
-                self.assertEqual(['astro.config.* present'], framework['evidence'])
-                self.assertTrue(any('package.json' in warning for warning in warnings))
-                self.assertEqual([], reads)
+                self.assertEqual('nextjs' if change == 'in_place' else 'astro', framework['name'])
+                if change == 'in_place':
+                    self.assertIn('package.json depends on next', framework['evidence'])
+                    self.assertEqual([], warnings)
+                    self.assertTrue(reads)
+                    self.assertTrue(all(0 < size <= plan.MAX_FILE_BYTES + 1 for size in reads))
+                else:
+                    self.assertEqual(['astro.config.* present'], framework['evidence'])
+                    self.assertTrue(any('package.json' in warning for warning in warnings))
+                    self.assertEqual([], reads)
+                    self.assertEqual('{}', (root / 'saved-package.json').read_text(encoding='utf-8'))
                 self.assertEqual(1, len(handles))
                 self.assertTrue(handles[0].closed)
                 self.assertEqual(raw, replacement.read_text(encoding='utf-8'))
-                self.assertEqual('{}', (root / 'saved-package.json').read_text(encoding='utf-8'))
 
     def test_build_keeps_native_html_owner_after_inventory_manifest_swap(self):
         original_inventory = plan.inventory
