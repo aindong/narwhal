@@ -124,9 +124,11 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
     target = site / 'merchant/index.html'
     target.parent.mkdir()
     snapshots = {}
+    merchant_sources = {}
     options = ['scan', destination, '--allow-private', '--only', 'schema', '--no-image-checks',
                '--max-bytes', '6000000', '--no-config', '--format', 'json']
     for label, prices in (('before', ['129.00']), ('ambiguous', ['129.00', '139.00']),
+                          ('unobserved', ['129.00']), ('range', ['129.00']),
                           ('corrected', ['149.00', '149.00'])):
         product = {'@context': 'https://schema.org', '@type': 'Product', 'name': 'Trail Shoe',
                    'url': destination, 'image': url + 'shoe.jpg', 'description': 'A stable trail shoe.',
@@ -136,6 +138,9 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
                                'itemCondition': 'https://schema.org/NewCondition',
                                'seller': {'@type': 'Organization', 'name': 'Seller ' + str(index)}}
                               for index, price in enumerate(prices)]}
+        if label == 'range':
+            product['offers'][0].update({'@type': 'AggregateOffer', 'lowPrice': '129.00',
+                                         'highPrice': '159.00', 'offerCount': 2})
         source = ('<!doctype html><html><head><title>Trail Shoe</title>'
                   '<meta property="og:type" content="product">'
                   '<meta property="product:price:amount" content="149.00">'
@@ -144,6 +149,9 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
                   '<meta property="product:retailer_item_id" content="TS-42">'
                   '<script type="application/ld+json">' + json.dumps(product)
                   + '</script></head><body><h1>Trail Shoe</h1><button>Add to cart</button></body></html>')
+        if label == 'unobserved':
+            source = source.replace('<meta property="product:price:amount" content="149.00">', '')
+        merchant_sources[label] = source
         target.write_text(source, encoding='utf-8')
         name = 'merchant-' + label + '.json'
         run(options + ['-o', name])
@@ -158,6 +166,31 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
     assert mismatch in {f['rule_id'] for f in snapshots['before']['findings']}
     assert mismatch not in {f['rule_id'] for f in snapshots['ambiguous']['findings']}
     assert snapshots['ambiguous']['meta']['ecommerce']['offer_comparison_status']['price'] == 'skipped_ambiguous'
+    assert 'price' not in snapshots['unobserved']['meta']['ecommerce']['visible_facts']
+    assert snapshots['range']['meta']['ecommerce']['aggregate_price_comparison']['within_range'] is True
+    for label in ('unobserved', 'range'):
+        assert mismatch not in {f['rule_id'] for f in snapshots[label]['findings']}
+        assert snapshots[label]['score'] > snapshots['before']['score']
+        name = 'merchant-' + label + '.json'
+        run(['diff', 'merchant-before.json', name, '--require-comparable', '--fail-on-regression',
+             '--format', 'json', '-o', name + '.diff.json'], expected=2)
+        difference = read(name + '.diff.json')
+        assert difference['comparison']['status'] == 'incomparable' and difference['score_delta'] is None, difference
+        assert difference['resolved'] == [], difference
+        if use_mcp:
+            assert difference == mcp_tool('diff_reports', {
+                'old_json': json.dumps(snapshots['before']), 'new_json': json.dumps(snapshots[label])}, root)
+    try:
+        for label in ('before', 'unobserved'):
+            target.write_text(merchant_sources[label], encoding='utf-8')
+            run(['crawl', destination, '--allow-private', '--max-pages', '1', '--no-config',
+                 '--format', 'json', '-o', 'merchant-crawl-' + label + '.json'])
+            rows = read('merchant-crawl-' + label + '.json')['pages']
+            assert len(rows) == 1 and rows[0]['url'] == destination, rows
+            basis = rows[0]['merchant_comparison_basis']
+            assert ('price' in basis['visible_fields']) == (label == 'before'), basis
+    finally:
+        target.write_text(merchant_sources['corrected'], encoding='utf-8')
     for label, supplied, rule in (
             ('ambiguous', snapshots['ambiguous'], ambiguity),
             ('ignored', dict(snapshots['ambiguous'], findings=[]), 'schema.ecommerce.comparison.unverified')):
@@ -218,6 +251,8 @@ def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
           'or score gain; plans require ownerless manual verification; actual consensus price correction compares '
           'and reverse regression fails. Malformed crawl aggregates remain unverified. '
           'Prior source/report bytes are preserved; no production or ranking proof.')
+    print('Installed merchant basis checks passed: removing observed price or changing exact amount to range '
+          'compatibility withholds score/resolution claims; native crawl receipts retain observed field coverage.')
 
 
 def main(use_mcp=False):

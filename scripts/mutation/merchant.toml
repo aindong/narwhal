@@ -5,6 +5,7 @@ only_mutate = ["src/lib/report.py", "src/crawl_site.py", "src/audit.py", "src/di
 also_copy = ["skills/seo-scan/tests/"]
 pytest_add_cli_args_test_selection = [
   "skills/seo-scan/tests/test_merchant_comparison_coverage.py",
+  "skills/seo-scan/tests/test_merchant_comparison_basis.py",
   "skills/seo-scan/tests/test_merchant_identity.py",
   "skills/seo-scan/tests/test_offer_comparisons.py",
   "skills/seo-scan/tests/test_scan_scope.py",

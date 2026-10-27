@@ -321,6 +321,14 @@ killed/total counts and survivors; do not count incomplete runs as passes.
 The installed action-cycle smoke also requires ambiguous or ignored-warning
 reports to yield manual verification and strict incomparable diffs, while a real
 consensus price correction resolves the mismatch and its reverse fails regression.
+For merchant observation/price-method handoffs, use the same profile with
+`lib.report.x_recorded_merchant_comparison_basis__mutmut_*`,
+`diff_scan.x__comparison__mutmut_*`, `diff_scan.x__crawl_settings__mutmut_*` and
+`crawl_site.x_crawl__mutmut_*`. Coverage includes removed observations,
+exact-vs-range changes, native crawl receipts, unsupported saved receipts and
+positive exact/range/missing-price repairs. Known current crawl evidence paired
+with unrecorded legacy evidence cannot certify unchanged observation coverage;
+two legacy reports retain their existing handling without inferring that coverage.
 
 The optional [output profile](scripts/mutation/output.toml) exercises snapshot
 preservation and nonblocking regular-file output through diff/planner tests:
