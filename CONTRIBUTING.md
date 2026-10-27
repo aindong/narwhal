@@ -44,6 +44,9 @@ Malformed scope, HTTP-status and response-completeness fixtures must withhold au
 while keeping planning read-only.
 Unsupported recorded target/page URL labels also withhold structural candidates;
 this offline syntax policy does not establish reachability or source ownership.
+Installed CLI/MCP smoke cases cover empty/file/bad-port labels, a malformed final
+label and failed page evidence with a claimed site scope. They retain source
+owners and report bytes; the native empty-string final-URL fallback stays eligible.
 Contradictory `not_selected` receipts must also block strict CLI proof and leave
 MCP comparisons unverified.
 Contradictory root/settings actual-rendering flags must also withhold automation
