@@ -1,0 +1,11 @@
+# Opt-in root llms.txt receipt boundary; pass explicit function targets.
+[tool.mutmut]
+source_paths = ["src/"]
+only_mutate = ["src/lib/llms_resource.py", "src/lib/report.py"]
+also_copy = ["skills/seo-scan/tests/"]
+pytest_add_cli_args_test_selection = [
+  "skills/seo-scan/tests/test_llms_resource.py",
+  "skills/seo-scan/tests/test_resource_range_coverage.py",
+]
+[tool.pytest.ini_options]
+pythonpath = ["skills/seo-scan/tests"]

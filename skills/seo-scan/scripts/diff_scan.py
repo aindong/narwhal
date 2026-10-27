@@ -181,7 +181,8 @@ def _comparison(o: dict, n: dict) -> dict:
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get('sitemap_discovery_unverified') is True
                                          for page in pages):
             reasons.append(label + ' audit contains unverified sitemap availability; its overall score is not comparable.')
-        if isinstance(pages, list) and any(isinstance(page, dict) and page.get('llms_txt_unverified') is True for page in pages):
+        if (recorded_llms_problem(crawl, for_score=True) or isinstance(pages, list) and any(
+                isinstance(page, dict) and page.get('llms_txt_unverified') is True for page in pages)):
             reasons.append(label + ' audit contains unverified root llms.txt availability; its overall score is not comparable.')
         if isinstance(pages, list) and any(isinstance(page, dict) and page.get('canonical_comparison_unverified') is True for page in pages):
             reasons.append(label + ' audit contains an unverified HTML canonical comparison; its overall score is not comparable.')

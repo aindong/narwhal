@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Unsupported explicit llms.txt receipts require manual verification instead of
+  enabling stale missing-file repairs or claimed score/resolution improvements.
+  Valid receipts, unselected GEO checks and missing legacy evidence retain their handling.
 - Planner mutation diagnostics include schema extraction uncertainty guards;
   installed CLI/MCP cycles withhold stale absence advice after an actual JSON-LD
   parse error while retaining syntax review and rejecting uncertain comparisons.

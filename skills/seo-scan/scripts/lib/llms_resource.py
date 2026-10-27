@@ -131,8 +131,12 @@ def note(meta):
 
 
 def problem(meta, *, for_score=False):
-    value = recorded(meta.get('llms_txt')) if isinstance(meta, dict) else None
-    if not value or value['state'] != 'unverified':
+    if not isinstance(meta, dict) or 'llms_txt' not in meta:
+        return None
+    value = recorded(meta['llms_txt'])
+    if value is None:
+        return 'Root llms.txt receipt is unsupported; verify availability before source changes or score comparisons.'
+    if value['state'] != 'unverified':
         return None
     if for_score and value['basis'] != 'root_http_response':
         return None  # caller flags / old missing coverage are not HTTP measurements
