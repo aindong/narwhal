@@ -32,7 +32,7 @@ class TestCliProcess(unittest.TestCase):
 
     def assert_reaped(self):
         for process in self.processes:
-            self.assertIsNotNone(process.poll(), 'CLI child must be terminated and reaped')
+            self.assertIsNotNone(process.returncode, 'Helper must already have terminated and reaped the CLI child')
 
     def write_cli(self, source):
         self.cli.write_text(source + '\nif __name__ == "__main__":\n    raise SystemExit(main(sys.argv[1:]))\n',

@@ -27,6 +27,16 @@ class TestReportOutput(unittest.TestCase):
         report_output.write_output(str(self.path), value, [])
         self.assertEqual(value, self.path.read_bytes())
 
+    def test_text_is_utf8_even_when_the_default_stream_encoding_is_ascii(self):
+        real_fdopen = os.fdopen
+
+        def open_stream(descriptor, mode, *, encoding=None):
+            return real_fdopen(descriptor, mode, encoding=encoding or 'ascii')
+
+        with mock.patch.object(report_output.os, 'fdopen', side_effect=open_stream):
+            report_output.write_output(str(self.path), 'Narwhal 🐳', [])
+        self.assertEqual('Narwhal 🐳'.encode('utf-8'), self.path.read_bytes())
+
     def test_fdopen_failure_closes_descriptor_without_truncating_output(self):
         self.path.write_bytes(b'previous report')
         opened = []
