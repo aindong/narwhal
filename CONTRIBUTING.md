@@ -66,6 +66,13 @@ Explicitly malformed crawl page lists and contradictory recorded page counts mus
 block score/fix claims in installed CLI and MCP diffs, including regression-only gates.
 The separate crawl-rule diff must report the missing-title rule as no longer
 observed in the matching sample, through both CLI and optional MCP.
+The fixture also reviews a schema action, generates WebSite JSON-LD from its real
+name/URL, and curates the MCP starter's inapplicable search-action placeholder.
+It applies that inspected artifact, runs the generated schema-only local scan/diff
+templates with fresh snapshots, requires one observed WebSite node and exactly the
+schema non-observation resolved, and rejects the reverse regression. Prior reports
+and unrelated source bytes remain unchanged. This is supported-extractor/local
+workflow evidence, not full schema validation, eligibility or ranking proof.
 The inner page also lacks a viewport declaration. Its native recurring finding
 must become an automation candidate only for that page's observed source.
 Temporarily removing the fixture source must withhold automation and leave an

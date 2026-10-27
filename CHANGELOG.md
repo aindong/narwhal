@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Installed schema action-cycle proof covers reviewed source selection, generated
+  and curated JSON-LD, comparable schema-only rescans and preserved baselines.
 - Installed action-cycle checks cover unsupported URL evidence and forged finding
   scope, preserving native empty final-URL fallback and source/report bytes.
 - Structural automation candidates require supported target/page URL labels;

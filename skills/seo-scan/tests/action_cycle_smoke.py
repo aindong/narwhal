@@ -473,6 +473,83 @@ def main(use_mcp=False):
                 # Removed crawl rules are sample observations, not individual page-resolution classifications.
                 print('Installed site action cycle passed: inner-page rule witness -> pricing/index.html -> explicit title edit; '
                       'recurring title rule resolved; comparable overall score delta {}. Local page proof only.'.format(audit_diff['score_delta']))
+                prior_reports = {p: p.read_bytes() for p in root.glob('*.json')}
+                schema_sources = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                schema_options = list(options)
+                schema_options[schema_options.index('--only') + 1] = 'schema'
+                run(schema_options + ['-o', 'schema-before.json'])
+                schema_baseline = (root / 'schema-before.json').read_bytes()
+                schema_before = read('schema-before.json')
+                schema_rule = 'schema.no.structured.data'
+                assert schema_rule in {f['rule_id'] for f in schema_before['findings']}
+                if use_mcp:
+                    schema_plan = mcp_tool('plan_remediation', {'report': schema_before, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'schema-before.json', '--repo', str(site), '--format', 'json', '-o', 'schema-plan.json'])
+                    schema_plan = read('schema-plan.json')
+                schema_action = next(a for a in schema_plan['actions'] if a['rule_id'] == schema_rule)
+                assert schema_action['artifact'] == 'json_ld' and schema_action['safety'] == 'review_required', schema_action
+                assert not (schema_action.get('automation_eligibility') or {}).get('eligible'), schema_action
+                assert any(o['path'] == 'index.html' and o['exists'] is True for o in schema_action['likely_files'])
+                fields = {'name': 'Local workflow verification', 'url': url}
+                assert '<h1>' + fields['name'] + '</h1>' in schema_sources['index.html'].decode('utf-8')
+                assert fields['url'] == schema_before['final_url']
+                generation = ['schema', 'WebSite', '--no-recommended',
+                              '--field', 'name=' + fields['name'], '--field', 'url=' + url]
+                node = json.loads(run(generation + ['--raw']).stdout)
+                assert node == {'@context': 'https://schema.org', '@type': 'WebSite', **fields}, node
+                script = run(generation).stdout
+                assert json.loads(script.split('>', 1)[1].rsplit('</script>', 1)[0]) == node
+                if use_mcp:
+                    starter = mcp_tool('generate_schema', {'type': 'WebSite', 'fields': fields}, root)
+                    # This fixture has no search action; curate the starter instead of inventing one.
+                    assert 'TODO' in starter.pop('potentialAction')
+                    assert starter == node, starter
+                    script = '<script type="application/ld+json">' + json.dumps(starter).replace('<', '\\u003c') + '</script>'
+                assert 'TODO' not in script
+                assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                fresh_names = {'page-before.json': 'schema-page-before.json', 'page-after.json': 'schema-page-after.json'}
+                schema_commands = [[fresh_names.get(token, token) for token in shlex.split(step, comments=True)]
+                                   for step in schema_action['verification'] if step.startswith('narwhal ')]
+                assert [command[1] for command in schema_commands] == ['scan', 'scan', 'diff', 'scan', 'diff']
+                for command in schema_commands:
+                    if command[1] == 'scan':
+                        assert command[command.index('--only') + 1] == 'schema', command
+                        assert command[command.index('--max-bytes') + 1] == '6000000', command
+                run(scan_arguments(schema_commands[0]))
+                schema_page_baseline = (root / 'schema-page-before.json').read_bytes()
+                patched = target.read_text(encoding='utf-8').replace('</head>', script + '</head>')
+                target.write_text(patched, encoding='utf-8')
+                run(scan_arguments(schema_commands[1]))
+                schema_after = read('schema-page-after.json')
+                for page in (json.loads(schema_page_baseline), schema_after):
+                    scope = page['meta']['scan_scope']
+                    assert page['status'] == 200 and scope['requested'] == scope['completed'] == ['schema'], page
+                    assert page['meta']['coverage']['response_byte_limit'] == 6_000_000
+                observed = schema_after['meta']['structured_data']
+                assert observed['types_by_format'] == {'jsonld': ['WebSite']}, observed
+                assert observed['nodes_count'] == 1 and observed['extraction_coverage']['status'] == 'no_known_problem', observed
+                run(diff_arguments(schema_commands[2], 'schema-page-diff.json'))
+                schema_diff = read('schema-page-diff.json')
+                assert schema_diff['comparison']['status'] == 'comparable' and schema_diff['regression'] is False, schema_diff
+                assert {f['rule_id'] for f in schema_diff['resolved']} == {schema_rule}, schema_diff
+                assert [(f['rule_id'], f['severity']) for f in schema_diff['added']] == [
+                    ('schema.structured.data.present', 'good')], schema_diff
+                assert schema_diff['score_delta'] > 0, schema_diff
+                if use_mcp:
+                    assert schema_diff == mcp_tool('diff_reports', {
+                        'old_json': schema_page_baseline.decode('utf-8'), 'new_json': json.dumps(schema_after)}, root)
+                run(['diff', 'schema-page-after.json', 'schema-page-before.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'schema-regression.json'], expected=1)
+                assert read('schema-regression.json')['regression'] is True
+                assert (root / 'schema-before.json').read_bytes() == schema_baseline
+                assert (root / 'schema-page-before.json').read_bytes() == schema_page_baseline
+                assert all(path.read_bytes() == data for path, data in prior_reports.items())
+                schema_sources['index.html'] = patched.encode('utf-8')
+                assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed schema action cycle passed: reviewed source owner -> generated and curated WebSite JSON-LD '
+                      '-> explicit fixture edit -> one resolved observation in a comparable local rescan; '
+                      'prior reports preserved and reverse regression rejected. No eligibility or ranking proof.')
             finally:
                 server.shutdown()
                 thread.join(timeout=5)
