@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner selection and truncation use the existing low-severity default for
+  legacy findings without a severity, matching their displayed priority while
+  preserving higher-priority findings and validation of explicit invalid values.
 - Planner tests require severity-first truncation and accurate coverage around
   the 1,000-action limit, after deduplication and successful-check exclusion,
   retaining critical findings and matching Python/MCP plans without false cap warnings.

@@ -303,6 +303,10 @@ Action-limit controls exercise the real 1,000-rule boundary below, at and above
 the cap. Deduplicate observations and exclude successful checks before counting;
 retain late critical rules ahead of low-priority rules, and disclose only actual
 omissions through coverage and Markdown warnings, with direct MCP parity.
+Missing-severity legacy findings must use the same low priority for selection,
+truncation and display; explicit invalid values still fail validation. Installed
+CLI/MCP cycles keep native controls and test deliberately altered saved scan/audit
+copies for complete-observation selection and the real 1,000-action limit.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does

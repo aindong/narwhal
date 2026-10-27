@@ -30,6 +30,59 @@ def build(data):
 
 
 class TestRepeatedPlanEvidence(unittest.TestCase):
+    def test_missing_severity_uses_low_priority_for_complete_observation_selection(self):
+        legacy, explicit = finding('low', 'alpha', 8), finding('low', 'zeta', 3)
+        legacy.pop('severity')
+        for kind in ('scan', 'audit'):
+            for rows in ([legacy, explicit], [explicit, legacy]):
+                for severity in ('low', 'medium'):
+                    with self.subTest(kind=kind, first=rows[0]['title'], severity=severity):
+                        selected_rows = copy.deepcopy(rows)
+                        for row in selected_rows:
+                            if 'severity' in row:
+                                row['severity'] = severity
+                        data = (report(selected_rows) if kind == 'scan' else
+                                {'site': 'https://example.test/', 'homepage': report(selected_rows[:1]),
+                                 'crawl': {'recurring': selected_rows[1:]}, 'sitemap': {}})
+                        original = copy.deepcopy(data)
+                        built = build(data)
+                        action = built['actions'][0]
+                        expected = legacy if severity == 'low' else explicit
+                        self.assertEqual((severity, expected['title'], expected['evidence'],
+                                          expected['recommendation'], expected['confidence']),
+                                         tuple(action[k] for k in ('severity', 'title', 'evidence',
+                                                                  'source_recommendation', 'confidence')))
+                        self.assertEqual(8, action['occurrences'])
+                        self.assertEqual('site' if kind == 'audit' else 'page', action['scope'])
+                        self.assertEqual(2, action['observation_selection']['normalized_observations'])
+                        self.assertEqual(built, mcp_server._plan(data, REPO))
+                        self.assertEqual(original, data)
+
+    def test_missing_low_severity_does_not_lose_its_place_at_the_action_limit(self):
+        for kind in ('scan', 'audit'):
+            with self.subTest(kind=kind):
+                rows = [{'category': 'content', 'severity': 'low', 'title': f'Issue {n}',
+                         'rule_id': f'content.zzz.{n:04d}'} for n in range(1000)]
+                legacy = {'category': 'content', 'rule_id': 'content.incomplete.open.graph.tags',
+                          'title': 'Legacy Open Graph observation', 'evidence': 'Recorded legacy evidence.'}
+                data = (report(rows + [legacy]) if kind == 'scan' else
+                        {'site': 'https://example.test/', 'homepage': report(rows),
+                         'crawl': {'recurring': [legacy]}, 'sitemap': {}})
+                original = copy.deepcopy(data)
+                built = build(data)
+                self.assertEqual([legacy['rule_id']] + [f'content.zzz.{n:04d}' for n in range(999)],
+                                 [a['rule_id'] for a in built['actions']])
+                self.assertEqual((1001, 1000, True), tuple(built['coverage'][k] for k in
+                                 ('actionable_findings', 'actions_emitted', 'action_generation_capped')))
+                self.assertEqual('low', built['actions'][0]['severity'])
+                self.assertEqual('open_graph', built['actions'][0]['artifact'])
+                explicit = copy.deepcopy(data)
+                selected = explicit['findings'][-1] if kind == 'scan' else explicit['crawl']['recurring'][0]
+                selected['severity'] = 'low'
+                self.assertEqual(build(explicit), built)
+                self.assertEqual(built, mcp_server._plan(data, REPO))
+                self.assertEqual(original, data)
+
     def test_worst_observation_retains_its_own_title_evidence_recommendation_and_confidence(self):
         low, high = finding('low', 'weak', 8), finding('high', 'strong', 2)
         for rows in ([low, high], [high, low]):

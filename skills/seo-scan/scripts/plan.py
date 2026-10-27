@@ -610,7 +610,7 @@ def normalize_report(data: dict) -> dict:
     representatives = []
     for observations in coalesced.values():
         selected = min(observations, key=lambda finding: (
-            SEVERITY_RANK.get(finding.get("severity"), 9), json.dumps(finding, sort_keys=True)))
+            SEVERITY_RANK.get(finding.get("severity", "low"), 9), json.dumps(finding, sort_keys=True)))
         representative = dict(selected)
         if (sitemap_validation is not None
                 and representative['rule_id'] == sitemap_validation['rule_id']
@@ -627,7 +627,7 @@ def normalize_report(data: dict) -> dict:
         representatives.append(representative)
     normalized_findings = sorted(
         representatives,
-        key=lambda finding: (SEVERITY_RANK.get(finding.get("severity"), 9),
+        key=lambda finding: (SEVERITY_RANK.get(finding.get("severity", "low"), 9),
                              finding["rule_id"]))
     total_findings = len(normalized_findings)
     return {

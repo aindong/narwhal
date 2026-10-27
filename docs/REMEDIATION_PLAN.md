@@ -214,6 +214,11 @@ recurring observations use this same selection. Repeated actions include an
 count and occurrence-count policy. The count includes normalized findings/rollups,
 not distinct pages or matched instances. Markdown discloses the reduction and
 points back to the original report; singleton actions omit this receipt.
+An omitted severity retains the legacy `low` default for both representative
+selection and the severity-first action limit, matching the displayed action.
+It competes with explicit low findings at the same priority; higher severities
+retain precedence. Explicit invalid severities, including null and empty strings,
+are rejected rather than defaulted. Original report objects remain unchanged.
 
 Repository coverage includes `file_inventory_walk_errors`: traversal failures
 counted by `os.walk`, with up to five failed-directory witnesses in warnings.
