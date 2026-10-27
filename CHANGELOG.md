@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Comparison tests check readable rejection and unknown-scope explanations,
+  matching-scope consistency, and JSON/Markdown/MCP agreement.
 - FIFO CLI test startup reuses Python's validated bytecode cache for large
   generated mutation modules, retaining the 30-second startup and five-second
   output deadlines with cache-reuse and source-invalidation controls.

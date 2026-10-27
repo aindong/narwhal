@@ -116,6 +116,46 @@ class FixtureHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+def comparison_explanations(run, read, root, page, audit, use_mcp):
+    """Exercise readable comparison decisions from native saved snapshots."""
+    legacy = json.loads(json.dumps(page))
+    legacy['meta'].pop('scan_scope')
+    missing_policy = json.loads(json.dumps(page))
+    missing_policy['meta'].pop('hreflang_policy_basis')
+    missing_crawl_policy = json.loads(json.dumps(audit))
+    missing_crawl_policy['crawl'].pop('hreflang_acquisition_basis')
+    for label, old, new, status, expected in (
+            ('matching', page, page, 'comparable', 0),
+            ('unknown', legacy, legacy, 'unknown', 2),
+            ('page-policy', page, missing_policy, 'incomparable', 2),
+            ('crawl-policy', audit, missing_crawl_policy, 'incomparable', 2)):
+        names = ['explanation-' + label + '-' + side + '.json' for side in ('old', 'new')]
+        saved = [json.dumps(data).encode('utf-8') for data in (old, new)]
+        for name, data in zip(names, saved):
+            (root / name).write_bytes(data)
+        flags = ['--require-comparable', '--fail-on-regression']
+        result = json.loads(run(['diff', *names, *flags, '--format', 'json'], expected=expected).stdout)
+        comparison = result['comparison']
+        assert comparison['status'] == status, result
+        reasons = comparison['reasons']
+        assert isinstance(reasons, list) and bool(reasons) == (status != 'comparable'), result
+        assert all(isinstance(reason, str) and reason.strip() for reason in reasons), result
+        markdown = run(['diff', *names, *flags], expected=expected).stdout
+        assert markdown.strip() and all(reason in markdown for reason in reasons), markdown
+        if status == 'incomparable':
+            assert result['score_delta'] is None and result['regression'] is None and result['resolved'] == [], result
+        if status == 'unknown':
+            run(['diff', *names, '--fail-on-regression'])
+        if use_mcp:
+            assert result == mcp_tool('diff_reports', {
+                'old_json': saved[0].decode('utf-8'), 'new_json': saved[1].decode('utf-8')}, root)
+        assert all((root / name).read_bytes() == data for name, data in zip(names, saved))
+    print('Installed comparison explanation checks passed: matching execution has no spurious scope reason; '
+          'unknown scope and page/crawl policy gaps have readable JSON/Markdown explanations; '
+          + ('MCP stdio parity checked; ' if use_mcp else '')
+          + 'strict and legacy gates and saved input bytes are preserved.')
+
+
 def merchant_comparison_cycle(run, read, root, site, url, use_mcp):
     """A skipped price comparison is not a repaired mismatch."""
     original_sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
@@ -550,6 +590,7 @@ def main(use_mcp=False):
                 audit_options = ['audit', url, '--allow-private', '--max-pages', '2', '--no-config', '--format', 'json']
                 run(audit_options + ['-o', 'audit-before.json'])
                 audit_before = read('audit-before.json')
+                comparison_explanations(run, read, root, read('before.json'), audit_before, use_mcp)
                 assert all(type(page['status']) is int and page['status'] == 200
                            and page['rendered'] is False for page in audit_before['crawl']['pages'])
                 source_bytes = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
