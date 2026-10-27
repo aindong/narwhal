@@ -273,13 +273,31 @@ def _header_target_evidence(crawl, rule_id):
             + json.dumps(witnesses))
 
 
-def _automation_source_gap(page):
+def _automation_url_supported(label, *, allow_bare=False):
+    """Use bounded recorded-label syntax, without DNS or ownership claims."""
+    if (not isinstance(label, str) or len(label) > finding_urls.MAX_URL_CHARS
+            or '\x7f' in label):
+        return False
+    try:
+        label.encode('utf-8')
+    except UnicodeError:
+        return False
+    candidate = 'https://' + label if allow_bare and '://' not in label else label
+    return finding_urls.same_origin_label(candidate, candidate)
+
+
+def _automation_source_gap(page, *, target=None, allow_bare_target=False):
     """Explicitly failed or unusable execution evidence cannot support structural edits."""
     meta = page.get('meta', page)
     if not isinstance(meta, dict):
         meta = {}
     scope = recorded_scan_scope(meta)
-    return (bool(recorded_execution_problem(page))
+    label = page.get('final_url')
+    if label is None or label == '':
+        label = page.get('url')
+    return ((label is not None and not _automation_url_supported(label))
+            or (target is not None and not _automation_url_supported(target, allow_bare=allow_bare_target))
+            or bool(recorded_execution_problem(page))
             or recorded_response_partial(meta) or recorded_response_truncated(meta)
             or ('scan_scope' in meta and scope is None)
             or (scope is not None and 'technical' not in scope[1]))
@@ -548,7 +566,7 @@ def normalize_report(data: dict) -> dict:
     total_findings = len(normalized_findings)
     return {
         "scan_options": _recorded_scan_options(page),
-        "page_automation_gap": _automation_source_gap(page),
+        "page_automation_gap": _automation_source_gap(page, target=target, allow_bare_target=kind == 'audit'),
         "crawl_automation_gap": crawl_automation_gap,
         "crawl_rule_ids": sorted(crawl_rule_ids),
         "kind": kind,
@@ -1312,6 +1330,10 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
     root = safe_repo_root(repo)
     inv = inventory(root, max_files=max(1, min(int(max_files), MAX_REPO_FILES)))
     warnings = list(inv["warnings"])
+    target_supported = _automation_url_supported(normalized['target'], allow_bare=normalized['kind'] == 'audit')
+    if not target_supported:
+        warnings.append('Report target is not a supported recorded HTTP(S) URL label; '
+                        'confirm the original URL before editing or using verification commands.')
     framework = detect_framework(root, inv["files"], warnings)
     page_witnesses = (_rule_page_witnesses(report, normalized['target'])
                       if normalized['kind'] == 'audit' else {})
@@ -1364,7 +1386,8 @@ def build_plan(report: dict, repo: str, *, report_source="<memory>",
                 blockers.append('unlocated_page_witness')
             if not any(owner.get('exists') is True for owner in owners):
                 blockers.append('no_existing_owner_candidate')
-            if ((finding.get('scope', 'page') != 'site' and normalized['page_automation_gap'])
+            if (not target_supported
+                    or (finding['rule_id'] not in normalized['crawl_rule_ids'] and normalized['page_automation_gap'])
                     or (finding['rule_id'] in normalized['crawl_rule_ids'] and normalized['crawl_automation_gap'])):
                 blockers.append('known_incomplete_source_evidence')
             eligibility = {

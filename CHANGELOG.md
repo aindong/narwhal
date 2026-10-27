@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Structural automation candidates require supported target/page URL labels;
+  finding scope hints cannot bypass page-source evidence checks. Audit bare-host
+  inputs and unrecorded legacy page labels retain their existing handling.
 - Planner manifest reads recheck source-path safety and match the opened file's
   identity before reading, withholding framework claims from replacement files.
 - Schema generation rejects duplicate keys in JSON-valued fields and native

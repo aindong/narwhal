@@ -42,6 +42,8 @@ The fixture uses a non-default 6 MB HTML budget and requires all generated
 page scans to retain it.
 Malformed scope, HTTP-status and response-completeness fixtures must withhold automation
 while keeping planning read-only.
+Unsupported recorded target/page URL labels also withhold structural candidates;
+this offline syntax policy does not establish reachability or source ownership.
 Contradictory `not_selected` receipts must also block strict CLI proof and leave
 MCP comparisons unverified.
 Contradictory root/settings actual-rendering flags must also withhold automation
