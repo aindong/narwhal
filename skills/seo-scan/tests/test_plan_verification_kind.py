@@ -72,6 +72,63 @@ class TestPlanVerificationKind(unittest.TestCase):
         self.assertTrue(any('-o after.json' in step for step in commands))
         self.assertFalse(any('narwhal audit' in item for item in commands))
 
+    def test_built_plan_keeps_report_kind_zero_score_and_matching_rerun(self):
+        for kind in ('scan', 'audit'):
+            for score in (0, 0.0):
+                with self.subTest(kind=kind, score=score):
+                    data = audit_report()
+                    data['homepage'].update(url='https://example.test/original/',
+                                            final_url='https://example.test/fetched/')
+                    if kind == 'scan':
+                        data = data['homepage']
+                        data['score'] = score
+                        target = data['final_url']
+                    else:
+                        data['overall_score'] = score
+                        target = data['site']
+                    original = copy.deepcopy(data)
+                    built = plan.build_plan(data, str(FIXTURES / 'plain_html'), report_source='<mcp-object>')
+                    self.assertEqual(kind, built['provenance']['report_kind'])
+                    self.assertEqual(target, built['target'])
+                    self.assertEqual(0, built['source_score'])
+                    self.assertIn(type(built['source_score']), (int, float))
+                    action = next(a for a in built['actions'] if a['artifact'] == 'title')
+                    command = shlex.split(action['verification'][-2], comments=True)
+                    self.assertEqual(['narwhal', kind], command[:2])
+                    self.assertEqual(['--', target], command[-2:])
+                    self.assertEqual('after.json', command[command.index('-o') + 1])
+                    self.assertEqual(built, mcp_server._plan(data, 'skills/seo-scan/tests/fixtures/planner/plain_html'))
+                    self.assertEqual(original, data)
+
+    def test_legacy_audit_fallback_targets_remain_literal_in_verification(self):
+        original_url = 'https://example.test/original?source=old'
+        final_url = 'https://example.test/fetched?view=full&lang=en#part'
+        for site, labels, target in (
+                ('example.test', {'url': original_url, 'final_url': final_url}, 'example.test'),
+                (None, {'url': original_url, 'final_url': final_url}, final_url),
+                ('', {'url': original_url}, original_url),
+                (None, {}, '')):
+            with self.subTest(site=site, labels=labels):
+                data = audit_report()
+                data.pop('site')
+                if site is not None:
+                    data['site'] = site
+                for field in ('url', 'final_url'):
+                    data['homepage'].pop(field, None)
+                data['homepage'].update(labels)
+                original = copy.deepcopy(data)
+                built = plan.build_plan(data, str(FIXTURES / 'plain_html'), report_source='<mcp-object>')
+                self.assertEqual('audit', built['provenance']['report_kind'])
+                self.assertEqual(target, built['target'])
+                action = next(a for a in built['actions'] if a['artifact'] == 'title')
+                command = shlex.split(action['verification'][-2], comments=True)
+                self.assertEqual(['narwhal', 'audit'], command[:2])
+                self.assertEqual(['--', target], command[-2:])
+                if not target:
+                    self.assertTrue(any('not a supported recorded HTTP(S) URL label' in w for w in built['warnings']))
+                self.assertEqual(built, mcp_server._plan(data, 'skills/seo-scan/tests/fixtures/planner/plain_html'))
+                self.assertEqual(original, data)
+
     def test_same_kind_keeps_real_diff_while_cross_kind_stays_blocked(self):
         before = audit_report()
         after = copy.deepcopy(before)

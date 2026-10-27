@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner tests preserve report kind, numeric zero scores and literal audit URL
+  fallbacks, and reject malformed tool-version metadata before inventory/output.
 - Planner tests require later independent crawl findings to survive successful
   or unverified schema-absence rollups, preserving counts and evidence while
   keeping schema verification manual.
