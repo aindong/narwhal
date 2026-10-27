@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner mutation diagnostics include schema extraction uncertainty guards;
+  installed CLI/MCP cycles withhold stale absence advice after an actual JSON-LD
+  parse error while retaining syntax review and rejecting uncertain comparisons.
 - Planner sitemap execution warnings retain malformed and contradictory recorded
   receipts even without error prose, preserving plausible legacy partial data.
 - Planner sitemap advice distinguishes positive source-problem counts from zero

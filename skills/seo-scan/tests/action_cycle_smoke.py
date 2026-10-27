@@ -521,6 +521,48 @@ def main(use_mcp=False):
                 schema_before = read('schema-before.json')
                 schema_rule = 'schema.no.structured.data'
                 assert schema_rule in {f['rule_id'] for f in schema_before['findings']}
+                try:
+                    target.write_bytes(schema_sources['index.html'] + b'<script type="application/ld+json">{bad</script>')
+                    run(schema_options + ['-o', 'schema-uncertain.json'])
+                finally:
+                    target.write_bytes(schema_sources['index.html'])
+                uncertain = read('schema-uncertain.json')
+                assert uncertain['meta']['scan_settings']['schema_extraction_reviewed'] is False, uncertain
+                assert schema_rule not in {f['rule_id'] for f in uncertain['findings']}, uncertain
+                # A stale saved absence finding must not override observed extraction uncertainty.
+                uncertain['findings'].append(next(f for f in schema_before['findings'] if f['rule_id'] == schema_rule))
+                uncertain_bytes = json.dumps(uncertain).encode('utf-8')
+                (root / 'schema-uncertain-legacy.json').write_bytes(uncertain_bytes)
+                if use_mcp:
+                    uncertain_plan = mcp_tool('plan_remediation', {'report': uncertain, 'repo': 'site'}, root)
+                else:
+                    run(['plan', 'schema-uncertain-legacy.json', '--repo', str(site), '--format', 'json',
+                         '-o', 'schema-uncertain-plan.json'])
+                    uncertain_plan = read('schema-uncertain-plan.json')
+                uncertain_actions = {a['rule_id']: a for a in uncertain_plan['actions']}
+                assert set(uncertain_actions) == {'schema.invalid.json.ld', 'schema.extraction.unverified'}, uncertain_actions
+                verification = uncertain_actions['schema.extraction.unverified']
+                assert (verification['safety'], verification['scope'], verification['severity']) == ('manual_external', 'page', 'low'), verification
+                assert verification['manual_action'] is True and verification['requires_deploy'] is False, verification
+                assert not verification['likely_files'] and not uncertain_plan['groups'], uncertain_plan
+                syntax_repair = uncertain_actions['schema.invalid.json.ld']
+                assert syntax_repair['safety'] == 'review_required' and syntax_repair['artifact'] == 'json_ld', syntax_repair
+                assert any(o['path'] == 'index.html' and o['exists'] is True for o in syntax_repair['likely_files']), syntax_repair
+                assert uncertain_plan['source_score'] == uncertain['score'], uncertain_plan
+                assert json.dumps(uncertain).encode('utf-8') == uncertain_bytes
+                assert (root / 'schema-uncertain-legacy.json').read_bytes() == uncertain_bytes
+                run(['diff', 'schema-uncertain-legacy.json', 'schema-uncertain-legacy.json', '--require-comparable',
+                     '--fail-on-regression', '--format', 'json', '-o', 'schema-uncertain-diff.json'], expected=2)
+                uncertain_diff = read('schema-uncertain-diff.json')
+                assert uncertain_diff['comparison']['status'] == 'incomparable' and uncertain_diff['score_delta'] is None, uncertain_diff
+                assert not uncertain_diff['resolved'], uncertain_diff
+                if use_mcp:
+                    assert uncertain_diff == mcp_tool('diff_reports', {
+                        'old_json': uncertain_bytes.decode('utf-8'), 'new_json': uncertain_bytes.decode('utf-8')}, root)
+                assert (root / 'schema-uncertain-legacy.json').read_bytes() == uncertain_bytes
+                assert schema_sources == {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
+                print('Installed schema uncertainty checks passed: actual JSON-LD extraction error overrides stale absence advice; '
+                      'syntax repair stays reviewable, verification stays ownerless and identical uncertain reports fail comparability.')
                 if use_mcp:
                     schema_plan = mcp_tool('plan_remediation', {'report': schema_before, 'repo': 'site'}, root)
                 else:

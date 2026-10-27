@@ -75,6 +75,10 @@ and unrelated source bytes remain unchanged. This is supported-extractor/local
 workflow evidence, not full schema validation, eligibility or ranking proof.
 Replanning that verified schema report must leave no actions, groups or conflicts;
 successful observations are not remaining work, and the input report stays intact.
+An actual JSON-LD parse error is also rescanned, then paired with stale saved
+absence advice. Planning must withhold that absence action, retain the syntax
+repair for source review and leave extraction verification ownerless. Even
+identical uncertain reports must fail comparability in CLI and MCP diffs.
 Sitemap source-problem summaries use nonnegative integer counts. Zero-filled
 summaries do not imply defects; malformed counts require manual verification.
 Independent positive counts and recorded failing HTTP samples retain their
@@ -242,6 +246,9 @@ exclusion, existing-candidate unions and per-file overlap evidence.
 The profile also exercises successful-finding exclusion and repeated-observation
 counts, scope and selection receipts. Successful siblings/rollups must neither
 create remediation nor inflate a remaining finding's count or selection history.
+Schema extraction guards are exercised through `test_page_schema_review.py`,
+including stale absence advice, independent syntax/property repairs and separate
+homepage/crawl uncertainty. These guards must survive the planner handoff.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does
