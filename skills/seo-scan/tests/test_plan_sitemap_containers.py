@@ -208,6 +208,15 @@ class TestSitemapSampleContainers(unittest.TestCase):
         action = self.actions(data)[1][NOTES]
         self.assertEqual('Original observation.', action['evidence'])
         self.assertEqual('Rewrite sitemap locations now.', action['source_recommendation'])
+        for text in ({}, {'detail': None, 'evidence': None}, {'detail': '', 'evidence': ''}):
+            data = clean()
+            data['sitemap']['sample'] = None
+            data['homepage']['findings'].append({
+                'category': 'technical', 'severity': 'high', 'rule_id': NOTES,
+                'title': 'Imported sitemap observation', 'recommendation': 'Rewrite locations now.', **text})
+            action = self.actions(data)[1][NOTES]
+            self.assert_gap(action)
+            self.assertTrue(action['evidence'].lower().startswith('recorded sitemap verification:\n'))
 
     def test_cli_and_offline_mcp_keep_manual_scope_without_changing_inputs(self):
         data = clean()
