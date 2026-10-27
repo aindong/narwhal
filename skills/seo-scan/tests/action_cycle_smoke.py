@@ -129,6 +129,67 @@ class FixtureHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+def sitemap_container_plans(run, read, root, site, audit, use_mcp):
+    """Keep a native control and test malformed copies plus a competing supplied finding."""
+    sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    reports = {p: p.read_bytes() for p in root.glob('*.json')}
+    unknown = 'technical.sitemap.validation.unverified'
+    source = 'technical.sitemap.validation.issues'
+    sample = 'technical.sitemap.sample.unverified'
+    assert isinstance(audit['sitemap']['sample'], list) and audit['sitemap']['broken_sample'] == []
+    cases = [('native', {}),
+             ('object-broken', {'broken_sample': {'status': 404, 'url': 'https://example.test/secret-token'}}),
+             ('null-sample', {'sample': None}), ('false-broken', {'broken_sample': False}),
+             ('mixed-counts', {'sample': None, 'invalid_lastmod': '0', 'fetch_failures': False}),
+             ('competing-finding', {'sample': None, 'invalid_lastmod': '0', 'fetch_failures': False})]
+    for label, changes in cases:
+        supplied = json.loads(json.dumps(audit))
+        supplied['sitemap'].update(changes)
+        if label == 'competing-finding':
+            supplied['homepage']['findings'].append({
+                'category': 'technical', 'severity': 'high', 'rule_id': unknown,
+                'title': 'Imported sitemap observation', 'detail': 'Original imported observation.',
+                'recommendation': 'Rewrite sitemap locations now.', 'occurrences': 7})
+        name = 'sample-containers-' + label + '.json'
+        saved = json.dumps(supplied).encode('utf-8')
+        (root / name).write_bytes(saved)
+        run(['plan', name, '--repo', 'site', '--format', 'json', '-o', name + '.plan.json'])
+        plans = [read(name + '.plan.json')]
+        if use_mcp:
+            plans.append(mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root))
+        for built in plans:
+            actions = {a['rule_id']: a for a in built['actions']}
+            assert source not in actions and sample not in actions, actions
+            if changes:
+                assert unknown in actions, actions
+                action = actions[unknown]
+                assert (action['safety'], action['manual_action'], action['requires_deploy'], action['likely_files']) == (
+                    'manual_external', True, False, []), action
+                assert 'container' in action['evidence'].lower(), action
+                assert action['occurrences'] == (7 if label == 'competing-finding' else 1), action
+                assert 'before making source changes' in action['source_recommendation'].lower(), action
+                if label in ('mixed-counts', 'competing-finding'):
+                    assert 'execution counters' in action['evidence'].lower(), action
+                    assert 'problem/invalid-lastmod counts' in action['evidence'].lower(), action
+                if label == 'competing-finding':
+                    assert action['severity'] == 'high' and action['scope'] == 'site', action
+                    assert action['evidence'].startswith('Original imported observation.\n\n'), action
+                    assert 'Rewrite' not in action['source_recommendation'], action
+                    assert action['observation_selection']['normalized_observations'] == 2, action
+                assert not any(unknown in group['rule_ids'] for group in built['groups']), built
+                assert 'secret-token' not in json.dumps(built), built
+            else:
+                assert unknown not in actions, actions
+        assert (root / name).read_bytes() == saved
+        assert all(p.read_bytes() == body for p, body in sources.items())
+        assert all(p.read_bytes() == body for p, body in reports.items())
+    assert sources == {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
+    print('Installed sitemap container checks passed: malformed sample envelopes require ownerless manual '
+          'verification, not invented probes or source edits; valid native containers stay unchanged. '
+          'Baseline and source bytes preserved. '
+          + ('CLI and MCP stdio verified.' if use_mcp else 'CLI verified.'))
+
+
 def planner_witness_cycle(run, read, root, site, url, server, use_mcp):
     """Verify native finding text and separate HTML/header ownership through planning."""
     sources = {p: p.read_bytes() for p in site.rglob('*') if p.is_file()}
@@ -927,6 +988,7 @@ def main(use_mcp=False):
                 comparison_explanations(run, read, root, read('before.json'), audit_before, use_mcp)
                 literal_comparison_reasons(run, read, root, audit_before, use_mcp)
                 planner_witness_cycle(run, read, root, site, url, server, use_mcp)
+                sitemap_container_plans(run, read, root, site, audit_before, use_mcp)
                 assert all(type(page['status']) is int and page['status'] == 200
                            and page['rendered'] is False for page in audit_before['crawl']['pages'])
                 source_bytes = {str(p.relative_to(site)): p.read_bytes() for p in site.rglob('*') if p.is_file()}
