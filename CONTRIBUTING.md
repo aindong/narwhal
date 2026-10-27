@@ -82,6 +82,12 @@ identical uncertain reports must fail comparability in CLI and MCP diffs.
 Explicit unsupported structured-data containers and review flags also withhold
 absence advice and score/fix claims. Missing legacy fields and unselected schema
 checks retain their handling; independently observed property repairs stay reviewable.
+Known truncated or ranged source coverage also withholds schema-type absence
+advice, even when the retained prefix parsed without extractor errors. Native
+schema and standalone merchant checks retain observed node/property findings.
+The installed fixture places existing WebSite markup beyond a real HTML byte
+cap, requires a manual verification plan and then observes that markup by raising
+only the budget. That pair remains incomparable and cannot count as a source fix.
 Null and future llms.txt receipts in saved audits likewise withhold stale
 missing-file repairs, keep verification ownerless and fail CLI/MCP comparability.
 The positive llms.txt fixture removes the root file, observes HTTP 404, reviews
@@ -292,6 +298,9 @@ selected auditor scope and planner/diff consumers:
 .venv-mutation/bin/python scripts/mutation_test.py --config scripts/mutation/extraction.toml \
   'lib.report.x_recorded_schema_extraction_problem__mutmut_*'
 ```
+
+For native schema/merchant absence checks, also select `audit_schema.x_audit__mutmut_*`,
+`audit_schema.x__cross_checks__mutmut_*` and `lib.ecommerce.x_audit__mutmut_*`.
 
 The [scope profile](scripts/mutation/scope.toml) gates shared execution receipts
 and their report/diff/planner consumers. The existing mutation CI job runs it

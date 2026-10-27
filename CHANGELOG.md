@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Known truncated/ranged HTML withholds schema-type absence advice across native
+  schema audits, standalone merchant checks and saved-report planning, while
+  preserving observed nodes/property repairs and raw extractor counts.
 - Unsupported structured-data containers and explicit review flags require manual
   verification, withholding stale absence advice and score/resolution claims while
   preserving independent property repairs, legacy handling and unselected schema checks.

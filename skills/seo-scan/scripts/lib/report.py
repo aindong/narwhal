@@ -206,6 +206,7 @@ def recorded_schema_extraction_problem(meta, *, for_score=False):
                    or (isinstance(data, dict) and 'extraction_coverage' in data
                        and schema_coverage.recorded(data['extraction_coverage']) is None))
     if (schema_coverage.state(schema_coverage.meta_receipt(meta)) == 'unverified'
+            or recorded_response_partial(meta) or recorded_response_truncated(meta)
             or legacy_warning or unsupported or isinstance(settings, dict) and 'schema_extraction_reviewed' in settings
             and settings['schema_extraction_reviewed'] is not True):
         return 'Structured-data extraction needs verification; schema/overall score comparisons are unverified.'
