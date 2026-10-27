@@ -284,6 +284,10 @@ create remediation nor inflate a remaining finding's count or selection history.
 Schema extraction guards are exercised through `test_page_schema_review.py`,
 including stale absence advice, independent syntax/property repairs and separate
 homepage/crawl uncertainty. These guards must survive the planner handoff.
+Existing image-weight, llms.txt, sitemap discovery/parsing and merchant-comparison
+tests also run in this profile so their verification-only evidence reaches planning.
+Target `plan.x_normalize_report__mutmut_*` to exercise these normalization handoffs;
+report its fresh results and survivors separately from the default CI gate.
 
 Profile paths are relative to your invoking directory; paths inside the profile
 refer to the temporary staging layout described below. Selecting a profile does
