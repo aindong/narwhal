@@ -114,6 +114,9 @@ Manifest bytes must decode as UTF-8 without replacement. Undecodable bytes
 withhold all dependency evidence from that manifest, even when replacement
 decoding could produce a JSON object. Valid UTF-8 text containing a literal
 replacement character remains ordinary string data.
+The manifest open is nonblocking where supported, and its descriptor must be a
+regular file matching the admitted identity before any bytes are read. A path
+replaced by a FIFO stays unverified instead of blocking framework detection.
 This is not package-manager validation, installed-package inspection or version
 resolution. Confirm the framework and source ownership before applying edits.
 

@@ -181,7 +181,7 @@ class TestManifestEvidence(unittest.TestCase):
             (root / 'package.json').write_bytes(b'{}')
             with (root / 'package.json').open('rb') as descriptor, \
                     mock.patch.object(plan, 'MAX_FILE_BYTES', 64), \
-                    mock.patch.object(Path, 'open', return_value=Stream(b'{}' + b' ' * 63)):
+                    mock.patch.object(plan, 'open', create=True, return_value=Stream(b'{}' + b' ' * 63)):
                 self.assertEqual('', plan._read_small(root, 'package.json'))
 
     def test_default_budget_rejects_grown_manifest_without_framework_claims(self):
@@ -236,7 +236,7 @@ class TestManifestEvidence(unittest.TestCase):
             package = root / 'package.json'
             package.write_text('{"dependencies":{"next":"latest"}}', encoding='utf-8')
             before = package.read_bytes()
-            with mock.patch.object(Path, 'open', side_effect=PermissionError('secret-token')):
+            with mock.patch.object(plan, 'open', create=True, side_effect=PermissionError('secret-token')):
                 result = plan.build_plan(REPORT, str(root))
             self.assertEqual(before, package.read_bytes())
             self.assertEqual('unknown', result['framework']['name'])

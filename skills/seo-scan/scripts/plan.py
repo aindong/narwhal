@@ -687,9 +687,11 @@ def _read_small(root: Path, rel: str) -> str:
         admitted = path.lstat()
         if admitted.st_size > MAX_FILE_BYTES or not _safe_source_candidate(root, rel):
             return ""
-        with path.open('rb') as source:
+        with open(path, 'rb', opener=lambda name, flags: os.open(
+                name, flags | getattr(os, 'O_NONBLOCK', 0))) as source:
             # A replacement must not supply bytes after path admission.
-            if not os.path.samestat(admitted, os.fstat(source.fileno())):
+            opened = os.fstat(source.fileno())
+            if not stat.S_ISREG(opened.st_mode) or not os.path.samestat(admitted, opened):
                 return ""
             raw = source.read(MAX_FILE_BYTES + 1)
         if len(raw) > MAX_FILE_BYTES:
