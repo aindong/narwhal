@@ -1,6 +1,7 @@
 """Malformed local manifests must not stop read-only remediation planning."""
 
 import contextlib
+import copy
 import io
 import json
 from pathlib import Path
@@ -21,6 +22,95 @@ REPORT = {'schema_version': '2.0', 'url': 'https://example.test/', 'findings': [
 
 
 class TestManifestEvidence(unittest.TestCase):
+    def test_invalid_utf8_cannot_supply_dependency_evidence_or_wrong_owners(self):
+        for raw in (b'{"dependencies":{"next":"\xff"}}',
+                    b'{"devDependencies":{"nuxt":"\xc0\xaf"}}',
+                    b'{"dependencies":{"next":"latest"},"secret-token":"\xed\xa0\x80"}'):
+            with self.subTest(raw=raw), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                package = root / 'package.json'
+                package.write_bytes(raw)
+                owner = root / 'index.html'
+                owner.write_text('<html><head></head><body>Fixture</body></html>', encoding='utf-8')
+                source = owner.read_bytes()
+                data = copy.deepcopy(REPORT)
+                result = plan.build_plan(data, str(root))
+                self.assertEqual('plain_html', result['framework']['name'])
+                self.assertGreaterEqual(result['framework']['confidence'], 0)
+                self.assertLessEqual(result['framework']['confidence'], 1)
+                self.assertEqual('index.html', result['actions'][0]['likely_files'][0]['path'])
+                self.assertIs(result['actions'][0]['likely_files'][0]['exists'], True)
+                self.assertTrue(any('package.json' in item and 'unverified' in item for item in result['warnings']))
+                self.assertNotIn('secret-token', json.dumps(result))
+                self.assertEqual(raw, package.read_bytes())
+                self.assertEqual(source, owner.read_bytes())
+                self.assertEqual(REPORT, data)
+
+    def test_invalid_manifest_keeps_config_priority_over_incidental_html(self):
+        for config, framework, owner in (
+                ('next.config.mjs', 'nextjs', 'app/layout.tsx'),
+                ('astro.config.mjs', 'astro', 'src/pages/index.astro'),
+                ('nuxt.config.ts', 'nuxt', 'app.vue')):
+            with self.subTest(framework=framework), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'package.json').write_bytes(b'{"dependencies":{"next":"\xff"}}')
+                (root / config).write_text('export default {}', encoding='utf-8')
+                source = root / owner
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text('Fixture source', encoding='utf-8')
+                for index in range(8):
+                    (root / ('index.html' if index == 0 else f'page-{index}.html')).write_text(
+                        '<html><head></head><body>Incidental HTML</body></html>', encoding='utf-8')
+                saved = {path: path.read_bytes() for path in root.rglob('*') if path.is_file()}
+                result = plan.build_plan(REPORT, str(root))
+                self.assertEqual(framework, result['framework']['name'])
+                self.assertFalse(any('depends on' in item for item in result['framework']['evidence']))
+                self.assertTrue(any(item['path'] == owner and item['exists']
+                                    for item in result['actions'][0]['likely_files']))
+                self.assertGreaterEqual(result['framework']['confidence'], 0)
+                self.assertLessEqual(result['framework']['confidence'], 1)
+                self.assertTrue(any('package.json' in item for item in result['warnings']))
+                self.assertEqual(saved, {path: path.read_bytes() for path in saved})
+
+    def test_invalid_utf8_keeps_independent_config_and_cli_mcp_plans_available(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package = root / 'package.json'
+            raw = b'{"dependencies":{"next":"latest"},"secret-token":"\xff"}'
+            package.write_bytes(raw)
+            (root / 'astro.config.mjs').write_text('export default {}', encoding='utf-8')
+            source = root / 'src/pages/index.astro'
+            source.parent.mkdir(parents=True)
+            source.write_text('<html><head></head><body>Fixture</body></html>', encoding='utf-8')
+            baseline = root / 'before.json'
+            baseline.write_text(json.dumps(REPORT), encoding='utf-8')
+            saved = {path: path.read_bytes() for path in root.rglob('*') if path.is_file()}
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = plan.main([str(baseline), '--repo', str(root), '--format', 'json'])
+            self.assertEqual(0, code)
+            with mock.patch.object(Path, 'cwd', return_value=root):
+                mcp = mcp_server._plan(REPORT, '.')
+            for result in (json.loads(output.getvalue()), mcp):
+                self.assertEqual('astro', result['framework']['name'])
+                self.assertEqual(['astro.config.* present'], result['framework']['evidence'])
+                self.assertTrue(any(owner['path'] == 'src/pages/index.astro' and owner['exists']
+                                    for owner in result['actions'][0]['likely_files']))
+                self.assertTrue(any('package.json' in item for item in result['warnings']))
+                self.assertNotIn('secret-token', json.dumps(result))
+            self.assertEqual(saved, {path: path.read_bytes() for path in saved})
+
+    def test_valid_utf8_including_literal_replacement_character_keeps_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for version in ('latest', 'workspace:*', '\ufffd'):
+                with self.subTest(version=version):
+                    manifest = json.dumps({'dependencies': {'next': version}, 'label': 'Café'}, ensure_ascii=False)
+                    result = self.build(root, manifest)
+                    self.assertEqual('nextjs', result['framework']['name'])
+                    self.assertEqual(['package.json depends on next'], result['framework']['evidence'])
+                    self.assertFalse(any('package.json' in item for item in result['warnings']))
+
     def build(self, root, manifest):
         """Write one controlled manifest; planning itself must leave it intact."""
         package = root / 'package.json'
@@ -112,14 +202,14 @@ class TestManifestEvidence(unittest.TestCase):
                 self.assertEqual(size > 2_000_000, any('package.json' in item for item in result['warnings']))
                 self.assertNotIn('secret-token', json.dumps(result))
 
-    def test_exact_utf8_byte_limit_and_replacement_decoding_remain_supported(self):
-        for raw in ('{"label":"é"}'.encode('utf-8'), b'\xff'):
+    def test_exact_byte_limit_and_strict_utf8_decoding(self):
+        for raw, expected in (('{"label":"é"}'.encode('utf-8'), '{"label":"é"}'), (b'\xff', '')):
             with self.subTest(raw=raw), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 path = root / 'package.json'
                 with mock.patch.object(plan, 'MAX_FILE_BYTES', len(raw)):
                     path.write_bytes(raw)
-                    self.assertEqual(raw.decode('utf-8', errors='replace'), plan._read_small(root, 'package.json'))
+                    self.assertEqual(expected, plan._read_small(root, 'package.json'))
                     path.write_bytes(raw + b' ')
                     self.assertEqual('', plan._read_small(root, 'package.json'))
 

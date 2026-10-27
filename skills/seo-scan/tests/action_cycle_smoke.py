@@ -117,6 +117,56 @@ class FixtureHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+def manifest_encoding_plans(run, read, root, site, page, use_mcp):
+    """Undecodable manifest bytes cannot displace observed source candidates."""
+    package, config = site / 'package.json', site / 'astro.config.mjs'
+    assert not package.exists() and not config.exists()
+    sources = {path: path.read_bytes() for path in site.rglob('*') if path.is_file()}
+    baseline = (root / 'before.json').read_bytes()
+    invalid = b'{"dependencies":{"next":"latest"},"secret-token":"\xff"}'
+    valid = json.dumps({'dependencies': {'next': 'latest'}, 'label': 'Café \ufffd'}, ensure_ascii=False).encode('utf-8')
+    try:
+        for label, raw, expected, astro in (
+                ('invalid-version', b'{"dependencies":{"next":"\xff"}}', 'plain_html', False),
+                ('invalid-unused-field', invalid, 'plain_html', False),
+                ('independent-config', invalid, 'astro', True),
+                ('valid-unicode', valid, 'nextjs', False)):
+            package.write_bytes(raw)
+            if astro:
+                config.write_text('export default {}', encoding='utf-8')
+            else:
+                config.unlink(missing_ok=True)
+            output = 'manifest-' + label + '-plan.json'
+            run(['plan', 'before.json', '--repo', str(site), '--format', 'json', '-o', output])
+            plans = [read(output)]
+            if use_mcp:
+                plans.append(mcp_tool('plan_remediation', {'report': page, 'repo': 'site'}, root))
+            for built in plans:
+                assert built['framework']['name'] == expected, built
+                warnings = [item for item in built['warnings'] if 'package.json' in item]
+                assert bool(warnings) == (label != 'valid-unicode'), built
+                if warnings:
+                    assert any('UTF-8 JSON' in item and 'unverified' in item for item in warnings), warnings
+                assert 'secret-token' not in json.dumps(built), built
+                if expected == 'plain_html':
+                    action = next(item for item in built['actions'] if item['rule_id'] == RULE)
+                    assert action['likely_files'][0]['path'] == 'index.html' and action['likely_files'][0]['exists'], action
+                    assert action['automation_eligibility']['eligible'] is True, action
+                if astro:
+                    assert built['framework']['evidence'] == ['astro.config.* present'], built
+            assert package.read_bytes() == raw
+            assert all(path.read_bytes() == data for path, data in sources.items())
+            assert (root / 'before.json').read_bytes() == baseline
+    finally:
+        package.unlink(missing_ok=True)
+        config.unlink(missing_ok=True)
+    assert sources == {path: path.read_bytes() for path in site.rglob('*') if path.is_file()}
+    print('Installed manifest encoding checks passed: undecodable bytes withhold dependency evidence and retain '
+          'observed HTML candidates or independent config; valid UTF-8 replacement characters remain data. '
+          + ('CLI/MCP stdio plans checked; ' if use_mcp else 'CLI plans checked; ')
+          + 'source and baseline bytes are preserved. Candidate classification is not edit authorization.')
+
+
 def comparison_explanations(run, read, root, page, audit, use_mcp):
     """Exercise readable comparison decisions from native saved snapshots."""
     legacy = json.loads(json.dumps(page))
@@ -442,6 +492,7 @@ def main(use_mcp=False):
                 run(options + ['-o', 'before.json'])
                 baseline = (root / 'before.json').read_bytes()
                 assert read('before.json')['status'] == 200
+                manifest_encoding_plans(run, read, root, site, read('before.json'), use_mcp)
                 ambiguous = '{"status":503,' + baseline.decode('utf-8').lstrip()[1:]
                 (root / 'ambiguous.json').write_text(ambiguous, encoding='utf-8')
                 rejected_output = root / 'rejected-output.json'
