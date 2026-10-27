@@ -18,6 +18,7 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_page_schema_review.py",
  "skills/seo-scan/tests/test_plan_sitemap_problem_counts.py",
  "skills/seo-scan/tests/test_plan_sitemap_verification.py",
+ "skills/seo-scan/tests/test_plan_sitemap_containers.py",
  "skills/seo-scan/tests/test_plan_sitemap_unverified_witnesses.py",
  "skills/seo-scan/tests/test_plan_repeated_evidence.py",
  "skills/seo-scan/tests/test_plan_evidence_handoff.py",

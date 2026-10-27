@@ -97,6 +97,8 @@ def _sitemap_note_findings(sitemap, schema_version):
     notes = sitemap.get('errors', [])
     count = len(notes) if isinstance(notes, list) else 1
     counter_keys = ('sitemaps_attempted', 'sitemaps_fetched', 'fetch_failures')
+    container_problem = any(key in sitemap and not isinstance(sitemap[key], list)
+                            for key in ('sample', 'broken_sample'))
     attempted, fetched, failed = (sitemap.get(key) for key in counter_keys)
     cap = sitemap.get('truncated', 0)
     cap_valid = type(cap) is int and cap >= 0
@@ -131,11 +133,17 @@ def _sitemap_note_findings(sitemap, schema_version):
             f'{cap} distinct sitemap file(s) remained outside the recorded attempt budget; URL totals are partial.', cap)
         classified += 1
     hint = any(type(value) is int and value > 0 for value in (failed, cap))
-    if count > classified or ((hint or counter_problem) and not out):
+    notes_unverified = count > classified or ((hint or counter_problem) and not out)
+    if notes_unverified or container_problem:
+        detail = ('Sitemap notes are unclassified or execution counters are inconsistent/unrecorded. '
+                  'Review the original report and endpoint; source invalidity is not established.'
+                  if notes_unverified else '')
+        if container_problem:
+            detail += (' ' if detail else '') + (
+                'Recorded sitemap sample containers have unsupported shapes. Verify sample coverage; '
+                'container values do not establish individual HTTP observations or source defects.')
         add('validation.unverified', 'Sitemap validation notes need manual verification',
-            'Sitemap notes are unclassified or execution counters are inconsistent/unrecorded. '
-            'Review the original report and endpoint; source invalidity is not established.',
-            max(1, count - classified))
+            detail, max(1, count - classified))
     return out
 
 
@@ -143,8 +151,8 @@ def _sitemap_sample_evidence(sitemap):
     """Keep actual failing HTTP responses distinct from uncertain/no-response probes."""
     samples = sitemap.get('sample')
     observed = list(samples) if isinstance(samples, list) else []
-    broken = sitemap.get('broken_sample') or []
-    for item in broken if isinstance(broken, list) else [broken]:
+    broken = sitemap.get('broken_sample', [])
+    for item in broken if isinstance(broken, list) else []:
         if item not in observed:
             observed.append(item)
     failures, unverified = [], []

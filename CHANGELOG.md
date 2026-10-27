@@ -811,6 +811,10 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Planner sitemap samples require list containers. Unsupported `sample` or
+  `broken_sample` values now request manual verification instead of disappearing
+  or being interpreted as individual HTTP failures; valid companion records remain usable.
+
 - Manifest reads use a nonblocking open and verify the opened regular-file
   identity before reading, so a FIFO replacement cannot hang planning or supply
   framework evidence. Independent repository evidence remains usable.

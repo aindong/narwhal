@@ -48,8 +48,13 @@ unverified. Gated/unsupported/no-response samples remain separate verification-o
 actions; retained compatibility `broken_sample` rows alone do not prove a source
 defect. Their length is not a count of confirmed HTTP failures. New sitemap
 JSON also records `sample_response_coverage` for selected targets; supplied
-counters do not override classification of the raw status/error observations. Source ownership and safety classifications do not
-change.
+counters do not override classification of the raw status/error observations.
+Supported list records keep their existing source ownership and safety classes.
+Explicit non-list `sample` or `broken_sample` containers require manual sitemap
+validation verification. They are not expanded into individual probe records
+and cannot alone justify source edits. Valid records in a companion list retain
+their independent classification. Missing legacy keys and empty lists keep their
+existing behavior; unsupported container values are not echoed into evidence.
 
 Comprehensive-audit `crawl.links` observations produce manual `links` actions:
 `technical.links.http.failures` for reported failing 4xx/5xx responses without
