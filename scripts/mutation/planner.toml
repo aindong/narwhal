@@ -29,6 +29,7 @@ pytest_add_cli_args_test_selection = [
  "skills/seo-scan/tests/test_plan_command_quoting.py",
  "skills/seo-scan/tests/test_plan_verification_kind.py",
  "skills/seo-scan/tests/test_plan_markdown_verification.py",
+ "skills/seo-scan/tests/test_plan_action_context.py",
  "skills/seo-scan/tests/test_plan_next_page_routes.py",
  "skills/seo-scan/tests/test_plan_next_discovery_owners.py",
  "skills/seo-scan/tests/test_plan_owner_contract.py",

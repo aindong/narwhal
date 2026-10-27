@@ -1612,6 +1612,8 @@ def render_markdown(plan: dict) -> str:
         'Command templates use POSIX shell quoting; adapt for PowerShell/cmd. '
         'Replace placeholders and add original options before `--`; do not execute '
         'instruction text as commands.', '',
+        'Occurrences use the maximum supplied count, or default to 1; '
+        'they are not distinct affected-page totals.', '',
     ]
     for instruction in (MEMORY_BASELINE_INSTRUCTION, SCAN_SETTINGS_INSTRUCTION):
         if any(instruction in action['verification'] for action in plan['actions']):
@@ -1663,7 +1665,8 @@ def render_markdown(plan: dict) -> str:
                                    'semantic gap. Review actual page purpose and wording.')
             if action['rule_id'] in SCHEMA_VERIFICATION_RULES:
                 scope_label = ('Page report' if action.get('scope') == 'page' else
-                               'Site sample/rollup' if action.get('scope') == 'site' else 'Unrecorded scope')
+                               'Site sample/rollup' if action.get('scope') == 'site' else
+                               'External' if action.get('scope') == 'external' else 'Unrecorded scope')
                 scope_lines = [f'- **Verification scope:** {scope_label}']
             if 'observation_selection' in action:
                 receipt = action['observation_selection']
@@ -1673,6 +1676,7 @@ def render_markdown(plan: dict) -> str:
                                    "matched page instances. Consult the original report for other observations.")
             lines += [f"### {action['severity'].upper()} — {_literal_preview_code(' '.join(display_title.split()))}", "",
                       f"- **Rule:** {_literal_preview_code(' '.join(action['rule_id'].split()))}",
+                      f"- **Plan scope:** {_literal_preview_code(action['scope'])} · **Occurrences:** {action['occurrences']}",
                       *scope_lines,
                       f"- **Likely owner:** {owners}",
                       f"- **Change:** {action['proposed_change']}", ""]

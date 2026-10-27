@@ -84,6 +84,12 @@ Safety values mean:
 
 `likely_files` are ranked candidates, not authorization to edit. `exists` and
 `confidence` distinguish observed owners from framework-convention suggestions.
+Markdown shows each action's normalized plan scope and occurrence count beside
+its rule. Counts retain the maximum supplied value or default to one; they are
+not matched or distinct affected-page totals. These labels do not change JSON,
+source ownership, safety classes or verification requirements.
+Schema verification labels also retain explicit external scope instead of
+describing it as unrecorded.
 For audit homepage findings, page-route candidates follow the recorded
 `homepage.final_url`, then `homepage.url`, falling back to the audit target for
 legacy reports without those labels. The plan target and final audit rerun keep

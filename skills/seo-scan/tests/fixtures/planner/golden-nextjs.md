@@ -8,6 +8,8 @@ _Read-only plan: inspect proposed owners and values before applying edits._
 
 Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace placeholders and add original options before `--`; do not execute instruction text as commands.
 
+Occurrences use the maximum supplied count, or default to 1; they are not distinct affected-page totals.
+
 > Save the original input report JSON, keeping all fields, to a fresh before.json before edits or reruns. If using an existing saved report, point the diff at that baseline and choose distinct fresh verification output paths. Do not overwrite files or substitute a new scan. This read-only plan has not saved a baseline.
 
 > Restore the original scan configuration, access settings and resource limits before running this template. Recorded auditor selection, rendering, image-check and HTML byte-budget options are included when known; the report does not record the complete invocation. Matching known options alone does not establish comparable coverage.
@@ -17,6 +19,7 @@ Command templates use POSIX shell quoting; adapt for PowerShell/cmd. Replace pla
 ### HIGH — `Missing meta description`
 
 - **Rule:** `technical.missing.meta.description`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
 - **Change:** Add or revise the page meta description in its metadata/head owner.
 
@@ -57,6 +60,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### HIGH — `Missing <title>`
 
 - **Rule:** `technical.missing.title`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
 - **Change:** Define a unique, descriptive page title in the framework's metadata/head API.
 
@@ -97,6 +101,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### MEDIUM — `No structured data (JSON-LD)`
 
 - **Rule:** `schema.no.structured.data.json.ld`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
 - **Change:** Review existing supported markup and the actual page entity; add semantic data only when applicable. Do not duplicate entities or invent visible content. Non-observation does not prove a markup requirement or establish rich-result eligibility, ranking or AI citation gains.
 
@@ -135,6 +140,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### MEDIUM — `Images missing alt text`
 
 - **Rule:** `technical.images.missing.alt.text`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/guides/widget/page.tsx` (in file inventory), `app/layout.tsx` (in file inventory), `app/page.tsx` (not in file inventory); additional candidates in JSON: 5
 - **Change:** Add meaningful alt text to informative images; use empty alt for decorative images.
 
@@ -175,6 +181,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### MEDIUM — `No canonical URL`
 
 - **Rule:** `technical.no.canonical.url`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
 - **Change:** Define the intended absolute canonical URL in the page or shared head owner.
 
@@ -215,6 +222,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### LOW — `Incomplete Open Graph tags`
 
 - **Rule:** `content.incomplete.open.graph.tags`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/layout.tsx` (in file inventory), `app/guides/widget/page.tsx` (in file inventory), `app/layout.jsx` (not in file inventory); additional candidates in JSON: 5
 - **Change:** Complete Open Graph and Twitter metadata using real page title, description, URL, and image.
 
@@ -257,6 +265,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### MEDIUM — `No robots.txt found`
 
 - **Rule:** `technical.no.robots.txt.found`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/robots.ts` (not in file inventory), `public/robots.txt` (not in file inventory), `src/app/robots.ts` (not in file inventory)
 - **Change:** Create or revise robots.txt deliberately, preserving intentional crawler policies.
 
@@ -279,6 +288,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### MEDIUM — `No XML sitemap found`
 
 - **Rule:** `technical.no.xml.sitemap.found`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `app/sitemap.ts` (not in file inventory), `public/sitemap.xml` (not in file inventory), `src/app/sitemap.ts` (not in file inventory)
 - **Change:** Create/configure the sitemap and reference it from robots.txt using the canonical deployed URL.
 
@@ -301,6 +311,7 @@ narwhal diff --fail-on-regression --require-comparable -- before.json after.json
 ### LOW — `No llms.txt`
 
 - **Rule:** `geo.no.llms.txt`
+- **Plan scope:** `page` · **Occurrences:** 1
 - **Likely owner:** `public/llms.txt` (not in file inventory)
 - **Change:** Generate a starter llms.txt in the public/static root, then curate every entry and TODO.
 

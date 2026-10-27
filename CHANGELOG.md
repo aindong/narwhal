@@ -12,6 +12,9 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner Markdown shows each action's existing scope and occurrence count,
+  explaining maximum supplied counts and the default of one for recurring work.
+  Schema verification keeps an explicit external scope instead of labeling it unrecorded.
 - Planner mutation diagnostics include existing header/evidence handoff checks,
   and recurring-page tests require URL notes to retain the original observation.
 - Audit plans select page-route source candidates using the fetched homepage's
