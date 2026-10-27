@@ -694,7 +694,7 @@ def _read_small(root: Path, rel: str) -> str:
             raw = source.read(MAX_FILE_BYTES + 1)
         if len(raw) > MAX_FILE_BYTES:
             return ""
-        return raw.decode('utf-8', errors='replace')
+        return raw.decode('utf-8')
     except (OSError, UnicodeError):
         return ""
 
@@ -715,7 +715,7 @@ def detect_framework(root: Path, files: list, warnings=None) -> dict:
         try:
             package = json.loads(_read_small(root, "package.json"))
         except (ValueError, RecursionError):
-            warnings.append('package.json could not be read as supported JSON within planner limits; '
+            warnings.append('package.json could not be read as supported UTF-8 JSON within planner limits; '
                             'dependency evidence is unverified. Confirm the framework manually.')
             package = {}
         if not isinstance(package, dict):

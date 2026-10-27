@@ -110,6 +110,10 @@ Framework detection treats package declarations as evidence only when
 manifests and unsupported sections or values produce bounded warnings without
 echoing manifest contents. Valid sibling declarations and independent config
 files still contribute; unavailable dependency evidence does not stop planning.
+Manifest bytes must decode as UTF-8 without replacement. Undecodable bytes
+withhold all dependency evidence from that manifest, even when replacement
+decoding could produce a JSON object. Valid UTF-8 text containing a literal
+replacement character remains ordinary string data.
 This is not package-manager validation, installed-package inspection or version
 resolution. Confirm the framework and source ownership before applying edits.
 

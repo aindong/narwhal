@@ -803,6 +803,10 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Planner framework detection withholds dependency evidence from manifests with
+  invalid UTF-8 rather than silently replacing bytes and guessing source owners.
+  Independent config/HTML evidence remains usable with a bounded warning.
+
 - Diff Markdown renders comparison reasons as literal single-line previews,
   preventing recorded crawl URL labels from introducing headings, links or HTML.
   Full JSON evidence and comparison decisions are preserved.
