@@ -146,6 +146,8 @@ class TestSitemapSampleContainers(unittest.TestCase):
                     if SOURCE in actions:
                         self.assertEqual('deploy_verification', actions[SOURCE]['safety'])
                         self.assertTrue(actions[SOURCE]['requires_deploy'])
+                        self.assertIn('invalid sitemap entries or lastmod values',
+                                      actions[SOURCE]['evidence'].lower())
                         self.assertTrue(any(owner['path'] == 'sitemap.xml'
                                             for owner in actions[SOURCE]['likely_files']))
                     self.assertEqual(original, data)
