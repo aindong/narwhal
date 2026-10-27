@@ -12,6 +12,8 @@ All notable changes to Narwhal are documented here. The format follows
   snapshots served HTML. Scores and gap/brief calculations are unchanged.
 
 ### Improved
+- Planner mutation diagnostics select existing image-weight, llms.txt, sitemap
+  discovery/parsing and merchant-comparison tests for normalization handoffs.
 - Planner Markdown shows each action's existing scope and occurrence count,
   explaining maximum supplied counts and the default of one for recurring work.
   Schema verification keeps an explicit external scope instead of labeling it unrecorded.
