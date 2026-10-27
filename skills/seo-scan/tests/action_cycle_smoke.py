@@ -236,6 +236,37 @@ def main(use_mcp=False):
                             'new_json': json.dumps(read('before.json'))}, root)
                         assert invalid_diff['comparison']['status'] == 'incomparable'
                         assert invalid_diff['score_delta'] is None and invalid_diff['resolved'] == []
+                for label, changes, eligible in (
+                        ('empty-url', {'url': '', 'final_url': ''}, False),
+                        ('file-url', {'final_url': 'file:///tmp/index.html'}, False),
+                        ('bad-port', {'final_url': 'https://example.test:bad/'}, False),
+                        ('malformed-final', {'final_url': {}}, False),
+                        ('site-scope', {'status': 206}, False),
+                        ('empty-final', {'final_url': ''}, True)):
+                    supplied = read('before.json')
+                    supplied.update(changes)
+                    if label == 'site-scope':
+                        next(f for f in supplied['findings'] if f['rule_id'] == RULE)['scope'] = 'site'
+                    source, output = label + '.json', label + '-plan.json'
+                    source_bytes = json.dumps(supplied).encode('utf-8')
+                    (root / source).write_bytes(source_bytes)
+                    if use_mcp:
+                        supplied_plan = mcp_tool('plan_remediation', {'report': supplied, 'repo': 'site'}, root)
+                    else:
+                        run(['plan', source, '--repo', str(site), '--format', 'json', '-o', output])
+                        supplied_plan = read(output)
+                    supplied_action = next(a for a in supplied_plan['actions'] if a['rule_id'] == RULE)
+                    assert supplied_action['automation_eligibility']['eligible'] is eligible, (label, supplied_action)
+                    assert supplied_action['safety'] == ('safely_automatable' if eligible else 'review_required')
+                    assert any(owner['path'] == 'index.html' and owner['exists'] is True
+                               for owner in supplied_action['likely_files']), supplied_action
+                    if not eligible:
+                        assert 'known_incomplete_source_evidence' in supplied_action['automation_eligibility']['blockers']
+                    assert supplied_plan['target'] == (supplied.get('final_url') or supplied.get('url') or '')
+                    assert (root / source).read_bytes() == source_bytes
+                    assert {path.name: path.read_bytes() for path in site.iterdir()} == original
+                print('Installed URL evidence checks passed: five invalid URL/scope cases withheld automation; '
+                      'native empty final URL retained its candidate; source and report bytes preserved.')
                 assert {path.name: path.read_bytes() for path in site.iterdir()} == original
                 # Only this generated fixture's templates are executed, as argv without a shell.
                 verification = [shlex.split(step, comments=True) for step in action['verification']
