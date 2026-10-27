@@ -292,7 +292,9 @@ def _automation_source_gap(page, *, target=None, allow_bare_target=False):
     if not isinstance(meta, dict):
         meta = {}
     scope = recorded_scan_scope(meta)
-    label = page.get('final_url') or page.get('url')
+    label = page.get('final_url')
+    if label is None or label == '':
+        label = page.get('url')
     return ((label is not None and not _automation_url_supported(label))
             or (target is not None and not _automation_url_supported(target, allow_bare=allow_bare_target))
             or bool(recorded_execution_problem(page))

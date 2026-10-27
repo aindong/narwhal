@@ -81,6 +81,16 @@ class TestUrlEligibility(unittest.TestCase):
             page.update(url='example.test', final_url=final_url)
             self.action({'site': URL, 'homepage': page, 'crawl': {}}, eligible)
 
+    def test_falsy_malformed_final_labels_do_not_become_usable_fallbacks(self):
+        for final_url in ({}, [], False, 0):
+            with self.subTest(final_url=final_url):
+                page = baseline()
+                page['final_url'] = final_url
+                self.action({'site': URL, 'homepage': page, 'crawl': {}}, False)
+        page = baseline()
+        page['final_url'] = ''
+        self.action({'site': URL, 'homepage': page, 'crawl': {}}, True)
+
     def test_bad_crawl_labels_withhold_but_unrecorded_legacy_labels_remain_unknown(self):
         for label in ('missing', '', 'file:///tmp/index.html', 'https://example.test:bad/'):
             with self.subTest(label=label):
