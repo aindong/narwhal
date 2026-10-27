@@ -803,6 +803,10 @@ All notable changes to Narwhal are documented here. The format follows
 
 ### Fixed
 
+- Manifest reads use a nonblocking open and verify the opened regular-file
+  identity before reading, so a FIFO replacement cannot hang planning or supply
+  framework evidence. Independent repository evidence remains usable.
+
 - Planner framework detection withholds dependency evidence from manifests with
   invalid UTF-8 rather than silently replacing bytes and guessing source owners.
   Independent config/HTML evidence remains usable with a bounded warning.

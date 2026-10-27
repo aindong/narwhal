@@ -31,13 +31,14 @@ def mcp_result(result, *, expected_error=False):
     return json.loads(next(item['text'] for item in wire['content'] if item['type'] == 'text'))
 
 
-def mcp_session(exercise, root):
+def mcp_session(exercise, root, *, server_args=None):
     """Exercise the installed server's real stdio boundary when explicitly requested."""
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
 
     async def call(errors):
-        params = StdioServerParameters(command=sys.executable, args=['-I', '-m', 'narwhal', 'mcp'], cwd=str(root))
+        params = StdioServerParameters(command=sys.executable,
+            args=server_args if server_args is not None else ['-I', '-m', 'narwhal', 'mcp'], cwd=str(root))
         async with stdio_client(params, errlog=errors) as (read, write):
             async with ClientSession(read, write) as session:
                 initialized = (await session.initialize()).model_dump(by_alias=True)
@@ -115,6 +116,65 @@ class FixtureHandler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
             return
         super().do_GET()
+
+
+def manifest_fifo_plans(root, site, page, use_mcp):
+    """Inject an actual FIFO swap into installed CLI and MCP planning."""
+    if not hasattr(os, 'mkfifo'):
+        return
+    package, saved = site / 'package.json', site / 'fifo-original-package.json'
+    assert not package.exists() and not saved.exists()
+    sources = {path: path.read_bytes() for path in site.rglob('*') if path.is_file()}
+    baseline = (root / 'before.json').read_bytes()
+    original = b'{"dependencies":{"next":"latest"}}'
+    driver = root / 'manifest-swap-driver.py'
+    driver.write_text('''import os, sys
+if sys.argv[1] == 'mcp':
+    from narwhal import mcp_server as service
+    import plan as planner
+else:
+    from narwhal import plan as planner
+original = planner._safe_source_candidate
+def swap(root, rel):
+    accepted = original(root, rel)
+    if accepted and rel == 'package.json':
+        (root / rel).rename(root / 'fifo-original-package.json')
+        os.mkfifo(root / rel)
+    return accepted
+planner._safe_source_candidate = swap
+if sys.argv[1] == 'mcp':
+    raise SystemExit(service.main([]))
+from narwhal import cli
+raise SystemExit(cli.main(['plan', 'before.json', '--repo', 'site', '--format', 'json']))
+''', encoding='utf-8')
+
+    async def exercise(session):
+        return mcp_result(await session.call_tool('plan_remediation', {'report': page, 'repo': 'site'}))
+
+    for mode in (('cli', 'mcp') if use_mcp else ('cli',)):
+        package.write_bytes(original)
+        try:
+            arguments = ['-I', str(driver), mode]
+            if mode == 'mcp':
+                built = mcp_session(exercise, root, server_args=arguments)
+            else:
+                result = subprocess.run([sys.executable, *arguments], cwd=root,
+                                        capture_output=True, text=True, timeout=5)
+                assert result.returncode == 0, (result.stdout, result.stderr)
+                built = json.loads(result.stdout)
+            assert built['framework']['name'] == 'plain_html', built
+            assert any('package.json' in item for item in built['warnings']), built
+            action = next(item for item in built['actions'] if item['rule_id'] == RULE)
+            assert action['likely_files'][0]['path'] == 'index.html' and action['likely_files'][0]['exists'], action
+            assert saved.read_bytes() == original and package.is_fifo()
+            assert (root / 'before.json').read_bytes() == baseline
+        finally:
+            package.unlink(missing_ok=True)
+            saved.unlink(missing_ok=True)
+    assert sources == {path: path.read_bytes() for path in site.rglob('*') if path.is_file()}
+    print('Installed manifest FIFO checks passed: post-admission FIFO swaps finish with unverified dependency '
+          'evidence and an observed HTML candidate; saved manifest/source/report bytes are preserved. '
+          + ('CLI and MCP stdio verified.' if use_mcp else 'CLI verified.'))
 
 
 def manifest_encoding_plans(run, read, root, site, page, use_mcp):
@@ -493,6 +553,7 @@ def main(use_mcp=False):
                 baseline = (root / 'before.json').read_bytes()
                 assert read('before.json')['status'] == 200
                 manifest_encoding_plans(run, read, root, site, read('before.json'), use_mcp)
+                manifest_fifo_plans(root, site, read('before.json'), use_mcp)
                 ambiguous = '{"status":503,' + baseline.decode('utf-8').lstrip()[1:]
                 (root / 'ambiguous.json').write_text(ambiguous, encoding='utf-8')
                 rejected_output = root / 'rejected-output.json'
