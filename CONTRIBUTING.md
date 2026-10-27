@@ -79,6 +79,8 @@ manual verification without inventing probe rows or source-edit actions. The
 uncorrupted native control and all source/report bytes must remain unchanged.
 Combined malformed counts, counters and containers must retain each verification
 reason and guidance through same-rule selection.
+An explicitly supplied competing finding must retain its selected severity and
+observation while recorded verification guidance takes precedence over repair advice.
 The fixture also reviews a schema action, generates WebSite JSON-LD from its real
 name/URL, and curates the MCP starter's inapplicable search-action placeholder.
 It applies that inspected artifact, runs the generated schema-only local scan/diff

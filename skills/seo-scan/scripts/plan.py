@@ -426,6 +426,7 @@ def normalize_report(data: dict) -> dict:
     crawl_rule_ids = set()
     crawl_automation_gap = False
     findings = []
+    sitemap_validation = None
     for raw in page.get("findings", []):
         if not isinstance(raw, dict) or raw.get("severity") == "good":
             continue
@@ -503,6 +504,8 @@ def normalize_report(data: dict) -> dict:
         findings.extend(_crawl_link_findings(crawl))
         sitemap = data.get("sitemap", {})
         sitemap_notes = _sitemap_note_findings(sitemap, data.get('schema_version'))
+        sitemap_validation = next((note for note in sitemap_notes
+                                   if note['rule_id'] == 'technical.sitemap.validation.unverified'), None)
         findings.extend(sitemap_notes)
         failed_samples, unverified_samples = _sitemap_sample_evidence(sitemap)
         sitemap_issues = ([f'{len(failed_samples)} recorded failing sampled HTTP response(s)']
@@ -519,13 +522,12 @@ def normalize_report(data: dict) -> dict:
                 'detail': 'Recorded sitemap problem/invalid-lastmod counts have unsupported shapes or values. '
                           'Verify the original counts; these values do not establish source invalidity.',
             }
-            validation_note = next((note for note in sitemap_notes
-                                    if note['rule_id'] == problem_note['rule_id']), None)
-            if validation_note is None:
+            if sitemap_validation is None:
+                sitemap_validation = problem_note
                 findings.append(problem_note)
             else:
                 # One synthesized observation keeps each independent reason through selection.
-                validation_note['detail'] += '\n\n' + problem_note['detail']
+                sitemap_validation['detail'] += '\n\n' + problem_note['detail']
         if any(type(value) is int and value > 0 for value in source_counts):
             sitemap_issues.append("invalid sitemap entries or lastmod values")
         if sitemap_issues and "technical.sitemap.validation.issues" not in seen:
@@ -601,14 +603,23 @@ def normalize_report(data: dict) -> dict:
         # Older/contradictory missing-file findings cannot authorize generation
         # when recorded HTTP evidence explicitly leaves root availability open.
         findings = [finding for finding in findings if finding['rule_id'] != 'geo.no.llms.txt']
-    # Keep a complete worst-severity observation, never severity from one and evidence from another.
+    # Keep a complete worst-severity observation; append recorded sitemap verification separately.
     coalesced = {}
     for finding in findings:
         coalesced.setdefault(finding["rule_id"], []).append(finding)
     representatives = []
     for observations in coalesced.values():
-        representative = dict(min(observations, key=lambda finding: (
-            SEVERITY_RANK.get(finding.get("severity"), 9), json.dumps(finding, sort_keys=True))))
+        selected = min(observations, key=lambda finding: (
+            SEVERITY_RANK.get(finding.get("severity"), 9), json.dumps(finding, sort_keys=True)))
+        representative = dict(selected)
+        if (sitemap_validation is not None
+                and representative['rule_id'] == sitemap_validation['rule_id']
+                and selected is not sitemap_validation):
+            original = representative.get('evidence') or representative.get('detail') or ''
+            representative['evidence'] = (original + ('\n\n' if original else '')
+                + 'Recorded sitemap verification:\n' + sitemap_validation['detail'])
+            representative['recommendation'] = sitemap_validation.get('recommendation',
+                'Verify the recorded sitemap evidence before making source changes.')
         representative['occurrences'] = max(
             _positive_int(item.get('occurrences', item.get('count', 1))) for item in observations)
         if any(item.get('scope') == 'site' for item in observations):

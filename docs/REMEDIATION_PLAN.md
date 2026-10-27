@@ -58,6 +58,10 @@ existing behavior; unsupported container values are not echoed into evidence.
 When malformed counts coexist with these execution or container warnings, their
 generated verification reasons are consolidated before same-rule selection so
 neither the explanation nor its verification guidance disappears.
+If a supplied finding with the same verification rule wins severity selection,
+its selected observation remains and the recorded verification context is appended.
+Verification guidance takes precedence over a conflicting repair recommendation;
+the original supplied report remains unchanged.
 
 Comprehensive-audit `crawl.links` observations produce manual `links` actions:
 `technical.links.http.failures` for reported failing 4xx/5xx responses without

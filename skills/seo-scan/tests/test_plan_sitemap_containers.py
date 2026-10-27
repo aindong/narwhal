@@ -167,6 +167,48 @@ class TestSitemapSampleContainers(unittest.TestCase):
                 self.assertEqual(([failure], [gated]), plan._sitemap_sample_evidence(data['sitemap']))
                 self.assertEqual(original, data)
 
+    def test_imported_same_rule_findings_keep_recorded_verification_context(self):
+        changes = ({'sample': None},
+                   {'sample': None, 'fetch_failures': False, 'invalid_lastmod': '0'},
+                   {'sample': None, 'fetch_failures': False,
+                    'problems': {'not-absolute': 1, 'future': 'secret-token'}},
+                   {'invalid_lastmod': '0'})
+        for location in ('homepage', 'crawl'):
+            for text_field in ('detail', 'evidence'):
+                for gap in changes:
+                    with self.subTest(location=location, text_field=text_field, gap=gap):
+                        data = clean()
+                        data['sitemap'].update(gap)
+                        supplied = {'category': 'technical', 'severity': 'high', 'rule_id': NOTES,
+                                    'title': 'Imported sitemap observation', text_field: 'Original observation.',
+                                    'recommendation': 'Rewrite sitemap locations now.', 'occurrences': 7}
+                        data[location]['findings' if location == 'homepage' else 'recurring'].append(supplied)
+                        original = copy.deepcopy(data)
+                        built, actions = self.actions(data)
+                        action = actions[NOTES]
+                        self.assertEqual({NOTES, SOURCE} if 'problems' in gap else {NOTES}, set(actions))
+                        self.assertEqual(('high', 'site', 7, 'manual_external', True, False, []),
+                                         tuple(action[k] for k in ('severity', 'scope', 'occurrences', 'safety',
+                                                                  'manual_action', 'requires_deploy', 'likely_files')))
+                        self.assertTrue(action['evidence'].startswith('Original observation.\n\n'))
+                        self.assertEqual('sample' in gap, 'sample containers' in action['evidence'].lower())
+                        if 'fetch_failures' in gap:
+                            self.assertIn('execution counters', action['evidence'].lower())
+                        if 'problems' in gap or 'invalid_lastmod' in gap:
+                            self.assertIn('problem/invalid-lastmod counts', action['evidence'].lower())
+                        self.assertIn('verify', action['source_recommendation'].lower())
+                        self.assertIn('before making source changes', action['source_recommendation'].lower())
+                        self.assertNotIn('Rewrite', action['source_recommendation'])
+                        self.assertNotIn('secret-token', json.dumps(actions))
+                        self.assertEqual(2, action['observation_selection']['normalized_observations'])
+                        self.assertFalse(any(NOTES in group['rule_ids'] for group in built['groups']))
+                        self.assertEqual(original, data)
+        data = clean()
+        data['homepage']['findings'].append(supplied)
+        action = self.actions(data)[1][NOTES]
+        self.assertEqual('Original observation.', action['evidence'])
+        self.assertEqual('Rewrite sitemap locations now.', action['source_recommendation'])
+
     def test_cli_and_offline_mcp_keep_manual_scope_without_changing_inputs(self):
         data = clean()
         data['sitemap']['broken_sample'] = {'url': 'https://example.test/secret-token', 'status': 404}
